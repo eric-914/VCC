@@ -85,7 +85,7 @@ static unsigned short (*ModuleAudioSample)(void)=NULL;
 static void (*ModuleReset) (void)=NULL;
 static void (*SetIniPath) (char *)=NULL;
 static void (*PakSetCart)(SETCART)=NULL;
-
+static char PakPath[MAX_PATH];
 
 static char Did=0;
 int FileID(char *);
@@ -102,6 +102,7 @@ static HMENU hSubMenu[64] ;
 
 
 static 	char Modname[MAX_PATH]="Blank";
+
 void PakTimer(void)
 {
 	if (HeartBeat != NULL)
@@ -174,21 +175,32 @@ int LoadCart(void)
 {
 	OPENFILENAME ofn ;	
 	char szFileName[MAX_PATH]="";
+	char temp[MAX_PATH];
+	GetIniFilePath(temp);
+	GetPrivateProfileString("DefaultPaths", "PakPath", "", PakPath, MAX_PATH, temp);
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
 	ofn.hwndOwner         = EmuState.WindowHandle;
-	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL\0\0";			// filter string
+	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL;*.pak\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;							// current filter index
 	ofn.lpstrFile         = szFileName ;				// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;					// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;						// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;					// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL ;						// initial directory
+	ofn.lpstrInitialDir   = PakPath;						// initial directory
 	ofn.lpstrTitle        = TEXT("Load Program Pack") ;	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if ( GetOpenFileName (&ofn))
-		if (!InsertModule (szFileName))
+		if (!InsertModule(szFileName)) {
+			string tmp = ofn.lpstrFile;
+			int idx;
+			idx = tmp.find_last_of("\\");
+			tmp=tmp.substr(0, idx);
+			strcpy(PakPath, tmp.c_str());
+			WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, temp);
 			return(0);
+		}
+	
 	return(1);
 }
 
@@ -509,7 +521,7 @@ void RefreshDynamicMenu(void)
 	if ((hMenu==NULL) | (EmuState.WindowHandle != hOld))
 		hMenu=GetMenu(EmuState.WindowHandle);
 	else
-		DeleteMenu(hMenu,2,MF_BYPOSITION);
+		DeleteMenu(hMenu,3,MF_BYPOSITION);
 
 	hOld=EmuState.WindowHandle;
 	hSubMenu[SubMenuIndex]=CreatePopupMenu();
@@ -521,7 +533,7 @@ void RefreshDynamicMenu(void)
 	Mii.hSubMenu = hSubMenu[SubMenuIndex];
 	Mii.dwTypeData = MenuTitle;
 	Mii.cch=strlen(MenuTitle);
-	InsertMenuItem(hMenu,2,TRUE,&Mii);
+	InsertMenuItem(hMenu,3,TRUE,&Mii);
 	SubMenuIndex++;	
 	for (TempIndex=0;TempIndex<MenuIndex;TempIndex++)
 	{

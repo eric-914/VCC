@@ -28,7 +28,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "resource.h"
 #include "tcc1014graphics.h"
 #include "throttle.h"
-
+#include "config.h"
+#include <iostream>
+#include <string>
 
 //Global Variables for Direct Draw funcions
 LPDIRECTDRAW        g_pDD		= NULL;  // The DirectDraw object
@@ -50,10 +52,11 @@ static unsigned char Resizeable=1;
 static unsigned char ForceAspect=1;
 static char StatusText[255]="";
 static unsigned int Color=0;
+static POINT RememberWinSize;
 
 //Function Prototypes for this module
 extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); //Callback for the main window
-void DisplayFlip(SystemState *);
+//void DisplayFlip(SystemState *);
 
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
@@ -78,8 +81,18 @@ bool CreateDDWindow(SystemState *CWState)
 	ddsd.dwSize = sizeof(ddsd);		// The first parameter of the structure must contain the size of the structure
 	rc.top=0;
 	rc.left=0;
-	rc.right=CWState->WindowSize.x;
-	rc.bottom=CWState->WindowSize.y;
+	//rc.right = CWState->WindowSize.x;
+	//rc.bottom = CWState->WindowSize.y;
+
+	if (GetRememberSize()) {
+		POINT pp = GetIniWindowSize();
+		rc.right = pp.x;
+		rc.bottom = pp.y;
+	}
+	else {
+		rc.right = CWState->WindowSize.x;
+		rc.bottom = CWState->WindowSize.y;
+	}
 
 	if (CWState->WindowHandle != NULL) //If its go a value it must be a mode switch
 	{
@@ -136,8 +149,9 @@ bool CreateDDWindow(SystemState *CWState)
 		// re-using rStatBar RECT even though it's the main window
 		::GetWindowRect(CWState->WindowHandle, &rStatBar);  
 		::MoveWindow(CWState->WindowHandle, rStatBar.left, rStatBar.top, // using MoveWindow to resize 
-										  rStatBar.right - rStatBar.left, (rStatBar.bottom+StatusBarHeight) - rStatBar.top,
-										  1); 
+											rStatBar.right - rStatBar.left, (rStatBar.bottom + StatusBarHeight) - rStatBar.top,
+//											rStatBar.right - rStatBar.left, rStatBar.bottom - rStatBar.top,
+											1);
 		::SendMessage(hwndStatusBar, WM_SIZE, 0, 0); // Redraw Status bar in new position
 
 		::GetWindowRect(CWState->WindowHandle, &WindowDefaultSize);	// And save the Final size of the Window 
@@ -247,11 +261,13 @@ void CheckSurfaces()
 
 void DisplayFlip(SystemState *DFState)	// Double buffering flip
 {
+	using namespace std;
 	static HRESULT hr;
 	static RECT    rcSrc;  // source blit rectangle
 	static RECT    rcDest; // destination blit rectangle
 	static RECT	Temp;
 	static POINT   p;	
+
 	if (DFState->FullScreen)	// if we're windowed do the blit, else just Flip
 		hr = g_pDDS->Flip(NULL,DDFLIP_NOVSYNC |DDFLIP_DONOTWAIT ); //DDFLIP_WAIT
 	else
@@ -335,6 +351,14 @@ void DisplayFlip(SystemState *DFState)	// Double buffering flip
 	
 		hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT , NULL); // DDBLT_WAIT
 	}
+
+	static RECT CurScreen;
+	::GetClientRect(DFState->WindowHandle, &CurScreen);
+	//CurScreen.bottom -= StatusBarHeight;
+	int clientWidth = (int)CurScreen.right;
+	int clientHeight = (int)CurScreen.bottom;
+	RememberWinSize.x = clientWidth; // Used for saving new window size to the ini file.
+	RememberWinSize.y = clientHeight-StatusBarHeight;
 	return;
 }
 
@@ -566,4 +590,7 @@ float Static(SystemState *STState)
 	g_pDDSBack->ReleaseDC(hdc);  
 	UnlockScreen(STState);
 	return(CalculateFPS());
+}
+POINT GetCurWindowSize() {
+	return (RememberWinSize);
 }

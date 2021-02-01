@@ -42,7 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
-
+#include "CommandLine.h"
 //#include "logger.h"
 #include <assert.h>
 using namespace std;
@@ -65,7 +65,7 @@ LRESULT CALLBACK InputConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK JoyStickConfig(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK TapeConfig(HWND , UINT , WPARAM , LPARAM );
 LRESULT CALLBACK BitBanger(HWND , UINT , WPARAM , LPARAM );
-
+LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 
 //
 //	global variables
@@ -75,6 +75,7 @@ static unsigned  int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRE
 static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
 static unsigned short int	Cpuchoice[2]={IDC_6809,IDC_6309};
 static unsigned short int	Monchoice[2]={IDC_COMPOSITE,IDC_RGB};
+static unsigned short int   PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
 static HICON CpuIcons[2],MonIcons[2],JoystickIcons[4];
 static unsigned char temp=0,temp2=0;
 static char IniFileName[]="Vcc.ini";
@@ -84,13 +85,13 @@ static char ExecDirectory[MAX_PATH]="";
 static char SerialCaptureFile[MAX_PATH]="";
 static char TextMode=1,PrtMon=0;;
 static unsigned char NumberofJoysticks=0;
-
 TCHAR AppDataPath[MAX_PATH];
 
 char OutBuffer[MAX_PATH]="";
 char AppName[MAX_LOADSTRING]="";
 STRConfig CurrentConfig;
 static STRConfig TempConfig;
+
 extern SystemState EmuState;
 extern char StickName[MAXSTICKS][STRLEN];
 
@@ -127,6 +128,10 @@ char * getKeyName(int x)
 
 unsigned char _TranslateDisp2Scan[SCAN_TRANS_COUNT];
 unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,32,38,20,33,35,40,36,24,30,31,42,43,55,52,16,34,19,21,22,23,25,26,27,45,46,0,51,44,41,39,18,37,17,29,28,47,48,49,51,0,53,54,50,66,67,0,0,0,0,0,0,0,0,0,0,58,64,60,0,62,0,63,0,59,65,61,56,57 };
+
+
+#define TABS 8
+static HWND g_hWndConfig[TABS]; // Moved this outside the initialization function so that other functions could access the window handles when necessary.
 
 unsigned char TranslateDisp2Scan(int x)
 {
@@ -167,6 +172,7 @@ void buildTransDisp2ScanTable()
 void LoadConfig(SystemState *LCState)
 {
 	HANDLE hr=NULL;
+	int lasterror;
 
 	buildTransDisp2ScanTable();
 
@@ -176,12 +182,18 @@ void LoadConfig(SystemState *LCState)
 	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath))) 
 		OutputDebugString(AppDataPath);
 	strcpy(CurrentConfig.PathtoExe,ExecDirectory);
+
 	strcat(AppDataPath, "\\VCC");
 	if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
-	strcpy(IniFilePath, AppDataPath);
-	strcat(IniFilePath,"\\");
-	strcat(IniFilePath,IniFileName);
 	
+	if (*CmdArg.IniFile) {
+		GetFullPathNameA(CmdArg.IniFile,MAX_PATH,IniFilePath,0);
+	} else {
+		strcpy(IniFilePath, AppDataPath);
+		strcat(IniFilePath, "\\");
+		strcat(IniFilePath, IniFileName);
+	}
+
 	LCState->ScanLines=0;
 	NumberOfSoundCards=GetSoundCardList(SoundCards);
 	ReadIniFile();
@@ -189,20 +201,30 @@ void LoadConfig(SystemState *LCState)
 	UpdateConfig();
 	RefreshJoystickStatus();
 	SoundInit(EmuState.WindowHandle,SoundCards[CurrentConfig.SndOutDev].Guid,CurrentConfig.AudioRate);
-	hr=CreateFile(IniFilePath,NULL,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hr==INVALID_HANDLE_VALUE) //No Ini File go create it
-		WriteIniFile();
-	else
+
+//  Try to open the config file.  Create it if necessary.  Abort if failure.
+	hr = CreateFile(IniFilePath,
+					GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
+					NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	lasterror = GetLastError();
+	if (hr==INVALID_HANDLE_VALUE) { // Fatal could not open ini file
+	    MessageBox(0,"Could not open ini file","Error",0);
+		exit(0);
+	} else {
 		CloseHandle(hr);
+		if (lasterror != ERROR_ALREADY_EXISTS) WriteIniFile();  //!=183
+	}
 }
 
 unsigned char WriteIniFile(void)
 {
+	POINT tp = GetCurWindowSize();
+	CurrentConfig.Resize = 1;
 	GetCurrentModule(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ModulePath);
 	ValidatePath(CurrentConfig.ExternalBasicImage);
+	
 	WritePrivateProfileString("Version","Release",AppName,IniFilePath);
-
 	WritePrivateProfileInt("CPU","DoubleSpeedClock",CurrentConfig.CPUMultiplyer,IniFilePath);
 	WritePrivateProfileInt("CPU","FrameSkip",CurrentConfig.FrameSkip,IniFilePath);
 	WritePrivateProfileInt("CPU","Throttle",CurrentConfig.SpeedThrottle,IniFilePath);
@@ -213,9 +235,13 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("Audio","Rate",CurrentConfig.AudioRate,IniFilePath);
 
 	WritePrivateProfileInt("Video","MonitorType",CurrentConfig.MonitorType,IniFilePath);
+	WritePrivateProfileInt("Video","PaletteType",CurrentConfig.PaletteType, IniFilePath);
 	WritePrivateProfileInt("Video","ScanLines",CurrentConfig.ScanLines,IniFilePath);
 	WritePrivateProfileInt("Video","AllowResize",CurrentConfig.Resize,IniFilePath);
 	WritePrivateProfileInt("Video","ForceAspect",CurrentConfig.Aspect,IniFilePath);
+	WritePrivateProfileInt("Video","RememberSize", CurrentConfig.RememberSize, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
+	WritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
 
 	WritePrivateProfileInt("Memory","RamSize",CurrentConfig.RamSize,IniFilePath);
 	WritePrivateProfileString("Memory", "ExternalBasicImage", CurrentConfig.ExternalBasicImage, IniFilePath);
@@ -245,6 +271,8 @@ unsigned char WriteIniFile(void)
 	WritePrivateProfileInt("RightJoyStick","DiDevice",Right.DiDevice,IniFilePath);
 	WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
 
+//  Flush inifile
+	WritePrivateProfileString(NULL,NULL,NULL,IniFilePath);
 	return(0);
 }
 
@@ -252,24 +280,31 @@ unsigned char ReadIniFile(void)
 {
 	HANDLE hr=NULL;
 	unsigned char Index=0;
+	POINT p;
+//	LPTSTR tmp;
 
 	//Loads the config structure from the hard disk
 	CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU","DoubleSpeedClock",2,IniFilePath);
 	CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU","FrameSkip",1,IniFilePath);
 	CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU","Throttle",1,IniFilePath);
 	CurrentConfig.CpuType = GetPrivateProfileInt("CPU","CpuType",0,IniFilePath);
-	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",100, IniFilePath);
+	CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock",227, IniFilePath);
 
 	CurrentConfig.AudioRate = GetPrivateProfileInt("Audio","Rate",3,IniFilePath);
 	GetPrivateProfileString("Audio","SndCard","",CurrentConfig.SoundCardName,63,IniFilePath);
 
 	CurrentConfig.MonitorType = GetPrivateProfileInt("Video","MonitorType",1,IniFilePath);
+	CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType",1,IniFilePath);
 	CurrentConfig.ScanLines = GetPrivateProfileInt("Video","ScanLines",0,IniFilePath);
+
 	CurrentConfig.Resize = GetPrivateProfileInt("Video","AllowResize",0,IniFilePath);	
 	CurrentConfig.Aspect = GetPrivateProfileInt("Video","ForceAspect",0,IniFilePath);
-
+	CurrentConfig.RememberSize = GetPrivateProfileInt("Video","RememberSize",0,IniFilePath);
+	CurrentConfig.WindowSizeX= GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
+	CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
 	CurrentConfig.AutoStart = GetPrivateProfileInt("Misc","AutoStart",1,IniFilePath);
 	CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc","CartAutoStart",1,IniFilePath);
+
 
 	CurrentConfig.RamSize = GetPrivateProfileInt("Memory","RamSize",1,IniFilePath);
 	GetPrivateProfileString("Memory","ExternalBasicImage","",CurrentConfig.ExternalBasicImage,MAX_PATH,IniFilePath);
@@ -303,6 +338,10 @@ unsigned char ReadIniFile(void)
 	Right.DiDevice=GetPrivateProfileInt("RightJoyStick","DiDevice",0,IniFilePath);
 	Right.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
 
+	GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
+	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
+
 	for (Index = 0; Index < NumberOfSoundCards; Index++)
 	{
 		if (!strcmp(SoundCards[Index].CardName, CurrentConfig.SoundCardName))
@@ -313,7 +352,17 @@ unsigned char ReadIniFile(void)
 
 	TempConfig=CurrentConfig;
 	InsertModule (CurrentConfig.ModulePath);	// Should this be here?
-	
+	CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini? 
+	if (CurrentConfig.RememberSize) {
+		p.x = CurrentConfig.WindowSizeX;
+		p.y = CurrentConfig.WindowSizeY;
+		SetWindowSize(p);
+	}
+	else {
+		p.x = 640;
+		p.y = 480;
+		SetWindowSize(p);
+	}
 	return(0);
 }
 
@@ -322,14 +371,11 @@ char * BasicRomName(void)
 	return(CurrentConfig.ExternalBasicImage); 
 }
 
-
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	#define TABS 8
 	static char TabTitles[TABS][10]={"Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger"};
 	static unsigned char TabCount=0,SelectedTab=0;
 	static HWND hWndTabDialog;
-	static HWND g_hWndConfig[TABS];
 	TCITEM Tabs;
 	switch (message)
 	{
@@ -350,6 +396,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			g_hWndConfig[5]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_MISC),hWndTabDialog,(DLGPROC) MiscConfig);
 			g_hWndConfig[6]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_CASSETTE),hWndTabDialog,(DLGPROC) TapeConfig);
 			g_hWndConfig[7]=CreateDialog(EmuState.WindowInstance,MAKEINTRESOURCE(IDD_BITBANGER),hWndTabDialog,(DLGPROC) BitBanger);
+	
 			//Set the title text for all tabs
 			for (TabCount=0;TabCount<TABS;TabCount++)
 			{
@@ -449,8 +496,23 @@ void GetIniFilePath( char *Path)
 	return;
 }
 
+//<EJJ>
+void SetIniFilePath( char *Path)
+{
+    //  Path must be to an existing ini file
+    strcpy(IniFilePath,Path);
+}
+
+char * AppDirectory() 
+{
+    // This only works after LoadConfig has been called
+	return AppDataPath;
+}
+//<EJJ/>
+
 void UpdateConfig (void)
 {
+	SetPaletteType();
 	SetResize(CurrentConfig.Resize);
 	SetAspect(CurrentConfig.Aspect);
 	SetScanLines(CurrentConfig.ScanLines);
@@ -465,6 +527,59 @@ void UpdateConfig (void)
 	if (CurrentConfig.RebootNow)
 		DoReboot();
 	CurrentConfig.RebootNow=0;
+}
+
+/**
+ * Increase the overclock speed, as seen after a POKE 65497,0.
+ * Valid values are [2,100].
+ */
+void IncreaseOverclockSpeed()
+{
+	if (TempConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock)
+	{
+		return;
+	}
+
+	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer + 1);
+
+	// Send updates to the dialog if it's open.
+	if (EmuState.ConfigDialog != NULL)
+	{
+		HWND hDlg = g_hWndConfig[1];
+		SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+		SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+	}
+
+	CurrentConfig = TempConfig;
+	EmuState.ResetPending = 4; // Without this, changing the config does nothing.
+}
+
+/**
+ * Decrease the overclock speed, as seen after a POKE 65497,0.
+ *
+ * Setting this value to 0 will make the emulator pause.  Hence the minimum of 2.
+ */
+void DecreaseOverclockSpeed()
+{
+	if (TempConfig.CPUMultiplyer == 2)
+	{
+		return;
+	}
+
+	TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer - 1);
+
+	// Send updates to the dialog if it's open.
+	if (EmuState.ConfigDialog != NULL)
+	{
+		HWND hDlg = g_hWndConfig[1];
+		SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+		sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+		SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+	}
+
+	CurrentConfig = TempConfig;
+	EmuState.ResetPending = 4;
 }
 
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -657,6 +772,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 
 LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static bool isRGB;
 	switch (message)
 	{
 		case WM_INITDIALOG:
@@ -667,11 +783,23 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg,IDC_FRAMESKIP,TBM_SETPOS,TRUE,TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_RESIZE,BM_SETCHECK,TempConfig.Resize,0);
 			SendDlgItemMessage(hDlg,IDC_ASPECT,BM_SETCHECK,TempConfig.Aspect,0);
+			SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_SETCHECK, TempConfig.RememberSize, 0);
 			sprintf(OutBuffer,"%i",TempConfig.FrameSkip);
 			SendDlgItemMessage(hDlg,IDC_FRAMEDISPLAY,WM_SETTEXT,strlen(OutBuffer),(LPARAM)(LPCSTR)OutBuffer);
 			for (temp=0;temp<=1;temp++)
 				SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,(temp==TempConfig.MonitorType),0);
+			if (TempConfig.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
+				isRGB = TRUE;
+				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
+				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
+				SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
+				SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
+			
+			}
 			SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+			for (temp = 0; temp <= 1; temp++)
+				SendDlgItemMessage(hDlg, PaletteChoice[temp], BM_SETCHECK, (temp == TempConfig.PaletteType), 0);
+			
 		break;
 
 		case WM_HSCROLL:
@@ -681,23 +809,68 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		break;
 		
 		case WM_COMMAND:
-			TempConfig.Resize = (unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
+			TempConfig.Resize = 1; //(unsigned char)SendDlgItemMessage(hDlg,IDC_RESIZE,BM_GETCHECK,0,0);
 			TempConfig.Aspect = (unsigned char)SendDlgItemMessage(hDlg,IDC_ASPECT,BM_GETCHECK,0,0);
 			TempConfig.ScanLines  = (unsigned char)SendDlgItemMessage(hDlg,IDC_SCANLINES,BM_GETCHECK,0,0);
 			TempConfig.SpeedThrottle = (unsigned char)SendDlgItemMessage(hDlg,IDC_THROTTLE,BM_GETCHECK,0,0);
+			TempConfig.RememberSize = (unsigned char)SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_GETCHECK, 0, 0);
+			//POINT p = { 640,480 };
 			switch (LOWORD (wParam))
 			{
-				case IDC_COMPOSITE:
+				
+			case IDC_REMEMBER_SIZE:
+				TempConfig.Resize = 1;
+				SendDlgItemMessage(hDlg, IDC_RESIZE, BM_GETCHECK, 1, 0);
+				break;
+
+			case IDC_COMPOSITE:
+					isRGB = FALSE;
+					for (temp = 0; temp <= 1; temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
+					if (LOWORD(wParam) == Monchoice[temp])
+					{
+						for (temp2 = 0; temp2 <= 1; temp2++)
+							SendDlgItemMessage(hDlg, Monchoice[temp2], BM_SETCHECK, 0, 0);
+							SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
+						TempConfig.MonitorType = temp;
+					}
+					SendDlgItemMessage(hDlg, IDC_MONTYPE, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)MonIcons[TempConfig.MonitorType]);
+					SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 0, 0);
+					SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 0, 0);
+					break;
 				case IDC_RGB:
-					for (temp=0;temp<=1;temp++)
+					isRGB = TRUE;
+					for (temp=0;temp<=1;temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
 						if (LOWORD(wParam)==Monchoice[temp])
 						{
 							for (temp2=0;temp2<=1;temp2++)
 								SendDlgItemMessage(hDlg,Monchoice[temp2],BM_SETCHECK,0,0);
-							SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
-							TempConfig.MonitorType=temp;
+								SendDlgItemMessage(hDlg,Monchoice[temp],BM_SETCHECK,1,0);
+								TempConfig.MonitorType=temp;
 						}
 					SendDlgItemMessage(hDlg,IDC_MONTYPE,STM_SETIMAGE ,(WPARAM)IMAGE_ICON,(LPARAM)MonIcons[TempConfig.MonitorType]);
+					//If RGB is chosen, disable palette buttons.
+					SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
+					SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
+					SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
+					SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
+					break;
+				case IDC_ORG_PALETTE: 
+					if (!isRGB) {
+						//Original Composite palette
+						SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 1, 0);
+						SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
+						TempConfig.PaletteType = 0;
+					}
+					else { SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0); }
+					break;
+				case IDC_UPD_PALETTE:
+					if (!isRGB) {
+						//New Composite palette
+						SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 1, 0);
+						SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
+						TempConfig.PaletteType = 1;
+					}
+					else { SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0); }
 				break;
 
 			}	//End switch LOWORD(wParam)
@@ -1045,12 +1218,18 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	}
 	return(0);
 }
+LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+	return 1;
+
+}
 
 int SelectFile(char *FileName)
 {
 	OPENFILENAME ofn ;	
 	char Dummy[MAX_PATH]="";
 	char TempFileName[MAX_PATH]="";
+	char CapFilePath[MAX_PATH];
+	GetPrivateProfileString("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
 
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME);
@@ -1064,12 +1243,53 @@ int SelectFile(char *FileName)
 	ofn.nMaxFile          = MAX_PATH;			// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;				// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH;			// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = Dummy;				// initial directory
+	ofn.lpstrInitialDir   = CapFilePath;				// initial directory
 	ofn.lpstrTitle        = "Open print capture file";		// title bar string
 
-	if ( GetOpenFileName(&ofn) )
-		if (!(OpenPrintFile(TempFileName)))
-			MessageBox(0,"Can't Open File","Can't open the file specified.",0);
+	if (GetOpenFileName(&ofn)) {
+		if (!(OpenPrintFile(TempFileName))) {
+			MessageBox(0, "Can't Open File", "Can't open the file specified.", 0);
+		}
+		string tmp = ofn.lpstrFile;
+		int idx;
+		idx = tmp.find_last_of("\\");
+		tmp = tmp.substr(0, idx);
+		strcpy(CapFilePath, tmp.c_str());
+		if (CapFilePath != "") {
+			WritePrivateProfileString("DefaultPaths", "CapFilePath", CapFilePath, IniFilePath);
+		}
+	}
 	strcpy(FileName,TempFileName);
+	
+	
+	
 	return(1);
 }
+
+void SetWindowSize(POINT p) {
+	int width = p.x+16;
+	int height = p.y+81;
+	HWND handle = GetActiveWindow();
+	::SetWindowPos(handle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+}
+int GetKeyboardLayout() {
+	return(CurrentConfig.KeyMap);
+}
+
+int GetPaletteType() {
+	return(CurrentConfig.PaletteType);
+}
+
+int GetRememberSize() {
+	return((int) CurrentConfig.RememberSize);
+	//return(1);
+}
+
+POINT GetIniWindowSize() {
+	POINT out;
+	
+	out.x = CurrentConfig.WindowSizeX;
+	out.y = CurrentConfig.WindowSizeY;
+	return(out);
+}
+

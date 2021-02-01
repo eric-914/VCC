@@ -22,6 +22,7 @@
 *.pch.*
 *.gch
 *.aps
+*.vscode
 
 Debug
 Release
@@ -31,3 +32,6 @@ vcc/coco3.rom
 vcc/disk11.rom
 *.opendb
 *.db
+*.user
+*.*~
+*~

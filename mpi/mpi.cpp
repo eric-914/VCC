@@ -18,6 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 // This is an expansion module for the Vcc Emulator. It simulated the functions of the TRS-80 Multi-Pak Interface
 
 #include <windows.h>
+#include <iostream>
 #include "stdio.h"
 #include "resource.h" 
 #include <commctrl.h>
@@ -35,11 +36,15 @@ static char ModuleNames[MAXPAX][MAX_LOADSTRING]={"Empty","Empty","Empty","Empty"
 static char CatNumber[MAXPAX][MAX_LOADSTRING]={"","","",""};
 static char SlotLabel[MAXPAX][MAX_LOADSTRING*2]={"Empty","Empty","Empty","Empty"};
 //static 
+static unsigned char PersistPaks = 0;
 static char ModulePaths[MAXPAX][MAX_PATH]={"","","",""};
 static unsigned char *ExtRomPointers[MAXPAX]={NULL,NULL,NULL,NULL};
 static unsigned int BankedCartOffset[MAXPAX]={0,0,0,0};
 static unsigned char Temp,Temp2;
 static char IniFile[MAX_PATH]="";
+static char MPIPath[MAX_PATH];
+
+using namespace std;
 
 //**************************************************************
 //Array of fuction pointer for each Slot
@@ -423,6 +428,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hDlg,IDC_PAKSELECT,TBM_SETPOS,TRUE,SwitchSlot);
 			ReadModuleParms(SwitchSlot,ConfigText);
 			SendDlgItemMessage(hDlg,IDC_MODINFO,WM_SETTEXT,strlen(ConfigText),(LPARAM)(LPCSTR)ConfigText );
+			SendDlgItemMessage(hDlg, IDC_PAK, BM_SETCHECK, PersistPaks, 0);
 
 			return TRUE; 
 		break;
@@ -431,8 +437,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			case IDOK:
-				WriteConfig();
+				PersistPaks = (unsigned char)SendDlgItemMessage(hDlg, IDC_PAK, BM_GETCHECK, 0, 0);
 				EndDialog(hDlg, LOWORD(wParam));
+				WriteConfig();
 				return TRUE;
 			break;
 
@@ -623,18 +630,24 @@ void LoadCartDLL(unsigned char Slot,char *DllPath)
 	memset(&ofn,0,sizeof(ofn));
 	ofn.lStructSize       = sizeof (OPENFILENAME) ;
 	ofn.hwndOwner		  = NULL;
-	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL\0\0";			// filter string
+	ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL;*.pak\0\0";			// filter string
 	ofn.nFilterIndex      = 1 ;								// current filter index
 	ofn.lpstrFile         = DllPath;						// contains full path and filename on return
 	ofn.nMaxFile          = MAX_PATH;						// sizeof lpstrFile
 	ofn.lpstrFileTitle    = NULL;							// filename and extension only
 	ofn.nMaxFileTitle     = MAX_PATH ;						// sizeof lpstrFileTitle
-	ofn.lpstrInitialDir   = NULL;							// initial directory
+	ofn.lpstrInitialDir   = MPIPath;							// initial directory
 	ofn.lpstrTitle        = TEXT("Load Program Pack");	// title bar string
 	ofn.Flags             = OFN_HIDEREADONLY;
 	if ( GetOpenFileName (&ofn) )
 	{
 		RetVal= MountModule( Slot,DllPath);
+		string tmp = ofn.lpstrFile;
+		int idx;
+		idx = tmp.find_last_of("\\");
+		tmp = tmp.substr(0, idx);
+		strcpy(MPIPath, tmp.c_str());
+
 
 	}
 	return;
@@ -645,6 +658,8 @@ void LoadConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
+	PersistPaks=GetPrivateProfileInt(ModName, "PersistPaks", 1, IniFile);
+	GetPrivateProfileString("DefaultPaths", "MPIPath", "", MPIPath, MAX_PATH, IniFile);
 	SwitchSlot=GetPrivateProfileInt(ModName,"SWPOSITION",3,IniFile);
 	ChipSelectSlot=SwitchSlot;
 	SpareSelectSlot=SwitchSlot;
@@ -666,8 +681,10 @@ void LoadConfig(void)
 void WriteConfig(void)
 {
 	char ModName[MAX_LOADSTRING]="";
+	if (MPIPath != "") { WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile); }
 	LoadString(g_hinstDLL,IDS_MODULE_NAME,ModName, MAX_LOADSTRING);
 	WritePrivateProfileInt(ModName,"SWPOSITION",SwitchSlot,IniFile);
+	WritePrivateProfileInt(ModName, "PesistPaks", PersistPaks, IniFile);
 	ValidatePath(ModulePaths[0]);
 	WritePrivateProfileString(ModName,"SLOT1",ModulePaths[0],IniFile);
 	ValidatePath(ModulePaths[1]);
@@ -676,6 +693,7 @@ void WriteConfig(void)
 	WritePrivateProfileString(ModName,"SLOT3",ModulePaths[2],IniFile);
 	ValidatePath(ModulePaths[3]);
 	WritePrivateProfileString(ModName,"SLOT4",ModulePaths[3],IniFile);
+
 	return;
 }
 

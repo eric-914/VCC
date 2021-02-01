@@ -38,7 +38,7 @@
 #define IDD_CASSETTE                    157
 #define IDD_NEWTAPE                     158
 #define IDD_BITBANGER                   159
-#define IDD_DIALOG1                     164
+#define IDD_KEYMAPED                    164
 #define IDC_MUTE                        1003
 #define IDC_THROTTLE                    1004
 #define IDC_ARTIFACTS                   1005
@@ -436,6 +436,8 @@
 #define IDC_BUTTON165                   1188
 #define IDC_BUTTON166                   1189
 #define IDC_BUTTON167                   1190
+#define IDC_ORG_PALETTE                 1191
+#define IDC_UPD_PALETTE                 1192
 #define ID_FILE_EXIT                    40002
 #define IDM_HELP_ABOUT                  40003
 #define ID_FILE_RUN                     40004
@@ -462,7 +464,14 @@
 #define ID_NMI                          40025
 #define ID_CARTRIDGE_INSERT             40026
 #define ID_FILE_LOAD                    40028
+#define ID_SAVE_CONFIG                  40029
 #define ID_CARTS_EJECT                  40030
+#define ID_COPY_TEXT                    40034
+#define ID_PASTE_TEXT                   40035
+#define ID_PASTE_BASIC                  40036
+#define ID_PASTE_BASIC_NEW              40037
+#define ID_FLIP_ARTIFACTS               40038
+#define IDC_REMEMBER_SIZE               40039
 #define ID_CONFIGURE_OPTIONS            65535
 
 // Next default values for new objects

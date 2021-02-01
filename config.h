@@ -17,7 +17,8 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include<iostream>
+using namespace std;
 void LoadConfig(SystemState *);
 unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);
@@ -26,6 +27,17 @@ void GetIniFilePath( char *);
 void UpdateConfig (void);
 void UpdateSoundBar(unsigned short,unsigned short);
 void UpdateTapeCounter(unsigned int,unsigned char);
+int GetKeyboardLayout();
+void SetWindowSize(POINT);
+
+void SetIniFilePath(char *); //EJJ
+char * AppDirectory();       //EJJ
+
+int GetPaletteType();
+POINT GetIniWindowSize();
+int GetRememberSize();
+void SetConfigPath(int, string);
+
 LRESULT CALLBACK	Config			(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct  {
@@ -36,9 +48,13 @@ typedef struct  {
 	unsigned char	CpuType;
 //	unsigned char	AudioMute;
 	unsigned char	MonitorType;
+	unsigned char   PaletteType;
 	unsigned char	ScanLines;
 	unsigned char	Resize;
 	unsigned char	Aspect;
+	unsigned short	RememberSize;
+	unsigned short	WindowSizeX;
+	unsigned short	WindowSizeY;
 	unsigned char	RamSize;
 	unsigned char	AutoStart;
 	unsigned char	CartAutoStart;
@@ -50,7 +66,13 @@ typedef struct  {
 	char			ExternalBasicImage[MAX_PATH];
 	char			ModulePath[MAX_PATH];
 	char			PathtoExe[MAX_PATH];
+	char			FloppyPath[MAX_PATH];
+	char			CassPath[MAX_PATH];
+	char            COCO3ROMPath[MAX_PATH];
 } STRConfig;
-	
+
+void DecreaseOverclockSpeed();
+void IncreaseOverclockSpeed();
+
 #endif
 

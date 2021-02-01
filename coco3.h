@@ -30,6 +30,11 @@ void SetTimerInteruptState(unsigned char);
 void SetTimerClockRate (unsigned char);	
 void SetInteruptTimer(unsigned short);
 void MiscReset(void);
+void PasteBASICWithNew();
+void PasteBASIC();
+void PasteText();
+void CopyText();
+void FlipArtifacts();
 unsigned short SetAudioRate (unsigned short);
 
 #endif

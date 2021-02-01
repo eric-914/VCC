@@ -165,8 +165,17 @@ unsigned char * Getint_rom_pointer(void)
 void CopyRom(void)
 {
 	char ExecPath[MAX_PATH];
+	char COCO3ROMPath[MAX_PATH];
+	char IniFilePath[MAX_PATH];
+
+	GetIniFilePath(IniFilePath);
+	GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath, MAX_PATH, IniFilePath);
 	unsigned short temp=0;
-	temp=load_int_rom(BasicRomName());		//Try to load the image
+	strcat(COCO3ROMPath, "\\coco3.rom");
+	if (COCO3ROMPath != "") { temp = load_int_rom(COCO3ROMPath); } //Try loading from the user defined path first.
+	if (temp) { OutputDebugString(" Found coco3.rom in COCO3ROMPath\n"); }
+
+	if (temp == 0) { temp = load_int_rom(BasicRomName()); }		//Try to load the image
 	if (temp == 0)
 	{	// If we can't find it use default copy
 		GetModuleFileName(NULL, ExecPath, MAX_PATH);
@@ -294,6 +303,13 @@ void MemWrite16(unsigned short data,unsigned short addr)
 	MemWrite8( data >>8,addr);
 	MemWrite8( data & 0xFF,addr+1);
 	return;
+}
+
+unsigned short GetMem(long address) {
+	return(memory[address]);
+}
+void SetMem(long address, unsigned short data) {
+	memory[address] = data;
 }
 
 void SetDistoRamBank(unsigned char data)
