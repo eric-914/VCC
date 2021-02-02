@@ -60,7 +60,6 @@ struct SectorInfo
   unsigned char Density;
 };
 
-
 #define IDLE 255
 #define NONE 4
 #define JVC	0
@@ -71,15 +70,15 @@ struct SectorInfo
 
 
 //Control register masks
-#define CTRL_DRIVE0		0x01
-#define CTRL_DRIVE1		0x02
-#define CTRL_DRIVE2		0x04
-#define CTRL_MOTOR_EN	0x08
+#define CTRL_DRIVE0		  0x01
+#define CTRL_DRIVE1		  0x02
+#define CTRL_DRIVE2		  0x04
+#define CTRL_MOTOR_EN	  0x08
 #define CTRL_WRT_PRECMP	0x10
-#define CTRL_DENSITY	0x20
-#define CTRL_DRIVE3		0x40
+#define CTRL_DENSITY	  0x20
+#define CTRL_DRIVE3		  0x40
 #define CTRL_HALT_FLAG	0x80
-#define SIDESELECT		0x40
+#define SIDESELECT		  0x40
 
 //Status Register return codes
 #define READY			0
@@ -91,18 +90,17 @@ struct SectorInfo
 #define RECNOTFOUND		0x10
 #define WRITEPROTECT	0x40
 
-
 #define WAITTIME		5
 #define STEPTIME		15	// 1 Millisecond = 15.78 Pings
-#define SETTLETIME		10	// CyclestoSettle
+#define SETTLETIME	10	// CyclestoSettle
 
-#define RESTORE			0
-#define	SEEK			1
-#define STEP			2
-#define STEPUPD			3
-#define	STEPIN			4
-#define	STEPINUPD		5
-#define STEPOUT			6
+#define RESTORE			  0
+#define	SEEK			    1
+#define STEP			    2
+#define STEPUPD			  3
+#define	STEPIN			  4
+#define	STEPINUPD		  5
+#define STEPOUT			  6
 #define STEPOUTUPD		7
 #define	READSECTOR		8
 #define READSECTORM		9
@@ -110,34 +108,17 @@ struct SectorInfo
 #define	WRITESECTORM	11
 #define	READADDRESS		12
 #define	FORCEINTERUPT	13
-#define	READTRACK		14
+#define	READTRACK		  14
 #define WRITETRACK		15
 
 #define HEADERBUFFERSIZE	256
 
-
-//#define IOCTL_KEYBOARD_SET_INDICATORS        CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0002, METHOD_BUFFERED, FILE_ANY_ACCESS)
-//#define IOCTL_KEYBOARD_QUERY_TYPEMATIC       CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0008, METHOD_BUFFERED, FILE_ANY_ACCESS)
-//#define IOCTL_KEYBOARD_QUERY_INDICATORS      CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0010, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-//typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
-//    USHORT UnitId;		// Unit identifier.
-//    USHORT LedFlags;		// LED indicator state.
-//
-//} KEYBOARD_INDICATOR_PARAMETERS, *PKEYBOARD_INDICATOR_PARAMETERS;
-
-//#define KEYBOARD_CAPS_LOCK_ON     4
-//#define KEYBOARD_NUM_LOCK_ON      2
-//#define KEYBOARD_SCROLL_LOCK_ON   1
-
-
-//
 #define DISK_SIDES          1       // sides per disk
 #define DISK_TRACKS         35      // tracks per side
 #define DISK_SECTORS        18      // sectors per track
 #define DISK_DATARATE       2       // 2 is double-density
 #define SECTOR_SIZE_CODE    1       // 0=128, 1=256, 2=512, 3=1024, ...
-#define SECTOR_GAP3         16    // gap3 size between sectors
+#define SECTOR_GAP3         16      // gap3 size between sectors
 #define SECTOR_FILL         0xFF    // fill byte for formatted sectors
 #define SECTOR_BASE         1       // first sector number on track
 #define TRACK_SKEW          1       // format skew to the same sector on the next track

@@ -114,6 +114,7 @@ bool SetDataRate(HANDLE, BYTE);
 static FD_READ_WRITE_PARAMS rwp;
 static bool DirtyDisk = 1;
 char ImageFormat[5][4] = { "JVC","VDK","DMK","OS9","RAW" };
+
 //****************************************************************
 //KEYBOARD_INDICATOR_PARAMETERS InputBuffer;	  // Input buffer for DeviceIoControl
 //KEYBOARD_INDICATOR_PARAMETERS OutputBuffer;	  // Output buffer for DeviceIoControl
@@ -149,10 +150,12 @@ unsigned char disk_io_read(unsigned char port)
   case 0x40:	//Control Register can't be read
     temp = 0;
     break;
+
   default:
     return(0);
     break;
-  }	//END Switch port
+  }
+
   return(temp);
 }
 
@@ -183,25 +186,24 @@ void disk_io_write(unsigned char data, unsigned char port)
     ControlReg = data;
     DecodeControlReg(ControlReg);
     break;
-  }	//END Switch port
-  return;
+  }
 }
+
 /****************************************************************
-*	7 halt enable flag											*
-*	6 drive select #3 or SideSelect								*
-*	5 density (0=single, 1=double)  and NMI enable flag			*
-*	4 write precompensation										*
-*	3 drive motor activation									*
-*	2 drive select #2											*
-*	1 drive select #1											*
-*	0 drive select #0											*
-*																*
-* Reading from $ff48-$ff4f clears bit 7 of DSKREG ($ff40)		*
-*																*
+*	7 halt enable flag											                     *
+*	6 drive select #3 or SideSelect								               *
+*	5 density (0=single, 1=double)  and NMI enable flag			     *
+*	4 write precompensation										                   *
+*	3 drive motor activation									                   *
+*	2 drive select #2											                       *
+*	1 drive select #1											                       *
+*	0 drive select #0											                       *
+*																                               *
+* Reading from $ff48-$ff4f clears bit 7 of DSKREG ($ff40)		   *
+*																                               *
 ****************************************************************/
 void DecodeControlReg(unsigned char Tmp)
 {
-
   KBLeds = 0;
   MotorOn = 0;
   CurrentDisk = NONE;
@@ -212,23 +214,25 @@ void DecodeControlReg(unsigned char Tmp)
   if (Tmp & CTRL_DRIVE0)
   {
     CurrentDisk = 0;
-    //		KBLeds|=KEYBOARD_NUM_LOCK_ON;
   }
+
   if (Tmp & CTRL_DRIVE1)
   {
     CurrentDisk = 1;
-    //		KBLeds|=KEYBOARD_CAPS_LOCK_ON;
   }
+
   if (Tmp & CTRL_DRIVE2)
   {
     CurrentDisk = 2;
-    //		KBLeds|=KEYBOARD_SCROLL_LOCK_ON;
   }
+
   if (Tmp & SIDESELECT)	//DRIVE3 Select in "all single sided" systems
     Side = 1;
+
   if (Tmp & CTRL_MOTOR_EN)
   {
     MotorOn = 1;
+
     if (Drive[CurrentDisk].ImageType == RAW)
       DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FD_MOTOR_ON, NULL, NULL, NULL, 0, &dwRet, NULL);
   }
@@ -238,24 +242,20 @@ void DecodeControlReg(unsigned char Tmp)
     CurrentDisk = 3;
     Side = 0;
   }
+
   if (!(Tmp & CTRL_MOTOR_EN))	//Turning off the drive makes the disk dirty
     DirtyDisk = 1;
 
   if (LastDisk != CurrentDisk)	//If we switch from reading one Physical disk to another we need to invalidate the cache
     DirtyDisk = 1;
+
   LastDisk = CurrentDisk;
+
   if (Tmp & CTRL_DENSITY)	//Strange, Density and Interupt enable flag
     InteruptEnable = 1;
+
   if (Tmp & CTRL_HALT_FLAG)
     HaltEnable = 1;
-  //	InputBuffer.LedFlags=KBLeds ;
-  //	if (UseLeds)
-  //	{
-  //		if (hKbdDev== INVALID_HANDLE_VALUE)
-  //			hKbdDev=OpenKeyboardDevice(NULL);
-  //		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_SET_INDICATORS,&InputBuffer, DataLength,NULL,0,&ReturnedLength, NULL);
-  //	}
-  return;
 }
 
 int mount_disk_image(char filename[MAX_PATH], unsigned char drive)
@@ -263,6 +263,7 @@ int mount_disk_image(char filename[MAX_PATH], unsigned char drive)
   unsigned int Temp = 0;
   Temp = MountDisk(filename, drive);
   BuildDynaMenu();
+
   return(!Temp);
 }
 
@@ -270,15 +271,17 @@ void unmount_disk_image(unsigned char drive)
 {
   if (Drive[drive].FileHandle != NULL)
     CloseHandle(Drive[drive].FileHandle);
+
   Drive[drive].FileHandle = NULL;
   Drive[drive].ImageType = 0;
   strcpy(Drive[drive].ImageName, "");
   DirtyDisk = 1;
+
   if (drive == (PhysicalDriveA - 1))
     PhysicalDriveA = 0;
+
   if (drive == (PhysicalDriveB - 1))
     PhysicalDriveB = 0;
-  return;
 }
 
 void DiskStatus(char* Status)
@@ -287,7 +290,6 @@ void DiskStatus(char* Status)
     sprintf(Status, "FD-502:Drv:%1.1i %s Trk:%2.2i Sec:%2.2i Hd:%1.1i", CurrentDisk, ImageFormat[Drive[CurrentDisk].ImageType], Drive[CurrentDisk].HeadPosition, SectorReg, Side);
   else
     sprintf(Status, "FD-502:Idle");
-  return;
 }
 
 unsigned char MountDisk(char* FileName, unsigned char disk)
@@ -300,6 +302,7 @@ unsigned char MountDisk(char* FileName, unsigned char disk)
 
   if (Drive[disk].FileHandle != NULL)
     unmount_disk_image(disk);
+
   //Image Geometry Defaults
   Drive[disk].FirstSector = 1;
   Drive[disk].Sides = 1;
@@ -321,6 +324,7 @@ unsigned char MountDisk(char* FileName, unsigned char disk)
       Drive[disk].FileHandle = CreateFile(FileName, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
       Drive[disk].WriteProtect = 0xFF;
     }
+
     if (Drive[disk].FileHandle == INVALID_HANDLE_VALUE)
       return(1); //Give up cant mount it
     strcpy(Drive[disk].ImageName, FileName);
@@ -348,10 +352,10 @@ unsigned char MountDisk(char* FileName, unsigned char disk)
     TmpSides = (HeaderBlock[16] & 1) + 1;
     TmpSectors = HeaderBlock[3];
     TmpMod = 1;
+
     if ((TmpSides * TmpSectors) != 0)
       TmpMod = TotalSectors % (TmpSides * TmpSectors);
     if ((TmpSectors == 18) & (TmpMod == 0) & (Drive[disk].HeaderSize == 0))	//Sanity Check 
-  //	if ((TmpSectors >=18) & (TmpMod==0) & (Drive[disk].HeaderSize ==0))	//Sanity Check 
     {
       Drive[disk].ImageType = OS9;
       Drive[disk].Sides = TmpSides;
@@ -359,6 +363,7 @@ unsigned char MountDisk(char* FileName, unsigned char disk)
     }
     else
       Drive[disk].ImageType = JVC;
+
     Drive[disk].TrackSize = Drive[disk].Sectors * BytesperSector[Drive[disk].SectorSize];
     break;
 
@@ -372,6 +377,7 @@ unsigned char MountDisk(char* FileName, unsigned char disk)
     Drive[disk].ImageType = DMK;	//DMK 
     if (Drive[disk].WriteProtect != 0xFF)
       Drive[disk].WriteProtect = HeaderBlock[0];
+
     Drive[disk].TrackSize = (HeaderBlock[3] << 8 | HeaderBlock[2]);
     Drive[disk].Sides = 2 - ((HeaderBlock[4] & 16) >> 4);
     break;
@@ -381,23 +387,30 @@ unsigned char MountDisk(char* FileName, unsigned char disk)
     {
       if (Drive[disk].FileHandle != NULL)
         unmount_disk_image(disk);
+
       Drive[disk].ImageType = RAW;
       Drive[disk].Sides = 2;
 
       Drive[disk].FileHandle = OpenFloppy(Drive[disk].RawDrive - 1);
       if (Drive[disk].FileHandle == NULL)
         return(1);
+
       strcpy(Drive[disk].ImageName, FileName);
+
       if (Drive[disk].RawDrive == 1)
         PhysicalDriveA = disk + 1;
+
       if (Drive[disk].RawDrive == 2)
         PhysicalDriveB = disk + 1;
     }
     break;
+
   default:
     return(1);
   }
+
   strncpy(Drive[disk].ImageTypeName, ImageFormat[Drive[disk].ImageType], 4);
+
   return(0); //Return 0 on success
 }
 
@@ -437,11 +450,13 @@ long ReadSector(unsigned char Side,	//0 or 1
     FileOffset = Drive[CurrentDisk].HeaderSize + ((Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize) + (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector)));
     SetFilePointer(Drive[CurrentDisk].FileHandle, FileOffset, 0, FILE_BEGIN);
     ReadFile(Drive[CurrentDisk].FileHandle, ReturnBuffer, BytesperSector[Drive[CurrentDisk].SectorSize], &BytesRead, NULL);
+
     if (BytesRead != BytesperSector[Drive[CurrentDisk].SectorSize]) //Fake the read for short images
     {
       memset(ReturnBuffer, 0xFF, BytesperSector[Drive[CurrentDisk].SectorSize]);
       BytesRead = BytesperSector[Drive[CurrentDisk].SectorSize];
     }
+
     return(BytesperSector[Drive[CurrentDisk].SectorSize]);
     break;
 
@@ -453,10 +468,14 @@ long ReadSector(unsigned char Side,	//0 or 1
     ReadFile(Drive[CurrentDisk].FileHandle, TempBuffer, Drive[CurrentDisk].TrackSize, &BytesRead, NULL);
     if (BytesRead != Drive[CurrentDisk].TrackSize) //DMK can't be short the image is corupt
       return (0);
+
     CurrentSector.Sector = Sector;
+
     if (GetSectorInfo(&CurrentSector, TempBuffer) == 0)
       return(0);
+
     memcpy(ReturnBuffer, &TempBuffer[CurrentSector.DAM], CurrentSector.Lenth);
+
     return(CurrentSector.Lenth);
     break;
 
@@ -464,6 +483,7 @@ long ReadSector(unsigned char Side,	//0 or 1
     pva = (unsigned char*)RawReadBuf;
     if (TrackReg != Drive[CurrentDisk].HeadPosition)
       return(0);
+
     //Read the entire track and cache it. Speeds up disk reads 
     if ((DirtyDisk) | (rwp.phead != Side) | (rwp.cyl != Drive[CurrentDisk].HeadPosition))
     {
@@ -482,15 +502,19 @@ long ReadSector(unsigned char Side,	//0 or 1
       // seek to cyl 
       DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_SEEK, &sp, sizeof(sp), NULL, 0, &dwRet, NULL);
       Ret = DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), RawReadBuf, 4608, &dwRet, NULL);
+
       if (dwRet != 4608)
         return(0);
+
       DirtyDisk = 0;
     }
+
     memcpy(ReturnBuffer, &pva[(Sector - 1) * 256], 256);
     return(256);
 
     break;
   }
+
   return(0);
 }
 
@@ -523,6 +547,7 @@ long WriteSector(unsigned char Side,		//0 or 1
     FileOffset = Drive[CurrentDisk].HeaderSize + ((Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize) + (Side * Drive[CurrentDisk].TrackSize) + (BytesperSector[Drive[CurrentDisk].SectorSize] * (Sector - Drive[CurrentDisk].FirstSector)));
     Result = SetFilePointer(Drive[CurrentDisk].FileHandle, FileOffset, 0, FILE_BEGIN);
     WriteFile(Drive[CurrentDisk].FileHandle, WriteBuffer, BytesperSector[Drive[CurrentDisk].SectorSize], &BytesWritten, NULL);
+
     return(BytesWritten);
     break;
 
@@ -531,10 +556,12 @@ long WriteSector(unsigned char Side,		//0 or 1
     Result = SetFilePointer(Drive[CurrentDisk].FileHandle, FileOffset, 0, FILE_BEGIN);
     //Need to read the entire track due to the emulation of interleave on these images			
     ReadFile(Drive[CurrentDisk].FileHandle, TempBuffer, Drive[CurrentDisk].TrackSize, &BytesRead, NULL);
+
     if (BytesRead != Drive[CurrentDisk].TrackSize)
       return (0);
 
     CurrentSector.Sector = Sector;
+
     if (GetSectorInfo(&CurrentSector, TempBuffer) == 0)
       return(0);
 
@@ -545,6 +572,7 @@ long WriteSector(unsigned char Side,		//0 or 1
     FileOffset = Drive[CurrentDisk].HeaderSize + ((Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize) + (Side * Drive[CurrentDisk].TrackSize));
     Result = SetFilePointer(Drive[CurrentDisk].FileHandle, FileOffset, 0, FILE_BEGIN);
     WriteFile(Drive[CurrentDisk].FileHandle, TempBuffer, Drive[CurrentDisk].TrackSize, &BytesWritten, NULL);
+
     return(CurrentSector.Lenth);
     break;
 
@@ -567,10 +595,12 @@ long WriteSector(unsigned char Side,		//0 or 1
     DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_SEEK, &Track, sizeof(Track), NULL, 0, &dwRet, NULL);
     memcpy(RawReadBuf, WriteBuffer, 256);
     Ret = DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_WRITE_DATA, &rwp, sizeof(rwp), RawReadBuf, 18 * (128 << rwp.size), &dwRet, NULL);
+
     return(dwRet);
     break;
 
   }
+
   return(0);
 }
 
@@ -622,11 +652,15 @@ long WriteTrack(unsigned char Side,		//0 or 1
     WriteIndex = 0;		// Index to raw Buffer
 
     TempBuffer = (unsigned char*)malloc(Drive[CurrentDisk].TrackSize);
+
     if (TempBuffer == 0) throw;
+
     memset(TempBuffer, 0, Drive[CurrentDisk].TrackSize);
+
     while (BufferIndex < Drive[CurrentDisk].TrackSize)
     {
       TempChar = WriteBuffer[WriteIndex++];
+
       if (TempChar == 0xF7)			//This is working now
       {
         Crc = ccitt_crc16(Seed, &TempBuffer[DataBlockPointer], BufferIndex - DataBlockPointer);
@@ -646,6 +680,7 @@ long WriteTrack(unsigned char Side,		//0 or 1
           DataBlockPointer = BufferIndex + 1;
           Seed = 0xE295;
         }
+
         if (TempChar == 0xFE)	//ID address marker
         {
           DataBlockPointer = BufferIndex;
@@ -654,8 +689,10 @@ long WriteTrack(unsigned char Side,		//0 or 1
 
         if (TempChar == 0xF5)
           TempBuffer[BufferIndex] = 0xA1;
+
         if (TempChar == 0xF6)
           TempBuffer[BufferIndex] = 0xC2;
+
         BufferIndex++;
       }
     }
@@ -666,14 +703,12 @@ long WriteTrack(unsigned char Side,		//0 or 1
     free(TempBuffer);
     break;
 
-
   case RAW:
     DirtyDisk = 1;
     DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_SEEK, &Track, sizeof(Track), NULL, 0, &dwRet, NULL);
     return(FormatTrack(Drive[CurrentDisk].FileHandle, Track, Side, WriteBuffer[100])); //KLUDGE!
 
     break;
-
   }
 
   return(BytesWritten);
@@ -698,6 +733,7 @@ long ReadTrack(unsigned char Side,		//0 or 1
   case OS9:
     if ((Side + 1) > Drive[CurrentDisk].Sides)
       return(0);
+
     //STUB Write Me
     return(0);
     break;
@@ -706,10 +742,12 @@ long ReadTrack(unsigned char Side,		//0 or 1
     FileOffset = Drive[CurrentDisk].HeaderSize + ((Track * Drive[CurrentDisk].Sides * Drive[CurrentDisk].TrackSize) + (Side * Drive[CurrentDisk].TrackSize) + 128);
     Result = SetFilePointer(Drive[CurrentDisk].FileHandle, FileOffset, 0, FILE_BEGIN);
     ReadFile(Drive[CurrentDisk].FileHandle, WriteBuffer, (Drive[CurrentDisk].TrackSize - 128), &BytesRead, NULL);
+
     if (BytesRead != ((unsigned)Drive[CurrentDisk].TrackSize - 128))
       return (0);
     break;
   }
+
   return(BytesRead);
 }
 
@@ -719,9 +757,12 @@ void PingFdc(void)
   static char wobble = 0;
   if ((MotorOn == 0))
     return;
+
   IndexCounter++;
+
   if (IndexCounter > ((INDEXTIME - 30) + wobble))
     IndexPulse = 1;
+
   if (IndexCounter > (INDEXTIME + wobble))
   {
     IndexPulse = 0;
@@ -737,9 +778,12 @@ void PingFdc(void)
     else
       StatusReg &= (~INDEXPULSE);
   }
+
   if (CurrentCommand == IDLE)
     return;
+
   ExecTimeWaiter--;
+
   if (ExecTimeWaiter > 0)  //Click Click Click
     return;
 
@@ -753,6 +797,7 @@ void PingFdc(void)
     {
       Drive[CurrentDisk].HeadPosition -= 1;
       ExecTimeWaiter = (CyclesperStep * StepTimeMS);
+
       if (Drive[CurrentDisk].ImageType == RAW)
         DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_SEEK, 0, 1, NULL, 0, &dwRet, NULL);
     }
@@ -762,8 +807,10 @@ void PingFdc(void)
       StatusReg = READY;
       StatusReg |= TRACK_ZERO;
       Drive[CurrentDisk].HeadPosition = 0;
+
       if (Drive[CurrentDisk].WriteProtect)
         StatusReg |= WRITEPROTECT;
+
       CommandDone();
     }
     break;
@@ -775,18 +822,23 @@ void PingFdc(void)
         Drive[CurrentDisk].HeadPosition += 1;
       else
         Drive[CurrentDisk].HeadPosition -= 1;
+
       ExecTimeWaiter = (CyclesperStep * StepTimeMS);
     }
     else
     {
       Drive[CurrentDisk].HeadPosition = TrackReg;
       StatusReg = READY;
+
       if (Drive[CurrentDisk].HeadPosition == 0)
         StatusReg |= TRACK_ZERO;
+
       if (Drive[CurrentDisk].WriteProtect)
         StatusReg |= WRITEPROTECT;
+
       CommandDone();
     }
+
     if (Drive[CurrentDisk].ImageType == RAW)
       DeviceIoControl(Drive[CurrentDisk].FileHandle, IOCTL_FDCMD_SEEK, &TrackReg, sizeof(TrackReg), NULL, 0, &dwRet, NULL);
     break;
@@ -808,10 +860,13 @@ void PingFdc(void)
       else
         TrackReg -= 1;
     }
+
     if (Drive[CurrentDisk].HeadPosition == 0)
       StatusReg = TRACK_ZERO;
+
     if (Drive[CurrentDisk].WriteProtect)
       StatusReg |= WRITEPROTECT;
+
     StatusReg = READY;
     CommandDone();
     break;
@@ -820,10 +875,13 @@ void PingFdc(void)
   case STEPINUPD:
     StepDirection = 1;
     Drive[CurrentDisk].HeadPosition += 1;
+
     if (CurrentCommand & 1)
       TrackReg += 1;
+
     if (Drive[CurrentDisk].WriteProtect)
       StatusReg |= WRITEPROTECT;
+
     StatusReg = READY;
     CommandDone();
     break;
@@ -831,14 +889,19 @@ void PingFdc(void)
   case STEPOUT:
   case STEPOUTUPD:
     StepDirection = 0;
+
     if (Drive[CurrentDisk].HeadPosition > 0)
       Drive[CurrentDisk].HeadPosition -= 1;
+
     if (CurrentCommand & 1)
       TrackReg -= 1;
+
     if (Drive[CurrentDisk].HeadPosition == 0)
       StatusReg = TRACK_ZERO;
+
     if (Drive[CurrentDisk].WriteProtect)
       StatusReg |= WRITEPROTECT;
+
     StatusReg = READY;
     CommandDone();
     break;
@@ -855,6 +918,7 @@ void PingFdc(void)
   case WRITESECTOR:
   case WRITESECTORM:
     StatusReg |= DRQ;	//IRON
+
     if (IOWaiter > WAITTIME)
     {
       LostDataFlag = 1;
@@ -884,6 +948,7 @@ void PingFdc(void)
 
   case WRITETRACK:
     StatusReg |= DRQ;	//IRON
+
     if (IOWaiter > WAITTIME)
     {
       LostDataFlag = 1;
@@ -900,28 +965,30 @@ void PingFdc(void)
 void DispatchCommand(unsigned char Tmp)
 {
   unsigned char Command = (Tmp >> 4);
+
   if ((CurrentCommand != IDLE) & (Command != 13))
     return;
+
   CurrentCommand = Command;
+
   switch (Command)
   {
   case RESTORE:
     SetType1Flags(Tmp);
-    ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);// * Drive[CurrentDrive].HeadPosition);
+    ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);
     StatusReg = BUSY;
-    //			WriteLog("RESTORE",0);
     break;
 
   case SEEK:
     SetType1Flags(Tmp);
-    ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);// * Diff(Drive[CurrentDrive].HeadPosition,DataReg));
+    ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);
     TrackReg = DataReg;
     StatusReg = BUSY;
+
     if (Drive[CurrentDisk].HeadPosition > DataReg)
       StepDirection = 0;
     else
       StepDirection = 1;
-    //			WriteLog("SEEK",0);
     break;
 
   case STEP:
@@ -929,7 +996,6 @@ void DispatchCommand(unsigned char Tmp)
     SetType1Flags(Tmp);
     ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);
     StatusReg = BUSY;
-    //		WriteLog("STEP",0);
     break;
 
   case STEPIN:
@@ -937,7 +1003,6 @@ void DispatchCommand(unsigned char Tmp)
     SetType1Flags(Tmp);
     ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);
     StatusReg = BUSY;
-    //			WriteLog("STEPIN",0);
     break;
 
   case STEPOUT:
@@ -945,7 +1010,6 @@ void DispatchCommand(unsigned char Tmp)
     SetType1Flags(Tmp);
     ExecTimeWaiter = CyclestoSettle + (CyclesperStep * StepTimeMS);
     StatusReg = BUSY;
-    //			WriteLog("STEPOUT",0);
     break;
 
   case READSECTOR:
@@ -957,32 +1021,26 @@ void DispatchCommand(unsigned char Tmp)
     ExecTimeWaiter = 1;
     IOWaiter = 0;
     MSectorFlag = Command & 1;
-    //			WriteLog("READSECTOR",0);
     break;
 
   case WRITESECTOR:
   case WRITESECTORM:
-    //			WriteLog("Getting WriteSector Command",0);
     SetType2Flags(Tmp);
     TransferBufferIndex = 0;
-    //			StatusReg= BUSY | DRQ;
-    StatusReg = BUSY; //IRON
+    StatusReg = BUSY;
     WriteBytetoDisk = &WriteBytetoSector;
     ExecTimeWaiter = 5;
     IOWaiter = 0;
     MSectorFlag = Command & 1;
-    //			WriteLog("WRITESECTOR",0);
     break;
 
   case READADDRESS:
-    //			MessageBox(0,"Hitting Get Address","Ok",0);
     SetType3Flags(Tmp);
     TransferBufferIndex = 0;
     StatusReg = BUSY | DRQ;
     GetBytefromDisk = &GetBytefromAddress;
     ExecTimeWaiter = 1;
     IOWaiter = 0;
-
     break;
 
   case FORCEINTERUPT:
@@ -990,13 +1048,12 @@ void DispatchCommand(unsigned char Tmp)
     TransferBufferSize = 0;
     StatusReg = READY;
     ExecTimeWaiter = 1;
+
     if ((Tmp & 15) != 0)
       CPUAssertInterupt(NMI, 0);
-    //			WriteLog("FORCEINTERUPT",0);
     break;
 
   case READTRACK:
-    //			WriteLog("Hitting ReadTrack",0);
     SetType3Flags(Tmp);
     TransferBufferIndex = 0;
     StatusReg = BUSY | DRQ;
@@ -1006,14 +1063,12 @@ void DispatchCommand(unsigned char Tmp)
     break;
 
   case WRITETRACK:
-    //			WriteLog("Getting WriteTrack Command",0);
     SetType3Flags(Tmp);
     TransferBufferIndex = 0;
-    StatusReg = BUSY;		//IRON
-//			StatusReg= BUSY | DRQ;
+    StatusReg = BUSY;
     WriteBytetoDisk = &WriteBytetoTrack;
     ExecTimeWaiter = 1;
-    ExecTimeWaiter = 5;		//IRON
+    ExecTimeWaiter = 5;
     IOWaiter = 0;
     break;
   }
@@ -1027,13 +1082,13 @@ unsigned char GetBytefromSector(unsigned char Tmp)
   if (TransferBufferSize == 0)
   {
     TransferBufferSize = ReadSector(Side, Drive[CurrentDisk].HeadPosition, SectorReg, TransferBuffer);
-    //		WriteLog("BEGIN Readsector",0);
   }
 
-  if (TransferBufferSize == 0)// IRON| (TrackReg != Drive[CurrentDrive].HeadPosition) ) //| (SectorReg > Drive[CurrentDrive].Sectors)
+  if (TransferBufferSize == 0)
   {
     CommandDone();
     StatusReg = RECNOTFOUND;
+
     return(0);
   }
 
@@ -1042,20 +1097,21 @@ unsigned char GetBytefromSector(unsigned char Tmp)
     RetVal = TransferBuffer[TransferBufferIndex++];
     StatusReg = BUSY | DRQ;
     IOWaiter = 0;
-    //		WriteLog("Transfering 1 Byte",0);
   }
   else
   {
-    //		WriteLog("READSECTOR DONE",0);
     StatusReg = READY;
     CommandDone();
+
     if (LostDataFlag == 1)
     {
       StatusReg = LOSTDATA;
       LostDataFlag = 0;
     }
+
     SectorReg++;
   }
+
   return(RetVal);
 }
 
@@ -1063,9 +1119,8 @@ unsigned char GetBytefromAddress(unsigned char Tmp)
 {
   unsigned char RetVal = 0;
   unsigned short Crc = 0;
-  //	SectorInfo CurrentSector;
-  //	unsigned char TempBuffer[8192];
   long FileOffset = 0, Result = 0;
+
   if (TransferBufferSize == 0)
   {
     switch (Drive[CurrentDisk].ImageType)
@@ -1077,23 +1132,22 @@ unsigned char GetBytefromAddress(unsigned char Tmp)
       TransferBuffer[1] = Drive[CurrentDisk].Sides;
       TransferBuffer[2] = IndexCounter / 176;
       TransferBuffer[3] = Drive[CurrentDisk].SectorSize;
-      //		Crc = ccitt_crc16(0xE295, &TempBuffer[DataBlockPointer],Drive[CurrentDrive].SectorSize );
       TransferBuffer[4] = (Crc >> 8);
       TransferBuffer[5] = (Crc & 0xFF);
       TransferBufferSize = 6;
       break;
 
     case DMK:
-      TransferBuffer[0] = Drive[CurrentDisk].HeadPosition;; //CurrentSector.Track; not right need to get from image
+      TransferBuffer[0] = Drive[CurrentDisk].HeadPosition;;
       TransferBuffer[1] = Drive[CurrentDisk].Sides;
       TransferBuffer[2] = IndexCounter / 176;
-      TransferBuffer[3] = IndexCounter / 176; //Drive[CurrentDrive].SectorSize;
-      Crc = 0;//CurrentSector.CRC;
+      TransferBuffer[3] = IndexCounter / 176;
+      Crc = 0;
       TransferBuffer[4] = (Crc >> 8);
       TransferBuffer[5] = (Crc & 0xFF);
       TransferBufferSize = 6;
       break;
-    } //END Switch
+    }
   }
 
   if (Drive[CurrentDisk].FileHandle == NULL)
@@ -1113,12 +1167,14 @@ unsigned char GetBytefromAddress(unsigned char Tmp)
   {
     StatusReg = READY;
     CommandDone();
+
     if (LostDataFlag == 1)
     {
       StatusReg = LOSTDATA;
       LostDataFlag = 0;
     }
   }
+
   return(RetVal);
 }
 
@@ -1129,13 +1185,13 @@ unsigned char GetBytefromTrack(unsigned char Tmp)
   if (TransferBufferSize == 0)
   {
     TransferBufferSize = ReadTrack(Side, Drive[CurrentDisk].HeadPosition, SectorReg, TransferBuffer);
-    //		WriteLog("BEGIN READTRACK",0);
   }
 
-  if ((TransferBufferSize == 0))//iron | (TrackReg != Drive[CurrentDrive].HeadPosition) ) //| (SectorReg > Drive[CurrentDrive].Sectors)
+  if ((TransferBufferSize == 0))
   {
     CommandDone();
     StatusReg = RECNOTFOUND;
+
     return(0);
   }
 
@@ -1147,9 +1203,9 @@ unsigned char GetBytefromTrack(unsigned char Tmp)
   }
   else
   {
-    //		WriteLog("READTRACK DONE",0);
     StatusReg = READY;
     CommandDone();
+
     if (LostDataFlag == 1)
     {
       StatusReg = LOSTDATA;
@@ -1169,13 +1225,13 @@ unsigned char WriteBytetoSector(unsigned char Tmp)
 
   if (TransferBufferSize == 0)
   {
-    //		WriteLog("Begining WriteSector data collection Command",0);
     switch (Drive[CurrentDisk].ImageType)
     {
     case JVC:
     case VDK:
     case OS9:
       TransferBufferSize = BytesperSector[Drive[CurrentDisk].SectorSize];
+
       if ((TransferBufferSize == 0) | (TrackReg != Drive[CurrentDisk].HeadPosition) | (SectorReg > Drive[CurrentDisk].Sectors))
       {
         StatusReg = RECNOTFOUND;
@@ -1190,29 +1246,34 @@ unsigned char WriteBytetoSector(unsigned char Tmp)
       ReadFile(Drive[CurrentDisk].FileHandle, TempBuffer, Drive[CurrentDisk].TrackSize, &BytesRead, NULL);
       CurrentSector.Sector = SectorReg;
       GetSectorInfo(&CurrentSector, TempBuffer);
+
       if ((CurrentSector.DAM == 0) | (BytesRead != Drive[CurrentDisk].TrackSize))
       {
         StatusReg = RECNOTFOUND;
         CommandDone();
         return(0);
       }
+
       TransferBufferSize = CurrentSector.Lenth;
       break;
 
     case RAW:
       TransferBufferSize = 256;
       break;
-    }	//END Switch
-  }	//END if
+    }
+  }
 
   if (TransferBufferIndex >= TransferBufferSize)
   {
     RetVal = WriteSector(Side, Drive[CurrentDisk].HeadPosition, SectorReg, TransferBuffer, TransferBufferSize);
     StatusReg = READY;
+
     if ((RetVal == 0) | (LostDataFlag == 1))
       StatusReg = LOSTDATA;
+
     if (Drive[CurrentDisk].WriteProtect != 0)
       StatusReg = WRITEPROTECT | RECNOTFOUND;
+
     CommandDone();
     LostDataFlag = 0;
     SectorReg++;
@@ -1223,24 +1284,29 @@ unsigned char WriteBytetoSector(unsigned char Tmp)
     StatusReg = BUSY | DRQ;
     IOWaiter = 0;
   }
+
   return(0);
 }
+
 unsigned char WriteBytetoTrack(unsigned char Tmp)
 {
   long RetVal = 0;
+
   if (TransferBufferSize == 0)
     TransferBufferSize = 6272;
-
 
   if (TransferBufferIndex >= TransferBufferSize)
   {
     RetVal = WriteTrack(Side, Drive[CurrentDisk].HeadPosition, SectorReg, TransferBuffer);
 
     StatusReg = READY;
+
     if ((RetVal == 0) | (LostDataFlag == 1))
       StatusReg = LOSTDATA;
+
     if (Drive[CurrentDisk].WriteProtect != 0)
       StatusReg = WRITEPROTECT | RECNOTFOUND;
+
     CommandDone();
     LostDataFlag = 0;
   }
@@ -1250,6 +1316,7 @@ unsigned char WriteBytetoTrack(unsigned char Tmp)
     StatusReg = BUSY | DRQ;
     IOWaiter = 0;
   }
+
   return(0);
 }
 
@@ -1259,7 +1326,6 @@ void SetType1Flags(unsigned char Tmp)
   HeadLoad = (Tmp >> 3) & 1;
   TrackVerify = (Tmp >> 2) & 1;
   StepTimeMS = StepTimesMS[(Tmp & 3)];
-  return;
 }
 
 void SetType2Flags(unsigned char Tmp)
@@ -1268,13 +1334,11 @@ void SetType2Flags(unsigned char Tmp)
   SideCompare = (Tmp >> 3) & 1;
   SideCompareEnable = (Tmp >> 1) & 1;
   Delay15ms = (Tmp >> 2) & 1;
-  return;
 }
 
 void SetType3Flags(unsigned char Tmp)
 {
   Delay15ms = (Tmp >> 2) & 1;
-  return;
 }
 
 unsigned char SetTurboDisk(unsigned char Tmp)
@@ -1282,6 +1346,7 @@ unsigned char SetTurboDisk(unsigned char Tmp)
   if (Tmp != QUERY)
   {
     TurboMode = Tmp & 1;
+
     switch (TurboMode)
     {
     case 0:
@@ -1294,62 +1359,9 @@ unsigned char SetTurboDisk(unsigned char Tmp)
       break;
     }
   }
+
   return(TurboMode);
 }
-
-//HANDLE OpenKeyboardDevice(int *ErrorNumber)
-//{
-//	HANDLE	hndKbdDev;
-//	int		*LocalErrorNumber;
-//	int		Dummy;
-//
-//	if (ErrorNumber == NULL)
-//		LocalErrorNumber = &Dummy;
-//	else
-//		LocalErrorNumber = ErrorNumber;
-//
-//	*LocalErrorNumber = 0;
-//	
-//	if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd", "\\Device\\KeyboardClass0"))
-//	{
-//		*LocalErrorNumber = GetLastError();
-//		return INVALID_HANDLE_VALUE;
-//	}
-//
-//	hndKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0, NULL,	OPEN_EXISTING,	0,	NULL);
-//	
-//	if (hndKbdDev == INVALID_HANDLE_VALUE)
-//		*LocalErrorNumber = GetLastError();
-//
-//	return hndKbdDev;
-//}
-
-
-//int CloseKeyboardDevice()
-//{
-//	int e = 0;
-//
-//	if (!DefineDosDevice (DDD_REMOVE_DEFINITION, "Kbd", NULL))
-//		e = GetLastError();
-//
-//	if (hKbdDev != INVALID_HANDLE_VALUE)
-//		if (!CloseHandle(hKbdDev))
-//			e = GetLastError();
-//	hKbdDev= INVALID_HANDLE_VALUE;
-//	return e;
-//}
-
-
-//unsigned char UseKeyboardLeds(unsigned char Tmp)
-//{
-//	if (Tmp!=QUERY)
-//	{
-//		UseLeds=Tmp;
-//		if (!UseLeds)
-//			CloseKeyboardDevice();
-//	}
-//	return(UseLeds);
-//}
 
 long GetSectorInfo(SectorInfo* Sector, unsigned char* TempBuffer)
 {
@@ -1375,19 +1387,23 @@ long GetSectorInfo(SectorInfo* Sector, unsigned char* TempBuffer)
   Sector->Lenth = BytesperSector[TempBuffer[Temp1 + 4] & 3]; //128 256 512 1024
   Sector->CRC = (TempBuffer[Temp1 + 5] << 8) | TempBuffer[Temp1 + 6];
   Sector->Density = Density;
+
   if ((Sector->Track != TrackReg) | (Sector->Sector != SectorReg))
     return(0);
 
   Temp1 += 7;				//Ignore the CRC
   Temp2 = Temp1 + 43;			//Scan for D.A.M.
+
   while ((TempBuffer[Temp1] != 0xFB) & (Temp1 < Temp2))
     Temp1++;
+
   if (Temp1 == Temp2)		//Can't find data address mark
     return(0);
+
   Sector->DAM = Temp1 + 1;
   Sector->CRC = ccitt_crc16(0xE295, &TempBuffer[Sector->DAM], Sector->Lenth);
-  return(Sector->DAM);	//Return Pointer to Start of sector data
 
+  return(Sector->DAM);	//Return Pointer to Start of sector data
 }
 
 void CommandDone(void)
@@ -1444,8 +1460,10 @@ static const unsigned short ccitt_crc16_table[256] =
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char* buffer, unsigned short buffer_len)
 {
   unsigned short i;
+
   for (i = 0; i < buffer_len; i++)
     crc = (crc << 8) ^ ccitt_crc16_table[(crc >> 8) ^ buffer[i]];
+
   return (crc);
 }
 
@@ -1461,22 +1479,24 @@ DWORD GetDriverVersion()
     DeviceIoControl(h, IOCTL_FDRAWCMD_GET_VERSION, NULL, 0, &dwVersion, sizeof(dwVersion), &dwRet, NULL);
     CloseHandle(h);
   }
+
   return dwVersion;
 }
-
 
 HANDLE OpenFloppy(int nDrive_)
 {
   char szDevice[32], szTemp[128] = "";
   HANDLE h = NULL;
   wsprintf(szDevice, "\\\\.\\fdraw%u", nDrive_);
-  //	MessageBox(0,szDevice,"ok",0);
+
   h = CreateFile(szDevice, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+
   if (h == INVALID_HANDLE_VALUE)
   {
     sprintf(szTemp, "Unable to open RAW device %s", szDevice);
     MessageBox(0, szTemp, "Ok", 0);
   }
+
   return (h != INVALID_HANDLE_VALUE && SetDataRate(h, DISK_DATARATE)) ? h : NULL;
 }
 
@@ -1495,13 +1515,12 @@ bool FormatTrack(HANDLE h_, BYTE cyl_, BYTE head_, BYTE Fill)
   pfp->size = SECTOR_SIZE_CODE;
   pfp->sectors = DISK_SECTORS;
   pfp->gap = SECTOR_GAP3;
-  pfp->fill = Fill;//SECTOR_FILL;
+  pfp->fill = Fill;;
 
   PFD_ID_HEADER ph = pfp->Header;
 
   for (BYTE s = 0; s < pfp->sectors; s++, ph++)
   {
-    //		printf("s = %i ph = %i\n",s,ph);
     ph->cyl = cyl_;
     ph->head = head_;
     ph->sector = SECTOR_BASE + ((s + cyl_ * (pfp->sectors - TRACK_SKEW)) % pfp->sectors);
@@ -1513,21 +1532,19 @@ bool FormatTrack(HANDLE h_, BYTE cyl_, BYTE head_, BYTE Fill)
 
 bool CmdFormat(HANDLE h_, PFD_FORMAT_PARAMS pfp_, ULONG ulSize_)
 {
-  //	printf("phead %i, size %i sectors %i, gap %i, fill %i ulSize %i\n",pfp_->phead,pfp_->size,pfp_->sectors,pfp_->gap,pfp_->fill,ulSize_);
-  //	printf("pfp_.Header->cyl %i, pfp_.Header->head %i, pfp.Header->sector %i, pfp_.Header->size %i\n", pfp_->Header->cyl,pfp_->Header->head,pfp_->Header->sector,pfp_->Header->size);
   return !!DeviceIoControl(h_, IOCTL_FDCMD_FORMAT_TRACK, pfp_, ulSize_, NULL, 0, &dwRet, NULL);
 }
 
 unsigned short InitController(void)
 {
   long RawDriverVersion = 0;
-  //	MessageBox(0,"Init Controller Called","Ok",0);
   RawDriverVersion = GetDriverVersion();
-  //	if (RawDriverVersion != FDRAWCMD_VERSION)	//Drive either not loaded or not the right version
-  //		return(0);
+
   if (RawReadBuf == NULL)
     RawReadBuf = VirtualAlloc(NULL, 4608, MEM_COMMIT, PAGE_READWRITE);
+
   if ((RawReadBuf == NULL))
     return(0);
+
   return(1);
 }

@@ -22,7 +22,6 @@ This file is part of VCC (Virtual Color Computer).
 *	Copyright 2006 (c) by Joseph Forgione 													*
 *********************************************************************************************/
 
-
 #include <windows.h>
 #include <stdio.h>
 #include <iostream>
@@ -36,11 +35,13 @@ This file is part of VCC (Virtual Color Computer).
 using namespace std;
 
 extern DiskInfo Drive[5];
+
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char, unsigned short);
 typedef void (*ASSERTINTERUPT) (unsigned char, unsigned char);
 typedef void (*DMAMEMPOINTERS) (MEMREAD8, MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)(char*, int, int);
+
 static unsigned char ExternalRom[EXTROMSIZE];
 static unsigned char DiskRom[EXTROMSIZE];
 static unsigned char RGBDiskRom[EXTROMSIZE];
@@ -73,6 +74,7 @@ static unsigned long RealDisks = 0;
 long CreateDisk(unsigned char);
 static char TempFileName[MAX_PATH] = "";
 unsigned char LoadExtRom(unsigned char, char*);
+
 BOOL WINAPI DllMain(
   HINSTANCE hinstDLL,  // handle to DLL module
   DWORD fdwReason,     // reason for calling function
@@ -88,6 +90,7 @@ BOOL WINAPI DllMain(
     g_hinstDLL = hinstDLL;
     RealDisks = InitController();
   }
+
   return(1);
 }
 
@@ -99,8 +102,10 @@ extern "C"
     LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
     LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
+
     if (DynamicMenuCallback != NULL)
       BuildDynaMenu();
+
     return;
   }
 }
@@ -143,8 +148,8 @@ extern "C"
       SaveConfig();
       break;
     }
+
     BuildDynaMenu();
-    return;
   }
 }
 
@@ -154,7 +159,6 @@ extern "C"
   {
     strcpy(IniFile, IniFilePath);
     LoadConfig();
-    return;
   }
 }
 
@@ -164,7 +168,6 @@ extern "C"
   __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
   {
     AssertInt = Dummy;
-    return;
   }
 }
 
@@ -176,17 +179,16 @@ extern "C"
       write_time(Data, Port);
     else
       disk_io_write(Data, Port);
-    return;
   }
 }
 
 extern "C"
 {
-
   __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
   {
     if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
       return(read_time(Port));
+
     return(disk_io_read(Port));
   }
 }
@@ -196,22 +198,9 @@ extern "C"
   __declspec(dllexport) void HeartBeat(void)
   {
     PingFdc();
-    return;
   }
 }
 
-//This captures the pointers to the MemRead8 and MemWrite8 functions. This allows the DLL to do DMA xfers with CPU ram.
-/*
-extern "C"
-{
-  __declspec(dllexport) void MemPointers(MEMREAD8 Temp1,MEMWRITE8 Temp2)
-  {
-    MemRead8=Temp1;
-    MemWrite8=Temp2;
-    return;
-  }
-}
-*/
 extern "C"
 {
   __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
@@ -219,16 +208,6 @@ extern "C"
     return(RomPointer[SelectRom][Address & (EXTROMSIZE - 1)]);
   }
 }
-/*
-extern "C"
-{
-  __declspec(dllexport) void PakMemWrite8(unsigned char Data,unsigned short Address)
-  {
-
-    return;
-  }
-}
-*/
 
 extern "C"
 {
@@ -245,7 +224,6 @@ void CPUAssertInterupt(unsigned char Interupt, unsigned char Latencey)
   return;
 }
 
-
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   static unsigned char CurrentDisk = 0, temp = 0, temp2 = 0;
@@ -258,6 +236,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   {
   case WM_INITDIALOG:
     TempSelectRom = SelectRom;
+
     if (!RealDisks)
     {
       EnableWindow(GetDlgItem(hDlg, IDC_DISKA), FALSE);
@@ -265,24 +244,26 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       PhysicalDriveA = 0;
       PhysicalDriveB = 0;
     }
+
     SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, 0);
     OldPhysicalDriveA = PhysicalDriveA;
     OldPhysicalDriveB = PhysicalDriveB;
     strcpy(TempRomFileName, RomFileName);
-    //			SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_SETCHECK,UseKeyboardLeds(QUERY),0);
+
     SendDlgItemMessage(hDlg, IDC_TURBO, BM_SETCHECK, SetTurboDisk(QUERY), 0);
     SendDlgItemMessage(hDlg, IDC_PERSIST, BM_SETCHECK, PersistDisks, 0);
+
     for (temp = 0;temp <= 3;temp++)
       SendDlgItemMessage(hDlg, ChipChoice[temp], BM_SETCHECK, (temp == TempSelectRom), 0);
+
     for (temp = 0;temp < 2;temp++)
       for (temp2 = 0;temp2 < 5;temp2++)
         SendDlgItemMessage(hDlg, VirtualDrive[temp], CB_ADDSTRING, NULL, (LPARAM)VirtualNames[temp2]);
 
-    //			GetDlgItem(hDlg,IDC_DISKA)->EnableWindow(FALSE); 
-    //			SendDlgItemMessage (hDlg, IDC_DISKA,WM_ENABLE  ,(WPARAM)0,(LPARAM)0);
     SendDlgItemMessage(hDlg, IDC_DISKA, CB_SETCURSEL, (WPARAM)PhysicalDriveA, (LPARAM)0);
     SendDlgItemMessage(hDlg, IDC_DISKB, CB_SETCURSEL, (WPARAM)PhysicalDriveB, (LPARAM)0);
     SendDlgItemMessage(hDlg, IDC_ROMPATH, WM_SETTEXT, strlen(TempRomFileName), (LPARAM)(LPCSTR)TempRomFileName);
+
     return TRUE;
     break;
 
@@ -291,16 +272,15 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case IDOK:
       ClockEnabled = (unsigned char)SendDlgItemMessage(hDlg, IDC_CLOCK, BM_GETCHECK, 0, 0);
-      //					UseKeyboardLeds((unsigned char)SendDlgItemMessage(hDlg,IDC_KBLEDS,BM_GETCHECK,0,0));
       SetTurboDisk((unsigned char)SendDlgItemMessage(hDlg, IDC_TURBO, BM_GETCHECK, 0, 0));
       PersistDisks = (unsigned char)SendDlgItemMessage(hDlg, IDC_PERSIST, BM_GETCHECK, 0, 0);
       PhysicalDriveA = (unsigned char)SendDlgItemMessage(hDlg, IDC_DISKA, CB_GETCURSEL, 0, 0);
       PhysicalDriveB = (unsigned char)SendDlgItemMessage(hDlg, IDC_DISKB, CB_GETCURSEL, 0, 0);
+
       if (!RealDisks)
       {
         PhysicalDriveA = 0;
         PhysicalDriveB = 0;
-        //	MessageBox(0,"Wrong Version or Driver not installed","FDRAWCMD Driver",0);
       }
       else
       {
@@ -319,12 +299,14 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             mount_disk_image("*Floppy B:", PhysicalDriveB - 1);
         }
       }
+
       EndDialog(hDlg, LOWORD(wParam));
       SelectRom = TempSelectRom;
       strcpy(RomFileName, TempRomFileName);
       CheckPath(RomFileName);
       LoadExtRom(External, RomFileName); //JF
       SaveConfig();
+
       return TRUE;
       break;
 
@@ -336,6 +318,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         {
           for (temp2 = 0;temp2 <= 3;temp2++)
             SendDlgItemMessage(hDlg, ChipChoice[temp2], BM_SETCHECK, 0, 0);
+
           SendDlgItemMessage(hDlg, ChipChoice[temp], BM_SETCHECK, 1, 0);
           TempSelectRom = temp;
         }
@@ -346,13 +329,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       ofn.lStructSize = sizeof(OPENFILENAME);
       ofn.hwndOwner = NULL;
       ofn.lpstrFilter = "Disk Rom Images\0*.rom;*.bin\0\0";	// filter ROM images
-      ofn.nFilterIndex = 1;								// current filter index
-      ofn.lpstrFile = TempRomFileName;						// contains full path and filename on return
-      ofn.nMaxFile = MAX_PATH;						// sizeof lpstrFile
-      ofn.lpstrFileTitle = NULL;							// filename and extension only
-      ofn.nMaxFileTitle = MAX_PATH;						// sizeof lpstrFileTitle
-      ofn.lpstrInitialDir = NULL;							// initial directory
-      ofn.lpstrTitle = TEXT("Disk Rom Image");	// title bar string
+      ofn.nFilterIndex = 1;								      // current filter index
+      ofn.lpstrFile = TempRomFileName;				  // contains full path and filename on return
+      ofn.nMaxFile = MAX_PATH;						      // sizeof lpstrFile
+      ofn.lpstrFileTitle = NULL;							  // filename and extension only
+      ofn.nMaxFileTitle = MAX_PATH;						  // sizeof lpstrFileTitle
+      ofn.lpstrInitialDir = NULL;							  // initial directory
+      ofn.lpstrTitle = TEXT("Disk Rom Image");  // title bar string
       ofn.Flags = OFN_HIDEREADONLY;
       GetOpenFileName(&ofn);
       SendDlgItemMessage(hDlg, IDC_ROMPATH, WM_SETTEXT, strlen(TempRomFileName), (LPARAM)(LPCSTR)TempRomFileName);
@@ -367,8 +350,8 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return TRUE;
     break;
-
   }
+
   return FALSE;
 }
 
@@ -377,8 +360,10 @@ void Load_Disk(unsigned char disk)
   HANDLE hr = NULL;
   OPENFILENAME ofn;
   unsigned char FileNotSelected = 0;
+  
   if (DialogOpen == 1)	//Only allow 1 dialog open 
     return;
+
   DialogOpen = 1;
   FileNotSelected = 1;
 
@@ -403,6 +388,7 @@ void Load_Disk(unsigned char disk)
     if (GetOpenFileName(&ofn))
     {
       hr = CreateFile(TempFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
       if (hr == INVALID_HANDLE_VALUE)
       {
         NewDiskNumber = disk;
@@ -431,16 +417,15 @@ void Load_Disk(unsigned char disk)
     else
       FileNotSelected = 0;
 
-
     DialogOpen = 0;
   }
-  return;
 }
 
 unsigned char SetChip(unsigned char Tmp)
 {
   if (Tmp != QUERY)
     SelectRom = Tmp;
+
   return(SelectRom);
 }
 
@@ -448,8 +433,10 @@ void BuildDynaMenu(void)
 {
   char TempMsg[64] = "";
   char TempBuf[MAX_PATH] = "";
+  
   if (DynamicMenuCallback == NULL)
     MessageBox(0, "No good", "Ok", 0);
+
   DynamicMenuCallback("", 0, 0);
   DynamicMenuCallback("", 6000, 0);
   DynamicMenuCallback("FD-502 Drive 0", 6000, HEAD);
@@ -508,8 +495,10 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_INITDIALOG:
     for (temp = 0;temp <= 2;temp++)
       SendDlgItemMessage(hDlg, DiskType[temp], BM_SETCHECK, (temp == NewDiskType), 0);
+
     for (temp = 0;temp <= 3;temp++)
       SendDlgItemMessage(hDlg, DiskTracks[temp], BM_SETCHECK, (temp == NewDiskTracks), 0);
+
     SendDlgItemMessage(hDlg, IDC_DBLSIDE, BM_SETCHECK, DblSided, 0);
     strcpy(Dummy, TempFileName);
     PathStripPath(Dummy);
@@ -555,11 +544,13 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       EndDialog(hDlg, LOWORD(wParam));
       PathRemoveExtension(TempFileName);
       strcat(TempFileName, ".dsk");
+
       if (CreateDiskHeader(TempFileName, NewDiskType, NewDiskTracks, DblSided))
       {
         strcpy(TempFileName, "");
         MessageBox(0, "Can't create File", "Error", 0);
       }
+
       return TRUE;
       break;
 
@@ -572,6 +563,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return TRUE;
     break;
   }
+
   return FALSE;
 }
 
@@ -584,7 +576,9 @@ long CreateDiskHeader(char* FileName, unsigned char Type, unsigned char Tracks, 
   unsigned short TrackSize = 0x1900;
   unsigned char IgnoreDensity = 0, SingleDensity = 0, HeaderSize = 0;
   unsigned long BytesWritten = 0, FileSize = 0;
+  
   hr = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
+  
   if (hr == INVALID_HANDLE_VALUE)
     return(1); //Failed to create File
 
@@ -636,13 +630,14 @@ long CreateDiskHeader(char* FileName, unsigned char Type, unsigned char Tracks, 
     HeaderSize = 0x10;
     FileSize = 1;
     break;
-
   }
+
   SetFilePointer(hr, 0, 0, FILE_BEGIN);
   WriteFile(hr, HeaderBuffer, HeaderSize, &BytesWritten, NULL);
   SetFilePointer(hr, FileSize - 1, 0, FILE_BEGIN);
   WriteFile(hr, &Dummy, 1, &BytesWritten, NULL);
   CloseHandle(hr);
+
   return(0);
 }
 
@@ -670,11 +665,13 @@ void LoadConfig(void)
   strcat(RGBRomPath, "rgbdos.rom");	//Future, Grey out dialog option if can't find file
   LoadExtRom(TandyDisk, DiskRomPath);
   LoadExtRom(RGBDisk, RGBRomPath);
+
   if (PersistDisks)
     for (Index = 0;Index < 4;Index++)
     {
       sprintf(Temp, "Disk#%i", Index);
       GetPrivateProfileString(ModName, Temp, "", DiskName, MAX_PATH, IniFile);
+
       if (strlen(DiskName))
       {
         RetVal = mount_disk_image(DiskName, Index);
@@ -688,10 +685,10 @@ void LoadConfig(void)
         }
       }
     }
+
   ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", 1, IniFile);
   SetTurboDisk(GetPrivateProfileInt(ModName, "TurboDisk", 1, IniFile));
   BuildDynaMenu();
-  return;
 }
 
 void SaveConfig(void)
@@ -704,38 +701,39 @@ void SaveConfig(void)
   WritePrivateProfileInt(ModName, "DiskRom", SelectRom, IniFile);
   WritePrivateProfileString(ModName, "RomPath", RomFileName, IniFile);
   WritePrivateProfileInt(ModName, "Persist", PersistDisks, IniFile);
+
   if (PersistDisks)
     for (Index = 0;Index < 4;Index++)
     {
       sprintf(Temp, "Disk#%i", Index);
       WritePrivateProfileString(ModName, Temp, Drive[Index].ImageName, IniFile);
     }
+
   WritePrivateProfileInt(ModName, "ClkEnable", ClockEnabled, IniFile);
   WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
+  
   if (FloppyPath != "") { WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); }
-  return;
 }
 
 unsigned char LoadExtRom(unsigned char RomType, char* FilePath)	//Returns 1 on if loaded
 {
-
   FILE* rom_handle = NULL;
   unsigned short index = 0;
   unsigned char RetVal = 0;
   unsigned char* ThisRom[3] = { ExternalRom,DiskRom,RGBDiskRom };
 
-  //	ThisRom[0]=ExternalRom;
-  //	ThisRom[1]=DiskRom;
-  //	ThisRom[2]=RGBDiskRom;
   rom_handle = fopen(FilePath, "rb");
+
   if (rom_handle == NULL)
     memset(ThisRom[RomType], 0xFF, EXTROMSIZE);
   else
   {
     while ((feof(rom_handle) == 0) & (index < EXTROMSIZE))
       ThisRom[RomType][index++] = fgetc(rom_handle);
+
     RetVal = 1;
     fclose(rom_handle);
   }
+
   return(RetVal);
 }

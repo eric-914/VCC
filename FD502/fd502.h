@@ -23,7 +23,6 @@ void BuildDynaMenu(void);
 #define SLAVE 1
 #define STANDALONE 2
 
-
 #define External 0
 #define TandyDisk 1
 #define RGBDisk 2

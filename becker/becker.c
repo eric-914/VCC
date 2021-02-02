@@ -45,8 +45,6 @@ static unsigned short dwsport = 65504;
 static char curaddress[MAX_PATH];
 static unsigned short curport = 65504;
 
-
-
 //thread handle
 static HANDLE hDWTCPThread;
 
@@ -66,7 +64,6 @@ void BuildDynaMenu(void);
 void LoadConfig(void);
 void SaveConfig(void);
 
-
 // dll entry hook
 BOOL APIENTRY DllMain(HINSTANCE  hinstDLL,
   DWORD  ul_reason_for_call,
@@ -84,8 +81,6 @@ BOOL APIENTRY DllMain(HINSTANCE  hinstDLL,
     break;
   case DLL_PROCESS_DETACH:
     // shutdown
-
-
     break;
 
     // not used by Vcc
@@ -97,11 +92,6 @@ BOOL APIENTRY DllMain(HINSTANCE  hinstDLL,
   return TRUE;
 }
 
-
-
-
-
-
 // coco checks for data
 unsigned char dw_status(void)
 {
@@ -112,7 +102,6 @@ unsigned char dw_status(void)
   else
     return(1);
 }
-
 
 // coco reads a byte
 unsigned char dw_read(void)
@@ -130,15 +119,14 @@ unsigned char dw_read(void)
   return(dwdata);
 }
 
-
 // coco writes a byte
 int dw_write(char dwdata)
 {
-
   // send the byte if we're connected
   if ((dwSocket != 0) & (!retry))
   {
     int res = send(dwSocket, &dwdata, 1, 0);
+
     if (res != 1)
     {
       sprintf(msg, "dw_write: socket error %d\n", WSAGetLastError());
@@ -160,10 +148,8 @@ int dw_write(char dwdata)
   return(0);
 }
 
-
 void killDWTCPThread(void)
 {
-
   // close socket to cause io thread to die
   if (dwSocket != 0)
     closesocket(dwSocket);
@@ -173,19 +159,15 @@ void killDWTCPThread(void)
   // reset buffer po
   InReadPos = 0;
   InWritePos = 0;
-
 }
-
-
-
 
 // set our hostname, called from config.c
 int dw_setaddr(char* bufdwaddr)
 {
   strcpy(dwaddress, bufdwaddr);
+
   return(0);
 }
-
 
 // set our port, called from config.c
 int dw_setport(char* bufdwport)
@@ -201,20 +183,15 @@ int dw_setport(char* bufdwport)
   return(0);
 }
 
-
-
 // try to connect with DW server
 void attemptDWConnection(void)
 {
-
   retry = true;
   BOOL bOptValTrue = TRUE;
   int iOptValTrue = 1;
 
-
   strcpy(curaddress, dwaddress);
   curport = dwsport;
-
 
   sprintf(msg, "Connecting to %s:%d... \n", dwaddress, dwsport);
   WriteLog(msg, TOCONS);
@@ -226,7 +203,6 @@ void attemptDWConnection(void)
   {
     // invalid hostname/no dns
     retry = false;
-    //              WriteLog("failed to resolve hostname.\n",TOCONS);
   }
 
   // allocate socket
@@ -258,15 +234,10 @@ void attemptDWConnection(void)
   if (rc == SOCKET_ERROR)
   {
     // no deal
-//              WriteLog("failed to connect.\n",TOCONS);
     closesocket(dwSocket);
     dwSocket = 0;
   }
-
 }
-
-
-
 
 // TCP connection thread
 unsigned __stdcall DWTCPThread(void* Dummy)
@@ -282,10 +253,9 @@ unsigned __stdcall DWTCPThread(void* Dummy)
   {
     WriteLog("WSAStartup() failed, DWTCPConnection thread exiting\n", TOCONS);
     WSACleanup();
+
     return(0);
   }
-
-
 
   while (DWTCPEnabled)
   {
@@ -327,13 +297,11 @@ unsigned __stdcall DWTCPThread(void* Dummy)
       {
         // good recv, inc ptr
         InWritePos += res;
+
         if (InWritePos == BUFFER_SIZE)
           InWritePos = 0;
-
       }
-
     }
-
   }
 
   // close socket if necessary
@@ -343,31 +311,21 @@ unsigned __stdcall DWTCPThread(void* Dummy)
   dwSocket = 0;
 
   _endthreadex(0);
+
   return(0);
 }
-
-
-
-
-
-
 
 // called from config.c/UpdateConfig
 void SetDWTCPConnectionEnable(unsigned int enable)
 {
-
   // turning us on?
   if ((enable == 1) & (!DWTCPEnabled))
   {
     DWTCPEnabled = true;
 
-    // WriteLog("DWTCPConnection has been enabled.\n",TOCONS);
-
-     // reset buffer pointers
+    // reset buffer pointers
     InReadPos = 0;
     InWritePos = 0;
-
-
 
     // start create thread to handle io
     hDWTCPThread;
@@ -394,8 +352,6 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 
     sprintf(msg, "DWTCPConnection thread started with id %d\n", threadID);
     WriteLog(msg, TOCONS);
-
-
   }
   else if ((enable != 1) & DWTCPEnabled)
   {
@@ -403,20 +359,8 @@ void SetDWTCPConnectionEnable(unsigned int enable)
     DWTCPEnabled = false;
 
     killDWTCPThread();
-
-    // WriteLog("DWTCPConnection has been disabled.\n",TOCONS);
-
   }
-
 }
-
-
-
-
-
-
-
-
 
 // dll exported functions
 __declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK Temp)
@@ -426,6 +370,7 @@ __declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMEN
   strcpy(ModName, "HDBDOS/DW/Becker");
 
   DynamicMenuCallback = Temp;
+
   if (DynamicMenuCallback != NULL)
     BuildDynaMenu();
 
@@ -443,7 +388,6 @@ __declspec(dllexport) void PackPortWrite(unsigned char Port, unsigned char Data)
   }
   return;
 }
-
 
 __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 {
@@ -464,25 +408,15 @@ __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
 
   return 0;
 }
-/*
-  __declspec(dllexport) unsigned char ModuleReset(void)
-  {
-    if (PakSetCart!=NULL)
-      PakSetCart(1);
-    return(0);
-  }
-*/
+
 __declspec(dllexport) unsigned char SetCart(SETCART Pointer)
 {
-
   PakSetCart = Pointer;
   return(0);
 }
 
 __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
 {
-  //sprintf(msg,"PalMemRead8: addr %d  val %d\n",(Address & 8191), Rom[Address & 8191]);
-      //WriteLog(msg,TOCONS);
   return(HDBRom[Address & 8191]);
 
 }
@@ -497,6 +431,7 @@ __declspec(dllexport) void ModuleStatus(char* DWStatus)
 {
   // calculate speed
   DWORD sinceCalc = GetTickCount() - LastStats;
+
   if (sinceCalc > STATS_PERIOD_MS)
   {
     LastStats += sinceCalc;
@@ -507,7 +442,6 @@ __declspec(dllexport) void ModuleStatus(char* DWStatus)
     BytesReadSince = 0;
     BytesWrittenSince = 0;
   }
-
 
   if (DWTCPEnabled)
   {
@@ -522,13 +456,11 @@ __declspec(dllexport) void ModuleStatus(char* DWStatus)
     else
     {
       int buffersize = InWritePos - InReadPos;
+
       if (InReadPos > InWritePos)
         buffersize = BUFFER_SIZE - InReadPos + InWritePos;
 
-
       sprintf(DWStatus, "DW: ConOK  R:%04.1f W:%04.1f", ReadSpeed, WriteSpeed);
-
-
     }
   }
   else
@@ -538,33 +470,28 @@ __declspec(dllexport) void ModuleStatus(char* DWStatus)
   return;
 }
 
-
 void BuildDynaMenu(void)
 {
 
   if (DynamicMenuCallback == NULL)
     MessageBox(0, "No good", "Ok", 0);
+
   DynamicMenuCallback("", 0, 0);
   DynamicMenuCallback("", 6000, 0);
   DynamicMenuCallback("DriveWire Server..", 5016, STANDALONE);
   DynamicMenuCallback("", 1, 0);
-
 }
-
 
 __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
 {
-
   DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
   BuildDynaMenu();
-  return;
 }
 
 __declspec(dllexport) void SetIniPath(char* IniFilePath)
 {
   strcpy(IniFile, IniFilePath);
   LoadConfig();
-  return;
 }
 
 
@@ -575,6 +502,7 @@ void WriteLog(char* Message, unsigned char Type)
     static HANDLE hout = NULL;
     static FILE* disk_handle = NULL;
     unsigned long dummy;
+
     switch (Type)
     {
     case TOCONS:
@@ -606,7 +534,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   switch (message)
   {
   case WM_INITDIALOG:
-
     if ((hwndOwner = GetParent(hDlg)) == NULL)
     {
       hwndOwner = GetDesktopWindow();
@@ -627,9 +554,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       0, 0,          // Ignores size arguments. 
       SWP_NOSIZE);
 
-
-
-
     SendDlgItemMessage(hDlg, IDC_TCPHOST, WM_SETTEXT, strlen(dwaddress), (LPARAM)(LPCSTR)dwaddress);
     sprintf(msg, "%d", dwsport);
     SendDlgItemMessage(hDlg, IDC_TCPPORT, WM_SETTEXT, strlen(msg), (LPARAM)(LPCSTR)msg);
@@ -641,7 +565,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (LOWORD(wParam))
     {
     case IDOK:
-
       SendDlgItemMessage(hDlg, IDC_TCPHOST, WM_GETTEXT, MAX_PATH, (LPARAM)(LPCSTR)dwaddress);
       SendDlgItemMessage(hDlg, IDC_TCPPORT, WM_GETTEXT, MAX_PATH, (LPARAM)(LPCSTR)msg);
       dw_setaddr(dwaddress);
@@ -660,14 +583,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       EndDialog(hDlg, LOWORD(wParam));
       break;
     }
+
     return TRUE;
     break;
-
   }
+
   return FALSE;
 }
-
-
 
 void LoadConfig(void)
 {
@@ -690,13 +612,11 @@ void LoadConfig(void)
   else
     dw_setport("65504");
 
-
   BuildDynaMenu();
   GetModuleFileName(NULL, DiskRomPath, MAX_PATH);
   PathRemoveFileSpec(DiskRomPath);
   strcat(DiskRomPath, "hdbdwbck.rom");
   LoadExtRom(DiskRomPath);
-  return;
 }
 
 void SaveConfig(void)
@@ -706,17 +626,16 @@ void SaveConfig(void)
   WritePrivateProfileString(ModName, "DWServerAddr", dwaddress, IniFile);
   sprintf(msg, "%d", dwsport);
   WritePrivateProfileString(ModName, "DWServerPort", msg, IniFile);
-  return;
 }
 
 unsigned char LoadExtRom(char* FilePath)	//Returns 1 on if loaded
 {
-
   FILE* rom_handle = NULL;
   unsigned short index = 0;
   unsigned char RetVal = 0;
 
   rom_handle = fopen(FilePath, "rb");
+
   if (rom_handle == NULL)
     memset(HDBRom, 0xFF, 8192);
   else
@@ -726,5 +645,6 @@ unsigned char LoadExtRom(char* FilePath)	//Returns 1 on if loaded
     RetVal = 1;
     fclose(rom_handle);
   }
+
   return(RetVal);
 }
