@@ -96,6 +96,7 @@ BOOL PathRemoveFileSpec(char* Path)
 
   while ((Index > 0) & (Path[Index] != '\\'))
     Index--;
+
   while ((Index > 0) & (Path[Index] == '\\'))
     Index--;
 

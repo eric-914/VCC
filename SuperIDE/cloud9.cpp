@@ -17,12 +17,12 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 /************************************************************************
-*	Basically simulates the Dallas DS1315 Real Time Clock				*
-*																		*
-*																		*
-*																		*
-*																		*
-*																		*
+*	Basically simulates the Dallas DS1315 Real Time Clock				         *
+*																		                                   *
+*																		                                   *
+*																		                                   *
+*																		                                   *
+*																		                                   *
 ************************************************************************/
 
 #include <windows.h>
@@ -40,6 +40,7 @@ static unsigned char FormatBit = 0; //1 = 12Hour Mode
 static unsigned char CookieRecived = 0;
 static unsigned char WriteEnabled = 0;
 void SetTime(void);
+
 unsigned char ReadTime(unsigned short port)
 {
   unsigned char ret_val = 0;
@@ -53,6 +54,7 @@ unsigned char ReadTime(unsigned short port)
     CurrentBit = port & 1;
     InBuffer = InBuffer >> 1;
     InBuffer = InBuffer | (CurrentBit << 63);
+
     if (CookieRecived == 1)
     {
       if (BitCounter == 0)
@@ -60,8 +62,10 @@ unsigned char ReadTime(unsigned short port)
         SetTime();
         CookieRecived = 0;
       }
+
       BitCounter--;
     }
+
     if (InBuffer == 0x5CA33AC55CA33AC5)
     {
       GetLocalTime(&now);
@@ -84,6 +88,7 @@ unsigned char ReadTime(unsigned short port)
       OutBuffer <<= 4;
       TempHour = (unsigned char)now.wHour;
       AmPmBit = 0;
+
       if ((FormatBit == 1) & (TempHour > 12)) //1=12 hour mode 1=PM
       {
         TempHour -= 12;
@@ -123,12 +128,10 @@ unsigned char ReadTime(unsigned short port)
     else
       CookieRecived = 0;
     break;
-  } //End of port switch
-
+  }
 
   return(ret_val);
 }
-
 
 void SetTime(void)
 {
@@ -149,10 +152,12 @@ void SetTime(void)
   TempHour = (unsigned char)(InBuffer & 15);	//Here fix me
 
   FormatBit = (TempHour & 8) >> 3;	//1 = 12Hour Mode
+
   if (FormatBit == 1)
   {
     AmPmBit = (TempHour & 2);
     now.wHour += (TempHour & 1) * 10;	//12 Hour Mode
+
     if (AmPmBit == 2)
       now.wHour += 12;				//convert to 24hour clock
   }
@@ -175,28 +180,17 @@ void SetTime(void)
   InBuffer >>= 4;
   now.wYear += (unsigned short)((InBuffer & 15) * 10);
   now.wYear += 1900;
+  
   if (WriteEnabled)
     SetLocalTime(&now); //Allow the emulator to fuck with host's time, 
-  return;
 }
-
 
 unsigned char SetClockWrite(unsigned char Flag)
 {
   if (Flag == 0xFF)
     return(WriteEnabled);
+
   WriteEnabled = Flag & 1;
+
   return(WriteEnabled);
 }
-
-
-
-
-
-
-
-
-
-
-
-

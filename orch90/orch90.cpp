@@ -29,6 +29,7 @@ static unsigned char LeftChannel = 0, RightChannel = 0;
 static void (*PakSetCart)(unsigned char) = NULL;
 unsigned char LoadExtRom(char*);
 static unsigned char Rom[8192];
+
 BOOL WINAPI DllMain(
   HINSTANCE hinstDLL,  // handle to DLL module
   DWORD fdwReason,     // reason for calling function
@@ -39,7 +40,9 @@ BOOL WINAPI DllMain(
     //Put shutdown procs here
     return(1);
   }
+
   g_hinstDLL = hinstDLL;
+
   return(1);
 }
 
@@ -50,7 +53,6 @@ extern "C"
     LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
     LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
     strcpy(ModName, "Orchestra-90");
-    return;
   }
 }
 
@@ -69,7 +71,6 @@ extern "C"
       LeftChannel = Data;
       break;
     }
-    return;
   }
 }
 
@@ -95,6 +96,7 @@ extern "C"
 
     if ((PakSetCart != NULL) & LoadExtRom(RomPath))	//If we can load the rom them assert cart 
       PakSetCart(1);
+
     return(NULL);
   }
 }
@@ -109,7 +111,6 @@ extern "C"
   }
 }
 
-
 extern "C"
 {
   __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
@@ -118,36 +119,33 @@ extern "C"
   }
 }
 
-
-
 // This gets called at the end of every scan line 262 Lines * 60 Frames = 15780 Hz 15720
 extern "C"
 {
   __declspec(dllexport) unsigned short ModuleAudioSample(void)
   {
-
     return((LeftChannel << 8) | RightChannel);
   }
 }
 
-
-
 unsigned char LoadExtRom(char* FilePath)	//Returns 1 on if loaded
 {
-
   FILE* rom_handle = NULL;
   unsigned short index = 0;
   unsigned char RetVal = 0;
 
   rom_handle = fopen(FilePath, "rb");
+
   if (rom_handle == NULL)
     memset(Rom, 0xFF, 8192);
   else
   {
     while ((feof(rom_handle) == 0) & (index < 8192))
       Rom[index++] = fgetc(rom_handle);
+
     RetVal = 1;
     fclose(rom_handle);
   }
+
   return(RetVal);
 }

@@ -63,7 +63,9 @@ BOOL WINAPI DllMain(
   {
     return(1);
   }
+
   g_hinstDLL = hinstDLL;
+
   return(1);
 }
 
@@ -75,9 +77,9 @@ extern "C"
     LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
     DynamicMenuCallback = Temp;
     IdeInit();
+
     if (DynamicMenuCallback != NULL)
       BuildDynaMenu();
-    return;
   }
 }
 
@@ -99,8 +101,7 @@ extern "C"
       default:
         IdeRegWrite(Port - BaseAddress, Data);
         break;
-      }	//End port switch	
-    return;
+      }
   }
 }
 
@@ -110,6 +111,7 @@ extern "C"
   {
     unsigned char RetVal = 0;
     unsigned short Temp = 0;
+
     if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
       RetVal = ReadTime(Port);
 
@@ -126,11 +128,11 @@ extern "C"
       case 0x8:
         RetVal = DataLatch;		//Latch
         break;
+
       default:
         RetVal = IdeRegRead(Port - BaseAddress) & 0xFF;
         break;
-
-      }	//End port switch	
+      }
 
     return(RetVal);
   }
@@ -141,7 +143,6 @@ extern "C"
   __declspec(dllexport) void ModuleStatus(char* MyStatus)
   {
     DiskStatus(MyStatus);
-    return;
   }
 }
 
@@ -179,7 +180,6 @@ extern "C"
       DialogBox(g_hinstDLL, (LPCTSTR)IDD_CONFIG, NULL, (DLGPROC)Config);
       break;
     }
-    return;
   }
 }
 
@@ -189,7 +189,6 @@ extern "C"
   {
     strcpy(IniFile, IniFilePath);
     LoadConfig();
-    return;
   }
 }
 
@@ -221,6 +220,7 @@ void BuildDynaMenu(void)
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   unsigned char BTemp = 0;
+
   switch (message)
   {
   case WM_INITDIALOG:
@@ -232,12 +232,14 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     SendDlgItemMessage(hDlg, IDC_BASEADDR, CB_ADDSTRING, NULL, (LPARAM)"70");
     SendDlgItemMessage(hDlg, IDC_BASEADDR, CB_SETCURSEL, BaseAddr, (LPARAM)0);
     EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
+
     if (BaseAddr == 3)
     {
       ClockEnabled = 0;
       SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, 0);
       EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), FALSE);
     }
+
     break;
 
   case WM_COMMAND:
@@ -259,7 +261,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       break;
 
     case IDC_CLOCK:
-
       break;
 
     case IDC_READONLY:
@@ -268,15 +269,18 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDC_BASEADDR:
       BTemp = (unsigned char)SendDlgItemMessage(hDlg, IDC_BASEADDR, CB_GETCURSEL, 0, 0);
       EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), TRUE);
+
       if (BTemp == 3)
       {
         ClockEnabled = 0;
         SendDlgItemMessage(hDlg, IDC_CLOCK, BM_SETCHECK, ClockEnabled, 0);
         EnableWindow(GetDlgItem(hDlg, IDC_CLOCK), FALSE);
       }
+
       break;
     }
   }
+
   return(0);
 }
 
@@ -293,31 +297,31 @@ void Select_Disk(unsigned char Disk)
   ofn.hInstance = GetModuleHandle(0);
   ofn.lpstrDefExt = "IMG";
   ofn.lpstrFilter = "Hard Disk Images\0*.img;*.vhd;*.os9\0All files\0*.*\0\0";	// filter string "Disks\0*.DSK\0\0";
-  ofn.nFilterIndex = 0;								// current filter index
-  ofn.lpstrFile = TempFileName;					// contains full path and filename on return
-  ofn.nMaxFile = MAX_PATH;						// sizeof lpstrFile
-  ofn.lpstrFileTitle = NULL;							// filename and extension only
-  ofn.nMaxFileTitle = MAX_PATH;						// sizeof lpstrFileTitle
-  ofn.lpstrInitialDir = SuperIDEPath;							// initial directory
+  ofn.nFilterIndex = 0;								          // current filter index
+  ofn.lpstrFile = TempFileName;					        // contains full path and filename on return
+  ofn.nMaxFile = MAX_PATH;						          // sizeof lpstrFile
+  ofn.lpstrFileTitle = NULL;							      // filename and extension only
+  ofn.nMaxFileTitle = MAX_PATH;						      // sizeof lpstrFileTitle
+  ofn.lpstrInitialDir = SuperIDEPath;						// initial directory
   ofn.lpstrTitle = "Mount IDE hard Disk Image";	// title bar string
 
   if (GetOpenFileName(&ofn)) {
     if (!(MountDisk(TempFileName, Disk)))
       MessageBox(0, "Can't Open File", "Can't open the Image specified.", 0);
+
     string tmp = ofn.lpstrFile;
     int idx;
     idx = tmp.find_last_of("\\");
     tmp = tmp.substr(0, idx);
     strcpy(SuperIDEPath, tmp.c_str());
   }
-  return;
 }
-
 
 void SaveConfig(void)
 {
   unsigned char Index = 0;
   char ModName[MAX_LOADSTRING] = "";
+
   LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
   QueryDisk(MASTER, FileName);
   WritePrivateProfileString(ModName, "Master", FileName, IniFile);
@@ -326,9 +330,8 @@ void SaveConfig(void)
   WritePrivateProfileInt(ModName, "BaseAddr", BaseAddr, IniFile);
   WritePrivateProfileInt(ModName, "ClkEnable", ClockEnabled, IniFile);
   WritePrivateProfileInt(ModName, "ClkRdOnly", ClockReadOnly, IniFile);
-  if (SuperIDEPath != "") { WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); }
 
-  return;
+  if (SuperIDEPath != "") { WritePrivateProfileString("DefaultPaths", "SuperIDEPath", SuperIDEPath, IniFile); }
 }
 
 void LoadConfig(void)
@@ -339,6 +342,7 @@ void LoadConfig(void)
   char DiskName[MAX_PATH] = "";
   unsigned int RetVal = 0;
   HANDLE hr = NULL;
+
   LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
   GetPrivateProfileString("DefaultPaths", "SuperIDEPath", "", SuperIDEPath, MAX_PATH, IniFile);
   GetPrivateProfileString(ModName, "Master", "", FileName, MAX_PATH, IniFile);
@@ -348,11 +352,12 @@ void LoadConfig(void)
   ClockEnabled = GetPrivateProfileInt(ModName, "ClkEnable", 1, IniFile);
   ClockReadOnly = GetPrivateProfileInt(ModName, "ClkRdOnly", 1, IniFile);
   BaseAddr &= 3;
+
   if (BaseAddr == 3)
     ClockEnabled = 0;
+
   BaseAddress = BaseTable[BaseAddr];
   SetClockWrite(!ClockReadOnly);
   MountDisk(FileName, SLAVE);
   BuildDynaMenu();
-  return;
 }

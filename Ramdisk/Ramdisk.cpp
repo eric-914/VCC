@@ -34,7 +34,6 @@ static char FileName[MAX_PATH] = "";
 static char IniFile[MAX_PATH] = "";
 static void (*DynamicMenuCallback)(char*, int, int) = NULL;
 
-
 static HINSTANCE g_hinstDLL;
 
 BOOL WINAPI DllMain(
@@ -46,7 +45,9 @@ BOOL WINAPI DllMain(
   {
     return(1);
   }
+
   g_hinstDLL = hinstDLL;
+
   return(1);
 }
 
@@ -58,9 +59,6 @@ extern "C"
     LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
     InitMemBoard();
     DynamicMenuCallback = Temp;
-    //		if (DynamicMenuCallback  != NULL)
-    //			BuildDynaMenu();		
-    return;
   }
 }
 
@@ -86,11 +84,9 @@ extern "C"
     default:
       return;
       break;
-    }	//End port switch		
-    return;
+    }
   }
 }
-
 
 extern "C"
 {
@@ -105,6 +101,6 @@ extern "C"
     default:
       return(0);
       break;
-    }	//End port switch
+    }
   }
 }

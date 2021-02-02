@@ -27,6 +27,7 @@ void WriteLog(char* Message, unsigned char Type)
   static FILE* disk_handle = NULL;
   unsigned long dummy;
   char cTemp[512] = "";
+
   switch (Type)
   {
   case TOCONS:
@@ -36,6 +37,7 @@ void WriteLog(char* Message, unsigned char Type)
       hout = GetStdHandle(STD_OUTPUT_HANDLE);
       SetConsoleTitle("Logging Window");
     }
+
     sprintf(cTemp, "%s", Message);
     WriteConsole(hout, cTemp, strlen(cTemp), &dummy, 0);
     Counter++;
@@ -49,9 +51,4 @@ void WriteLog(char* Message, unsigned char Type)
     fflush(disk_handle);
     break;
   }
-
 }
-
-
-
-

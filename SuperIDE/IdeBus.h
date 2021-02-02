@@ -36,6 +36,7 @@ void DiskStatus(char*);
 unsigned char MountDisk(char*, unsigned char);
 unsigned char DropDisk(unsigned char);
 void QueryDisk(unsigned char, char*);
+
 //Status 
 #define ERR		1	//Previous command ended in an error
 #define IDX		2	//Unused
@@ -56,13 +57,9 @@ void QueryDisk(unsigned char, char*);
 #define UNC		64	//(Uncorrectable Data Error) Set when Uncorrectable Error is encountered.
 #define BBK		128	//(Bad Block Detected) Set when a Bad Block is detected.
 
-
-
 #define BUSYWAIT 5
 
 #define MASTER 0
 #define SLAVE 1
 
-
 #endif
-

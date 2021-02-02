@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #define RAMSIZE 1024*512
 
-
 bool InitMemBoard(void);
 bool WritePort(unsigned char, unsigned char);
 bool WriteArray(unsigned char);
