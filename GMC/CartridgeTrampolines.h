@@ -1,7 +1,6 @@
 #pragma once
 #include "GMC.h"
 
-
 GMC_EXPORT void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK addMenuCallback);
 GMC_EXPORT void ModuleStatus(char* statusBuffer);
 GMC_EXPORT void ModuleConfig(unsigned char /*menuId*/);

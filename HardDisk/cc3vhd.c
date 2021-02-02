@@ -119,8 +119,10 @@ int MountHD(char FileName[MAX_PATH], int drive)
     WpHD[drive] = 0;
     Mounted[drive] = 0;
     Status = HD_NODSK;
+
     return(0);
   }
+
   return(1);
 }
 
@@ -134,16 +136,16 @@ void UnmountHD(int drive)
     Mounted[drive] = 0;
     Status = HD_NODSK;
   }
-  return;
 }
 
 // Clear drive select on reset
-void VhdReset(void) {
+void VhdReset(void) 
+{
   MemWrite(0, 0xFF86);
 }
 
-void HDcommand(unsigned char Command) {
-
+void HDcommand(unsigned char Command) 
+{
   unsigned short Temp = 0;
 
   // Verify drive is mounted
@@ -166,6 +168,7 @@ void HDcommand(unsigned char Command) {
 
     // Read it
     ReadFile(HardDrive[DriveSelect], SectorBuffer, SECTORSIZE, &BytesMoved, NULL);
+
     if (BytesMoved != SECTORSIZE) {
       Status = HD_NODSK;
     }
@@ -226,7 +229,6 @@ void HDcommand(unsigned char Command) {
 
   default:
     Status = HD_INVLD;
-    return;
   }
 }
 
@@ -242,6 +244,7 @@ void DiskStatus(char* Temp)
 
   if (ScanCount > 63) {
     ScanCount = 0;
+
     if (Mounted[DriveSelect] == 1) {
       sprintf(DStatus, "HD%d:IDLE", DriveSelect);
     }
@@ -249,7 +252,6 @@ void DiskStatus(char* Temp)
       sprintf(DStatus, "HD%d:No Image!", DriveSelect);
     }
   }
-  return;
 }
 
 void IdeWrite(unsigned char data, unsigned char port)
@@ -278,7 +280,6 @@ void IdeWrite(unsigned char data, unsigned char port)
     if (data == (data & 1)) DriveSelect = data;
     break;
   }
-  return;
 }
 
 unsigned char IdeRead(unsigned char port)
@@ -306,5 +307,6 @@ unsigned char IdeRead(unsigned char port)
     return DriveSelect;
     break;
   }
+
   return(0);
 }

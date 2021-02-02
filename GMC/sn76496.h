@@ -3,11 +3,9 @@
 #pragma once
 #include <cstdint>
 
-
 class SN76489Device
 {
 public:
-
   using stream_sample_t = unsigned short;
 
   SN76489Device();
@@ -16,16 +14,11 @@ public:
   virtual void write(uint8_t data);
   virtual stream_sample_t sound_stream_update(stream_sample_t& lbuffer, stream_sample_t& rbuffer);
 
-
 protected:
 
-
-
 private:
-
   inline bool     in_noise_mode();
   void            countdown_cycles();
-
 
   const int32_t	m_feedback_mask;    // mask for feedback
   const int32_t	m_whitenoise_tap1;  // mask for white noise tap 1 (higher one, usually bit 14)

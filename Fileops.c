@@ -44,6 +44,7 @@ int CheckPath(char* Path)	//Return 1 on Error
     return(1);
 
   hr = CreateFile(Path, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
   if (hr == INVALID_HANDLE_VALUE) //File Doesn't exist
   {
     GetModuleFileName(NULL, TempPath, MAX_PATH);
@@ -89,6 +90,7 @@ void PathStripPath(char* TextBuffer)
 BOOL PathRemoveFileSpec(char* Path)
 {
   size_t Index = strlen(Path), Lenth = Index;
+
   if ((Index == 0) | (Index > MAX_PATH))
     return(false);
 
@@ -108,6 +110,7 @@ BOOL PathRemoveFileSpec(char* Path)
 BOOL PathRemoveExtension(char* Path)
 {
   size_t Index = strlen(Path), Lenth = Index;
+
   if ((Index == 0) | (Index > MAX_PATH))
     return(false);
 
@@ -121,6 +124,7 @@ BOOL PathRemoveExtension(char* Path)
 char* PathFindExtension(char* Path)
 {
   size_t Index = strlen(Path), Lenth = Index;
+
   if ((Index == 0) | (Index > MAX_PATH))
     return(&Path[strlen(Path) + 1]);
   

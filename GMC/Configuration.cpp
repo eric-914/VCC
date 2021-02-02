@@ -2,8 +2,6 @@
 #include <io.h>
 #include <Windows.h>
 
-
-
 Configuration::Configuration(std::string filename)
   : m_Filename(move(filename))
 {
@@ -11,7 +9,6 @@ Configuration::Configuration(std::string filename)
   char pathBuffer[MAX_PATH];
   GetPrivateProfileStringA(moduleName, "ROM", "", pathBuffer, MAX_PATH, m_Filename.c_str());
   std::string activeRom(pathBuffer);
-
 
   MRUListType mruROMList;
   for (auto i(0U); ; ++i)
@@ -28,16 +25,12 @@ Configuration::Configuration(std::string filename)
 
   m_ActiveROM = move(activeRom);
   m_MRURoms = move(mruROMList);
-
 }
-
-
 
 std::string Configuration::GetActiveRom() const
 {
   return m_ActiveROM;
 }
-
 
 void Configuration::SetActiveRom(std::string filename)
 {

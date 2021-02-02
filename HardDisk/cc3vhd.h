@@ -1,4 +1,3 @@
-
 #ifndef __CC3VHD_H__
 #define __CC3VHD_H__
 /*

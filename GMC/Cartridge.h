@@ -2,16 +2,13 @@
 #include "CartridgeTrampolines.h"
 #include <string>
 
-
 class Cartridge
 {
 protected:
-
   explicit Cartridge(std::string name, std::string catalogId = std::string());
 
 
 public:
-
   virtual ~Cartridge();
 
   virtual std::string GetName() const;
@@ -30,9 +27,7 @@ public:
   virtual void OnWritePort(unsigned char port, unsigned char data);
   virtual unsigned char OnReadPort(unsigned char port) const;
 
-
 protected:
-
   enum class ItemType
   {
     Head,
@@ -58,10 +53,7 @@ protected:
   virtual void LoadConfiguration(const std::string& filename);
   virtual void LoadMenu();
 
-
-
 private:
-
   friend void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK addMenuCallback);
   friend void ModuleStatus(char* statusBuffer);
   friend void ModuleConfig(unsigned char menuId);
@@ -74,7 +66,6 @@ private:
   friend unsigned short ModuleAudioSample(void);
 
 private:
-
   static Cartridge* m_Singleton;
 
   std::string			m_Name;

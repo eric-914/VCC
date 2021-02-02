@@ -8,15 +8,14 @@
 
 GMCCartridge::GMCCartridge()
   : Cartridge("Game Master Catridge", "SN76489")
-{}
-
+{
+}
 
 void GMCCartridge::LoadConfiguration(const std::string& filename)
 {
   Cartridge::LoadConfiguration(filename);
   m_Configuration = Configuration(filename);
 }
-
 
 void GMCCartridge::LoadMenu()
 {
@@ -25,7 +24,6 @@ void GMCCartridge::LoadMenu()
   AddMenuItem("Select GMC ROM", 5000 + MenuItems::SelectRom, ItemType::StandAlone);
   AddMenuItem("", 1, ItemType::Head);
 }
-
 
 std::string GMCCartridge::GetStatusMessage() const
 {
@@ -44,23 +42,16 @@ std::string GMCCartridge::GetStatusMessage() const
   return message;
 }
 
-
 void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 {
   if (menuId == MenuItems::SelectRom)
   {
     const auto selectedFile(SelectROMFile());
-    //		if (!selectedFile.has_value())
+
     if (selectedFile.empty())
     {
       return;
     }
-
-    //if (!m_ROMImage.Load(*selectedFile))
-    //{
-    //	MessageBoxA(nullptr, "Unable to open file", "Error", MB_OK);
-    //	return;
-    //}
 
     MessageBoxA(
       nullptr,
@@ -72,7 +63,6 @@ void GMCCartridge::OnMenuItemSelected(unsigned char menuId)
 
     AssetCartridgeLine(false);
     AssetCartridgeLine(true);
-
   }
 }
 
@@ -91,9 +81,6 @@ void GMCCartridge::OnReset()
   }
 }
 
-
-
-
 unsigned short GMCCartridge::UpdateAudio()
 {
   SN76489Device::stream_sample_t lbuffer, rbuffer;
@@ -101,14 +88,10 @@ unsigned short GMCCartridge::UpdateAudio()
   return m_PSG.sound_stream_update(lbuffer, rbuffer);
 }
 
-
-
-
 unsigned char GMCCartridge::OnReadMemory(unsigned short address) const
 {
   return m_ROMImage.Read(address);
 }
-
 
 void GMCCartridge::OnWritePort(unsigned char port, unsigned char data)
 {
@@ -124,7 +107,6 @@ void GMCCartridge::OnWritePort(unsigned char port, unsigned char data)
   }
 }
 
-
 unsigned char GMCCartridge::OnReadPort(unsigned char port) const
 {
   if (port == Ports::BankSelect)
@@ -134,5 +116,3 @@ unsigned char GMCCartridge::OnReadPort(unsigned char port) const
 
   return 0;
 }
-
-

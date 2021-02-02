@@ -4,11 +4,9 @@
 #include "sn76496.h"
 #include "Configuration.h"
 
-
 class GMCCartridge : public Cartridge
 {
 public:
-
   GMCCartridge();
 
   void LoadConfiguration(const std::string& filename) override;
@@ -23,7 +21,6 @@ public:
   unsigned char OnReadPort(unsigned char port) const override;
 
 private:
-
   struct MenuItems
   {
     static const unsigned int SelectRom = 3;
@@ -35,9 +32,7 @@ private:
     static const unsigned char PSG = 0x41;
   };
 
-  ROM				m_ROMImage;
+  ROM				    m_ROMImage;
   SN76489Device	m_PSG;
   Configuration	m_Configuration;
 };
-
-

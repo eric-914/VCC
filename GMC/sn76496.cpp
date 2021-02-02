@@ -141,7 +141,6 @@
 
 #define MAX_OUTPUT 0x7fff
 
-
 SN76489Device::SN76489Device()
   : m_feedback_mask(0x4000)
   , m_period_divider(6.11f)
@@ -163,10 +162,6 @@ SN76489Device::SN76489Device()
   , m_vol_table()
   , m_period()
 {}
-
-
-
-
 
 void SN76489Device::device_start()
 {
@@ -235,7 +230,6 @@ void SN76489Device::write(uint8_t data)
   else
   {
     r = m_last_register;
-    //if ((m_ncr_style_psg) && ((r & 1) || (r == 6))) return; // NCR-style PSG ignores writes to regs 1, 3, 5, 6 and 7 with bit 7 clear; this behavior is not verified on hardware yet, uncomment it once verified.
   }
 
   c = r >> 1;
@@ -280,7 +274,6 @@ void SN76489Device::write(uint8_t data)
     break;
 
   case 6: // noise: frequency, mode
-    //if ((data & 0x80) == 0) logerror("SN76489Device: write to reg 6 with bit 7 clear; data was %03x, new write is %02x! report this to LN!\n", m_register[6], data);
     if ((data & 0x80) == 0)
     {
       m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
@@ -306,12 +299,10 @@ void SN76489Device::countdown_cycles()
   if (m_cycles_to_ready > 0)
   {
     m_cycles_to_ready--;
-    //if (m_ready_state==true) m_ready_handler(CLEAR_LINE);
     m_ready_state = false;
   }
   else
   {
-    //if (m_ready_state==false) m_ready_handler(ASSERT_LINE);
     m_ready_state = true;
   }
 }
@@ -387,4 +378,3 @@ SN76489Device::stream_sample_t SN76489Device::sound_stream_update(stream_sample_
 
   return lbuffer + rbuffer;
 }
-

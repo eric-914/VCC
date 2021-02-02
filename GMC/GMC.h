@@ -13,4 +13,3 @@ typedef void(*DYNAMICMENUCALLBACK)(const char*, int, int);
 
 std::string SelectROMFile();
 std::string ExtractFilename(std::string path);
-

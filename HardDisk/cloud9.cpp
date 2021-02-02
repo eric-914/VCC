@@ -16,12 +16,12 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 /************************************************************************
-*	Basically simulates the Dallas DS1315 Real Time Clock				*
-*																		*
-*																		*
-*																		*
-*																		*
-*																		*
+*	Basically simulates the Dallas DS1315 Real Time Clock				         *
+*																		                                   *
+*																		                                   *
+*																		                                   *
+*																		                                   *
+*																		                                   *
 ************************************************************************/
 
 #include <windows.h>
@@ -124,10 +124,8 @@ unsigned char ReadTime(unsigned short port)
     break;
   } //End of port switch
 
-
   return(ret_val);
 }
-
 
 void SetTime(void)
 {
@@ -148,6 +146,7 @@ void SetTime(void)
   TempHour = (unsigned char)(InBuffer & 15);	//Here fix me
 
   FormatBit = (TempHour & 8) >> 3;	//1 = 12Hour Mode
+
   if (FormatBit == 1)
   {
     AmPmBit = (TempHour & 2);
@@ -174,28 +173,17 @@ void SetTime(void)
   InBuffer >>= 4;
   now.wYear += (unsigned short)((InBuffer & 15) * 10);
   now.wYear += 1900;
+
   if (WriteEnabled)
     SetLocalTime(&now); //Allow the emulator to fuck with host's time, 
-  return;
 }
-
 
 unsigned char SetClockWrite(unsigned char Flag)
 {
   if (Flag == 0xFF)
     return(WriteEnabled);
+
   WriteEnabled = Flag & 1;
+
   return(WriteEnabled);
 }
-
-
-
-
-
-
-
-
-
-
-
-

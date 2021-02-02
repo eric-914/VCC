@@ -5,9 +5,8 @@ using namespace std;
 
 bool ROM::Load(std::string filename)
 {
-
-  //	std::ifstream input(filename, std::ifstream::binary);
   ifstream input(filename, ios::binary);
+
   if (!input.is_open())
   {
     return false;
@@ -18,10 +17,6 @@ bool ROM::Load(std::string filename)
   int end = (int)input.tellg();
   int fileLength = end - begin;
   input.seekg(0, ios::beg);
-
-  //	input.seekg(0, std::ifstream::ios_base::end);
-  //    const auto fileLength(input.tellg().seekpos());
-  //    input.seekg(0, std::ifstream::ios_base::beg);
 
   std::vector<unsigned char> fileData(fileLength);
   input.read(reinterpret_cast<char*>(&fileData[0]), fileData.size());
@@ -36,12 +31,8 @@ bool ROM::Load(std::string filename)
   m_BankOffset = 0;
   m_Bank = 0;
 
-  //	char msg[256];
-  //	sprintf(msg,"%s loaded %d",&m_Filename[0],m_Data.size());
-  //	MessageBoxA(nullptr, msg, "Rom loaded", MB_OK);
   return true;
 }
-
 
 void ROM::Unload()
 {
@@ -50,14 +41,10 @@ void ROM::Unload()
   m_Bank = 0;
 }
 
-
 void ROM::Reset()
 {
   SetBank(0);
 }
-
-
-
 
 void ROM::SetBank(unsigned char blockId)
 {
@@ -68,14 +55,10 @@ void ROM::SetBank(unsigned char blockId)
   }
 }
 
-
 unsigned char ROM::GetBank() const
 {
   return m_Bank;
 }
-
-
-
 
 ROM::value_type ROM::Read(size_type readOffset) const
 {
