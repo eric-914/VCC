@@ -143,14 +143,25 @@
 
 
 SN76489Device::SN76489Device()
-	: m_feedback_mask(0x4000)
-	, m_period_divider(6.11f)
-	, m_whitenoise_tap1(0x01)
-	, m_whitenoise_tap2(0x02)
-	, m_negate(false)	//	Was true!
-	, m_stereo(false)
-	, m_ncr_style_psg(false)
-	, m_sega_style_psg(true)
+  : m_feedback_mask(0x4000)
+  , m_period_divider(6.11f)
+  , m_whitenoise_tap1(0x01)
+  , m_whitenoise_tap2(0x02)
+  , m_negate(false)	//	Was true!
+  , m_stereo(false)
+  , m_ncr_style_psg(false)
+  , m_sega_style_psg(true)
+  , m_last_register()
+  , m_cycles_to_ready()
+  , m_ready_state()
+  , m_RNG()
+  , m_stereo_mask()
+  , m_count()
+  , m_output()
+  , m_register()
+  , m_volume()
+  , m_vol_table()
+  , m_period()
 {}
 
 
@@ -159,221 +170,221 @@ SN76489Device::SN76489Device()
 
 void SN76489Device::device_start()
 {
-	for (int i = 0; i < 8; i += 2)
-	{
-		m_register[i] = 0;
-		m_register[i + 1] = 0;   // volume = 0x0 (max volume) on reset; this needs testing on chips other than SN76489A and Sega VDP PSG
-	}
-	m_last_register = m_sega_style_psg ? 3 : 0; // Sega VDP PSG defaults to selected period reg for 2nd channel
+  for (int i = 0; i < 8; i += 2)
+  {
+    m_register[i] = 0;
+    m_register[i + 1] = 0;   // volume = 0x0 (max volume) on reset; this needs testing on chips other than SN76489A and Sega VDP PSG
+  }
+  m_last_register = m_sega_style_psg ? 3 : 0; // Sega VDP PSG defaults to selected period reg for 2nd channel
 
-	for (int i = 0; i < 4; i++)
-	{
-		m_period[i] = 0;
-		m_volume[i] = 0;
-		m_count[i] = 0;
-		m_output[i] = 0;
-	}
+  for (int i = 0; i < 4; i++)
+  {
+    m_period[i] = 0;
+    m_volume[i] = 0;
+    m_count[i] = 0;
+    m_output[i] = 0;
+  }
 
-	m_RNG = m_feedback_mask;
-	m_output[3] = m_RNG & 1;
+  m_RNG = m_feedback_mask;
+  m_output[3] = m_RNG & 1;
 
-	m_cycles_to_ready = 1;          // assume ready is not active immediately on init. is this correct?
-	m_stereo_mask = 0xFF;           // all channels enabled
+  m_cycles_to_ready = 1;          // assume ready is not active immediately on init. is this correct?
+  m_stereo_mask = 0xFF;           // all channels enabled
 
 
-	// build volume table (2dB per step)
-	double out = MAX_OUTPUT / 4; // four channels, each gets 1/4 of the total range
-	for (int i = 0; i < 15; i++)
-	{
-		// limit volume to avoid clipping
-		if (out > MAX_OUTPUT / 4)
-		{
-			m_vol_table[i] = MAX_OUTPUT / 4;
-		}
-		else
-		{
-			m_vol_table[i] = static_cast<int32_t>(out);
-		}
+  // build volume table (2dB per step)
+  double out = MAX_OUTPUT / 4; // four channels, each gets 1/4 of the total range
+  for (int i = 0; i < 15; i++)
+  {
+    // limit volume to avoid clipping
+    if (out > MAX_OUTPUT / 4)
+    {
+      m_vol_table[i] = MAX_OUTPUT / 4;
+    }
+    else
+    {
+      m_vol_table[i] = static_cast<int32_t>(out);
+    }
 
-		out /= 1.258925412; /* = 10 ^ (2/20) = 2dB */
-	}
-	m_vol_table[15] = 0;
+    out /= 1.258925412; /* = 10 ^ (2/20) = 2dB */
+  }
+  m_vol_table[15] = 0;
 
-	m_ready_state = true;
+  m_ready_state = true;
 }
 
 
 void SN76489Device::write(uint8_t data)
 {
-	int n, r, c;
+  int n, r, c;
 
-	// set number of cycles until READY is active; this is always one
-	// 'sample', i.e. it equals the clock divider exactly
-	m_cycles_to_ready = 1;
+  // set number of cycles until READY is active; this is always one
+  // 'sample', i.e. it equals the clock divider exactly
+  m_cycles_to_ready = 1;
 
-	if (data & 0x80)
-	{
-		r = (data & 0x70) >> 4;
-		m_last_register = r;
-		if (((m_ncr_style_psg) && (r == 6)) && ((data & 0x04) != (m_register[6] & 0x04)))
-		{
-			m_RNG = m_feedback_mask; // NCR-style PSG resets the LFSR only on a mode write which actually changes the state of bit 2 of register 6
-		}
-		m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
-	}
-	else
-	{
-		r = m_last_register;
-		//if ((m_ncr_style_psg) && ((r & 1) || (r == 6))) return; // NCR-style PSG ignores writes to regs 1, 3, 5, 6 and 7 with bit 7 clear; this behavior is not verified on hardware yet, uncomment it once verified.
-	}
+  if (data & 0x80)
+  {
+    r = (data & 0x70) >> 4;
+    m_last_register = r;
+    if (((m_ncr_style_psg) && (r == 6)) && ((data & 0x04) != (m_register[6] & 0x04)))
+    {
+      m_RNG = m_feedback_mask; // NCR-style PSG resets the LFSR only on a mode write which actually changes the state of bit 2 of register 6
+    }
+    m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
+  }
+  else
+  {
+    r = m_last_register;
+    //if ((m_ncr_style_psg) && ((r & 1) || (r == 6))) return; // NCR-style PSG ignores writes to regs 1, 3, 5, 6 and 7 with bit 7 clear; this behavior is not verified on hardware yet, uncomment it once verified.
+  }
 
-	c = r >> 1;
-	switch (r)
-	{
-	case 0: // tone 0: frequency
-	case 2: // tone 1: frequency
-	case 4: // tone 2: frequency
-		if ((data & 0x80) == 0)
-		{
-			m_register[r] = (m_register[r] & 0x0f) | ((data & 0x3f) << 4);
-		}
+  c = r >> 1;
+  switch (r)
+  {
+  case 0: // tone 0: frequency
+  case 2: // tone 1: frequency
+  case 4: // tone 2: frequency
+    if ((data & 0x80) == 0)
+    {
+      m_register[r] = (m_register[r] & 0x0f) | ((data & 0x3f) << 4);
+    }
 
-		if (m_register[r] != 0 || !m_sega_style_psg)
-		{
-			m_period[c] = m_register[r];
-		}
-		else
-		{
-			m_period[c] = 0x400;
-		}
+    if (m_register[r] != 0 || !m_sega_style_psg)
+    {
+      m_period[c] = m_register[r];
+    }
+    else
+    {
+      m_period[c] = 0x400;
+    }
 
-		if (r == 4)
-		{
-			// update noise shift frequency
-			if ((m_register[6] & 0x03) == 0x03)
-			{
-				m_period[3] = m_period[2] << 1;
-			}
-		}
-		break;
+    if (r == 4)
+    {
+      // update noise shift frequency
+      if ((m_register[6] & 0x03) == 0x03)
+      {
+        m_period[3] = m_period[2] << 1;
+      }
+    }
+    break;
 
-	case 1: // tone 0: volume
-	case 3: // tone 1: volume
-	case 5: // tone 2: volume
-	case 7: // noise: volume
-		m_volume[c] = m_vol_table[data & 0x0f];
-		if ((data & 0x80) == 0)
-		{
-			m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
-		}
-		break;
+  case 1: // tone 0: volume
+  case 3: // tone 1: volume
+  case 5: // tone 2: volume
+  case 7: // noise: volume
+    m_volume[c] = m_vol_table[data & 0x0f];
+    if ((data & 0x80) == 0)
+    {
+      m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
+    }
+    break;
 
-	case 6: // noise: frequency, mode
-		//if ((data & 0x80) == 0) logerror("SN76489Device: write to reg 6 with bit 7 clear; data was %03x, new write is %02x! report this to LN!\n", m_register[6], data);
-		if ((data & 0x80) == 0)
-		{
-			m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
-		}
-		n = m_register[6];
-		// N/512,N/1024,N/2048,Tone #3 output
-		m_period[3] = ((n & 3) == 3) ? (m_period[2] << 1) : (1 << (5 + (n & 3)));
-		if (!m_ncr_style_psg)
-		{
-			m_RNG = m_feedback_mask;
-		}
-		break;
-	}
+  case 6: // noise: frequency, mode
+    //if ((data & 0x80) == 0) logerror("SN76489Device: write to reg 6 with bit 7 clear; data was %03x, new write is %02x! report this to LN!\n", m_register[6], data);
+    if ((data & 0x80) == 0)
+    {
+      m_register[r] = (m_register[r] & 0x3f0) | (data & 0x0f);
+    }
+    n = m_register[6];
+    // N/512,N/1024,N/2048,Tone #3 output
+    m_period[3] = ((n & 3) == 3) ? (m_period[2] << 1) : (1 << (5 + (n & 3)));
+    if (!m_ncr_style_psg)
+    {
+      m_RNG = m_feedback_mask;
+    }
+    break;
+  }
 }
 
 inline bool SN76489Device::in_noise_mode()
 {
-	return ((m_register[6] & 4) != 0);
+  return ((m_register[6] & 4) != 0);
 }
 
 void SN76489Device::countdown_cycles()
 {
-	if (m_cycles_to_ready > 0)
-	{
-		m_cycles_to_ready--;
-		//if (m_ready_state==true) m_ready_handler(CLEAR_LINE);
-		m_ready_state = false;
-	}
-	else
-	{
-		//if (m_ready_state==false) m_ready_handler(ASSERT_LINE);
-		m_ready_state = true;
-	}
+  if (m_cycles_to_ready > 0)
+  {
+    m_cycles_to_ready--;
+    //if (m_ready_state==true) m_ready_handler(CLEAR_LINE);
+    m_ready_state = false;
+  }
+  else
+  {
+    //if (m_ready_state==false) m_ready_handler(ASSERT_LINE);
+    m_ready_state = true;
+  }
 }
 
 SN76489Device::stream_sample_t SN76489Device::sound_stream_update(stream_sample_t& lbuffer, stream_sample_t& rbuffer)
 {
-	// decrement Cycles to READY by one
-	countdown_cycles();
+  // decrement Cycles to READY by one
+  countdown_cycles();
 
-	// handle channels 0,1,2
-	for (int i = 0; i < 3; i++)
-	{
-		m_count[i]--;
-		if (m_count[i] <= 0)
-		{
-			m_output[i] ^= 1;
-			m_count[i] = static_cast<int32_t>(static_cast<float>(m_period[i]) / m_period_divider);
-		}
-	}
+  // handle channels 0,1,2
+  for (int i = 0; i < 3; i++)
+  {
+    m_count[i]--;
+    if (m_count[i] <= 0)
+    {
+      m_output[i] ^= 1;
+      m_count[i] = static_cast<int32_t>(static_cast<float>(m_period[i]) / m_period_divider);
+    }
+  }
 
-	// handle channel 3
-	m_count[3]--;
-	if (m_count[3] <= 0)
-	{
-		// if noisemode is 1, both taps are enabled
-		// if noisemode is 0, the lower tap, whitenoisetap2, is held at 0
-		// The != was a bit-XOR (^) before
-		if (((m_RNG & m_whitenoise_tap1)!=0) != (((m_RNG & m_whitenoise_tap2)!=(m_ncr_style_psg?m_whitenoise_tap2:0)) && in_noise_mode()))
-		{
-			m_RNG >>= 1;
-			m_RNG |= m_feedback_mask;
-		}
-		else
-		{
-			m_RNG >>= 1;
-		}
-		m_output[3] = m_RNG & 1;
+  // handle channel 3
+  m_count[3]--;
+  if (m_count[3] <= 0)
+  {
+    // if noisemode is 1, both taps are enabled
+    // if noisemode is 0, the lower tap, whitenoisetap2, is held at 0
+    // The != was a bit-XOR (^) before
+    if (((m_RNG & m_whitenoise_tap1) != 0) != (((m_RNG & m_whitenoise_tap2) != (uint32_t)(m_ncr_style_psg ? m_whitenoise_tap2 : 0)) && in_noise_mode()))
+    {
+      m_RNG >>= 1;
+      m_RNG |= m_feedback_mask;
+    }
+    else
+    {
+      m_RNG >>= 1;
+    }
+    m_output[3] = m_RNG & 1;
 
-		m_count[3] = static_cast<int32_t>(static_cast<float>(m_period[3]) / m_period_divider);
-	}
+    m_count[3] = static_cast<int32_t>(static_cast<float>(m_period[3]) / m_period_divider);
+  }
 
-	int16_t out;
-	int16_t out2 = 0;
+  int32_t out;
+  int32_t out2 = 0;
 
-	if (m_stereo)
-	{
-		out = ((((m_stereo_mask & 0x10)!=0) && (m_output[0]!=0))? m_volume[0] : 0)
-			+ ((((m_stereo_mask & 0x20)!=0) && (m_output[1]!=0))? m_volume[1] : 0)
-			+ ((((m_stereo_mask & 0x40)!=0) && (m_output[2]!=0))? m_volume[2] : 0)
-			+ ((((m_stereo_mask & 0x80)!=0) && (m_output[3]!=0))? m_volume[3] : 0);
+  if (m_stereo)
+  {
+    out = ((((m_stereo_mask & 0x10) != 0) && (m_output[0] != 0)) ? m_volume[0] : 0)
+      + ((((m_stereo_mask & 0x20) != 0) && (m_output[1] != 0)) ? m_volume[1] : 0)
+      + ((((m_stereo_mask & 0x40) != 0) && (m_output[2] != 0)) ? m_volume[2] : 0)
+      + ((((m_stereo_mask & 0x80) != 0) && (m_output[3] != 0)) ? m_volume[3] : 0);
 
-		out2= ((((m_stereo_mask & 0x1)!=0) && (m_output[0]!=0))? m_volume[0] : 0)
-			+ ((((m_stereo_mask & 0x2)!=0) && (m_output[1]!=0))? m_volume[1] : 0)
-			+ ((((m_stereo_mask & 0x4)!=0) && (m_output[2]!=0))? m_volume[2] : 0)
-			+ ((((m_stereo_mask & 0x8)!=0) && (m_output[3]!=0))? m_volume[3] : 0);
-	}
-	else
-	{
-		out= ((m_output[0]!=0)? m_volume[0]:0)
-			+((m_output[1]!=0)? m_volume[1]:0)
-			+((m_output[2]!=0)? m_volume[2]:0)
-			+((m_output[3]!=0)? m_volume[3]:0);
-	}
+    out2 = ((((m_stereo_mask & 0x1) != 0) && (m_output[0] != 0)) ? m_volume[0] : 0)
+      + ((((m_stereo_mask & 0x2) != 0) && (m_output[1] != 0)) ? m_volume[1] : 0)
+      + ((((m_stereo_mask & 0x4) != 0) && (m_output[2] != 0)) ? m_volume[2] : 0)
+      + ((((m_stereo_mask & 0x8) != 0) && (m_output[3] != 0)) ? m_volume[3] : 0);
+  }
+  else
+  {
+    out = ((m_output[0] != 0) ? m_volume[0] : 0)
+      + ((m_output[1] != 0) ? m_volume[1] : 0)
+      + ((m_output[2] != 0) ? m_volume[2] : 0)
+      + ((m_output[3] != 0) ? m_volume[3] : 0);
+  }
 
-	if (m_negate)
-	{
-		out = -out;
-		out2 = -out2;
-	}
+  if (m_negate)
+  {
+    out = -out;
+    out2 = -out2;
+  }
 
-	lbuffer = out;
-	rbuffer = out2;
+  lbuffer = (SN76489Device::stream_sample_t)out;
+  rbuffer = (SN76489Device::stream_sample_t)out2;
 
-	return lbuffer + rbuffer;
+  return lbuffer + rbuffer;
 }
 

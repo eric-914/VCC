@@ -9845,14 +9845,14 @@ void MakeCMPpalette(void)
 		237,251,251,251,252,240,183,255
 	};
 
-	float gamma = 1.4;
+	float gamma = 1.4f;
 	if (PaletteType == 1) { OutputDebugString("Loading new CMP palette.\n"); }
 	else { OutputDebugString("Loading old CMP palette.\n"); }
 	for (Index = 0; Index <= 63; Index++)
 	{
 		if (PaletteType == 1) 
 		{
-			if (Index > 39) { gamma = 1.1; }
+			if (Index > 39) { gamma = 1.1f; }
 			if (Index > 55) { gamma = 1; }
 
 			//int tmp = 0;
