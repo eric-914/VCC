@@ -40,9 +40,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014mmu.h"
 
-//int CPUExeca(int);
-
-//****************************************
 static double SoundInterupt = 0;
 static double PicosToSoundSample = SoundInterupt;
 static double CyclesPerSecord = (COLORBURST / 4) * (TARGETFRAMERATE / FRAMESPERSECORD);
@@ -53,7 +50,6 @@ static double CycleDrift = 0;
 static double CyclesThisLine = 0;
 static unsigned int StateSwitch = 0;
 unsigned short SoundRate = 0;
-//*****************************************************
 
 static unsigned char HorzInteruptEnabled = 0, VertInteruptEnabled = 0;
 static unsigned char TopBoarder = 0, BottomBoarder = 0;
@@ -115,23 +111,27 @@ float RenderFrame(SystemState* RFState)
   {
     if (!(FrameCounter % RFState->FrameSkip))
       DrawTopBoarder[RFState->BitDepth](RFState);
+
     CPUCycle();
   }
 
   for (RFState->LineCounter = 0;RFState->LineCounter < LinesperScreen;RFState->LineCounter++)		//Active Display area		
   {
     CPUCycle();
+
     if (!(FrameCounter % RFState->FrameSkip))
       UpdateScreen[RFState->BitDepth](RFState);
   }
+
   irq_fs(1);  //End of active display FS goes High to Low
+
   if (VertInteruptEnabled)
     GimeAssertVertInterupt();
+
   for (RFState->LineCounter = 0;RFState->LineCounter < (BottomBoarder);RFState->LineCounter++)	// Bottom boarder
   {
-    //		if ( (RFState->LineCounter==1) & (VertInteruptEnabled) )	//Vert Interupt occurs 1 line into
-    //			GimeAssertVertInterupt();								// Bottom Boarder MPATDEMO
     CPUCycle();
+
     if (!(FrameCounter % RFState->FrameSkip))
       DrawBottomBoarder[RFState->BitDepth](RFState);
   }
@@ -150,48 +150,35 @@ float RenderFrame(SystemState* RFState)
   case 0:
     FlushAudioBuffer(AudioBuffer, AudioIndex << 2);
     break;
+
   case 1:
     FlushCassetteBuffer(CassBuffer, AudioIndex);
     break;
+
   case 2:
     LoadCassetteBuffer(CassBuffer);
 
     break;
   }
+
   AudioIndex = 0;
 
-
-  /*
-    //Debug Code
-    Frames++;
-    if (Frames==60)
-    {
-      Frames=0;
-      sprintf(Msga,"Total Cycles = %i Scan lines = %i LPS= %i\n",TotalCycles,Scans,LinesperScreen+TopBoarder+BottomBoarder+19);
-      WriteLog(Msga,0);
-      TotalCycles=0;
-      Scans=0;
-    }
-  */
   return(CalculateFPS());
 }
 
 void SetClockSpeed(unsigned short Cycles)
 {
   OverClock = Cycles;
-  return;
 }
 
 void SetHorzInteruptState(unsigned char State)
 {
   HorzInteruptEnabled = !!State;
-  return;
 }
 
 void SetVertInteruptState(unsigned char State)
 {
   VertInteruptEnabled = !!State;
-  return;
 }
 
 void SetLinesperScreen(unsigned char Lines)
@@ -200,32 +187,37 @@ void SetLinesperScreen(unsigned char Lines)
   LinesperScreen = Lpf[Lines];
   TopBoarder = VcenterTable[Lines];
   BottomBoarder = 243 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
-  return;
 }
-
 
 _inline int CPUCycle(void)
 {
   if (HorzInteruptEnabled)
     GimeAssertHorzInterupt();
+
   irq_hs(ANY);
   PakTimer();
   PicosThisLine += PicosPerLine;
+
   while (PicosThisLine > 1)
   {
     StateSwitch = 0;
+
     if ((PicosToInterupt <= PicosThisLine) & IntEnable)	//Does this iteration need to Timer Interupt
       StateSwitch = 1;
+
     if ((PicosToSoundSample <= PicosThisLine) & SndEnable)//Does it need to collect an Audio sample
       StateSwitch += 2;
+
     switch (StateSwitch)
     {
     case 0:		//No interupts this line
       CyclesThisLine = CycleDrift + (PicosThisLine * CyclesPerLine * OverClock / PicosPerLine);
+
       if (CyclesThisLine >= 1)	//Avoid un-needed CPU engine calls
         CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       else
         CycleDrift = CyclesThisLine;
+
       PicosToInterupt -= PicosThisLine;
       PicosToSoundSample -= PicosThisLine;
       PicosThisLine = 0;
@@ -234,10 +226,12 @@ _inline int CPUCycle(void)
     case 1:		//Only Interupting
       PicosThisLine -= PicosToInterupt;
       CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+
       if (CyclesThisLine >= 1)
         CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       else
         CycleDrift = CyclesThisLine;
+
       GimeAssertTimerInterupt();
       PicosToSoundSample -= PicosToInterupt;
       PicosToInterupt = MasterTickCounter;
@@ -246,10 +240,12 @@ _inline int CPUCycle(void)
     case 2:		//Only Sampling
       PicosThisLine -= PicosToSoundSample;
       CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+
       if (CyclesThisLine >= 1)
         CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       else
         CycleDrift = CyclesThisLine;
+
       AudioEvent();
       PicosToInterupt -= PicosToSoundSample;
       PicosToSoundSample = SoundInterupt;
@@ -260,20 +256,24 @@ _inline int CPUCycle(void)
       {
         PicosThisLine -= PicosToSoundSample;
         CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+        
         if (CyclesThisLine >= 1)
           CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         else
           CycleDrift = CyclesThisLine;
+
         AudioEvent();
         PicosToInterupt -= PicosToSoundSample;
         PicosToSoundSample = SoundInterupt;
         PicosThisLine -= PicosToInterupt;
 
         CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+        
         if (CyclesThisLine >= 1)
           CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         else
           CycleDrift = CyclesThisLine;
+
         GimeAssertTimerInterupt();
         PicosToSoundSample -= PicosToInterupt;
         PicosToInterupt = MasterTickCounter;
@@ -284,37 +284,45 @@ _inline int CPUCycle(void)
       {
         PicosThisLine -= PicosToInterupt;
         CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+        
         if (CyclesThisLine >= 1)
           CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         else
           CycleDrift = CyclesThisLine;
+
         GimeAssertTimerInterupt();
         PicosToSoundSample -= PicosToInterupt;
         PicosToInterupt = MasterTickCounter;
         PicosThisLine -= PicosToSoundSample;
         CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+        
         if (CyclesThisLine >= 1)
           CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         else
           CycleDrift = CyclesThisLine;
+
         AudioEvent();
         PicosToInterupt -= PicosToSoundSample;
         PicosToSoundSample = SoundInterupt;
         break;
       }
+
       //They are the same (rare)
       PicosThisLine -= PicosToInterupt;
       CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
+
       if (CyclesThisLine > 1)
         CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       else
         CycleDrift = CyclesThisLine;
+
       GimeAssertTimerInterupt();
       AudioEvent();
       PicosToInterupt = MasterTickCounter;
       PicosToSoundSample = SoundInterupt;
     }
   }
+
   if (!clipboard.empty()) {
     char tmp[] = { 0x00 };
     char kbstate = 2;
@@ -324,35 +332,44 @@ _inline int CPUCycle(void)
     //Set it to off. We need speed for this!
     if (tmpthrottle == 0) {
       tmpthrottle = SetSpeedThrottle(QUERY);
+
       if (tmpthrottle == 0) { tmpthrottle = 2; } // 2 = No throttle.
     }
+
     SetSpeedThrottle(0);
 
     strcpy(tmp, clipboard.substr(0, 1).c_str());
+
     if (clipcycle == 1) {
       if (tmp[z] == 0x36) {
         vccKeyboardHandleKey(0x36, 0x36, kEventKeyDown);  //Press shift and...
         clipboard = clipboard.substr(1, clipboard.length() - 1); // get the next key in the string
         strcpy(tmp, clipboard.substr(0, 1).c_str());
         vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
+
         if (tmp[z] == 0x1c) {
           cyclewait = 6000;
         }
-        else { cyclewait = 2000; }
-
-
+        else { 
+          cyclewait = 2000; 
+        }
       }
       else {
         vccKeyboardHandleKey(tmp[z], tmp[z], kEventKeyDown);
+
         if (tmp[z] == 0x1c) {
           cyclewait = 6000;
         }
-        else { cyclewait = 2000; }
+        else { 
+          cyclewait = 2000; 
+        }
       }
 
       clipboard = clipboard.substr(1, clipboard.length() - 1);
+
       if (clipboard.empty()) {
         SetPaste(false);
+
         //Done pasting. Reset throttle to original state
         if (tmpthrottle == 2) { SetSpeedThrottle(0); }
         else { SetSpeedThrottle(1); }
@@ -369,41 +386,41 @@ _inline int CPUCycle(void)
       if (!GetPaste()) {
         clipboard.clear();
         SetPaste(false);
+
         if (tmpthrottle == 2) { SetSpeedThrottle(0); }
         else { SetSpeedThrottle(1); }
       }
     }
-    clipcycle++; if (clipcycle > cyclewait) { clipcycle = 1; }
 
+    clipcycle++; 
+    
+    if (clipcycle > cyclewait) { clipcycle = 1; }
   }
+
   return(0);
 }
 
 void SetTimerInteruptState(unsigned char State)
 {
   TimerInteruptEnabled = State;
-  return;
 }
 
 void SetInteruptTimer(unsigned short Timer)
 {
   UnxlatedTickCounter = (Timer & 0xFFF);
   SetMasterTickCounter();
-  return;
 }
 
 void SetTimerClockRate(unsigned char Tmp)	//1= 279.265nS (1/ColorBurst)
-{											//0= 63.695uS  (1/60*262)  1 scanline time
+{											                    //0= 63.695uS  (1/60*262)  1 scanline time
   TimerClockRate = !!Tmp;
   SetMasterTickCounter();
-  return;
 }
 
 void SetMasterTickCounter(void)
 {
-  //	double Rate[2]={63613.2315,279.265};
-  //	double Rate[2]={279.265*228,279.265};
   double Rate[2] = { PICOSECOND / (TARGETFRAMERATE * LINESPERSCREEN),PICOSECOND / COLORBURST };
+
   if (UnxlatedTickCounter == 0)
     MasterTickCounter = 0;
   else
@@ -414,11 +431,11 @@ void SetMasterTickCounter(void)
     OldMaster = MasterTickCounter;
     PicosToInterupt = MasterTickCounter;
   }
+
   if (MasterTickCounter != 0)
     IntEnable = 1;
   else
     IntEnable = 0;
-  return;
 }
 
 void MiscReset(void)
@@ -431,8 +448,8 @@ void MiscReset(void)
   MasterTickCounter = 0;
   UnxlatedTickCounter = 0;
   OldMaster = 0;
-  //*************************
-  SoundInterupt = 0;//PICOSECOND/44100;
+
+  SoundInterupt = 0;
   PicosToSoundSample = SoundInterupt;
   CycleDrift = 0;
   CyclesThisLine = 0;
@@ -440,25 +457,15 @@ void MiscReset(void)
   IntEnable = 0;
   AudioIndex = 0;
   ResetAudio();
-  return;
 }
-/*
-int CPUExeca(int Loops)
-{
-  int RetVal=0;
-  TotalCycles+=Loops;
-  RetVal=CPUExec(Loops);
-  TotalCycles+=abs(RetVal);
-  return(RetVal);
-}
-*/
+
 unsigned short SetAudioRate(unsigned short Rate)
 {
-
   SndEnable = 1;
   SoundInterupt = 0;
   CycleDrift = 0;
   AudioIndex = 0;
+
   if (Rate != 0)	//Force Mute or 44100Hz
     Rate = 44100;
 
@@ -469,31 +476,27 @@ unsigned short SetAudioRate(unsigned short Rate)
     SoundInterupt = PICOSECOND / Rate;
     PicosToSoundSample = SoundInterupt;
   }
+
   SoundRate = Rate;
+
   return(0);
 }
 
 void AudioOut(void)
 {
-
   AudioBuffer[AudioIndex++] = GetDACSample();
-  return;
 }
 
 void CassOut(void)
 {
   CassBuffer[AudioIndex++] = GetCasSample();
-  return;
 }
 
 void CassIn(void)
 {
   AudioBuffer[AudioIndex] = GetDACSample();
   SetCassetteSample(CassBuffer[AudioIndex++]);
-  return;
 }
-
-
 
 unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
 {
@@ -508,7 +511,7 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 
     AudioEvent = AudioOut;
     SetAudioRate(PrimarySoundRate);
-    //		SetAudioRate(44100);
+
     break;
 
   case 1:
@@ -530,13 +533,12 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
 
   if (Mode != LastMode)
   {
-
-    //		if (LastMode==1)
-    //			FlushCassetteBuffer(CassBuffer,AudioIndex);	//get the last few bytes
     AudioIndex = 0;	//Reset Buffer on true mode switch
     LastMode = Mode;
   }
+
   SoundOutputMode = Mode;
+
   return(SoundOutputMode);
 }
 
@@ -549,21 +551,26 @@ void PasteText() {
   bool CSHIFT;
   bool LCNTRL;
   int GraphicsMode = GetGraphicsMode();
+
   if (GraphicsMode != 0) {
     int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
+
     if (tmp != 6) { return; }
   }
-  SetPaste(true);
 
+  SetPaste(true);
 
   //This sets the keyboard to Natural,
   //but we need to read it first so we can set it back
   CurrentKeyMap = GetKeyboardLayout();
   vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
   cliptxt = GetClipboardText().c_str();
+
   if (PasteWithNew) { cliptxt = "NEW\n" + cliptxt; }
+
   for (int t = 0; t < (int)cliptxt.length(); t++) {
     char tmp = cliptxt[t];
+
     if (tmp != (char)'\n') {
       lines += tmp;
     }
@@ -573,14 +580,17 @@ void PasteText() {
         string main = lines.substr(0, 249);
         string extra = lines.substr(249, lines.length() - 249);
         string spaces;
+
         for (int p = 1; p < 249; p++) {
           spaces.append(" ");
         }
+
         string linestr = lines.substr(0, b);
         lines = main + "\n\nEDIT " + linestr + "\n" + spaces + "I" + extra + "\n";
         clipparse += lines;
         lines.clear();
       }
+
       if (lines.length() >= 257 && codepaste == true) {
         // Line is too long to handle. Truncate.
         int b = lines.find(" ");
@@ -589,16 +599,19 @@ void PasteText() {
         MessageBox(0, linestr.c_str(), "Clipboard", 0);
         lines = (lines.substr(0, 249));
       }
+
       if (lines.length() <= 249 || codepaste == false) {
         // Just a regular line.
         clipparse += lines + "\n";
         lines.clear();
       }
     }
+
     if (t == cliptxt.length() - 1) {
       clipparse += lines;
     }
   }
+
   cliptxt = clipparse;
 
   for (int pp = 0; pp <= (int)cliptxt.size(); pp++) {
@@ -606,6 +619,7 @@ void PasteText() {
     CSHIFT = FALSE;
     LCNTRL = FALSE;
     letter = cliptxt[pp];
+
     switch (letter)
     {
     case '@': sc = 0x03; CSHIFT = TRUE; break;
@@ -707,23 +721,30 @@ void PasteText() {
     case 0x09: sc = 0x39; break; // TAB
     default: sc = 0xFF;	break;
     }
+
     if (CSHIFT) { out += 0x36; CSHIFT = FALSE; }
     if (LCNTRL) { out += 0x1D; LCNTRL = FALSE; }
-    out += sc;
 
+    out += sc;
   }
+
   clipboard = out;
 }
 
 std::string GetClipboardText()
 {
   if (!OpenClipboard(nullptr)) { MessageBox(0, "Unable to open clipboard.", "Clipboard", 0); return(""); }
+
   HANDLE hClip = GetClipboardData(CF_TEXT);
+
   if (hClip == nullptr) { CloseClipboard(); MessageBox(0, "No text found in clipboard.", "Clipboard", 0); return(""); }
+
   char* tmp = static_cast<char*>(GlobalLock(hClip));
+
   if (tmp == nullptr) {
     CloseClipboard();  MessageBox(0, "NULL Pointer", "Clipboard", 0); return("");
   }
+
   std::string out(tmp);
   GlobalUnlock(hClip);
   CloseClipboard();
@@ -735,13 +756,16 @@ bool SetClipboard(string sendout) {
   const char* clipout = sendout.c_str();
   const size_t len = strlen(clipout) + 1;
   HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+
   if (hMem == 0) throw;
+
   memcpy(GlobalLock(hMem), clipout, len);
   GlobalUnlock(hMem);
   OpenClipboard(0);
   EmptyClipboard();
   SetClipboardData(CF_TEXT, hMem);
   CloseClipboard();
+
   return TRUE;
 }
 
@@ -751,16 +775,18 @@ void CopyText() {
   int lines;
   int offset;
   int lastchar;
-  //bool os9;
   int BytesPerRow = GetBytesPerRow();
   int GraphicsMode = GetGraphicsMode();
   unsigned int screenstart = GetStartOfVidram();
+
   if (GraphicsMode != 0) {
     MessageBox(0, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0);
     return;
   }
+
   string out;
   string tmpline;
+
   if (BytesPerRow == 32) { lines = 15; }
   else { lines = 23; }
 
@@ -802,16 +828,21 @@ void CopyText() {
       lastchar = 0;
       tmpline.clear();
       tmp = 0;
+
       for (idx = 0; idx < BytesPerRow; idx++) {
         tmp = MemRead8(0x0400 + y * BytesPerRow + idx);
+
         if (tmp == 32 || tmp == 64 || tmp == 96) { tmp = 30 + offset; }
         else { lastchar = idx + 1; }
+
         tmpline += pcchars[tmp - offset];
       }
-      tmpline = tmpline.substr(0, lastchar);
-      if (lastchar != 0) { out += tmpline; out += "\n"; }
 
+      tmpline = tmpline.substr(0, lastchar);
+
+      if (lastchar != 0) { out += tmpline; out += "\n"; }
     }
+
     if (out == "") { MessageBox(0, "No text found on screen.", "Clipboard", 0); }
   }
   else if (BytesPerRow == 40 || BytesPerRow == 80) {
@@ -852,18 +883,22 @@ void CopyText() {
       lastchar = 0;
       tmpline.clear();
       tmp = 0;
+
       for (idx = 0; idx < BytesPerRow * 2; idx += 2) {
         tmp = GetMem(screenstart + y * (BytesPerRow * 2) + idx);
+
         if (tmp == 32 || tmp == 64 || tmp == 96) { tmp = offset; }
         else { lastchar = idx / 2 + 1; }
+
         tmpline += pcchars[tmp - offset];
       }
+
       tmpline = tmpline.substr(0, lastchar);
+
       if (lastchar != 0) { out += tmpline; out += "\n"; }
     }
   }
 
-  //if (BytesPerRow == 32) { out = out.substr(0, out.length() - 2); }
   bool succ = SetClipboard(out);
 }
 
@@ -872,13 +907,15 @@ void PasteBASIC() {
   PasteText();
   codepaste = false;
 }
+
 void PasteBASICWithNew() {
   int tmp = MessageBox(0, "Warning: This operation will erase the Coco's BASIC memory\nbefore pasting. Continue?", "Clipboard", MB_YESNO);
+
   if (tmp != 6) { return; }
+
   codepaste = true;
   PasteWithNew = true;
   PasteText();
   codepaste = false;
   PasteWithNew = false;
 }
-

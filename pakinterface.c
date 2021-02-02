@@ -89,6 +89,7 @@ static char PakPath[MAX_PATH];
 
 static char Did = 0;
 int FileID(char*);
+
 typedef struct {
   char MenuName[512];
   int MenuId;
@@ -99,23 +100,20 @@ static Dmenu MenuItem[100];
 static unsigned char MenuIndex = 0;
 static HMENU hMenu = NULL;
 static HMENU hSubMenu[64];
-
-
-static 	char Modname[MAX_PATH] = "Blank";
+static char Modname[MAX_PATH] = "Blank";
 
 void PakTimer(void)
 {
   if (HeartBeat != NULL)
     HeartBeat();
-  return;
 }
 
 void ResetBus(void)
 {
   BankedCartOffset = 0;
+
   if (ModuleReset != NULL)
     ModuleReset();
-  return;
 }
 
 void GetModuleStatus(SystemState* SMState)
@@ -124,7 +122,6 @@ void GetModuleStatus(SystemState* SMState)
     ModuleStatus(SMState->StatusLine);
   else
     sprintf(SMState->StatusLine, "");
-  return;
 }
 
 unsigned char PackPortRead(unsigned char port)
@@ -146,28 +143,28 @@ void PackPortWrite(unsigned char Port, unsigned char Data)
   if ((Port == 0x40) && (RomPackLoaded == true)) {
     BankedCartOffset = (Data & 15) << 14;
   }
-
-  return;
 }
 
 unsigned char PackMem8Read(unsigned short Address)
 {
   if (PakMemRead8 != NULL)
     return(PakMemRead8(Address & 32767));
+
   if (ExternalRomBuffer != NULL)
     return(ExternalRomBuffer[(Address & 32767) + BankedCartOffset]);
+
   return(0);
 }
 
 void PackMem8Write(unsigned char Port, unsigned char Data)
 {
-  return;
 }
 
 unsigned short PackAudioSample(void)
 {
   if (ModuleAudioSample != NULL)
     return(ModuleAudioSample());
+
   return(NULL);
 }
 
@@ -190,6 +187,7 @@ int LoadCart(void)
   ofn.lpstrInitialDir = PakPath;						// initial directory
   ofn.lpstrTitle = TEXT("Load Program Pack");	// title bar string
   ofn.Flags = OFN_HIDEREADONLY;
+
   if (GetOpenFileName(&ofn))
     if (!InsertModule(szFileName)) {
       string tmp = ofn.lpstrFile;
@@ -198,6 +196,7 @@ int LoadCart(void)
       tmp = tmp.substr(0, idx);
       strcpy(PakPath, tmp.c_str());
       WritePrivateProfileString("DefaultPaths", "PakPath", PakPath, temp);
+
       return(0);
     }
 
@@ -214,7 +213,6 @@ int InsertModule(char* ModulePath)
   unsigned char FileType = 0;
   FileType = FileID(ModulePath);
 
-
   switch (FileType)
   {
   case 0:		//File doesn't exist
@@ -222,7 +220,6 @@ int InsertModule(char* ModulePath)
     break;
 
   case 2:		//File is a ROM image
-
     UnloadDll();
     load_ext_rom(ModulePath);
     strncpy(Modname, ModulePath, MAX_PATH);
@@ -237,8 +234,10 @@ int InsertModule(char* ModulePath)
   case 1:		//File is a DLL
     UnloadDll();
     hinstLib = LoadLibrary(ModulePath);
+
     if (hinstLib == NULL)
       return(NOMODULE);
+
     SetCart(0);
     GetModuleName = (GETNAME)GetProcAddress(hinstLib, "ModuleName");
     ConfigModule = (CONFIGIT)GetProcAddress(hinstLib, "ModuleConfig");
@@ -254,96 +253,116 @@ int InsertModule(char* ModulePath)
     ModuleReset = (MODULERESET)GetProcAddress(hinstLib, "ModuleReset");
     SetIniPath = (SETINIPATH)GetProcAddress(hinstLib, "SetIniPath");
     PakSetCart = (SETCARTPOINTER)GetProcAddress(hinstLib, "SetCart");
+    
     if (GetModuleName == NULL)
     {
       FreeLibrary(hinstLib);
       hinstLib = NULL;
+
       return(NOTVCC);
     }
+
     BankedCartOffset = 0;
+
     if (DmaMemPointer != NULL)
       DmaMemPointer(MemRead8, MemWrite8);
+
     if (SetInteruptCallPointer != NULL)
       SetInteruptCallPointer(CPUAssertInterupt);
 
-    GetModuleName(Modname, CatNumber, DynamicMenuCallback);  //Instanciate the menus from HERE!
+    GetModuleName(Modname, CatNumber, DynamicMenuCallback);  //Instantiate the menus from HERE!
     sprintf(Temp, "Configure %s", Modname);
 
     strcat(String, "Module Name: ");
     strcat(String, Modname);
     strcat(String, "\n");
+
     if (ConfigModule != NULL)
     {
       ModualParms |= 1;
       strcat(String, "Has Configurable options\n");
     }
+
     if (PakPortWrite != NULL)
     {
       ModualParms |= 2;
       strcat(String, "Is IO writable\n");
     }
+
     if (PakPortRead != NULL)
     {
       ModualParms |= 4;
       strcat(String, "Is IO readable\n");
     }
+
     if (SetInteruptCallPointer != NULL)
     {
       ModualParms |= 8;
       strcat(String, "Generates Interupts\n");
     }
+
     if (DmaMemPointer != NULL)
     {
       ModualParms |= 16;
       strcat(String, "Generates DMA Requests\n");
     }
+
     if (HeartBeat != NULL)
     {
       ModualParms |= 32;
       strcat(String, "Needs Heartbeat\n");
     }
+
     if (ModuleAudioSample != NULL)
     {
       ModualParms |= 64;
       strcat(String, "Analog Audio Outputs\n");
     }
+
     if (PakMemWrite8 != NULL)
     {
       ModualParms |= 128;
       strcat(String, "Needs ChipSelect Write\n");
     }
+
     if (PakMemRead8 != NULL)
     {
       ModualParms |= 256;
       strcat(String, "Needs ChipSelect Read\n");
     }
+
     if (ModuleStatus != NULL)
     {
       ModualParms |= 512;
       strcat(String, "Returns Status\n");
     }
+
     if (ModuleReset != NULL)
     {
       ModualParms |= 1024;
       strcat(String, "Needs Reset Notification\n");
     }
+
     if (SetIniPath != NULL)
     {
       ModualParms |= 2048;
       GetIniFilePath(TempIni);
       SetIniPath(TempIni);
     }
+
     if (PakSetCart != NULL)
     {
       ModualParms |= 4096;
       strcat(String, "Can Assert CART\n");
       PakSetCart(SetCart);
     }
+
     strcpy(DllPath, ModulePath);
     EmuState.ResetPending = 2;
     return(0);
     break;
   }
+
   return(NOMODULE);
 }
 
@@ -366,18 +385,22 @@ int load_ext_rom(char filename[MAX_PATH])
   // If memory was unable to be allocated, fail
   if (ExternalRomBuffer == nullptr) {
     MessageBox(0, "cant allocate ram", "Ok", 0);
+    
     return 0;
   }
 
   // Open the ROM file, fail if unable to
   FILE* rom_handle = fopen(filename, "rb");
+
   if (rom_handle == nullptr) return 0;
 
   // Load the file, one byte at a time.. (TODO: Get size and read entire block)
   size_t index = 0;
+
   while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
     ExternalRomBuffer[index++] = fgetc(rom_handle);
   }
+
   fclose(rom_handle);
 
   UnloadDll();
@@ -394,6 +417,7 @@ void UnloadDll(void)
     MessageBox(0, "Close Configuration Dialog before unloading", "Ok", 0);
     return;
   }
+
   GetModuleName = NULL;
   ConfigModule = NULL;
   PakPortWrite = NULL;
@@ -406,26 +430,24 @@ void UnloadDll(void)
   ModuleStatus = NULL;
   ModuleAudioSample = NULL;
   ModuleReset = NULL;
+  
   if (hinstLib != NULL)
     FreeLibrary(hinstLib);
+
   hinstLib = NULL;
   DynamicMenuCallback("", 0, 0); //Refresh Menus
   DynamicMenuCallback("", 1, 0);
-  //	DynamicMenuCallback("",0,0);
-  return;
 }
 
 void GetCurrentModule(char* DefaultModule)
 {
   strcpy(DefaultModule, DllPath);
-  return;
 }
 
 void UpdateBusPointer(void)
 {
   if (SetInteruptCallPointer != NULL)
     SetInteruptCallPointer(CPUAssertInterupt);
-  return;
 }
 
 void UnloadPack(void)
@@ -439,12 +461,12 @@ void UnloadPack(void)
   if (ExternalRomBuffer != nullptr) {
     free(ExternalRomBuffer);
   }
+
   ExternalRomBuffer = nullptr;
 
   EmuState.ResetPending = 2;
   DynamicMenuCallback("", 0, 0); //Refresh Menus
   DynamicMenuCallback("", 1, 0);
-  return;
 }
 
 int FileID(char* Filename)
@@ -452,6 +474,7 @@ int FileID(char* Filename)
   FILE* DummyHandle = NULL;
   char Temp[3] = "";
   DummyHandle = fopen(Filename, "rb");
+  
   if (DummyHandle == NULL)
     return(0);	//File Doesn't exist
 
@@ -459,8 +482,10 @@ int FileID(char* Filename)
   Temp[1] = fgetc(DummyHandle);
   Temp[2] = 0;
   fclose(DummyHandle);
+  
   if (strcmp(Temp, "MZ") == 0)
     return(1);	//DLL File
+
   return(2);		//Rom Image 
 }
 
@@ -471,20 +496,22 @@ void DynamicMenuActivated(unsigned char MenuItem)
   case 1:
     LoadPack();
     break;
+
   case 2:
     UnloadPack();
     break;
+
   default:
     if (ConfigModule != NULL)
       ConfigModule(MenuItem);
     break;
   }
-  return;
 }
 
 void DynamicMenuCallback(char* MenuName, int MenuId, int Type)
 {
   char Temp[256] = "";
+
   //MenuId=0 Flush Buffer MenuId=1 Done 
   switch (MenuId)
   {
@@ -508,7 +535,6 @@ void DynamicMenuCallback(char* MenuName, int MenuId, int Type)
     MenuIndex++;
     break;
   }
-  return;
 }
 
 void RefreshDynamicMenu(void)
@@ -518,6 +544,7 @@ void RefreshDynamicMenu(void)
   unsigned char TempIndex = 0, Index = 0;
   static HWND hOld;
   int SubMenuIndex = 0;
+
   if ((hMenu == NULL) | (EmuState.WindowHandle != hOld))
     hMenu = GetMenu(EmuState.WindowHandle);
   else
@@ -535,6 +562,7 @@ void RefreshDynamicMenu(void)
   Mii.cch = strlen(MenuTitle);
   InsertMenuItem(hMenu, 3, TRUE, &Mii);
   SubMenuIndex++;
+
   for (TempIndex = 0;TempIndex < MenuIndex;TempIndex++)
   {
     if (strlen(MenuItem[TempIndex].MenuName) == 0)
@@ -569,7 +597,6 @@ void RefreshDynamicMenu(void)
       Mii.cch = strlen(MenuItem[TempIndex].MenuName);
       InsertMenuItem(hSubMenu[SubMenuIndex], 0, FALSE, &Mii);
 
-
       break;
 
     case STANDALONE:
@@ -579,8 +606,6 @@ void RefreshDynamicMenu(void)
         Mii.cbSize = sizeof(MENUITEMINFO);
         Mii.fMask = MIIM_TYPE | MIIM_ID;
         Mii.fType = MF_SEPARATOR;
-        //	Mii.fType = MF_MENUBARBREAK;
-        //	Mii.fType = MFT_STRING;
         Mii.wID = MenuItem[TempIndex].MenuId;
         Mii.hSubMenu = hMenu;
         Mii.dwTypeData = MenuItem[TempIndex].MenuName;
@@ -602,7 +627,6 @@ void RefreshDynamicMenu(void)
       break;
     }
   }
-  DrawMenuBar(EmuState.WindowHandle);
-  return;
-}
 
+  DrawMenuBar(EmuState.WindowHandle);
+}

@@ -31,6 +31,7 @@ void WriteLog(char* Message, unsigned char Type)
 {
   static int newconsole = 0;
   unsigned long dummy;
+
   switch (Type)
   {
   case TOCONS:
@@ -38,6 +39,7 @@ void WriteLog(char* Message, unsigned char Type)
       // Write existing console. Create a new one if that fails
       hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
       char heading[] = "\n -- Vcc Log --\n";
+
       if (!WriteFile(hLog_Out, heading, strlen(heading), &dummy, 0)) {
         AllocConsole();
         hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -45,6 +47,7 @@ void WriteLog(char* Message, unsigned char Type)
         newconsole = 1;
       }
     }
+
     if (newconsole) {
       WriteConsole(hLog_Out, Message, strlen(Message), &dummy, 0);
     }
@@ -55,8 +58,10 @@ void WriteLog(char* Message, unsigned char Type)
 
   case TOFILE:
     if (fLogOut == NULL) fLogOut = fopen("c:\\VccLog.txt", "w");
+
     fprintf(fLogOut, "%s\r\n", Message);
     fflush(fLogOut);
+    
     break;
   }
 }
@@ -66,11 +71,12 @@ void CpuDump(void)
   FILE* disk_handle = NULL;
   int x;
   disk_handle = fopen("c:\\cpuspace_dump.txt", "wb");
+
   for (x = 0;x <= 65535;x++)
     fprintf(disk_handle, "%c", MemRead8(x));
+
   fflush(disk_handle);
   fclose(disk_handle);
-  return;
 }
 
 // PrintLogC - Put formatted string to the console
@@ -88,5 +94,6 @@ void PrintLogC(const void* fmt, ...)
 void OpenLogFile(char* logfile)
 {
   if (fLogOut == NULL) fclose(fLogOut);
+
   fLogOut = fopen(logfile, "wb");
 }

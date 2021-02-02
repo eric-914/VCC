@@ -33,7 +33,6 @@ float Static(SystemState*);
 POINT GetCurWindowSize();
 void DisplayFlip(SystemState*);
 
-
 #define MAX_LOADSTRING 100
 
 #endif

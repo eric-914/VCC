@@ -31,7 +31,6 @@ This file is part of VCC (Virtual Color Computer).
 #define MSABI __attribute__((ms_abi))
 #endif
 
-//Global variables for CPU Emulation-----------------------
 #define NTEST8(r) r>0x7F;
 #define NTEST16(r) r>0x7FFF;
 #define NTEST32(r) r>0x7FFFFFFF;
@@ -65,8 +64,8 @@ This file is part of VCC (Virtual Color Computer).
 #define M2827	19
 #define M3726	20
 #define M3130	21
-#define M42 22
-#define M53 23
+#define M42   22
+#define M53   23
 
 typedef union
 {
@@ -185,9 +184,6 @@ static unsigned char* NatEmuCycles[] =
   &NatEmuCycles53
 };
 
-//END Global variables for CPU Emulation-------------------
-
-//Fuction Prototypes---------------------------------------
 static unsigned short CalculateEA(unsigned char);
 void InvalidInsHandler(void);
 void DivbyZero(void);
@@ -204,26 +200,23 @@ void Page_2(void);
 void Page_3(void);
 void MemWrite32(unsigned int, unsigned short);
 unsigned int MemRead32(unsigned short);
-// void MemWrite8(unsigned char, unsigned short);
-// void MemWrite16(unsigned short, unsigned short);
-// unsigned char MemRead8(unsigned short);
-// unsigned short MemRead16(unsigned short);
-// extern void SetNatEmuStat(unsigned char);
-
-//unsigned char GetDestReg(unsigned char);
-//END Fuction Prototypes-----------------------------------
 
 void HD6309Reset(void)
 {
   char index;
+  
   for (index = 0;index <= 6;index++)		//Set all register to 0 except V
     *xfreg16[index] = 0;
+  
   for (index = 0;index <= 7;index++)
     *ureg8[index] = 0;
+  
   for (index = 0;index <= 7;index++)
     cc[index] = 0;
+  
   for (index = 0;index <= 7;index++)
     md[index] = 0;
+
   mdbits = getmd();
   dp.Reg = 0;
   cc[I] = 1;
@@ -231,7 +224,6 @@ void HD6309Reset(void)
   SyncWaiting = 0;
   PC_REG = MemRead16(VRESET);	//PC gets its reset vector
   SetMapType(0);	//shouldn't be here
-  return;
 }
 
 void HD6309Init(void)
@@ -304,12 +296,10 @@ void HD6309Init(void)
   InsCycles[1][M42] = 2;
   InsCycles[0][M53] = 5;	//5-3
   InsCycles[1][M53] = 3;
-  //SetNatEmuStat(1);
+
   cc[I] = 1;
   cc[F] = 1;
-  return;
 }
-
 
 void Neg_D(void)
 { //0
@@ -521,6 +511,7 @@ void LBhi_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -533,6 +524,7 @@ void LBls_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -545,6 +537,7 @@ void LBhs_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 6;
 }
@@ -557,6 +550,7 @@ void LBcs_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -569,6 +563,7 @@ void LBne_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -581,6 +576,7 @@ void LBvc_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -593,6 +589,7 @@ void LBvs_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -605,6 +602,7 @@ void LBpl_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -617,6 +615,7 @@ void LBmi_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -629,6 +628,7 @@ void LBge_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -641,6 +641,7 @@ void LBlt_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -653,6 +654,7 @@ void LBgt_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -665,6 +667,7 @@ void LBle_R(void)
     PC_REG += *spostword;
     CycleCounter += 1;
   }
+
   PC_REG += 2;
   CycleCounter += 5;
 }
@@ -680,6 +683,7 @@ void Addr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
@@ -737,6 +741,7 @@ void Addr(void)
     cc[N] = NTEST16(*xfreg16[Dest]);
     cc[Z] = ZTEST(*xfreg16[Dest]);
   }
+
   CycleCounter += 4;
 }
 
@@ -751,12 +756,14 @@ void Adcr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
+
       if (Source == 2) source8 = getcc();
       else source8 = *ureg8[Source];
     }
@@ -767,12 +774,22 @@ void Adcr(void)
     }
 
     temp16 = source8 + dest8 + cc[C];
+    
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp16); break;
-    case 4: case 5: break; // never assign to zero reg
-    default: 				*ureg8[Dest] = (unsigned char)temp16; break;
+    case 2: 				
+      setcc((unsigned char)temp16); 
+      break;
+
+    case 4: 
+    case 5: 
+      break; // never assign to zero reg
+
+    default: 				
+      *ureg8[Dest] = (unsigned char)temp16; 
+      break;
     }
+
     cc[C] = (temp16 & 0x100) >> 8;
     cc[V] = OVERFLOW8(cc[C], source8, dest8, temp16);
     cc[N] = NTEST8(*ureg8[Dest]);
@@ -789,13 +806,31 @@ void Adcr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -805,6 +840,7 @@ void Adcr(void)
     cc[V] = OVERFLOW16(cc[C], source16, dest16, temp32);
     cc[N] = NTEST16(*xfreg16[Dest]);		cc[Z] = ZTEST(*xfreg16[Dest]);
   }
+
   CycleCounter += 4;
 }
 
@@ -819,12 +855,14 @@ void Subr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
+
       if (Source == 2) source8 = getcc();
       else source8 = *ureg8[Source];
     }
@@ -835,12 +873,22 @@ void Subr(void)
     }
 
     temp16 = dest8 - source8;
+
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp16); break;
-    case 4: case 5: break; // never assign to zero reg
-    default: 				*ureg8[Dest] = (unsigned char)temp16; break;
+    case 2: 				
+      setcc((unsigned char)temp16); 
+      break;
+
+    case 4: 
+    case 5: 
+      break; // never assign to zero reg
+
+    default: 				
+      *ureg8[Dest] = (unsigned char)temp16; 
+      break;
     }
+
     cc[C] = (temp16 & 0x100) >> 8;
     cc[V] = cc[C] ^ ((dest8 ^ *ureg8[Dest] ^ source8) >> 7);
     cc[N] = *ureg8[Dest] >> 7;
@@ -857,13 +905,31 @@ void Subr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -874,6 +940,7 @@ void Subr(void)
     cc[N] = (temp32 & 0x8000) >> 15;
     cc[Z] = ZTEST(temp32);
   }
+
   CycleCounter += 4;
 }
 
@@ -888,12 +955,14 @@ void Sbcr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
+
       if (Source == 2) source8 = getcc();
       else source8 = *ureg8[Source];
     }
@@ -904,12 +973,22 @@ void Sbcr(void)
     }
 
     temp16 = dest8 - source8 - cc[C];
+
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp16); break;
-    case 4: case 5: break; // never assign to zero reg
-    default: 				*ureg8[Dest] = (unsigned char)temp16; break;
+    case 2: 				
+      setcc((unsigned char)temp16); 
+      break;
+
+    case 4: 
+    case 5: 
+      break; // never assign to zero reg
+
+    default: 				
+      *ureg8[Dest] = (unsigned char)temp16; 
+      break;
     }
+
     cc[C] = (temp16 & 0x100) >> 8;
     cc[V] = cc[C] ^ ((dest8 ^ *ureg8[Dest] ^ source8) >> 7);
     cc[N] = *ureg8[Dest] >> 7;
@@ -926,13 +1005,31 @@ void Sbcr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -943,6 +1040,7 @@ void Sbcr(void)
     cc[N] = (temp32 & 0x8000) >> 15;
     cc[Z] = ZTEST(temp32);
   }
+
   CycleCounter += 4;
 }
 
@@ -957,12 +1055,14 @@ void Andr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
+
       if (Source == 2) source8 = getcc();
       else source8 = *ureg8[Source];
     }
@@ -973,12 +1073,22 @@ void Andr(void)
     }
 
     temp8 = dest8 & source8;
+
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp8); break;
-    case 4: case 5: break; // never assign to zero reg
-    default: 				*ureg8[Dest] = (unsigned char)temp8; break;
+    case 2: 				
+      setcc((unsigned char)temp8); 
+      break;
+
+    case 4: 
+    case 5: 
+      break; // never assign to zero reg
+
+    default: 				
+      *ureg8[Dest] = (unsigned char)temp8; 
+      break;
     }
+
     cc[N] = temp8 >> 7;
     cc[Z] = ZTEST(temp8);
   }
@@ -995,11 +1105,28 @@ void Andr(void)
       Source &= 7;
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -1023,12 +1150,14 @@ void Orr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
+
       if (Source == 2) source8 = getcc();
       else source8 = *ureg8[Source];
     }
@@ -1039,12 +1168,22 @@ void Orr(void)
     }
 
     temp8 = dest8 | source8;
+
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp8); break;
-    case 4: case 5: break; // never assign to zero reg
-    default: 				*ureg8[Dest] = (unsigned char)temp8; break;
+    case 2: 				
+      setcc((unsigned char)temp8); 
+      break;
+
+    case 4: 
+    case 5: 
+      break; // never assign to zero reg
+
+    default: 				
+      *ureg8[Dest] = (unsigned char)temp8; 
+      break;
     }
+
     cc[N] = temp8 >> 7;
     cc[Z] = ZTEST(temp8);
   }
@@ -1059,13 +1198,31 @@ void Orr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -1074,6 +1231,7 @@ void Orr(void)
     cc[N] = temp16 >> 15;
     cc[Z] = ZTEST(temp16);
   }
+
   cc[V] = 0;
   CycleCounter += 4;
 }
@@ -1089,6 +1247,7 @@ void Eorr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
@@ -1105,12 +1264,22 @@ void Eorr(void)
     }
 
     temp8 = dest8 ^ source8;
+
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp8); break;
-    case 4: case 5: break; // never assign to zero reg
-    default: 				*ureg8[Dest] = (unsigned char)temp8; break;
+    case 2: 				
+      setcc((unsigned char)temp8); 
+      break;
+
+    case 4: 
+    case 5: 
+      break; // never assign to zero reg
+
+    default: 				
+      *ureg8[Dest] = (unsigned char)temp8; 
+      break;
     }
+
     cc[N] = temp8 >> 7;
     cc[Z] = ZTEST(temp8);
   }
@@ -1125,13 +1294,31 @@ void Eorr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -1140,6 +1327,7 @@ void Eorr(void)
     cc[N] = temp16 >> 15;
     cc[Z] = ZTEST(temp16);
   }
+
   cc[V] = 0;
   CycleCounter += 4;
 }
@@ -1155,6 +1343,7 @@ void Cmpr(void)
   if (Dest > 7) // 8 bit dest
   {
     Dest &= 7;
+
     if (Dest == 2) dest8 = getcc();
     else dest8 = *ureg8[Dest];
 
@@ -1190,11 +1379,28 @@ void Cmpr(void)
       Source &= 7;
       switch (Source)
       {
-      case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
-      case 3:	        source16 = (unsigned short)dp.Reg; break; // DP
-      case 4: case 5: source16 = 0; break; // Zero Reg
-      case 6: case 7: source16 = W_REG; break; // E & F Reg
+      case 0: 
+      case 1: 
+        source16 = D_REG; 
+        break; // A & B Reg
+
+      case 2:	        
+        source16 = (unsigned short)getcc(); 
+        break; // CC
+
+      case 3:	        
+        source16 = (unsigned short)dp.Reg; 
+        break; // DP
+
+      case 4: 
+      case 5: 
+        source16 = 0; 
+        break; // Zero Reg
+
+      case 6: 
+      case 7: 
+        source16 = W_REG; 
+        break; // E & F Reg
       }
     }
 
@@ -1204,6 +1410,7 @@ void Cmpr(void)
     cc[N] = (temp32 & 0x8000) >> 15;
     cc[Z] = ZTEST(temp32);
   }
+
   CycleCounter += 4;
 }
 
@@ -1247,12 +1454,14 @@ void Swi2_I(void)
   MemWrite8(x.B.lsb, --S_REG);
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
+
   if (md[NATIVE6309])
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
     CycleCounter += 2;
   }
+
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
@@ -2213,11 +2422,13 @@ void Band(void)
     case 1: // B Reg
       *ureg8[postbyte] &= ~(1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() & ~(1 << Dest));
       break;
     }
   }
+
   // Else nothing changes
   CycleCounter += NatEmuCycles76;
 }
@@ -2244,11 +2455,13 @@ void Biand(void)
     case 1: // B Reg
       *ureg8[postbyte] &= ~(1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() & ~(1 << Dest));
       break;
     }
   }
+
   // Else do nothing
   CycleCounter += NatEmuCycles76;
 }
@@ -2275,11 +2488,13 @@ void Bor(void)
     case 1: // B Reg
       *ureg8[postbyte] |= (1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() | (1 << Dest));
       break;
     }
   }
+
   // Else do nothing
   CycleCounter += NatEmuCycles76;
 }
@@ -2306,11 +2521,13 @@ void Bior(void)
     case 1: // B Reg
       *ureg8[postbyte] |= (1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() | (1 << Dest));
       break;
     }
   }
+
   // Else do nothing
   CycleCounter += NatEmuCycles76;
 }
@@ -2337,11 +2554,13 @@ void Beor(void)
     case 1: // B Reg
       *ureg8[postbyte] ^= (1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() ^ (1 << Dest));
       break;
     }
   }
+
   CycleCounter += NatEmuCycles76;
 }
 
@@ -2367,11 +2586,13 @@ void Bieor(void)
     case 1: // B Reg
       *ureg8[postbyte] ^= (1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() ^ (1 << Dest));
       break;
     }
   }
+
   CycleCounter += NatEmuCycles76;
 }
 
@@ -2397,6 +2618,7 @@ void Ldbt(void)
     case 1: // B Reg
       *ureg8[postbyte] |= (1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() | (1 << Dest));
       break;
@@ -2410,11 +2632,13 @@ void Ldbt(void)
     case 1: // B Reg
       *ureg8[postbyte] &= ~(1 << Dest);
       break;
+
     case 2: // CC Reg
       setcc(getcc() & ~(1 << Dest));
       break;
     }
   }
+
   CycleCounter += NatEmuCycles76;
 }
 
@@ -2439,6 +2663,7 @@ void Stbt(void)
   case 1: // B Reg
     postbyte = *ureg8[postbyte];
     break;
+
   case 2: // CC Reg
     postbyte = getcc();
     break;
@@ -2452,6 +2677,7 @@ void Stbt(void)
   {
     temp8 &= ~(1 << Dest);
   }
+
   MemWrite8(temp8, temp16);
   CycleCounter += NatEmuCycles87;
 }
@@ -2571,8 +2797,10 @@ void Bitmd_M(void)
   postbyte = MemRead8(PC_REG++) & 0xC0;
   temp8 = getmd() & postbyte;
   cc[Z] = ZTEST(temp8);
+  
   if (temp8 & 0x80) md[7] = 0;
   if (temp8 & 0x40) md[6] = 0;
+  
   CycleCounter += 4;
 }
 
@@ -2595,12 +2823,14 @@ void Swi3_I(void)
   MemWrite8(x.B.lsb, --S_REG);
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
+  
   if (md[NATIVE6309])
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
     CycleCounter += 2;
   }
+
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
@@ -2807,6 +3037,7 @@ void Divd_M(void)
     cc[N] = NTEST8(B_REG);
     cc[V] = 0;
   }
+
   cc[C] = B_REG & 1;
   CycleCounter += 25;
 }
@@ -2838,6 +3069,7 @@ void Divq_M(void)
 
   D_REG = (unsigned short)((signed int)temp32 % (signed short int)postword);
   W_REG = stemp32;
+
   if ((stemp16 > 32767) || (stemp16 < -32768))
   {
     cc[V] = 1;
@@ -2849,6 +3081,7 @@ void Divq_M(void)
     cc[N] = NTEST16(W_REG);
     cc[V] = 0;
   }
+
   cc[C] = B_REG & 1;
   CycleCounter += 34;
 }
@@ -2978,6 +3211,7 @@ void Divd_D(void)
     cc[N] = NTEST8(B_REG);
     cc[V] = 0;
   }
+
   cc[C] = B_REG & 1;
   CycleCounter += 27;
 }
@@ -3008,6 +3242,7 @@ void Divq_D(void)
 
   D_REG = (unsigned short)((signed int)temp32 % (signed short int)postword);
   W_REG = stemp32;
+
   if ((stemp16 > 32767) || (stemp32 < -32768))
   {
     cc[V] = 1;
@@ -3019,6 +3254,7 @@ void Divq_D(void)
     cc[N] = NTEST16(W_REG);
     cc[V] = 0;
   }
+
   cc[C] = B_REG & 1;
   CycleCounter += NatEmuCycles3635;
 }
@@ -3177,6 +3413,7 @@ void Divq_X(void)
 
   D_REG = (unsigned short)((signed int)temp32 % (signed short int)postword);
   W_REG = stemp32;
+  
   if ((stemp16 > 32767) || (stemp16 < -32768))
   {
     cc[V] = 1;
@@ -3188,6 +3425,7 @@ void Divq_X(void)
     cc[N] = NTEST16(W_REG);
     cc[V] = 0;
   }
+  
   cc[C] = B_REG & 1;
   CycleCounter += NatEmuCycles3635;
 }
@@ -3355,6 +3593,7 @@ void Divq_E(void)
 
   D_REG = (unsigned short)((signed int)temp32 % (signed short int)postword);
   W_REG = stemp32;
+
   if ((stemp16 > 32767) || (stemp16 < -32768))
   {
     cc[V] = 1;
@@ -3610,6 +3849,7 @@ void Sexw_I(void)
     D_REG = 0xFFFF;
   else
     D_REG = 0;
+
   cc[Z] = ZTEST(Q_REG);
   cc[N] = NTEST16(D_REG);
   CycleCounter += 4;
@@ -3641,6 +3881,7 @@ void Daa_I(void)
   msn = (A_REG & 0xF0);
   lsn = (A_REG & 0xF);
   temp8 = 0;
+
   if (cc[H] || (lsn > 9))
     temp8 |= 0x06;
 
@@ -3691,6 +3932,7 @@ void Exg_M(void)
   Dest = postbyte & 15;
 
   ccbits = getcc();
+
   if ((Source & 0x08) == (Dest & 0x08)) //Verify like size registers
   {
     if (Dest & 0x08) //8 bit EXG
@@ -3727,6 +3969,7 @@ void Exg_M(void)
     case 0x05: // Z
       (*xfreg16[Dest]) = 0; // Source is Zero reg. Just zero the Destination.
       break;
+
     case 0x00: // A
     case 0x03: // DP
     case 0x06: // E
@@ -3735,6 +3978,7 @@ void Exg_M(void)
       (*ureg8[Source]) = (*xfreg16[Dest]) >> 8; // A, DP, E get high byte of 16 bit Dest
       (*xfreg16[Dest]) = temp16; // Place 8 bit source in both halves of 16 bit Dest
       break;
+
     case 0x01: // B
     case 0x02: // CC
     case 0x07: // F
@@ -3745,6 +3989,7 @@ void Exg_M(void)
       break;
     }
   }
+
   setcc(ccbits);
   CycleCounter += NatEmuCycles85;
 }
@@ -3808,6 +4053,7 @@ void Bhi_R(void)
 { //22
   if (!(cc[C] | cc[Z]))
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3816,6 +4062,7 @@ void Bls_R(void)
 { //23
   if (cc[C] | cc[Z])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3824,6 +4071,7 @@ void Bhs_R(void)
 { //24
   if (!cc[C])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3832,6 +4080,7 @@ void Blo_R(void)
 { //25
   if (cc[C])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3840,6 +4089,7 @@ void Bne_R(void)
 { //26
   if (!cc[Z])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3848,6 +4098,7 @@ void Beq_R(void)
 { //27
   if (cc[Z])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3856,6 +4107,7 @@ void Bvc_R(void)
 { //28
   if (!cc[V])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3864,6 +4116,7 @@ void Bvs_R(void)
 { //29
   if (cc[V])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3872,6 +4125,7 @@ void Bpl_R(void)
 { //2A
   if (!cc[N])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3880,6 +4134,7 @@ void Bmi_R(void)
 { //2B
   if (cc[N])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3888,6 +4143,7 @@ void Bge_R(void)
 { //2C
   if (!(cc[N] ^ cc[V]))
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3896,6 +4152,7 @@ void Blt_R(void)
 { //2D
   if (cc[V] ^ cc[N])
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3904,6 +4161,7 @@ void Bgt_R(void)
 { //2E
   if (!(cc[Z] | (cc[N] ^ cc[V])))
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3912,6 +4170,7 @@ void Ble_R(void)
 { //2F
   if (cc[Z] | (cc[N] ^ cc[V]))
     PC_REG += (signed char)MemRead8(PC_REG);
+  
   PC_REG++;
   CycleCounter += 3;
 }
@@ -3945,45 +4204,53 @@ void Leau_X(void)
 void Pshs_M(void)
 { //34
   postbyte = MemRead8(PC_REG++);
+  
   if (postbyte & 0x80)
   {
     MemWrite8(pc.B.lsb, --S_REG);
     MemWrite8(pc.B.msb, --S_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x40)
   {
     MemWrite8(u.B.lsb, --S_REG);
     MemWrite8(u.B.msb, --S_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x20)
   {
     MemWrite8(y.B.lsb, --S_REG);
     MemWrite8(y.B.msb, --S_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x10)
   {
     MemWrite8(x.B.lsb, --S_REG);
     MemWrite8(x.B.msb, --S_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x08)
   {
     MemWrite8(dp.B.msb, --S_REG);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x04)
   {
     MemWrite8(B_REG, --S_REG);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x02)
   {
     MemWrite8(A_REG, --S_REG);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x01)
   {
     MemWrite8(getcc(), --S_REG);
@@ -3996,150 +4263,177 @@ void Pshs_M(void)
 void Puls_M(void)
 { //35
   postbyte = MemRead8(PC_REG++);
+  
   if (postbyte & 0x01)
   {
     setcc(MemRead8(S_REG++));
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x02)
   {
     A_REG = MemRead8(S_REG++);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x04)
   {
     B_REG = MemRead8(S_REG++);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x08)
   {
     dp.B.msb = MemRead8(S_REG++);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x10)
   {
     x.B.msb = MemRead8(S_REG++);
     x.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x20)
   {
     y.B.msb = MemRead8(S_REG++);
     y.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x40)
   {
     u.B.msb = MemRead8(S_REG++);
     u.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x80)
   {
     pc.B.msb = MemRead8(S_REG++);
     pc.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
+  
   CycleCounter += NatEmuCycles54;
 }
 
 void Pshu_M(void)
 { //36
   postbyte = MemRead8(PC_REG++);
+  
   if (postbyte & 0x80)
   {
     MemWrite8(pc.B.lsb, --U_REG);
     MemWrite8(pc.B.msb, --U_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x40)
   {
     MemWrite8(s.B.lsb, --U_REG);
     MemWrite8(s.B.msb, --U_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x20)
   {
     MemWrite8(y.B.lsb, --U_REG);
     MemWrite8(y.B.msb, --U_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x10)
   {
     MemWrite8(x.B.lsb, --U_REG);
     MemWrite8(x.B.msb, --U_REG);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x08)
   {
     MemWrite8(dp.B.msb, --U_REG);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x04)
   {
     MemWrite8(B_REG, --U_REG);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x02)
   {
     MemWrite8(A_REG, --U_REG);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x01)
   {
     MemWrite8(getcc(), --U_REG);
     CycleCounter += 1;
   }
+  
   CycleCounter += NatEmuCycles54;
 }
 
 void Pulu_M(void)
 { //37
   postbyte = MemRead8(PC_REG++);
+  
   if (postbyte & 0x01)
   {
     setcc(MemRead8(U_REG++));
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x02)
   {
     A_REG = MemRead8(U_REG++);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x04)
   {
     B_REG = MemRead8(U_REG++);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x08)
   {
     dp.B.msb = MemRead8(U_REG++);
     CycleCounter += 1;
   }
+  
   if (postbyte & 0x10)
   {
     x.B.msb = MemRead8(U_REG++);
     x.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x20)
   {
     y.B.msb = MemRead8(U_REG++);
     y.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x40)
   {
     s.B.msb = MemRead8(U_REG++);
     s.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
+  
   if (postbyte & 0x80)
   {
     pc.B.msb = MemRead8(U_REG++);
     pc.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
+  
   CycleCounter += NatEmuCycles54;
 }
 
@@ -4161,16 +4455,19 @@ void Rti_I(void)
   setcc(MemRead8(S_REG++));
   CycleCounter += 6;
   InInterupt = 0;
+  
   if (cc[E])
   {
     A_REG = MemRead8(S_REG++);
     B_REG = MemRead8(S_REG++);
+
     if (md[NATIVE6309])
     {
       (E_REG) = MemRead8(S_REG++);
       (F_REG) = MemRead8(S_REG++);
       CycleCounter += 2;
     }
+
     dp.B.msb = MemRead8(S_REG++);
     x.B.msb = MemRead8(S_REG++);
     x.B.lsb = MemRead8(S_REG++);
@@ -4180,6 +4477,7 @@ void Rti_I(void)
     u.B.lsb = MemRead8(S_REG++);
     CycleCounter += 9;
   }
+
   pc.B.msb = MemRead8(S_REG++);
   pc.B.lsb = MemRead8(S_REG++);
 }
@@ -4219,12 +4517,14 @@ void Swi1_I(void)
   MemWrite8(x.B.lsb, --S_REG);
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
+
   if (md[NATIVE6309])
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
     CycleCounter += 2;
   }
+
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
@@ -6930,17 +7230,12 @@ void(*JmpVec3[256])(void) = {
   InvalidInsHandler,		// FF
 };
 
-// static unsigned char op1, op2;
-// static unsigned short opstack[16];
-// static unsigned short addrstack[16];
-// static short int stckidx = 0;
-
 int HD6309Exec(int CycleFor)
 {
-
   //static unsigned char opcode = 0;
   CycleCounter = 0;
   gCycleFor = CycleFor;
+
   while (CycleCounter < CycleFor) {
 
     if (PendingInterupts)
@@ -6964,7 +7259,7 @@ int HD6309Exec(int CycleFor)
       return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
 
     JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
-  }//End While
+  }
 
   return(CycleFor - CycleCounter);
 }
@@ -6981,7 +7276,6 @@ void Page_3(void) //11
 
 void cpu_firq(void)
 {
-
   if (!cc[F])
   {
     InInterupt = 1; //Flag to indicate FIRQ has been asserted
@@ -7008,11 +7302,13 @@ void cpu_firq(void)
       MemWrite8(x.B.lsb, --S_REG);
       MemWrite8(x.B.msb, --S_REG);
       MemWrite8(dp.B.msb, --S_REG);
+
       if (md[NATIVE6309])
       {
         MemWrite8((F_REG), --S_REG);
         MemWrite8((E_REG), --S_REG);
       }
+
       MemWrite8(B_REG, --S_REG);
       MemWrite8(A_REG, --S_REG);
       MemWrite8(getcc(), --S_REG);
@@ -7022,14 +7318,15 @@ void cpu_firq(void)
       break;
     }
   }
+
   PendingInterupts = PendingInterupts & 253;
-  return;
 }
 
 void cpu_irq(void)
 {
   if (InInterupt == 1) //If FIRQ is running postpone the IRQ
     return;
+
   if ((!cc[I]))
   {
     cc[E] = 1;
@@ -7042,19 +7339,21 @@ void cpu_irq(void)
     MemWrite8(x.B.lsb, --S_REG);
     MemWrite8(x.B.msb, --S_REG);
     MemWrite8(dp.B.msb, --S_REG);
+
     if (md[NATIVE6309])
     {
       MemWrite8((F_REG), --S_REG);
       MemWrite8((E_REG), --S_REG);
     }
+
     MemWrite8(B_REG, --S_REG);
     MemWrite8(A_REG, --S_REG);
     MemWrite8(getcc(), --S_REG);
     PC_REG = MemRead16(VIRQ);
     cc[I] = 1;
-  } //Fi I test
+  }
+
   PendingInterupts = PendingInterupts & 254;
-  return;
 }
 
 void cpu_nmi(void)
@@ -7069,11 +7368,13 @@ void cpu_nmi(void)
   MemWrite8(x.B.lsb, --S_REG);
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
+
   if (md[NATIVE6309])
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
   }
+
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
@@ -7081,7 +7382,6 @@ void cpu_nmi(void)
   cc[F] = 1;
   PC_REG = MemRead16(VNMI);
   PendingInterupts = PendingInterupts & 251;
-  return;
 }
 
 static unsigned short CalculateEA(unsigned char postbyte)
@@ -7179,21 +7479,25 @@ static unsigned short CalculateEA(unsigned char postbyte)
 
     case 15: // W reg
       byte = (postbyte >> 5) & 3;
+
       switch (byte)
       {
       case 0: // No offset from W reg
         ea = W_REG;
         break;
+
       case 1: // 16 bit offset from W reg
         ea = W_REG + IMMADDRESS(PC_REG);
         PC_REG += 2;
         CycleCounter += 2;
         break;
+
       case 2: // Post inc by 2 from W reg
         ea = W_REG;
         W_REG += 2;
         CycleCounter += 1;
         break;
+
       case 3: // Pre dec by 2 from W reg
         W_REG -= 2;
         ea = W_REG;
@@ -7204,12 +7508,14 @@ static unsigned short CalculateEA(unsigned char postbyte)
 
     case 16: // W reg
       byte = (postbyte >> 5) & 3;
+
       switch (byte)
       {
       case 0: // Indirect no offset from W reg
         ea = MemRead16(W_REG);
         CycleCounter += 3;
         break;
+
       case 1: // Indirect 16 bit offset from W reg
         ea = MemRead16(W_REG + IMMADDRESS(PC_REG));
         PC_REG += 2;
@@ -7220,6 +7526,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
         W_REG += 2;
         CycleCounter += 4;
         break;
+
       case 3: // Indirect pre dec by 2 from W reg
         W_REG -= 2;
         ea = MemRead16(W_REG);
@@ -7321,7 +7628,6 @@ static unsigned short CalculateEA(unsigned char postbyte)
       CycleCounter += 8;
       PC_REG += 2;
       break;
-
     } //END Switch
   }
   else // 5 bit offset
@@ -7332,6 +7638,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
     ea = *xfreg16[Register] + byte; //Was signed
     CycleCounter += 1;
   }
+
   return(ea);
 }
 
@@ -7347,38 +7654,35 @@ void setcc(unsigned char bincc)
 unsigned char getcc(void)
 {
   unsigned char bincc = 0, bit = 0;
+  
   for (bit = 0;bit <= 7;bit++)
     if (cc[bit])
       bincc = bincc | (1 << bit);
+  
   return(bincc);
 }
 
 void setmd(unsigned char binmd)
 {
   unsigned char bit;
+
   for (bit = 0;bit <= 1;bit++)
     md[bit] = !!(binmd & (1 << bit));
-  //if (md[NATIVE6309]) 
-  //{
-  //	SetNatEmuStat(2);
-  //}
-  //else 
-  //{
-  //	SetNatEmuStat(1);
-  //}
+
   for (short i = 0; i < 24; i++)
   {
     *NatEmuCycles[i] = InsCycles[md[NATIVE6309]][i];
   }
-  return;
 }
 
 unsigned char getmd(void)
 {
   unsigned char binmd = 0, bit = 0;
+
   for (bit = 6;bit <= 7;bit++)
     if (md[bit])
       binmd = binmd | (1 << bit);
+
   return(binmd);
 }
 
@@ -7387,30 +7691,19 @@ void HD6309AssertInterupt(unsigned char Interupt, unsigned char waiter)// 4 nmi 
   SyncWaiting = 0;
   PendingInterupts = PendingInterupts | (1 << (Interupt - 1));
   IRQWaiter = waiter;
-  return;
 }
 
 void HD6309DeAssertInterupt(unsigned char Interupt)// 4 nmi 2 firq 1 irq
 {
   PendingInterupts = PendingInterupts & ~(1 << (Interupt - 1));
   InInterupt = 0;
-  return;
 }
 
 void InvalidInsHandler(void)
 {
-  // fprintf(stderr, "Illegal instruction %02x %02x \n", (int)op1, (int)op2);
-  // extern void dumpMem(UINT16, UINT16);
-  // dumpMem(PC_REG-8, (UINT16)16);
-  // for(short i = 0 ; i > -16 ; i--)
-  // {
-  // 	fprintf(stderr, "(%04x %04x)", addrstack[stckidx+i], opstack[stckidx+i]);
-  // }
-  // fprintf(stderr, "\n");
   md[ILLEGAL] = 1;
   mdbits = getmd();
   ErrorVector();
-  return;
 }
 
 void DivbyZero(void)
@@ -7418,7 +7711,6 @@ void DivbyZero(void)
   md[ZERODIV] = 1;
   mdbits = getmd();
   ErrorVector();
-  return;
 }
 
 void ErrorVector(void)
@@ -7433,18 +7725,19 @@ void ErrorVector(void)
   MemWrite8(x.B.lsb, --S_REG);
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
+
   if (md[NATIVE6309])
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
     CycleCounter += 2;
   }
+
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
   PC_REG = MemRead16(VTRAP);
   CycleCounter += (12 + NatEmuCycles54);	//One for each byte +overhead? Guessing from PSHS
-  return;
 }
 
 unsigned char GetSorceReg(unsigned char Tmp)
@@ -7452,8 +7745,10 @@ unsigned char GetSorceReg(unsigned char Tmp)
   unsigned char Source = (Tmp >> 4);
   unsigned char Dest = Tmp & 15;
   unsigned char Translate[] = { 0,0 };
+
   if ((Source & 8) == (Dest & 8)) //like size registers
     return(Source);
+
   return(0);
 }
 
@@ -7462,7 +7757,6 @@ void HD6309ForcePC(unsigned short NewPC)
   PC_REG = NewPC;
   PendingInterupts = 0;
   SyncWaiting = 0;
-  return;
 }
 
 /*****************************************************************
@@ -7478,13 +7772,4 @@ void MemWrite32(unsigned int data, unsigned short addr)
 {
   MemWrite16(data >> 16, addr);
   MemWrite16(data & 0xFFFF, addr + 2);
-  return;
 }
-
-
-// unsigned short GetPC(void)
-// {
-// 	return(PC_REG);
-// }
-
-

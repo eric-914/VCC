@@ -26,21 +26,15 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 #include "logger.h"
 #include "config.h"
+
 unsigned char port_read(unsigned short addr)
 {
   unsigned char port = 0, temp = 0;
-  //	char Message[128]="";
+
   port = (addr & 0xFF);
-  /*
-  if ( (port>=0x50) & (port <=0x5a))
-  {
-      sprintf(Message,"Reading from %x\n",addr);
-      WriteLog(Message,TOCONS);
-  }
-  */
+
   switch (port)
   {
-
   case 0:
   case 1:
   case 2:
@@ -52,7 +46,6 @@ unsigned char port_read(unsigned short addr)
   case 0x21:
   case 0x22:
   case 0x23:
-
     temp = pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
     break;
 
@@ -160,28 +153,21 @@ unsigned char port_read(unsigned short addr)
   case 0xBF:
     temp = GimeRead(port);
     break;
+
   default:
     temp = PackPortRead(port);
   }
+
   return(temp);
 }
-
 
 void port_write(unsigned char data, unsigned short addr)
 {
   unsigned char port = 0;
   port = (addr & 0xFF);
-  /*
-  char Message[256]="";
-  if ( (addr>=0x50) & (port <=0x5a))
-  {
-      sprintf(Message,"Wrting %x to %x\n",data,addr);
-      WriteLog(Message,TOCONS);
-  }
-  */
+
   switch (port)
   {
-
   case 0:
   case 1:
   case 2:
@@ -281,9 +267,8 @@ void port_write(unsigned char data, unsigned short addr)
   case 0xBF:
     GimeWrite(port, data);
     break;
+
   default:
     PackPortWrite(port, data);
   }
-  return;
 }
-

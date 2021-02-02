@@ -55,6 +55,7 @@ static BOOL MonState = FALSE;
 unsigned char pia0_read(unsigned char port)
 {
   unsigned char dda, ddb;
+
   dda = (rega[1] & 4);
   ddb = (rega[3] & 4);
 
@@ -88,6 +89,7 @@ unsigned char pia0_read(unsigned char port)
       return(rega_dd[port]);
     break;
   }
+
   return(0);
 }
 
@@ -95,6 +97,7 @@ unsigned char pia1_read(unsigned char port)
 {
   static unsigned int Flag = 0, Flag2 = 0;
   unsigned char dda, ddb;
+  
   port -= 0x20;
   dda = (regb[1] & 4);
   ddb = (regb[3] & 4);
@@ -129,6 +132,7 @@ unsigned char pia1_read(unsigned char port)
       return(regb_dd[port]);
     break;
   }
+
   return(0);
 }
 
@@ -146,6 +150,7 @@ void pia0_write(unsigned char data, unsigned char port)
     else
       rega_dd[port] = data;
     return;
+  
   case 2:
     if (ddb)
       rega[port] = data;
@@ -164,7 +169,6 @@ void pia0_write(unsigned char data, unsigned char port)
     return;
     break;
   }
-  return;
 }
 
 void pia1_write(unsigned char data, unsigned char port)
@@ -182,6 +186,7 @@ void pia1_write(unsigned char data, unsigned char port)
     {
       regb[port] = data;
       CaptureBit((regb[0] & 2) >> 1);
+
       if (GetMuxState() == 0)
         if ((regb[3] & 8) != 0)//==0 for cassette writes
           Asample = (regb[0] & 0xFC) >> 1; //0 to 127
@@ -216,7 +221,6 @@ void pia1_write(unsigned char data, unsigned char port)
     return;
     break;
   }
-  return;
 }
 
 unsigned char VDG_Mode(void)
@@ -224,47 +228,53 @@ unsigned char VDG_Mode(void)
   return((regb[2] & 248) >> 3);
 }
 
-
 void irq_hs(int phase)	//63.5 uS
 {
-
   switch (phase)
   {
   case FALLING:	//HS went High to low
     if ((rega[1] & 2)) //IRQ on low to High transition
       return;
+
     rega[1] = (rega[1] | 128);
+
     if (rega[1] & 1)
       CPUAssertInterupt(IRQ, 1);
+
     break;
 
   case RISING:	//HS went Low to High
     if (!(rega[1] & 2)) //IRQ  High to low transition
       return;
+
     rega[1] = (rega[1] | 128);
+
     if (rega[1] & 1)
       CPUAssertInterupt(IRQ, 1);
+
     break;
 
   case ANY:
     rega[1] = (rega[1] | 128);
+
     if (rega[1] & 1)
       CPUAssertInterupt(IRQ, 1);
-    break;
-  } //END switch
 
-  return;
+    break;
+  }
 }
 
 void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
 {
   if ((CartInserted == 1) & (CartAutoStart == 1))
     AssertCart();
+
   switch (phase)
   {
   case 0:	//FS went High to low
     if ((rega[3] & 2) == 0) //IRQ on High to low transition
       rega[3] = (rega[3] | 128);
+
     if (rega[3] & 1)
       CPUAssertInterupt(IRQ, 1);
 
@@ -276,19 +286,20 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
     if ((rega[3] & 2)) //IRQ  Low to High transition
     {
       rega[3] = (rega[3] | 128);
+
       if (rega[3] & 1)
         CPUAssertInterupt(IRQ, 1);
     }
+
     return;
     break;
-  } //END switch
-
-  return;
+  }
 }
 
 void AssertCart(void)
 {
   regb[3] = (regb[3] | 128);
+
   if (regb[3] & 1)
     CPUAssertInterupt(FIRQ, 0);
   else
@@ -320,7 +331,6 @@ unsigned char DACState(void)
 void SetCart(unsigned char cart)
 {
   CartInserted = cart;
-  return;
 }
 
 unsigned int GetDACSample(void)
@@ -329,11 +339,13 @@ unsigned int GetDACSample(void)
   static unsigned short SampleLeft = 0, SampleRight = 0, PakSample = 0;
   static unsigned short OutLeft = 0, OutRight = 0;
   static unsigned short LastLeft = 0, LastRight = 0;
+
   PakSample = PackAudioSample();
   SampleLeft = (PakSample >> 8) + Asample + Ssample;
   SampleRight = (PakSample & 0xFF) + Asample + Ssample; //9 Bits each
   SampleLeft = SampleLeft << 6;	//Conver to 16 bit values
   SampleRight = SampleRight << 6;	//For Max volume
+  
   if (SampleLeft == LastLeft)	//Simulate a slow high pass filter
   {
     if (OutLeft)
@@ -357,6 +369,7 @@ unsigned int GetDACSample(void)
   }
 
   RetVal = (OutLeft << 16) + (OutRight);
+
   return(RetVal);
 }
 
@@ -364,6 +377,7 @@ unsigned char SetCartAutoStart(unsigned char Tmp)
 {
   if (Tmp != QUERY)
     CartAutoStart = Tmp;
+
   return(CartAutoStart);
 }
 
@@ -375,6 +389,7 @@ unsigned char GetCasSample(void)
 void SetCassetteSample(unsigned char Sample)
 {
   regb[0] = regb[0] & 0xFE;
+  
   if (Sample > 0x7F)
     regb[0] = regb[0] | 1;
 }
@@ -384,40 +399,50 @@ void CaptureBit(unsigned char Sample)
   unsigned long BytesMoved = 0;
   static unsigned char BitMask = 1, StartWait = 1;
   static char Byte = 0;
+
   if (hPrintFile == INVALID_HANDLE_VALUE)
     return;
+
   if (StartWait & Sample)	//Waiting for start bit
     return;
+
   if (StartWait)
   {
     StartWait = 0;
     return;
   }
+
   if (Sample)
     Byte |= BitMask;
+
   BitMask = BitMask << 1;
+
   if (!BitMask)
   {
     BitMask = 1;
     StartWait = 1;
     WriteFile(hPrintFile, &Byte, 1, &BytesMoved, NULL);
+
     if (MonState)
       WritePrintMon(&Byte);
+
     if ((Byte == 0x0D) & AddLF)
     {
       Byte = 0x0A;
       WriteFile(hPrintFile, &Byte, 1, &BytesMoved, NULL);
     }
+
     Byte = 0;
   }
-  return;
 }
 
 int OpenPrintFile(char* FileName)
 {
   hPrintFile = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+
   if (hPrintFile == INVALID_HANDLE_VALUE)
     return(0);
+
   return(1);
 }
 
@@ -427,13 +452,11 @@ void ClosePrintFile(void)
   hPrintFile = INVALID_HANDLE_VALUE;
   FreeConsole();
   hout = NULL;
-  return;
 }
 
 void SetSerialParams(unsigned char TextMode)
 {
   AddLF = TextMode;
-  return;
 }
 
 void SetMonState(BOOL State)
@@ -443,23 +466,26 @@ void SetMonState(BOOL State)
     FreeConsole();
     hout = NULL;
   }
+
   MonState = State;
-  return;
 }
+
 void WritePrintMon(char* Data)
 {
   unsigned long dummy;
+
   if (hout == NULL)
   {
     AllocConsole();
     hout = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTitle("Printer Monitor");
   }
+
   WriteConsole(hout, Data, 1, &dummy, 0);
+
   if (Data[0] == 0x0D)
   {
     Data[0] = 0x0A;
     WriteConsole(hout, Data, 1, &dummy, 0);
   }
 }
-

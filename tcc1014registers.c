@@ -90,6 +90,7 @@ void GimeWrite(unsigned char port, unsigned char data)
   case 0x96:
     SetTurboMode(data & 1);
     break;
+
   case 0x97:
     break;
 
@@ -159,7 +160,6 @@ void GimeWrite(unsigned char port, unsigned char data)
     SetGimePallet(port - 0xB0, data & 63);
     break;
   }
-  return;
 }
 
 unsigned char GimeRead(unsigned char port)
@@ -196,14 +196,12 @@ void SetInit0(unsigned char data)
   SetVectors(data & 8);			//MC3
   EnhancedFIRQFlag = (data & 16) >> 4;
   EnhancedIRQFlag = (data & 32) >> 5;
-  return;
 }
 
 void SetInit1(unsigned char data)
 {
   Set_MmuTask(data & 1);			//TR
   SetTimerClockRate(data & 32);	//TINS
-  return;
 }
 
 unsigned char GetInit0(unsigned char port)
@@ -233,7 +231,6 @@ void SetGimeIRQStearing(unsigned char data) //92
     SetTimerInteruptState(1);
   else
     SetTimerInteruptState(0);
-  return;
 }
 
 void SetGimeFIRQStearing(unsigned char data) //93
@@ -257,8 +254,6 @@ void SetGimeFIRQStearing(unsigned char data) //93
     SetTimerInteruptState(1);
   else
     SetTimerInteruptState(0);
-
-  return;
 }
 
 void SetTimerMSB(unsigned char data) //94
@@ -266,7 +261,6 @@ void SetTimerMSB(unsigned char data) //94
   unsigned short Temp;
   Temp = ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 4095;
   SetInteruptTimer(Temp);
-  return;
 }
 
 void SetTimerLSB(unsigned char data) //95
@@ -274,7 +268,6 @@ void SetTimerLSB(unsigned char data) //95
   unsigned short Temp;
   Temp = ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 4095;
   SetInteruptTimer(Temp);
-  return;
 }
 
 void GimeAssertKeyboardInterupt(void)
@@ -290,12 +283,10 @@ void GimeAssertKeyboardInterupt(void)
       CPUAssertInterupt(IRQ, 0);
       LastIrq = LastIrq | 2;
     }
-  return;
 }
 
 void GimeAssertVertInterupt(void)
 {
-
   if (((GimeRegisters[0x93] & 8) != 0) & (EnhancedFIRQFlag == 1))
   {
     CPUAssertInterupt(FIRQ, 0); //FIRQ
@@ -312,7 +303,6 @@ void GimeAssertVertInterupt(void)
 
 void GimeAssertHorzInterupt(void)
 {
-
   if (((GimeRegisters[0x93] & 16) != 0) & (EnhancedFIRQFlag == 1))
   {
     CPUAssertInterupt(FIRQ, 0);
@@ -324,7 +314,6 @@ void GimeAssertHorzInterupt(void)
       CPUAssertInterupt(IRQ, 0);
       LastIrq = LastIrq | 16;
     }
-  return;
 }
 
 void GimeAssertTimerInterupt(void)
@@ -340,17 +329,16 @@ void GimeAssertTimerInterupt(void)
       CPUAssertInterupt(IRQ, 0);
       LastIrq = LastIrq | 32;
     }
-  return;
 }
 
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
-
   if ((port >= 0xF0) & (port <= 0xFF)) //IRQ vectors from rom
     return(rom[0x3F00 + port]);
 
   return(0);
 }
+
 void sam_write(unsigned char data, unsigned char port)
 {
   unsigned char mask = 0;
@@ -362,8 +350,10 @@ void sam_write(unsigned char data, unsigned char port)
     reg = ((port & 0x0E) >> 1);
     mask = 1 << reg;
     Dis_Offset = Dis_Offset & (0xFF - mask); //Shut the bit off
+
     if (port & 1)
       Dis_Offset = Dis_Offset | mask;
+
     SetGimeVdgOffset(Dis_Offset);
   }
 
@@ -373,8 +363,10 @@ void sam_write(unsigned char data, unsigned char port)
     reg = ((port & 0x0E) >> 1);
     mask = 1 << reg;
     VDG_Mode = VDG_Mode & (0xFF - mask);
+
     if (port & 1)
       VDG_Mode = VDG_Mode | mask;
+
     SetGimeVdgMode(VDG_Mode);
   }
 
@@ -386,10 +378,7 @@ void sam_write(unsigned char data, unsigned char port)
 
   if ((port == 0xD6) | (port == 0xD8))
     SetCPUMultiplyerFlag(0);
-
-  return;
 }
-
 
 void mc6883_reset()
 {
@@ -397,7 +386,6 @@ void mc6883_reset()
   Dis_Offset = 0;
   MPU_Rate = 0;
   rom = Getint_rom_pointer();
-  return;
 }
 
 unsigned char VDG_Offset(void)
@@ -409,4 +397,3 @@ unsigned char VDG_Modes(void)
 {
   return(VDG_Mode);
 }
-

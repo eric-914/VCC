@@ -46,7 +46,6 @@
   | [Cntl][Win][Alt][        Space       ][Alt][Win][Prp][Cntl]   [LftA][DnA][RgtA] |
   +---------------------------------------------------------------------------------+
 
-
   TODO: explain and add link or reference to CoCo 'scan codes' for each key
 */
 /*****************************************************************************/
@@ -56,7 +55,6 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <windows.h>
 #include <dinput.h>
-
 
 /*****************************************************************************/
 /**
@@ -135,7 +133,6 @@ keytranslationentry_t keyTranslationsCoCo[] =
   { DIK_SEMICOLON,  0,             32,     3,     0,    0 }, //   ;
   { DIK_EQUALS,     DIK_LSHIFT,    32,     5,    64,    7 }, //   =
   { DIK_EQUALS,     0,             32,     5,     0,    0 }, //   -
-//	{ DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL-3)
 
   // added
   { DIK_UPARROW,    0,              8,     3,     0,    0 }, //   UP
@@ -155,20 +152,14 @@ keytranslationentry_t keyTranslationsCoCo[] =
   { DIK_F2,         0,             64,     6,     0,    0 }, //   F2
   { DIK_BACK,       0,              8,     5,     0,    0 }, //   BACKSPACE -> CoCo left arrow
 
-//	{ DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL-0 for OS-9)
   { DIK_CAPSLOCK,   0,             64,     7,    16,    0 }, //   CAPS LOCK (CoCo SHIFT-0 for DECB)
 
-  // these produce the square bracket characters in DECB 
-  // but it does not match what the real CoCo does
-  //{ DIK_LBRACKET,   0,           64,     7,    8,    4 }, //   [
-  //{ DIK_RBRACKET,   0,           64,     7,    8,    6 }, //   ]
   // added from OS-9 layout
   { DIK_LBRACKET,   0,             64,     4,    32,    0 }, //   [ (CoCo CTRL 8)
   { DIK_RBRACKET,   0,             64,     4,    32,    1 }, //   ] (CoCo CTRL 9)
   { DIK_LBRACKET,   DIK_LSHIFT,    64,     4,    32,    4 }, //   { (CoCo CTRL ,)
   { DIK_RBRACKET,   DIK_LSHIFT,    64,     4,    32,    6 }, //   } (CoCo CTRL .)
 
-//	{ DIK_SCROLL,     0,              1,     0,    64,    7 }, //   SCROLL (CoCo SHIFT @)
   { DIK_RALT,       0,              1,     0,     0,    0 }, //   @
 
   { DIK_LALT,       0,             64,     3,     0,    0 }, //   ALT
@@ -304,9 +295,6 @@ keytranslationentry_t keyTranslationsNatural[] =
   { DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL 3)
 
   { DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL 0 for OS-9)
-//	{ DIK_CAPSLOCK,   0,             64,     7,    16,    0 }, //   CAPS LOCK (CoCo Shift 0 for DECB)
-
-//	{ DIK_SCROLL,     0,              1,     0,    64,    7 }, //   SCROLL (CoCo SHIFT @)
 
   { DIK_LALT,       0,             64,     3,     0,    0 }, //   ALT
   { DIK_LCONTROL,   0,             64,     4,     0,    0 }, //   CTRL
@@ -441,9 +429,6 @@ keytranslationentry_t keyTranslationsCompact[] =
   { DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL 3)
 
   { DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL 0 for OS-9)
-//	{ DIK_CAPSLOCK,   0,             64,     7,    16,    0 }, //   CAPS LOCK (CoCo Shift 0 for DECB)
-
-//	{ DIK_SCROLL,     0,              1,     0,    64,    7 }, //   SCROLL (CoCo SHIFT @)
 
   { DIK_LALT,       0,             64,     3,     0,    0 }, //   ALT
   { DIK_LCONTROL,   0,             64,     4,     0,    0 }, //   CTRL
@@ -579,9 +564,6 @@ keytranslationentry_t keyTranslationsCustom[] =
   { DIK_GRAVE,      DIK_LSHIFT,    16,     3,    64,    4 }, //   ~ (tilde) (CoCo CTRL 3)
 
   { DIK_CAPSLOCK,   0,             64,     4,    16,    0 }, //   CAPS LOCK (CoCo CTRL 0 for OS-9)
-                                 //	{ DIK_CAPSLOCK,   0,             64,     7,    16,    0 }, //   CAPS LOCK (CoCo Shift 0 for DECB)
-
-                                 //	{ DIK_SCROLL,     0,              1,     0,    64,    7 }, //   SCROLL (CoCo SHIFT @)
 
   { DIK_LALT,       0,             64,     3,     0,    0 }, //   ALT
   { DIK_LCONTROL,   0,             64,     4,     0,    0 }, //   CTRL
@@ -589,4 +571,3 @@ keytranslationentry_t keyTranslationsCustom[] =
 
   { 0,              0,              0,     0,     0,    0 }  // terminator
 };
-

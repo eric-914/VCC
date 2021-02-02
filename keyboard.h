@@ -21,11 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 /*****************************************************************************/
 
-
-/**
-*/
-
-
 typedef enum keyevent_e
 {
   kEventKeyUp = 0,
@@ -59,8 +54,6 @@ const char* const k_keyboardLayoutNames[] =
   "Custom"
 };
 
-/**
-*/
 typedef struct keytranslationentry_t
 {
   unsigned char ScanCode1;
@@ -83,8 +76,6 @@ typedef struct {
   unsigned char HiRes;
 } JoyStick;
 
-/*****************************************************************************/
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -106,8 +97,6 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
-/*****************************************************************************/
 
 #endif // __KEYBOARD_H__
 

@@ -25,7 +25,6 @@ unsigned char PackMem8Read(unsigned short);
 void PackMem8Write(unsigned char, unsigned char);
 void GetModuleStatus(SystemState*);
 int LoadCart(void);
-//void ConfigThisModule (void);
 unsigned short PackAudioSample(void);
 void ResetBus(void);
 int load_ext_rom(char*);
@@ -36,6 +35,7 @@ void UnloadDll(void);
 void UnloadPack(void);
 void DynamicMenuActivated(unsigned char);
 void RefreshDynamicMenu(void);
+
 #define ID_SDYNAMENU 5000	//Defines the start and end IDs for the dynamic menus
 #define ID_EDYNAMENU 5100
 #define NOMODULE	1

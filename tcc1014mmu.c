@@ -23,13 +23,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "string.h"
 #include "tcc1014mmu.h"
 #include "iobus.h"
-//#include "cc3rom.h"
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
 #include "logger.h"
 #include "hd6309.h"
 #include "fileops.h"
+
 static unsigned char* MemPages[1024];
 static unsigned short MemPageOffsets[1024];
 static unsigned char* memory = NULL;	//Emulated RAM
@@ -51,6 +51,7 @@ static unsigned char CurrentRamConfig = 1;
 static unsigned short MmuPrefix = 0;
 
 void UpdateMmuArray(void);
+
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *
 * Copy Rom Images to buffer space and reset GIME MMU registers to 0                      *
@@ -62,12 +63,15 @@ unsigned char* MmuInit(unsigned char RamConfig)
   unsigned int Index1 = 0;
   RamSize = MemConfig[RamConfig];
   CurrentRamConfig = RamConfig;
+
   if (memory != NULL)
     free(memory);
 
   memory = (unsigned char*)malloc(RamSize);
+
   if (memory == NULL)
     return(NULL);
+
   for (Index1 = 0;Index1 < RamSize;Index1++)
   {
     if (Index1 & 1)
@@ -75,9 +79,12 @@ unsigned char* MmuInit(unsigned char RamConfig)
     else
       memory[Index1] = 0xFF;
   }
+
   SetVidMask(VidMask[CurrentRamConfig]);
+
   if (InternalRomBuffer != NULL)
     free(InternalRomBuffer);
+
   InternalRomBuffer = NULL;
   InternalRomBuffer = (unsigned char*)malloc(0x8000);
 
@@ -87,12 +94,14 @@ unsigned char* MmuInit(unsigned char RamConfig)
   memset(InternalRomBuffer, 0xFF, 0x8000);
   CopyRom();
   MmuReset();
+
   return(memory);
 }
 
 void MmuReset(void)
 {
   unsigned int Index1 = 0, Index2 = 0;
+
   MmuTask = 0;
   MmuEnabled = 0;
   RamVectors = 0;
@@ -100,6 +109,7 @@ void MmuReset(void)
   RomMap = 0;
   MapType = 0;
   MmuPrefix = 0;
+
   for (Index1 = 0;Index1 < 8;Index1++)
     for (Index2 = 0;Index2 < 4;Index2++)
       MmuRegisters[Index2][Index1] = Index1 + StateSwitch[CurrentRamConfig];
@@ -109,15 +119,14 @@ void MmuReset(void)
     MemPages[Index1] = memory + ((Index1 & RamMask[CurrentRamConfig]) * 0x2000);
     MemPageOffsets[Index1] = 1;
   }
+
   SetRomMap(0);
   SetMapType(0);
-  return;
 }
 
 void SetVectors(unsigned char data)
 {
   RamVectors = !!data; //Bit 3 of $FF90 MC3
-  return;
 }
 
 void SetMmuRegister(unsigned char Register, unsigned char data)
@@ -126,35 +135,30 @@ void SetMmuRegister(unsigned char Register, unsigned char data)
   BankRegister = Register & 7;
   Task = !!(Register & 8);
   MmuRegisters[Task][BankRegister] = MmuPrefix | (data & RamMask[CurrentRamConfig]); //gime.c returns what was written so I can get away with this
-  return;
 }
 
 void SetRomMap(unsigned char data)
 {
   RomMap = (data & 3);
   UpdateMmuArray();
-  return;
 }
 
 void SetMapType(unsigned char type)
 {
   MapType = type;
   UpdateMmuArray();
-  return;
 }
 
 void Set_MmuTask(unsigned char task)
 {
   MmuTask = task;
   MmuState = (!MmuEnabled) << 1 | MmuTask;
-  return;
 }
 
 void Set_MmuEnabled(unsigned char usingmmu)
 {
   MmuEnabled = usingmmu;
   MmuState = (!MmuEnabled) << 1 | MmuTask;
-  return;
 }
 
 unsigned char* Getint_rom_pointer(void)
@@ -171,11 +175,15 @@ void CopyRom(void)
   GetIniFilePath(IniFilePath);
   GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath, MAX_PATH, IniFilePath);
   unsigned short temp = 0;
+  
   strcat(COCO3ROMPath, "\\coco3.rom");
+
   if (COCO3ROMPath != "") { temp = load_int_rom(COCO3ROMPath); } //Try loading from the user defined path first.
+  
   if (temp) { OutputDebugString(" Found coco3.rom in COCO3ROMPath\n"); }
 
   if (temp == 0) { temp = load_int_rom(BasicRomName()); }		//Try to load the image
+  
   if (temp == 0)
   {	// If we can't find it use default copy
     GetModuleFileName(NULL, ExecPath, MAX_PATH);
@@ -183,14 +191,12 @@ void CopyRom(void)
     strcat(ExecPath, "coco3.rom");
     temp = load_int_rom(ExecPath);
   }
+
   if (temp == 0)
   {
     MessageBox(0, "Missing file coco3.rom", "Error", 0);
     exit(0);
   }
-  //		for (temp=0;temp<=32767;temp++)
-  //			InternalRomBuffer[temp]=CC3Rom[temp];
-  return;
 }
 
 int load_int_rom(TCHAR filename[MAX_PATH])
@@ -198,12 +204,15 @@ int load_int_rom(TCHAR filename[MAX_PATH])
   unsigned short index = 0;
   FILE* rom_handle;
   rom_handle = fopen(filename, "rb");
+
   if (rom_handle == NULL)
     return(0);
+
   while ((feof(rom_handle) == 0) & (index < 0x8000))
     InternalRomBuffer[index++] = fgetc(rom_handle);
 
   fclose(rom_handle);
+
   return(index);
 }
 
@@ -214,42 +223,44 @@ unsigned char MemRead8(unsigned short address)
   {
     if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
       return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+
     return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
   }
+
   if (address > 0xFEFF)
     return (port_read(address));
+  
   if (RamVectors)	//Address must be $FE00 - $FEFF
     return(memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)]);
+  
   if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
     return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+
   return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
 }
 
 void MemWrite8(unsigned char data, unsigned short address)
 {
-  //	char Message[256]="";
-  //	if ((address>=0xC000) & (address<=0xE000))
-  //	{
-  //		sprintf(Message,"Writing %i to ROM Address %x\n",data,address);
-  //		WriteLog(Message,TOCONS);
-  //	}
   if (address < 0xFE00)
   {
     if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
       MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+
     return;
   }
+
   if (address > 0xFEFF)
   {
     port_write(data, address);
+
     return;
   }
+
   if (RamVectors)	//Address must be $FE00 - $FEFF
     memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)] = data;
   else
     if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
       MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
-  return;
 }
 
 unsigned char __fastcall fMemRead8(unsigned short address)
@@ -258,14 +269,19 @@ unsigned char __fastcall fMemRead8(unsigned short address)
   {
     if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
       return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+
     return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
   }
+
   if (address > 0xFEFF)
     return (port_read(address));
+  
   if (RamVectors)	//Address must be $FE00 - $FEFF
     return(memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)]);
+  
   if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
     return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+  
   return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
 }
 
@@ -277,18 +293,20 @@ void __fastcall fMemWrite8(unsigned char data, unsigned short address)
       MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
     return;
   }
+
   if (address > 0xFEFF)
   {
     port_write(data, address);
     return;
   }
+
   if (RamVectors)	//Address must be $FE00 - $FEFF
     memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)] = data;
   else
     if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
       MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
-  return;
 }
+
 /*****************************************************************
 * 16 bit memory handling routines                                *
 *****************************************************************/
@@ -302,7 +320,6 @@ void MemWrite16(unsigned short data, unsigned short addr)
 {
   MemWrite8(data >> 8, addr);
   MemWrite8(data & 0xFF, addr + 1);
-  return;
 }
 
 unsigned short GetMem(long address) {
@@ -320,27 +337,28 @@ void SetDistoRamBank(unsigned char data)
   case 0:	// 128K
     return;
     break;
+
   case 1:	//512K
     return;
     break;
+
   case 2:	//2048K
     SetVideoBank(data & 3);
     SetMmuPrefix(0);
     return;
     break;
+
   case 3:	//8192K	//No Can 3 
     SetVideoBank(data & 0x0F);
     SetMmuPrefix((data & 0x30) >> 4);
     return;
     break;
   }
-  return;
 }
 
 void SetMmuPrefix(unsigned char data)
 {
   MmuPrefix = (data & 3) << 8;
-  return;
 }
 
 void UpdateMmuArray(void)
@@ -358,6 +376,7 @@ void UpdateMmuArray(void)
     MemPageOffsets[VectorMask[CurrentRamConfig]] = 1;
     return;
   }
+
   switch (RomMap)
   {
   case 0:
@@ -400,6 +419,4 @@ void UpdateMmuArray(void)
     return;
     break;
   }
-  return;
 }
-

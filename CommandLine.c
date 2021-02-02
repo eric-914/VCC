@@ -118,16 +118,15 @@ int GetCmdLineArgs(char* CmdString)
 
   // Get the first token from the command string
   token = ParseCmdString(CmdString, ValueRequired);
-  while (token) {
 
+  while (token) {
     // Option?
     if (*token == '-') {
       switch (*(token + 1)) {
-
         // "-i" specfies the Vcc configuration file to use.
         // The value is required and will be found starting
         // at the third character of the option string.
-// Default config file is "vcc.ini"
+        // Default config file is "vcc.ini"
       case 'i':
         strncpy(CmdArg.IniFile, token + 2, CL_MAX_PATH);
         break;
@@ -138,6 +137,7 @@ int GetCmdLineArgs(char* CmdString)
       case 'd':
         if (*(token + 2)) {
           CmdArg.Logging = atoi(token + 2);
+
           if (CmdArg.Logging < 1) CmdArg.Logging = 0;
           if (CmdArg.Logging > 3) CmdArg.Logging = 3;
         }
@@ -156,7 +156,6 @@ int GetCmdLineArgs(char* CmdString)
     }
     else {
       switch (++argnum) {
-
         // First (currently only) positional arg is Quick Load filename.
       case 1:
         strncpy(CmdArg.QLoadFile, token, CL_MAX_PATH);
@@ -171,6 +170,7 @@ int GetCmdLineArgs(char* CmdString)
     // Get next token
     token = ParseCmdString(NULL, ValueRequired);
   }
+
   return 0;
 }
 
@@ -197,12 +197,14 @@ char* ParseCmdString(char* CmdString, const char* ValueRequired)
   // Initial call sets command string. Subsequent calls expect a NULL
   if (CmdString) {
     while (*CmdString == ' ') CmdString++;  // Skip leading blanks
-    strncpy(string, CmdString, 256);          // Make a copy of what is left
-    string[255] = '\0';                       // Be sure it is terminated
+
+    strncpy(string, CmdString, 256);        // Make a copy of what is left
+    string[255] = '\0';                     // Be sure it is terminated
     NxtTokenPtr = string;                   // Save it's location
 
     // Mark unquoted blanks
     quoted = 0;
+
     for (char* p = NxtTokenPtr; *p; p++) {
       if (*p == '"') {
         quoted = !quoted;
@@ -223,12 +225,14 @@ char* ParseCmdString(char* CmdString, const char* ValueRequired)
           if (value = GetNextToken()) {
             strcpy(option, token);
             strcat(option, value);
+
             return option;
           }
         }
       }
     }
   }
+
   return token;   // null, positional argument, or option with no value
 }
 
@@ -249,7 +253,6 @@ char* GetNextToken()
 
   // If anything remains
   if (*NxtTokenPtr != '\0') {
-
     // Terminate current token
     *NxtTokenPtr++ = '\0';
 
@@ -261,6 +264,7 @@ char* GetNextToken()
   if (token[0] == '\"') {
     token++;
     int n = strlen(token);
+
     if ((n > 0) && (token[n - 1] == '\"')) token[n - 1] = '\0';
   }
 

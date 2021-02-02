@@ -10,43 +10,16 @@
 
 #include "xDebug.h"
 
-/*
-  System headers
-*/
-//#include <ucontext.h>
-//#include <unistd.h>
-//#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <Windows.h>
 
-/*****************************************************************************/
-
 int	g_bTraceMessageLogging = TRUE;
-//int	g_bTraceMessageLogFile	= FALSE;
 
-/*****************************************************************************/
-
-#if 0
 void _xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...)
 {
-  va_list		args;
-
-  va_start(args, pFormat);
-
-  fprintf(stdout, "%s(%d) : ", (char*)pFile, iLine);
-
-  vfprintf(stdout, (char*)pFormat, args);
-
-  va_end(args);
-
-  fflush(stdout);
-}
-#else
-void _xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...)
-{
-  va_list		args;
+  va_list	args;
   char temp[1024];
 
   va_start(args, pFormat);
@@ -58,10 +31,4 @@ void _xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...)
   OutputDebugString(temp);
 
   va_end(args);
-
-  //	fflush(stdout);
 }
-#endif
-
-/*****************************************************************************/
-

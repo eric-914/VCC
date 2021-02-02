@@ -32,20 +32,24 @@ int EnumerateJoysticks(void)
 {
   HRESULT hr;
   JoyStickIndex = 0;
+
   if (FAILED(hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&di, NULL)))
     return(0);
 
   if (FAILED(hr = di->EnumDevices(DI8DEVCLASS_GAMECTRL, enumCallback, NULL, DIEDFL_ATTACHEDONLY)))
     return(0);
+
   return(JoyStickIndex);
 }
 
 BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
 {
   HRESULT hr;
+
   hr = di->CreateDevice(instance->guidInstance, &Joysticks[JoyStickIndex], NULL);
   strncpy(StickName[JoyStickIndex], instance->tszProductName, STRLEN);
   JoyStickIndex++;
+
   return(JoyStickIndex < MAXSTICKS);
 }
 
@@ -54,26 +58,20 @@ bool InitJoyStick(unsigned char StickNumber)
 {
   //	DIDEVCAPS capabilities;
   HRESULT hr;
+
   CurrentStick = StickNumber;
+
   if (Joysticks[StickNumber] == NULL)
     return(0);
 
   if (FAILED(hr = Joysticks[StickNumber]->SetDataFormat(&c_dfDIJoystick2)))
     return(0);
 
-  //	if (FAILED(hr= Joysticks[StickNumber]->SetCooperativeLevel(NULL, DISCL_EXCLUSIVE ))) 
-  //		return(0);
-
-    //Fails for some reason Investigate this
-  //	if (FAILED(hr= Joysticks[StickNumber]->GetCapabilities(&capabilities)))
-  //		return(0);
-
   if (FAILED(hr = Joysticks[StickNumber]->EnumObjects(enumAxesCallback, NULL, DIDFT_AXIS)))
     return(0);
+
   return(1); //return true on success
 }
-
-
 
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context)
 {
@@ -88,24 +86,27 @@ BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* con
 
   if (FAILED(Joysticks[CurrentStick]->SetProperty(DIPROP_RANGE, &propRange.diph)))
     return(DIENUM_STOP);
+
   return(DIENUM_CONTINUE);
 }
-
 
 HRESULT JoyStickPoll(DIJOYSTATE2* js, unsigned char StickNumber)
 {
   HRESULT hr;
+
   if (Joysticks[StickNumber] == NULL)
     return (S_OK);
 
   hr = Joysticks[StickNumber]->Poll();
+
   if (FAILED(hr))
   {
     hr = Joysticks[StickNumber]->Acquire();
+
     while (hr == DIERR_INPUTLOST)
       hr = Joysticks[StickNumber]->Acquire();
 
-    if (hr == DIERR_INVALIDPARAM)  //|| (hr == DIERR_NOTINITALIZED
+    if (hr == DIERR_INVALIDPARAM)
       return(E_FAIL);
 
     if (hr == DIERR_OTHERAPPHASPRIO)
@@ -116,5 +117,4 @@ HRESULT JoyStickPoll(DIJOYSTATE2* js, unsigned char StickNumber)
     return(hr);
 
   return(S_OK);
-
 }

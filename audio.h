@@ -27,6 +27,7 @@ int GetFreeBlockCount(void);
 int GetAuxBlockCount(void);
 void PurgeAuxBuffer(void);
 unsigned short GetSoundStatus(void);
+
 typedef struct CardList {
   char CardName[64];
   _GUID* Guid;

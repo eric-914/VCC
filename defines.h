@@ -26,19 +26,17 @@ This file is part of VCC (Virtual Color Computer).
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
 #define SAMPLESPERFRAME 262
 
-
-
 //CPU 
 #define FRAMESPERSECORD (double)59.923	//The coco really runs at about 59.923 Frames per second
 #define LINESPERSCREEN (double)262
 #define PICOSECOND (double)1000000000
 #define COLORBURST (double)3579545 
 #define AUDIOBUFFERS 12
+
 //Misc
 #define MAX_LOADSTRING 100
 #define QUERY 255
 #define INDEXTIME ((LINESPERSCREEN * TARGETFRAMERATE)/5)
-
 
 //Common CPU defs
 #define IRQ		1
@@ -51,7 +49,6 @@ extern void (*CPUReset)(void);
 extern void (*CPUAssertInterupt)(unsigned char, unsigned char);
 extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
-
 
 typedef struct
 {
@@ -74,9 +71,6 @@ typedef struct
   long			SurfacePitch;
   unsigned short	LineCounter;
   unsigned char	ScanLines;
-  //bool			InRender;
-  //unsigned char	PauseEmuLoop;
-  //unsigned char	Waiting;
   unsigned char	EmulationRunning;
   unsigned char	ResetPending;
   POINT			WindowSize;
@@ -86,6 +80,7 @@ typedef struct
 
 static char RateList[4][7] = { "Mute","11025","22050","44100" };
 static unsigned short iRateList[4] = { 0,11025,22050,44100 };
+
 #define TAPEAUDIORATE 44100
 
 #endif

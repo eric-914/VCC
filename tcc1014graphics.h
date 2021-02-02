@@ -18,7 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 void UpdateScreen8(SystemState*);
 void UpdateScreen16(SystemState*);
 void UpdateScreen24(SystemState*);
@@ -33,7 +32,6 @@ void DrawTopBoarder8(SystemState*);
 void DrawTopBoarder16(SystemState*);
 void DrawTopBoarder24(SystemState*);
 void DrawTopBoarder32(SystemState*);
-
 
 void SetGimeVdgOffset(unsigned char);
 void SetGimeVdgMode(unsigned char);
@@ -59,17 +57,12 @@ int GetBytesPerRow(void);
 unsigned int GetStartOfVidram();
 int GetGraphicsMode();
 
-//unsigned char SetArtifacts(unsigned char);
-//unsigned char SetColorInvert(unsigned char);
-
-//void Cls(unsigned int);
 unsigned char SetScanLines(unsigned char);
 void SetBlinkState(unsigned char);
 static unsigned char Lpf[4] = { 192,199,225,225 }; // 2 is really undefined but I gotta put something here.
 static unsigned char VcenterTable[4] = { 29,23,12,12 };
+
 #define MRGB	1
 #define MCMP	0
-
-//void Set8BitPalette(void);
 
 #endif

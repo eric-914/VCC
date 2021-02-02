@@ -80,8 +80,6 @@ static unsigned char RightButton2Status = 0;
 static unsigned char LeftStickNumber = 0;
 static unsigned char RightStickNumber = 0;
 
-
-
 /*****************************************************************************/
 //
 // keyboard
@@ -99,9 +97,6 @@ static unsigned char RolloverTable[8];	// CoCo 'keys' for emulator
 
 /** run-time key translation table - convert key up/down messages to 'rollover' codes */
 static keytranslationentry_t KeyTransTable[KBTABLE_ENTRY_COUNT];	// run-time keyboard layout table (key(s) to keys(s) translation)
-
-/*****************************************************************************/
-/*****************************************************************************/
 
 /*****************************************************************************/
 /**
@@ -136,6 +131,7 @@ unsigned char vccKeyboardGetScan(unsigned char Col)
 
   //	MuxSelect=GetMuxState();	//Collect CA2 and CB2 from the PIA (1of4 Multiplexer)
   StickValue = get_pot_value(GetMuxState());
+
   if (StickValue != 0)		//OS9 joyin routine needs this (koronis rift works now)
   {
     if (StickValue >= DACState())		// Set bit of stick >= DAC output $FF20 Bits 7-2
@@ -209,9 +205,7 @@ void _vccKeyboardUpdateRolloverTable()
   for (Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++)
   {
     // stop at last entry
-    if ((KeyTransTable[Index].ScanCode1 == 0)
-      & (KeyTransTable[Index].ScanCode2 == 0)
-      )
+    if ((KeyTransTable[Index].ScanCode1 == 0) & (KeyTransTable[Index].ScanCode2 == 0))
     {
       break;
     }
@@ -219,9 +213,7 @@ void _vccKeyboardUpdateRolloverTable()
     if (LockOut != KeyTransTable[Index].ScanCode1)
     {
       // Single input key 
-      if ((KeyTransTable[Index].ScanCode1 != 0)
-        && (KeyTransTable[Index].ScanCode2 == 0)
-        )
+      if ((KeyTransTable[Index].ScanCode1 != 0) && (KeyTransTable[Index].ScanCode2 == 0))
       {
         // check if key pressed
         if (ScanTable[KeyTransTable[Index].ScanCode1] == KEY_DOWN)
@@ -239,14 +231,10 @@ void _vccKeyboardUpdateRolloverTable()
       }
 
       // Double Input Key
-      if ((KeyTransTable[Index].ScanCode1 != 0)
-        && (KeyTransTable[Index].ScanCode2 != 0)
-        )
+      if ((KeyTransTable[Index].ScanCode1 != 0) && (KeyTransTable[Index].ScanCode2 != 0))
       {
         // check if both keys pressed
-        if ((ScanTable[KeyTransTable[Index].ScanCode1] == KEY_DOWN)
-          && (ScanTable[KeyTransTable[Index].ScanCode2] == KEY_DOWN)
-          )
+        if ((ScanTable[KeyTransTable[Index].ScanCode1] == KEY_DOWN) && (ScanTable[KeyTransTable[Index].ScanCode2] == KEY_DOWN))
         {
           int col;
 
@@ -290,6 +278,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
   {
     ScanCode = DIK_LSHIFT;
   }
+
 #if 0 // TODO: CTRL and/or ALT?
   // CTRL key - right -> left
   if (ScanCode == DIK_RCONTROL)
@@ -311,9 +300,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
 
     // Key Down
   case kEventKeyDown:
-    if ((Left.UseMouse == 0)
-      | (Right.UseMouse == 0)
-      )
+    if ((Left.UseMouse == 0) | (Right.UseMouse == 0))
     {
       ScanCode = SetMouseStatus(ScanCode, 1);
     }
@@ -321,21 +308,18 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
     // track key is down
     ScanTable[ScanCode] = KEY_DOWN;
 
-
     _vccKeyboardUpdateRolloverTable();
-
 
     if (GimeGetKeyboardInteruptState())
     {
       GimeAssertKeyboardInterupt();
     }
+
     break;
 
     // Key Up
   case kEventKeyUp:
-    if ((Left.UseMouse == 0)
-      | (Right.UseMouse == 0)
-      )
+    if ((Left.UseMouse == 0) | (Right.UseMouse == 0))
     {
       ScanCode = SetMouseStatus(ScanCode, 0);
     }
@@ -354,6 +338,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char ScanCode, keyevent_e 
     }
 
     _vccKeyboardUpdateRolloverTable();
+
     break;
   }
 }
@@ -366,7 +351,7 @@ int keyTransCompare(const void* e1, const void* e2)
 {
   keytranslationentry_t* entry1 = (keytranslationentry_t*)e1;
   keytranslationentry_t* entry2 = (keytranslationentry_t*)e2;
-  int						result = 0;
+  int result = 0;
 
   // ascending
   // elem1 - elem2
@@ -411,17 +396,13 @@ int keyTransCompare(const void* e1, const void* e2)
         }
         else
           // move double key combos in front of single ones
-          if (entry1->ScanCode2 == 0
-            && entry2->ScanCode2 != 0
-            )
+          if (entry1->ScanCode2 == 0 && entry2->ScanCode2 != 0)
           {
             result = 1;
           }
           else
             // move double key combos in front of single ones
-            if (entry2->ScanCode2 == 0
-              && entry1->ScanCode2 != 0
-              )
+            if (entry2->ScanCode2 == 0 && entry1->ScanCode2 != 0)
             {
               result = -1;
             }
@@ -497,6 +478,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
   // copy the selected keyboard layout to the run-time table
   memset(KeyTransTable, 0, sizeof(KeyTransTable));
   Index2 = 0;
+
   for (Index1 = 0; ; Index1++)
   {
     memcpy(&keyTransEntry, &keyLayoutTable[Index1], sizeof(keytranslationentry_t));
@@ -521,18 +503,14 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
     //
     // swaps ScanCode1 with ScanCode2 if ScanCode1 is zero
     //
-    if ((keyTransEntry.ScanCode1 == 0)
-      & (keyTransEntry.ScanCode2 != 0)
-      )
+    if ((keyTransEntry.ScanCode1 == 0) & (keyTransEntry.ScanCode2 != 0))
     {
       keyTransEntry.ScanCode1 = keyTransEntry.ScanCode2;
       keyTransEntry.ScanCode2 = 0;
     }
 
     // check for terminating entry
-    if (keyTransEntry.ScanCode1 == 0
-      && keyTransEntry.ScanCode2 == 0
-      )
+    if (keyTransEntry.ScanCode1 == 0 && keyTransEntry.ScanCode2 == 0)
     {
       break;
     }
@@ -558,9 +536,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
   for (Index1 = 0; Index1 < KBTABLE_ENTRY_COUNT; Index1++)
   {
     // check for null entry
-    if (KeyTransTable[Index1].ScanCode1 == 0
-      && KeyTransTable[Index1].ScanCode2 == 0
-      )
+    if (KeyTransTable[Index1].ScanCode1 == 0 && KeyTransTable[Index1].ScanCode2 == 0)
     {
       // done
       break;
@@ -581,20 +557,16 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 #endif
 }
 
-/*****************************************************************************/
-/*****************************************************************************/
 /*
   Joystick related code
 */
 
-/*****************************************************************************/
-/**
-*/
 void joystick(unsigned short x, unsigned short y)
 {
 
   if (x > 63)
     x = 63;
+
   if (y > 63)
     y = 63;
 
@@ -603,6 +575,7 @@ void joystick(unsigned short x, unsigned short y)
     LeftStickX = x;
     LeftStickY = y;
   }
+
   if (Right.UseMouse == 1)
   {
     RightStickX = x;
@@ -612,22 +585,16 @@ void joystick(unsigned short x, unsigned short y)
   return;
 }
 
-/*****************************************************************************/
-/**
-*/
 void SetStickNumbers(unsigned char Temp1, unsigned char Temp2)
 {
   LeftStickNumber = Temp1;
   RightStickNumber = Temp2;
-  return;
 }
 
-/*****************************************************************************/
-/**
-*/
 unsigned short get_pot_value(unsigned char pot)
 {
   DIJOYSTATE2 Stick1;
+
   if (Left.UseMouse == 3)
   {
     JoyStickPoll(&Stick1, LeftStickNumber);
@@ -668,9 +635,6 @@ unsigned short get_pot_value(unsigned char pot)
   return (0);
 }
 
-/*****************************************************************************/
-/**
-*/
 char SetMouseStatus(char ScanCode, unsigned char Phase)
 {
   char ReturnValue = ScanCode;
@@ -685,26 +649,31 @@ char SetMouseStatus(char ScanCode, unsigned char Phase)
         LeftStickX = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Right)
       {
         LeftStickX = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Up)
       {
         LeftStickY = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Down)
       {
         LeftStickY = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Fire1)
       {
         LeftButton1Status = 0;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Fire2)
       {
         LeftButton2Status = 0;
@@ -719,26 +688,31 @@ char SetMouseStatus(char ScanCode, unsigned char Phase)
         RightStickX = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Right)
       {
         RightStickX = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Up)
       {
         RightStickY = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Down)
       {
         RightStickY = 32;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Fire1)
       {
         RightButton1Status = 0;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Fire2)
       {
         RightButton2Status = 0;
@@ -755,26 +729,31 @@ char SetMouseStatus(char ScanCode, unsigned char Phase)
         LeftStickX = 0;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Right)
       {
         LeftStickX = 63;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Up)
       {
         LeftStickY = 0;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Down)
       {
         LeftStickY = 63;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Fire1)
       {
         LeftButton1Status = 1;
         ReturnValue = 0;
       }
+
       if (ScanCode == Left.Fire2)
       {
         LeftButton2Status = 1;
@@ -789,26 +768,31 @@ char SetMouseStatus(char ScanCode, unsigned char Phase)
         ReturnValue = 0;
         RightStickX = 0;
       }
+
       if (ScanCode == Right.Right)
       {
         RightStickX = 63;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Up)
       {
         RightStickY = 0;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Down)
       {
         RightStickY = 63;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Fire1)
       {
         RightButton1Status = 1;
         ReturnValue = 0;
       }
+
       if (ScanCode == Right.Fire2)
       {
         RightButton2Status = 1;
@@ -821,13 +805,10 @@ char SetMouseStatus(char ScanCode, unsigned char Phase)
   return(ReturnValue);
 }
 
-/*****************************************************************************/
-/**
-*/
 void SetButtonStatus(unsigned char Side, unsigned char State) //Side=0 Left Button Side=1 Right Button State 1=Down
 {
-  unsigned char Btemp = 0;
-  Btemp = (Side << 1) | State;
+  unsigned char Btemp = (Side << 1) | State;
+
   if (Left.UseMouse == 1)
     switch (Btemp)
     {
@@ -869,12 +850,10 @@ void SetButtonStatus(unsigned char Side, unsigned char State) //Side=0 Left Butt
     }
 }
 
-/*****************************************************************************/
-
 bool GetPaste() {
   return pasting;
 }
+
 void SetPaste(bool tmp) {
   pasting = tmp;
 }
-

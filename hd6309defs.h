@@ -44,9 +44,6 @@ This file is part of VCC (Virtual Color Computer).
 #define VNMI	0xFFFC
 #define VRESET	0xFFFE
 
-
-
-
 //Opcode Defs
 //Last Char (D) Direct (I) Inherent (R) Relative (M) Immediate (X) Indexed (E) extened
 #define NEG_D	0x00

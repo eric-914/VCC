@@ -30,8 +30,8 @@ void UpdateTapeCounter(unsigned int, unsigned char);
 int GetKeyboardLayout();
 void SetWindowSize(POINT);
 
-void SetIniFilePath(char*); //EJJ
-char* AppDirectory();       //EJJ
+void SetIniFilePath(char*);
+char* AppDirectory();
 
 int GetPaletteType();
 POINT GetIniWindowSize();
@@ -46,7 +46,6 @@ typedef struct {
   unsigned char	FrameSkip;
   unsigned char	SpeedThrottle;
   unsigned char	CpuType;
-  //	unsigned char	AudioMute;
   unsigned char	MonitorType;
   unsigned char   PaletteType;
   unsigned char	ScanLines;
@@ -75,4 +74,3 @@ void DecreaseOverclockSpeed();
 void IncreaseOverclockSpeed();
 
 #endif
-

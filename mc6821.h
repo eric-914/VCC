@@ -42,6 +42,7 @@ unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
 int OpenPrintFile(char*);
+
 #define FALLING 0
 #define RISING	1
 #define ANY		2
