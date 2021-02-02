@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
- //CC Flag masks
+//CC Flag masks
 #define E 7
 #define F 6
 #define H 5

@@ -20,35 +20,35 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "logger.h"
 
-void WriteLog(char *Message,unsigned char Type)
+void WriteLog(char* Message, unsigned char Type)
 {
-	static unsigned int Counter=1;
-	static HANDLE hout=NULL;
-	static FILE  *disk_handle=NULL;
-	unsigned long dummy;
-	char cTemp[512]="";
-	switch (Type)
-	{
-	case TOCONS:
-		if (hout==NULL)
-		{
-			AllocConsole();
-			hout=GetStdHandle(STD_OUTPUT_HANDLE);
-			SetConsoleTitle("Logging Window"); 
-		}
-		sprintf(cTemp,"%s",Message);
-		WriteConsole(hout,cTemp,strlen(cTemp),&dummy,0);
-		Counter++;
-		break;
+  static unsigned int Counter = 1;
+  static HANDLE hout = NULL;
+  static FILE* disk_handle = NULL;
+  unsigned long dummy;
+  char cTemp[512] = "";
+  switch (Type)
+  {
+  case TOCONS:
+    if (hout == NULL)
+    {
+      AllocConsole();
+      hout = GetStdHandle(STD_OUTPUT_HANDLE);
+      SetConsoleTitle("Logging Window");
+    }
+    sprintf(cTemp, "%s", Message);
+    WriteConsole(hout, cTemp, strlen(cTemp), &dummy, 0);
+    Counter++;
+    break;
 
-	case TOFILE:
-	if (disk_handle ==NULL)
-		disk_handle=fopen("c:\\VccLog.txt","w");
+  case TOFILE:
+    if (disk_handle == NULL)
+      disk_handle = fopen("c:\\VccLog.txt", "w");
 
-	fprintf(disk_handle,"%s\r\n",Message);
-	fflush(disk_handle);
-	break;
-	}
+    fprintf(disk_handle, "%s\r\n", Message);
+    fflush(disk_handle);
+    break;
+  }
 
 }
 

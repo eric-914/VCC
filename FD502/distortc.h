@@ -18,6 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 unsigned char read_time(unsigned short);
-void write_time(unsigned char,unsigned char);
+void write_time(unsigned char, unsigned char);
 
 #endif

@@ -3,8 +3,8 @@
 
 namespace detail
 {
-	void NullAssetCartridgeLine(unsigned char) {}
-	void NullAddMenuItem(const char *, int, int) {}
+  void NullAssetCartridgeLine(unsigned char) {}
+  void NullAddMenuItem(const char*, int, int) {}
 }
 
 
@@ -12,25 +12,25 @@ Cartridge* Cartridge::m_Singleton(nullptr);
 
 
 Cartridge::Cartridge(std::string name, std::string catalogId)
-	:
-	m_Name(move(name)),
-	m_CatalogId(move(catalogId)),
-	AssetCartridgeLinePtr(detail::NullAssetCartridgeLine),
-	AddMenuItemPtr(detail::NullAddMenuItem)
+  :
+  m_Name(move(name)),
+  m_CatalogId(move(catalogId)),
+  AssetCartridgeLinePtr(detail::NullAssetCartridgeLine),
+  AddMenuItemPtr(detail::NullAddMenuItem)
 {
-	if (m_Singleton)
-	{
-//		throw std::runtime_error("Cartridge instance already created.");
-	}
+  if (m_Singleton)
+  {
+    //		throw std::runtime_error("Cartridge instance already created.");
+  }
 
-	m_Singleton = this;
+  m_Singleton = this;
 }
 
 
 
 Cartridge::~Cartridge()
 {
-	m_Singleton = nullptr;
+  m_Singleton = nullptr;
 }
 
 
@@ -50,13 +50,13 @@ void Cartridge::LoadMenu()
 
 std::string Cartridge::GetName() const
 {
-	return m_Name;
+  return m_Name;
 }
 
 
 std::string Cartridge::GetCatalogId() const
 {
-	return m_CatalogId;
+  return m_CatalogId;
 }
 
 
@@ -64,28 +64,28 @@ std::string Cartridge::GetCatalogId() const
 
 void Cartridge::SetCartLineAssertCallback(SETCART callback)
 {
-	AssetCartridgeLinePtr = callback;
+  AssetCartridgeLinePtr = callback;
 }
 
 
 void Cartridge::SetConfigurationPath(std::string path)
 {
-	m_ConfigurationPath = move(path);
-	LoadConfiguration(m_ConfigurationPath);
-	LoadMenu();
+  m_ConfigurationPath = move(path);
+  LoadConfiguration(m_ConfigurationPath);
+  LoadMenu();
 }
 
 
 void Cartridge::SetMenuBuilderCallback(DYNAMICMENUCALLBACK callback)
 {
-	AddMenuItemPtr = callback;
+  AddMenuItemPtr = callback;
 }
 
 
 
 std::string Cartridge::GetStatusMessage() const
 {
-	return std::string();
+  return std::string();
 }
 
 
@@ -105,7 +105,7 @@ void Cartridge::OnReset()
 
 unsigned short Cartridge::UpdateAudio()
 {
-	return 0;
+  return 0;
 }
 
 
@@ -113,7 +113,7 @@ unsigned short Cartridge::UpdateAudio()
 
 unsigned char Cartridge::OnReadMemory(unsigned short /*address*/) const
 {
-	return 0;
+  return 0;
 }
 
 
@@ -123,7 +123,7 @@ void Cartridge::OnWritePort(unsigned char /*port*/, unsigned char /*data*/)
 
 unsigned char Cartridge::OnReadPort(unsigned char /*port*/) const
 {
-	return 0;
+  return 0;
 }
 
 

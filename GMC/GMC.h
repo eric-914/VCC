@@ -9,7 +9,7 @@
 
 typedef void(*SETCART)(unsigned char);
 typedef void(*SETCARTPOINTER)(SETCART);
-typedef void(*DYNAMICMENUCALLBACK)(const char *, int, int);
+typedef void(*DYNAMICMENUCALLBACK)(const char*, int, int);
 
 std::string SelectROMFile();
 std::string ExtractFilename(std::string path);

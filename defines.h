@@ -46,46 +46,46 @@ This file is part of VCC (Virtual Color Computer).
 #define NMI		3
 
 extern void (*CPUInit)(void);
-extern int  (*CPUExec)( int);
+extern int  (*CPUExec)(int);
 extern void (*CPUReset)(void);
-extern void (*CPUAssertInterupt)(unsigned char,unsigned char);
+extern void (*CPUAssertInterupt)(unsigned char, unsigned char);
 extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
 
 
-typedef struct 
+typedef struct
 {
-HWND			WindowHandle;
-HWND			ConfigDialog;
-HINSTANCE		WindowInstance;
-unsigned char	*RamBuffer;
-unsigned short	*WRamBuffer;
-unsigned char	RamSize;
-double			CPUCurrentSpeed;
-unsigned char	DoubleSpeedMultiplyer;
-unsigned char	DoubleSpeedFlag;
-unsigned char	TurboSpeedFlag;
-unsigned char	CpuType;
-unsigned char	FrameSkip;
-unsigned char	BitDepth;
-unsigned char	*PTRsurface8;
-unsigned short	*PTRsurface16;
-unsigned int	*PTRsurface32;
-long			SurfacePitch;
-unsigned short	LineCounter;
-unsigned char	ScanLines;
-//bool			InRender;
-//unsigned char	PauseEmuLoop;
-//unsigned char	Waiting;
-unsigned char	EmulationRunning;
-unsigned char	ResetPending;
-POINT			WindowSize;
-unsigned char	FullScreen;
-char			StatusLine[256];
+  HWND			WindowHandle;
+  HWND			ConfigDialog;
+  HINSTANCE		WindowInstance;
+  unsigned char* RamBuffer;
+  unsigned short* WRamBuffer;
+  unsigned char	RamSize;
+  double			CPUCurrentSpeed;
+  unsigned char	DoubleSpeedMultiplyer;
+  unsigned char	DoubleSpeedFlag;
+  unsigned char	TurboSpeedFlag;
+  unsigned char	CpuType;
+  unsigned char	FrameSkip;
+  unsigned char	BitDepth;
+  unsigned char* PTRsurface8;
+  unsigned short* PTRsurface16;
+  unsigned int* PTRsurface32;
+  long			SurfacePitch;
+  unsigned short	LineCounter;
+  unsigned char	ScanLines;
+  //bool			InRender;
+  //unsigned char	PauseEmuLoop;
+  //unsigned char	Waiting;
+  unsigned char	EmulationRunning;
+  unsigned char	ResetPending;
+  POINT			WindowSize;
+  unsigned char	FullScreen;
+  char			StatusLine[256];
 } SystemState;
 
-static char RateList[4][7]={"Mute","11025","22050","44100"};
-static unsigned short iRateList[4]={0,11025,22050,44100};
+static char RateList[4][7] = { "Mute","11025","22050","44100" };
+static unsigned short iRateList[4] = { 0,11025,22050,44100 };
 #define TAPEAUDIORATE 44100
 
 #endif

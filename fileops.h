@@ -22,16 +22,16 @@ This file is part of VCC (Virtual Color Computer).
 extern "C" {
 #endif
 
-void PathStripPath(char *);
-void ValidatePath(char *Path);
-int CheckPath(char *);
-BOOL PathRemoveFileSpec(char *);
-BOOL PathRemoveExtension(char *);
-char* PathFindExtension(char *);
-DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
+  void PathStripPath(char*);
+  void ValidatePath(char* Path);
+  int CheckPath(char*);
+  BOOL PathRemoveFileSpec(char*);
+  BOOL PathRemoveExtension(char*);
+  char* PathFindExtension(char*);
+  DWORD WritePrivateProfileInt(LPCTSTR, LPCTSTR, int, LPCTSTR);
 
 #ifdef __cplusplus
-	}
+}
 #endif
 
 #endif

@@ -8,7 +8,7 @@
 /*****************************************************************************/
 
 /*
-	Debug trace macros
+  Debug trace macros
 */
 #if (defined _DEBUG)
 #	define XTRACE(x,...)			_xDbgTrace( __FILE__, __LINE__, x, ##__VA_ARGS__ )
@@ -22,9 +22,9 @@
 extern "C"
 {
 #endif
-	
-	void		_xDbgTrace(const void * pFile, const int iLine, const void * pFormat, ...);
-	
+
+  void		_xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...);
+
 #ifdef __cplusplus
 }
 #endif

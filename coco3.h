@@ -24,10 +24,10 @@ void SetLinesperScreen(unsigned char Lines);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);
 unsigned char SetSndOutMode(unsigned char);
-float RenderFrame (SystemState *);
+float RenderFrame(SystemState*);
 
 void SetTimerInteruptState(unsigned char);
-void SetTimerClockRate (unsigned char);	
+void SetTimerClockRate(unsigned char);
 void SetInteruptTimer(unsigned short);
 void MiscReset(void);
 void PasteBASICWithNew();
@@ -35,6 +35,6 @@ void PasteBASIC();
 void PasteText();
 void CopyText();
 void FlipArtifacts();
-unsigned short SetAudioRate (unsigned short);
+unsigned short SetAudioRate(unsigned short);
 
 #endif

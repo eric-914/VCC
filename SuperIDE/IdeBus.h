@@ -18,24 +18,24 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 struct IDEINTERFACE {
-	unsigned short	Data;
-	unsigned char	Error[2];
-	unsigned char	SecCount;
-	unsigned char	SecNumber;
-	unsigned char	Cylinderlsb;
-	unsigned char	Cylindermsb;
-	unsigned char	Head;
-	unsigned char	Command;
-	unsigned char	Status[2];
+  unsigned short	Data;
+  unsigned char	Error[2];
+  unsigned char	SecCount;
+  unsigned char	SecNumber;
+  unsigned char	Cylinderlsb;
+  unsigned char	Cylindermsb;
+  unsigned char	Head;
+  unsigned char	Command;
+  unsigned char	Status[2];
 };
 
 void IdeInit();
-void IdeRegWrite(unsigned char,unsigned short);
+void IdeRegWrite(unsigned char, unsigned short);
 unsigned short IdeRegRead(unsigned char);
-void DiskStatus(char *);
-unsigned char MountDisk(char *,unsigned char );
+void DiskStatus(char*);
+unsigned char MountDisk(char*, unsigned char);
 unsigned char DropDisk(unsigned char);
-void QueryDisk(unsigned char,char *);
+void QueryDisk(unsigned char, char*);
 //Status 
 #define ERR		1	//Previous command ended in an error
 #define IDX		2	//Unused

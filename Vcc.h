@@ -25,20 +25,20 @@ This file is part of VCC (Virtual Color Computer).
 //#define CONFIG_DIALOG_MODAL
 
 void shutdown(void);
-void SetCPUMultiplyerFlag (unsigned char);
+void SetCPUMultiplyerFlag(unsigned char);
 void SetTurboMode(unsigned char);
-unsigned char SetCPUMultiplyer(unsigned char );
+unsigned char SetCPUMultiplyer(unsigned char);
 unsigned char SetRamSize(unsigned char);
 unsigned char SetSpeedThrottle(unsigned char);
 unsigned char SetFrameSkip(unsigned char);
-unsigned char SetCpuType( unsigned char);
+unsigned char SetCpuType(unsigned char);
 unsigned char SetAutoStart(unsigned char);
 void SetPaletteType(void);
 //void StartCart(char *);
 void DoReboot(void);
-void DoHardReset(SystemState *);
-void LoadPack (void);
-void DynamicMenuCallback( char *,int,int);
+void DoHardReset(SystemState*);
+void LoadPack(void);
+void DynamicMenuCallback(char*, int, int);
 //void RefreshWindow(void);
 
 //Type 0= HEAD TAG 1= Slave Tag 2=StandAlone

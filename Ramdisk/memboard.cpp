@@ -24,53 +24,53 @@ This file is part of VCC (Virtual Color Computer).
 
 union
 {
-	unsigned int Address;
-	struct
-	{
-		unsigned char lswlsb,lswmsb,mswlsb,mswmsb;
-	} Byte;
+  unsigned int Address;
+  struct
+  {
+    unsigned char lswlsb, lswmsb, mswlsb, mswmsb;
+  } Byte;
 } IndexAddress;//BufferAddress;
 
-static unsigned char *RamBuffer=NULL;
+static unsigned char* RamBuffer = NULL;
 
 bool InitMemBoard(void)
 {
-	IndexAddress.Address=0;
-	if (RamBuffer!=NULL)
-		free(RamBuffer);
-	RamBuffer=(unsigned char *)malloc(RAMSIZE);
-	if (RamBuffer==NULL)
-		return(true);
-	memset(RamBuffer,0,RAMSIZE);
-	return(false);
+  IndexAddress.Address = 0;
+  if (RamBuffer != NULL)
+    free(RamBuffer);
+  RamBuffer = (unsigned char*)malloc(RAMSIZE);
+  if (RamBuffer == NULL)
+    return(true);
+  memset(RamBuffer, 0, RAMSIZE);
+  return(false);
 }
 
-bool WritePort(unsigned char Port,unsigned char Data)
+bool WritePort(unsigned char Port, unsigned char Data)
 {
-	switch (Port)
-	{
-	case 0x40:
-		IndexAddress.Byte.lswlsb=Data;
-		break;
-	case 0x41:
-		IndexAddress.Byte.lswmsb=Data;
-		break;
-	case 0x42:
-		IndexAddress.Byte.mswlsb=(Data & 0x7);
-		break;
-	}
-	return(false);
+  switch (Port)
+  {
+  case 0x40:
+    IndexAddress.Byte.lswlsb = Data;
+    break;
+  case 0x41:
+    IndexAddress.Byte.lswmsb = Data;
+    break;
+  case 0x42:
+    IndexAddress.Byte.mswlsb = (Data & 0x7);
+    break;
+  }
+  return(false);
 }
 
 bool WriteArray(unsigned char Data)
 {
-	RamBuffer[IndexAddress.Address]=Data;
-	return(false);
+  RamBuffer[IndexAddress.Address] = Data;
+  return(false);
 }
 
 unsigned char ReadArray(void)
 {
-	return(RamBuffer[IndexAddress.Address]);
+  return(RamBuffer[IndexAddress.Address]);
 }
 
 

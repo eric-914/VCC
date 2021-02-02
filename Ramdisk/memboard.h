@@ -22,7 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 
 
 bool InitMemBoard(void);
-bool WritePort(unsigned char,unsigned char);
+bool WritePort(unsigned char, unsigned char);
 bool WriteArray(unsigned char);
 unsigned char ReadArray(void);
 

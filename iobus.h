@@ -19,6 +19,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 unsigned char port_read(unsigned short addr);
-void port_write(unsigned char data,unsigned short addr);
+void port_write(unsigned char data, unsigned short addr);
 
 #endif

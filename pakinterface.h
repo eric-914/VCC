@@ -19,22 +19,22 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 void PakTimer(void);
-unsigned char PackPortRead (unsigned char);
-void PackPortWrite(unsigned char,unsigned char);
-unsigned char PackMem8Read (unsigned short);
-void PackMem8Write(unsigned char,unsigned char);
-void GetModuleStatus( SystemState *);
+unsigned char PackPortRead(unsigned char);
+void PackPortWrite(unsigned char, unsigned char);
+unsigned char PackMem8Read(unsigned short);
+void PackMem8Write(unsigned char, unsigned char);
+void GetModuleStatus(SystemState*);
 int LoadCart(void);
 //void ConfigThisModule (void);
 unsigned short PackAudioSample(void);
 void ResetBus(void);
-int load_ext_rom(char *);
-void GetCurrentModule(char *);
-int InsertModule (char *);
+int load_ext_rom(char*);
+void GetCurrentModule(char*);
+int InsertModule(char*);
 void UpdateBusPointer(void);
 void UnloadDll(void);
 void UnloadPack(void);
-void DynamicMenuActivated(unsigned char );
+void DynamicMenuActivated(unsigned char);
 void RefreshDynamicMenu(void);
 #define ID_SDYNAMENU 5000	//Defines the start and end IDs for the dynamic menus
 #define ID_EDYNAMENU 5100

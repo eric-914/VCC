@@ -31,8 +31,8 @@ unsigned int LoadTape(void);
 void SetTapeCounter(unsigned int);
 void SetTapeMode(unsigned char);
 void Motor(unsigned char);
-void LoadCassetteBuffer(unsigned char *);
-void FlushCassetteBuffer(unsigned char *,unsigned int);
-void GetTapeName(char *);
+void LoadCassetteBuffer(unsigned char*);
+void FlushCassetteBuffer(unsigned char*, unsigned int);
+void GetTapeName(char*);
 
 #endif

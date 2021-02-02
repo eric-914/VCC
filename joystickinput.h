@@ -22,8 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 #define MAXSTICKS 10
 #define STRLEN 64
 
-HRESULT JoyStickPoll(DIJOYSTATE2 * ,unsigned char);
+HRESULT JoyStickPoll(DIJOYSTATE2*, unsigned char);
 int EnumerateJoysticks(void);
-bool InitJoyStick (unsigned char);
+bool InitJoyStick(unsigned char);
 
 #endif

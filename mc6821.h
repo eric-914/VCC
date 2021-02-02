@@ -21,15 +21,15 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 
 unsigned char pia0_read(unsigned char port);
-void pia0_write(unsigned char data,unsigned char port);
+void pia0_write(unsigned char data, unsigned char port);
 unsigned char pia1_read(unsigned char port);
-void pia1_write(unsigned char data,unsigned char port);
+void pia1_write(unsigned char data, unsigned char port);
 
 void ClosePrintFile(void);
 void SetSerialParams(unsigned char);
 void SetMonState(BOOL);
 unsigned char VDG_Mode(void);
-void kb_tap(unsigned int,unsigned int,unsigned int);
+void kb_tap(unsigned int, unsigned int, unsigned int);
 void irq_hs(int);
 void irq_fs(int);
 void AssertCart(void);
@@ -41,7 +41,7 @@ unsigned char DACState(void);
 unsigned int GetDACSample(void);
 unsigned char GetCasSample(void);
 void SetCassetteSample(unsigned char);
-int OpenPrintFile(char *);
+int OpenPrintFile(char*);
 #define FALLING 0
 #define RISING	1
 #define ANY		2

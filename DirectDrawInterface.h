@@ -18,20 +18,20 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-BOOL InitInstance(HINSTANCE,int);
-BOOL InitDrawSurface(bool );
-void UnlockScreen(SystemState *);
-unsigned char LockScreen(SystemState *);
-void SetStatusBarText( char *,SystemState *);
-bool CreateDDWindow(SystemState *);
-void Cls(unsigned int,SystemState *);
-void DoCls(SystemState *);
-unsigned char SetInfoBand( unsigned char);
+BOOL InitInstance(HINSTANCE, int);
+BOOL InitDrawSurface(bool);
+void UnlockScreen(SystemState*);
+unsigned char LockScreen(SystemState*);
+void SetStatusBarText(char*, SystemState*);
+bool CreateDDWindow(SystemState*);
+void Cls(unsigned int, SystemState*);
+void DoCls(SystemState*);
+unsigned char SetInfoBand(unsigned char);
 unsigned char SetResize(unsigned char);
-unsigned char SetAspect (unsigned char);
-float Static(SystemState *);
+unsigned char SetAspect(unsigned char);
+float Static(SystemState*);
 POINT GetCurWindowSize();
-void DisplayFlip(SystemState *);
+void DisplayFlip(SystemState*);
 
 
 #define MAX_LOADSTRING 100

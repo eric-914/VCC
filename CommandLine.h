@@ -22,14 +22,14 @@ This file is part of VCC (Virtual Color Computer).
 // Declare global variables defined by GetCmdLineArgs
 #define CL_MAX_PATH 256
 struct CmdLineArguments {
-	char QLoadFile[CL_MAX_PATH];
-	char IniFile[CL_MAX_PATH];
-	int  Logging;
+  char QLoadFile[CL_MAX_PATH];
+  char IniFile[CL_MAX_PATH];
+  int  Logging;
 };
 extern struct CmdLineArguments CmdArg;
 
 // Get Settings from Command line string 
-int  GetCmdLineArgs(char * lpCmdLine);
+int  GetCmdLineArgs(char* lpCmdLine);
 
 // Errors returned
 #define CL_ERR_UNKOPT 1  // Unknown option found

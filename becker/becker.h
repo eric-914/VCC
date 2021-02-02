@@ -6,8 +6,8 @@
 #define false 0
 
 // functions
-void MemWrite(unsigned char,unsigned short );
-unsigned char MemRead(unsigned short );
+void MemWrite(unsigned char, unsigned short);
+unsigned char MemRead(unsigned short);
 void BuildDynaMenu(void);
 
 extern const unsigned char Rom[8192];

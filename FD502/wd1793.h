@@ -19,45 +19,45 @@ This file is part of VCC (Virtual Color Computer).
 */
 #include "defines.h"
 unsigned char disk_io_read(unsigned char port);
-void disk_io_write(unsigned char data,unsigned char port);	
-int mount_disk_image(char *,unsigned char );
+void disk_io_write(unsigned char data, unsigned char port);
+int mount_disk_image(char*, unsigned char);
 void unmount_disk_image(unsigned char drive);
-void DiskStatus(char *);
+void DiskStatus(char*);
 void PingFdc(void);
-unsigned char SetTurboDisk( unsigned char);
+unsigned char SetTurboDisk(unsigned char);
 //unsigned char UseKeyboardLeds(unsigned char);
-DWORD GetDriverVersion ();
-unsigned short InitController (void);
+DWORD GetDriverVersion();
+unsigned short InitController(void);
 //unsigned long UseRawDisk(unsigned char,unsigned char);
 // Commands for the wd1793 disk controller $FF48
 
-struct DiskInfo 
+struct DiskInfo
 {
-	HANDLE FileHandle;
-	char ImageName[MAX_PATH];
-	long FileSize;				
-	unsigned char HeaderSize;
-	unsigned char Sides;		// Number of Sides 1 ot 2
-	unsigned char Sectors;		//Sectors Per Track
-	unsigned char SectorSize;	//0=128 1=256 2=512 3=1024
-	unsigned char FirstSector;	// 0 or 1
-	unsigned char ImageType;	//0=JVC 1=VDK 2=DMK 3=OS9
-	unsigned short TrackSize;
-	unsigned char WriteProtect;
-	unsigned char HeadPosition;	// The "Physical" Track the head is over
-	unsigned char RawDrive;
-	char ImageTypeName[4];
+  HANDLE FileHandle;
+  char ImageName[MAX_PATH];
+  long FileSize;
+  unsigned char HeaderSize;
+  unsigned char Sides;		// Number of Sides 1 ot 2
+  unsigned char Sectors;		//Sectors Per Track
+  unsigned char SectorSize;	//0=128 1=256 2=512 3=1024
+  unsigned char FirstSector;	// 0 or 1
+  unsigned char ImageType;	//0=JVC 1=VDK 2=DMK 3=OS9
+  unsigned short TrackSize;
+  unsigned char WriteProtect;
+  unsigned char HeadPosition;	// The "Physical" Track the head is over
+  unsigned char RawDrive;
+  char ImageTypeName[4];
 };
 
 struct SectorInfo
 {
-	unsigned char Track;
-	unsigned char Side;
-	unsigned char Sector;
-	unsigned short Lenth;
-	unsigned short CRC;
-	long DAM;
-	unsigned char Density;
+  unsigned char Track;
+  unsigned char Side;
+  unsigned char Sector;
+  unsigned short Lenth;
+  unsigned short CRC;
+  long DAM;
+  unsigned char Density;
 };
 
 

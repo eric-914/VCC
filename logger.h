@@ -18,10 +18,10 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void WriteLog(char *,unsigned char);
+void WriteLog(char*, unsigned char);
 void CpuDump(void);
-void PrintLogC(const void * fmt, ...);
-void OpenLogFile(char * filename);
+void PrintLogC(const void* fmt, ...);
+void OpenLogFile(char* filename);
 
 #define TOCONS	0
 #define TOFILE	1

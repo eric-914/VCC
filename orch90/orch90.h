@@ -17,9 +17,9 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
-void MemWrite(unsigned char,unsigned short );
-unsigned char MemRead(unsigned short );
-void CPUAssertInterupt(unsigned char,unsigned char);
+void MemWrite(unsigned char, unsigned short);
+unsigned char MemRead(unsigned short);
+void CPUAssertInterupt(unsigned char, unsigned char);
 
 
 //Misc

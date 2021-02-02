@@ -59,249 +59,252 @@ This file is part of VCC (Virtual Color Computer).
 #include "..\fileops.h"
 
 typedef union {
-    unsigned int All;
-    struct {
-        unsigned char lswlsb,lswmsb,mswlsb,mswmsb;
-    } Byte;
+  unsigned int All;
+  struct {
+    unsigned char lswlsb, lswmsb, mswlsb, mswmsb;
+  } Byte;
 } SECOFF;
 
 typedef union {
-    unsigned int word;
-    struct {
-        unsigned char lsb,msb;
-    } Byte;
+  unsigned int word;
+  struct {
+    unsigned char lsb, msb;
+  } Byte;
 } Address;
 
-static int DriveSelect=0;
-static HANDLE HardDrive[2]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
+static int DriveSelect = 0;
+static HANDLE HardDrive[2] = { INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE };
 static SECOFF SectorOffset;
 static Address DMAaddress;
 static unsigned char SectorBuffer[SECTORSIZE];
-static unsigned char Mounted[2]={0,0};
-static unsigned char WpHD[2]={0,0};
-static unsigned short ScanCount=0;
-static unsigned long LastSectorNum=0;
-static char DStatus[128]="";
+static unsigned char Mounted[2] = { 0,0 };
+static unsigned char WpHD[2] = { 0,0 };
+static unsigned short ScanCount = 0;
+static unsigned long LastSectorNum = 0;
+static char DStatus[128] = "";
 static char Status = HD_PWRUP;
-unsigned long BytesMoved=0;
+unsigned long BytesMoved = 0;
 
 void HDcommand(unsigned char);
 
 int MountHD(char FileName[MAX_PATH], int drive)
 {
-    drive = drive&1;  // Drive can be 0 or 1
+  drive = drive & 1;  // Drive can be 0 or 1
 
-    // Unmount existing
-    if (HardDrive[drive] != INVALID_HANDLE_VALUE) UnmountHD(drive);
+  // Unmount existing
+  if (HardDrive[drive] != INVALID_HANDLE_VALUE) UnmountHD(drive);
 
-    // Assume mount will work for now
-    WpHD[drive]=0;
-    Mounted[drive]=1;
-    Status = HD_OK;
-    SectorOffset.All = 0;
-    DMAaddress.word = 0;
-    HardDrive[drive] = CreateFile( FileName,
-                                   GENERIC_READ | GENERIC_WRITE,
-                                   0,0,OPEN_EXISTING,
-                                   FILE_ATTRIBUTE_NORMAL,0);
+  // Assume mount will work for now
+  WpHD[drive] = 0;
+  Mounted[drive] = 1;
+  Status = HD_OK;
+  SectorOffset.All = 0;
+  DMAaddress.word = 0;
+  HardDrive[drive] = CreateFile(FileName,
+    GENERIC_READ | GENERIC_WRITE,
+    0, 0, OPEN_EXISTING,
+    FILE_ATTRIBUTE_NORMAL, 0);
 
-    // If can't open read/write try read only.
-    if (HardDrive[drive] == INVALID_HANDLE_VALUE) {
-        HardDrive[drive] = CreateFile( FileName,
-                                       GENERIC_READ,
-                                       0,0,OPEN_EXISTING,
-                                       FILE_ATTRIBUTE_NORMAL,0);
-        WpHD[drive]=1; // drive is write protected
-    }
+  // If can't open read/write try read only.
+  if (HardDrive[drive] == INVALID_HANDLE_VALUE) {
+    HardDrive[drive] = CreateFile(FileName,
+      GENERIC_READ,
+      0, 0, OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL, 0);
+    WpHD[drive] = 1; // drive is write protected
+  }
 
-    // Give up if can't open either way
-    if (HardDrive[drive] == INVALID_HANDLE_VALUE) {
-        WpHD[drive]=0;
-        Mounted[drive]=0;
-        Status = HD_NODSK;
-        return(0);
-    }
-    return(1);
+  // Give up if can't open either way
+  if (HardDrive[drive] == INVALID_HANDLE_VALUE) {
+    WpHD[drive] = 0;
+    Mounted[drive] = 0;
+    Status = HD_NODSK;
+    return(0);
+  }
+  return(1);
 }
 
 void UnmountHD(int drive)
 {
-    drive = drive&1;  // Drive can be 0 or 1
+  drive = drive & 1;  // Drive can be 0 or 1
 
-    if (HardDrive[drive] != INVALID_HANDLE_VALUE) {
-        CloseHandle(HardDrive[drive]);
-        HardDrive[drive] = INVALID_HANDLE_VALUE;
-        Mounted[drive] = 0;
-        Status = HD_NODSK;
-    }
-    return;
+  if (HardDrive[drive] != INVALID_HANDLE_VALUE) {
+    CloseHandle(HardDrive[drive]);
+    HardDrive[drive] = INVALID_HANDLE_VALUE;
+    Mounted[drive] = 0;
+    Status = HD_NODSK;
+  }
+  return;
 }
 
 // Clear drive select on reset
 void VhdReset(void) {
-    MemWrite(0,0xFF86);
+  MemWrite(0, 0xFF86);
 }
 
 void HDcommand(unsigned char Command) {
 
-    unsigned short Temp=0;
+  unsigned short Temp = 0;
 
-    // Verify drive is mounted
-    if (Mounted[DriveSelect] == 0) {
-        Status = HD_NODSK;
-        return;
+  // Verify drive is mounted
+  if (Mounted[DriveSelect] == 0) {
+    Status = HD_NODSK;
+    return;
+  }
+
+  switch (Command) {
+
+  case SECTOR_READ:
+    // Verify desired sector is in range
+    if (SectorOffset.All > MAX_SECTOR) {
+      Status = HD_NODSK;
+      return;
     }
 
-    switch (Command) {
+    // Seek desired sector
+    SetFilePointer(HardDrive[DriveSelect], SectorOffset.All, 0, FILE_BEGIN);
 
-    case SECTOR_READ:
-        // Verify desired sector is in range
-        if (SectorOffset.All > MAX_SECTOR) {
-            Status = HD_NODSK;
-            return;
-        }
-
-        // Seek desired sector
-        SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
-
-        // Read it
-        ReadFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,NULL);
-        if (BytesMoved != SECTORSIZE) {
-            Status = HD_NODSK;
-        } else {
-            // Copy block to Coco RAM
-            for (Temp=0; Temp < SECTORSIZE;Temp++) {
-                MemWrite(SectorBuffer[Temp],Temp+DMAaddress.word);
-            }
-            Status = HD_OK;
-        }
-
-        // Put disk status text
-        sprintf(DStatus,"HD%d: Rd %000000.6X",DriveSelect,SectorOffset.All>>8);
-
-        break;
-
-    case SECTOR_WRITE:
-        // Verify desired sector is in range
-        if (SectorOffset.All > MAX_SECTOR) {
-            Status = HD_NODSK;
-            return;
-        }
-        
-        // Check for write protect (file opened read only)
-        if (WpHD[DriveSelect] == 1 ) {
-            Status = HD_WP;
-            return;
-        }
-
-        // Copy block from from CoCo RAM
-        for (Temp=0; Temp <SECTORSIZE;Temp++) {
-            SectorBuffer[Temp]=MemRead(Temp+DMAaddress.word);
-        }
-
-        // Seek desired sector
-        SetFilePointer(HardDrive[DriveSelect],SectorOffset.All,0,FILE_BEGIN);
-
-        // Write it
-        WriteFile(HardDrive[DriveSelect],SectorBuffer,SECTORSIZE,&BytesMoved,NULL);
-        if (BytesMoved != SECTORSIZE) {
-            Status = HD_NODSK;
-        } else {
-            Status = HD_OK;
-        }
-
-        // Put disk status text
-        sprintf(DStatus,"HD: Wr Sec %000000.6X",SectorOffset.All>>8);
-
-        break;
-
-    case DISK_FLUSH:
-        FlushFileBuffers(HardDrive[DriveSelect]);
-        SectorOffset.All=0;
-        DMAaddress.word=0;
-        Status = HD_OK;
-        break;
-
-    default:
-        Status = HD_INVLD;
-        return;
+    // Read it
+    ReadFile(HardDrive[DriveSelect], SectorBuffer, SECTORSIZE, &BytesMoved, NULL);
+    if (BytesMoved != SECTORSIZE) {
+      Status = HD_NODSK;
     }
+    else {
+      // Copy block to Coco RAM
+      for (Temp = 0; Temp < SECTORSIZE;Temp++) {
+        MemWrite(SectorBuffer[Temp], Temp + DMAaddress.word);
+      }
+      Status = HD_OK;
+    }
+
+    // Put disk status text
+    sprintf(DStatus, "HD%d: Rd %000000.6X", DriveSelect, SectorOffset.All >> 8);
+
+    break;
+
+  case SECTOR_WRITE:
+    // Verify desired sector is in range
+    if (SectorOffset.All > MAX_SECTOR) {
+      Status = HD_NODSK;
+      return;
+    }
+
+    // Check for write protect (file opened read only)
+    if (WpHD[DriveSelect] == 1) {
+      Status = HD_WP;
+      return;
+    }
+
+    // Copy block from from CoCo RAM
+    for (Temp = 0; Temp < SECTORSIZE;Temp++) {
+      SectorBuffer[Temp] = MemRead(Temp + DMAaddress.word);
+    }
+
+    // Seek desired sector
+    SetFilePointer(HardDrive[DriveSelect], SectorOffset.All, 0, FILE_BEGIN);
+
+    // Write it
+    WriteFile(HardDrive[DriveSelect], SectorBuffer, SECTORSIZE, &BytesMoved, NULL);
+    if (BytesMoved != SECTORSIZE) {
+      Status = HD_NODSK;
+    }
+    else {
+      Status = HD_OK;
+    }
+
+    // Put disk status text
+    sprintf(DStatus, "HD: Wr Sec %000000.6X", SectorOffset.All >> 8);
+
+    break;
+
+  case DISK_FLUSH:
+    FlushFileBuffers(HardDrive[DriveSelect]);
+    SectorOffset.All = 0;
+    DMAaddress.word = 0;
+    Status = HD_OK;
+    break;
+
+  default:
+    Status = HD_INVLD;
+    return;
+  }
 }
 
-void DiskStatus(char *Temp)
+void DiskStatus(char* Temp)
 {
-    strcpy(Temp,DStatus);
-    ScanCount++;
+  strcpy(Temp, DStatus);
+  ScanCount++;
 
-    if (SectorOffset.All != LastSectorNum) {
-        ScanCount=0;
-        LastSectorNum=SectorOffset.All;
-    }
+  if (SectorOffset.All != LastSectorNum) {
+    ScanCount = 0;
+    LastSectorNum = SectorOffset.All;
+  }
 
-    if (ScanCount > 63) {
-        ScanCount=0;
-        if (Mounted[DriveSelect]==1) {
-            sprintf(DStatus,"HD%d:IDLE",DriveSelect);
-        } else {
-            sprintf(DStatus,"HD%d:No Image!",DriveSelect);
-        }
+  if (ScanCount > 63) {
+    ScanCount = 0;
+    if (Mounted[DriveSelect] == 1) {
+      sprintf(DStatus, "HD%d:IDLE", DriveSelect);
     }
-    return;
+    else {
+      sprintf(DStatus, "HD%d:No Image!", DriveSelect);
+    }
+  }
+  return;
 }
 
-void IdeWrite(unsigned char data,unsigned char port)
+void IdeWrite(unsigned char data, unsigned char port)
 {
-    switch (port-0x80) {
-    case 0:
-        SectorOffset.Byte.mswmsb = data;
-        break;
-    case 1:
-        SectorOffset.Byte.mswlsb = data;
-        break;
-    case 2:
-        SectorOffset.Byte.lswmsb = data;
-        break;
-    case 3:
-        HDcommand(data);
-        break;
-    case 4:
-        DMAaddress.Byte.msb=data;
-        break;
-    case 5:
-        DMAaddress.Byte.lsb=data;
-        break;
-    case 6:
-        // Only select drive if data is 0 or 1
-        if (data == (data&1)) DriveSelect = data;
-        break;
-    }
-    return;
+  switch (port - 0x80) {
+  case 0:
+    SectorOffset.Byte.mswmsb = data;
+    break;
+  case 1:
+    SectorOffset.Byte.mswlsb = data;
+    break;
+  case 2:
+    SectorOffset.Byte.lswmsb = data;
+    break;
+  case 3:
+    HDcommand(data);
+    break;
+  case 4:
+    DMAaddress.Byte.msb = data;
+    break;
+  case 5:
+    DMAaddress.Byte.lsb = data;
+    break;
+  case 6:
+    // Only select drive if data is 0 or 1
+    if (data == (data & 1)) DriveSelect = data;
+    break;
+  }
+  return;
 }
 
 unsigned char IdeRead(unsigned char port)
 {
-    switch (port-0x80) {
-    case 0:
-        return(SectorOffset.Byte.mswmsb);
-        break;
-    case 1:
-        return(SectorOffset.Byte.mswlsb);
-        break;
-    case 2:
-        return(SectorOffset.Byte.lswmsb);
-        break;
-    case 3:
-        return(Status);
-        break;
-    case 4:
-        return(DMAaddress.Byte.msb);
-        break;
-    case 5:
-        return(DMAaddress.Byte.lsb);
-        break;
-    case 6:
-        return DriveSelect;
-        break;
-    }
-    return(0);
+  switch (port - 0x80) {
+  case 0:
+    return(SectorOffset.Byte.mswmsb);
+    break;
+  case 1:
+    return(SectorOffset.Byte.mswlsb);
+    break;
+  case 2:
+    return(SectorOffset.Byte.lswmsb);
+    break;
+  case 3:
+    return(Status);
+    break;
+  case 4:
+    return(DMAaddress.Byte.msb);
+    break;
+  case 5:
+    return(DMAaddress.Byte.lsb);
+    break;
+  case 6:
+    return DriveSelect;
+    break;
+  }
+  return(0);
 }

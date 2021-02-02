@@ -19,29 +19,29 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 
-void UpdateScreen8 (SystemState *);
-void UpdateScreen16 (SystemState *);
-void UpdateScreen24 (SystemState *);
-void UpdateScreen32 (SystemState *);
+void UpdateScreen8(SystemState*);
+void UpdateScreen16(SystemState*);
+void UpdateScreen24(SystemState*);
+void UpdateScreen32(SystemState*);
 
-void DrawBottomBoarder8(SystemState *);
-void DrawBottomBoarder16(SystemState *);
-void DrawBottomBoarder24(SystemState *);
-void DrawBottomBoarder32(SystemState *);
+void DrawBottomBoarder8(SystemState*);
+void DrawBottomBoarder16(SystemState*);
+void DrawBottomBoarder24(SystemState*);
+void DrawBottomBoarder32(SystemState*);
 
-void DrawTopBoarder8(SystemState *);
-void DrawTopBoarder16(SystemState *);
-void DrawTopBoarder24(SystemState *);
-void DrawTopBoarder32(SystemState *);
+void DrawTopBoarder8(SystemState*);
+void DrawTopBoarder16(SystemState*);
+void DrawTopBoarder24(SystemState*);
+void DrawTopBoarder32(SystemState*);
 
 
-void SetGimeVdgOffset (unsigned char );
-void SetGimeVdgMode (unsigned char);
-void SetGimeVdgMode2 (unsigned char);
+void SetGimeVdgOffset(unsigned char);
+void SetGimeVdgMode(unsigned char);
+void SetGimeVdgMode2(unsigned char);
 
 void SetVerticalOffsetRegister(unsigned short);
 void SetCompatMode(unsigned char);
-void SetGimePallet(unsigned char,unsigned char);
+void SetGimePallet(unsigned char, unsigned char);
 void SetGimeVmode(unsigned char);
 void SetGimeVres(unsigned char);
 void SetGimeHorzOffset(unsigned char);
@@ -52,8 +52,8 @@ void InvalidateBoarder();
 void GimeInit(void);
 void GimeReset(void);
 void SetVideoBank(unsigned char);
-unsigned char SetMonitorType(unsigned char );
-void SetBoarderChange (unsigned char);
+unsigned char SetMonitorType(unsigned char);
+void SetBoarderChange(unsigned char);
 int GetBytesPerRow(void);
 
 unsigned int GetStartOfVidram();
@@ -65,8 +65,8 @@ int GetGraphicsMode();
 //void Cls(unsigned int);
 unsigned char SetScanLines(unsigned char);
 void SetBlinkState(unsigned char);
-static unsigned char Lpf[4]={192,199,225,225}; // 2 is really undefined but I gotta put something here.
-static unsigned char VcenterTable[4]={29,23,12,12};
+static unsigned char Lpf[4] = { 192,199,225,225 }; // 2 is really undefined but I gotta put something here.
+static unsigned char VcenterTable[4] = { 29,23,12,12 };
 #define MRGB	1
 #define MCMP	0
 
