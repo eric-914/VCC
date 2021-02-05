@@ -34,7 +34,7 @@ static unsigned char* MemImage = NULL;
 FILE* BinImage = NULL;
 HANDLE hr;
 static unsigned char Flag = 1;
-static int temp = 255;
+static size_t temp = 255;
 static char Extension[MAX_PATH] = "";
 
 unsigned char QuickLoad(char* BinFileName)

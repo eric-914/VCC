@@ -310,7 +310,7 @@ void Select_Disk(unsigned char Disk)
       MessageBox(0, "Can't Open File", "Can't open the Image specified.", 0);
 
     string tmp = ofn.lpstrFile;
-    int idx;
+    size_t idx;
     idx = tmp.find_last_of("\\");
     tmp = tmp.substr(0, idx);
     strcpy(SuperIDEPath, tmp.c_str());

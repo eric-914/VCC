@@ -286,15 +286,15 @@ void ExecuteCommand(void)
 void ByteSwap(char* String)
 {
   int Index = 0, Index2 = 0;
-  int Lenth = strlen(String);
-  char* NewString = (char*)malloc(Lenth + 1);
-  memset(NewString, NULL, Lenth + 1);
+  size_t Length = strlen(String);
+  char* NewString = (char*)malloc(Length + 1);
+  memset(NewString, NULL, Length + 1);
 
-  for (Index = 0;Index < (Lenth + 1);Index++)
+  for (Index = 0;Index < (Length + 1);Index++)
     if (String[Index ^ 1])
       NewString[Index2++] = String[Index ^ 1];
 
-  memcpy(String, NewString, Lenth);
+  memcpy(String, NewString, Length);
   free(NewString);
 }
 

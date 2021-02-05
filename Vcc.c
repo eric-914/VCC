@@ -101,10 +101,10 @@ static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
 static unsigned char FlagEmuStop = TH_RUNNING;
 
-int APIENTRY WinMain(HINSTANCE hInstance,
-  HINSTANCE hPrevInstance,
-  LPSTR     lpCmdLine,
-  int       nCmdShow)
+INT WINAPI WinMain(_In_ HINSTANCE hInstance, 
+  _In_opt_ HINSTANCE hPrevInstance,
+  _In_ PSTR lpCmdLine, 
+  _In_ INT nCmdShow)
 {
   MSG  Msg;
 
@@ -195,7 +195,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   UnloadDll();
   SoundDeInit();
   WriteIniFile(); //Save Any changes to ini File
-  return Msg.wParam;
+
+  return (INT)Msg.wParam;
 }
 
 /*--------------------------------------------------------------------------*/

@@ -40,7 +40,7 @@ void WriteLog(char* Message, unsigned char Type)
       hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
       char heading[] = "\n -- Vcc Log --\n";
 
-      if (!WriteFile(hLog_Out, heading, strlen(heading), &dummy, 0)) {
+      if (!WriteFile(hLog_Out, heading, (DWORD)strlen(heading), &dummy, 0)) {
         AllocConsole();
         hLog_Out = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");
@@ -49,10 +49,10 @@ void WriteLog(char* Message, unsigned char Type)
     }
 
     if (newconsole) {
-      WriteConsole(hLog_Out, Message, strlen(Message), &dummy, 0);
+      WriteConsole(hLog_Out, Message, (DWORD)strlen(Message), &dummy, 0);
     }
     else {
-      WriteFile(hLog_Out, Message, strlen(Message), &dummy, 0);
+      WriteFile(hLog_Out, Message, (DWORD)strlen(Message), &dummy, 0);
     }
     break;
 

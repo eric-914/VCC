@@ -39,7 +39,7 @@ void WriteLog(char* Message, unsigned char Type)
     }
 
     sprintf(cTemp, "%s", Message);
-    WriteConsole(hout, cTemp, strlen(cTemp), &dummy, 0);
+    WriteConsole(hout, cTemp, (DWORD)strlen(cTemp), &dummy, 0);
     Counter++;
     break;
 

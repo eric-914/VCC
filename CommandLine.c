@@ -263,7 +263,7 @@ char* GetNextToken()
   // Strip leading and trailing quotes from token
   if (token[0] == '\"') {
     token++;
-    int n = strlen(token);
+    size_t n = strlen(token);
 
     if ((n > 0) && (token[n - 1] == '\"')) token[n - 1] = '\0';
   }

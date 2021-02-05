@@ -236,7 +236,7 @@ void LoadHardDisk(int drive)
 
   //  Keep vhd directory for config file
   string tmp = ofn.lpstrFile;
-  int idx;
+  size_t idx;
   idx = tmp.find_last_of("\\");
   tmp = tmp.substr(0, idx);
   strcpy(HardDiskPath, tmp.c_str());

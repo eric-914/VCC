@@ -512,7 +512,7 @@ void WriteLog(char* Message, unsigned char Type)
         hout = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");
       }
-      WriteConsole(hout, Message, strlen(Message), &dummy, 0);
+      WriteConsole(hout, Message, (DWORD)strlen(Message), &dummy, 0);
       break;
 
     case TOFILE:

@@ -655,7 +655,7 @@ void LoadCartDLL(unsigned char Slot, char* DllPath)
   {
     RetVal = MountModule(Slot, DllPath);
     string tmp = ofn.lpstrFile;
-    int idx;
+    size_t idx;
     idx = tmp.find_last_of("\\");
     tmp = tmp.substr(0, idx);
     strcpy(MPIPath, tmp.c_str());

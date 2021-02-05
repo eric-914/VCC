@@ -603,7 +603,7 @@ float Static(SystemState* STState)
   g_pDDSBack->GetDC(&hdc);
   SetBkColor(hdc, 0);
   SetTextColor(hdc, RGB(Counter1 << 2, Counter1 << 2, Counter1 << 2));
-  TextOut(hdc, TextX, TextY, Message, strlen(Message));
+  TextOut(hdc, TextX, TextY, Message, (int)strlen(Message));
   Counter++;
   Counter1 += Phase;
 

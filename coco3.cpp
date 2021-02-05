@@ -576,7 +576,7 @@ void PasteText() {
     }
     else { //...the character is a <CR>
       if (lines.length() > 249 && lines.length() < 257 && codepaste == true) {
-        int b = lines.find(" ");
+        size_t b = lines.find(" ");
         string main = lines.substr(0, 249);
         string extra = lines.substr(249, lines.length() - 249);
         string spaces;
@@ -593,7 +593,7 @@ void PasteText() {
 
       if (lines.length() >= 257 && codepaste == true) {
         // Line is too long to handle. Truncate.
-        int b = lines.find(" ");
+        size_t b = lines.find(" ");
         string linestr = "Warning! Line " + lines.substr(0, b) + " is too long for BASIC and will be truncated.";
 
         MessageBox(0, linestr.c_str(), "Clipboard", 0);

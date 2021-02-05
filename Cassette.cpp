@@ -319,7 +319,7 @@ unsigned int LoadTape(void)
 
   DialogOpen = 0;
   string tmp = ofn.lpstrFile;
-  int idx;
+  size_t idx;
   idx = tmp.find_last_of("\\");
   tmp = tmp.substr(0, idx);
   strcpy(CassPath, tmp.c_str());

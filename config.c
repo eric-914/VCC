@@ -126,7 +126,7 @@ unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = { 0,1,2,3,4,5,6,7,8,9,10,1
 #define TABS 8
 static HWND g_hWndConfig[TABS]; // Moved this outside the initialization function so that other functions could access the window handles when necessary.
 
-unsigned char TranslateDisp2Scan(int x)
+unsigned char TranslateDisp2Scan(LRESULT x)
 {
   assert(x >= 0 && x < SCAN_TRANS_COUNT);
 
@@ -1315,7 +1315,7 @@ int SelectFile(char* FileName)
     }
 
     string tmp = ofn.lpstrFile;
-    int idx;
+    size_t idx;
     idx = tmp.find_last_of("\\");
     tmp = tmp.substr(0, idx);
     strcpy(CapFilePath, tmp.c_str());

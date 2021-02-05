@@ -191,7 +191,7 @@ int LoadCart(void)
   if (GetOpenFileName(&ofn))
     if (!InsertModule(szFileName)) {
       string tmp = ofn.lpstrFile;
-      int idx;
+      size_t idx;
       idx = tmp.find_last_of("\\");
       tmp = tmp.substr(0, idx);
       strcpy(PakPath, tmp.c_str());
@@ -395,7 +395,7 @@ int load_ext_rom(char filename[MAX_PATH])
   if (rom_handle == nullptr) return 0;
 
   // Load the file, one byte at a time.. (TODO: Get size and read entire block)
-  size_t index = 0;
+  int index = 0;
 
   while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
     ExternalRomBuffer[index++] = fgetc(rom_handle);
@@ -559,7 +559,7 @@ void RefreshDynamicMenu(void)
   Mii.wID = 4999;
   Mii.hSubMenu = hSubMenu[SubMenuIndex];
   Mii.dwTypeData = MenuTitle;
-  Mii.cch = strlen(MenuTitle);
+  Mii.cch = (UINT)strlen(MenuTitle);
   InsertMenuItem(hMenu, 3, TRUE, &Mii);
   SubMenuIndex++;
 
@@ -581,7 +581,7 @@ void RefreshDynamicMenu(void)
       Mii.wID = MenuItem[TempIndex].MenuId;
       Mii.hSubMenu = hSubMenu[SubMenuIndex];
       Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-      Mii.cch = strlen(MenuItem[TempIndex].MenuName);
+      Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
       InsertMenuItem(hSubMenu[0], 0, FALSE, &Mii);
 
       break;
@@ -594,7 +594,7 @@ void RefreshDynamicMenu(void)
       Mii.wID = MenuItem[TempIndex].MenuId;
       Mii.hSubMenu = hSubMenu[SubMenuIndex];
       Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-      Mii.cch = strlen(MenuItem[TempIndex].MenuName);
+      Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
       InsertMenuItem(hSubMenu[SubMenuIndex], 0, FALSE, &Mii);
 
       break;
@@ -609,7 +609,7 @@ void RefreshDynamicMenu(void)
         Mii.wID = MenuItem[TempIndex].MenuId;
         Mii.hSubMenu = hMenu;
         Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-        Mii.cch = strlen(MenuItem[TempIndex].MenuName);
+        Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
         InsertMenuItem(hSubMenu[0], 0, FALSE, &Mii);
       }
       else
@@ -621,7 +621,7 @@ void RefreshDynamicMenu(void)
         Mii.wID = MenuItem[TempIndex].MenuId;
         Mii.hSubMenu = hMenu;
         Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-        Mii.cch = strlen(MenuItem[TempIndex].MenuName);
+        Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
         InsertMenuItem(hSubMenu[0], 0, FALSE, &Mii);
       }
       break;

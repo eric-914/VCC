@@ -1527,7 +1527,9 @@ bool FormatTrack(HANDLE h_, BYTE cyl_, BYTE head_, BYTE Fill)
     ph->size = pfp->size;
   }
 
-  return CmdFormat(h_, pfp, (PBYTE)ph - abFormat);
+  ULONG size = (ULONG)((PBYTE)ph - abFormat);  //warning C4244: 'initializing': conversion from '__int64' to 'ULONG', possible loss of data
+
+  return CmdFormat(h_, pfp, size);
 }
 
 bool CmdFormat(HANDLE h_, PFD_FORMAT_PARAMS pfp_, ULONG ulSize_)
