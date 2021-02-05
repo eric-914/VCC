@@ -33,17 +33,21 @@ static unsigned char Rom[8192];
 BOOL WINAPI DllMain(
   HINSTANCE hinstDLL,  // handle to DLL module
   DWORD fdwReason,     // reason for calling function
-  LPVOID lpReserved)  // reserved
+  LPVOID lpReserved)   // reserved
 {
-  if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+  switch (fdwReason)
   {
-    //Put shutdown procs here
-    return(1);
+  case DLL_PROCESS_ATTACH:
+  case DLL_THREAD_ATTACH:
+  case DLL_THREAD_DETACH:
+    g_hinstDLL = hinstDLL;
+    break;
+
+  case DLL_PROCESS_DETACH:
+    break;
   }
 
-  g_hinstDLL = hinstDLL;
-
-  return(1);
+  return TRUE;
 }
 
 extern "C"

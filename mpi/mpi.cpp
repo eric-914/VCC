@@ -40,7 +40,7 @@ static unsigned char PersistPaks = 0;
 static char ModulePaths[MAXPAX][MAX_PATH] = { "","","","" };
 static unsigned char* ExtRomPointers[MAXPAX] = { NULL,NULL,NULL,NULL };
 static unsigned int BankedCartOffset[MAXPAX] = { 0,0,0,0 };
-static unsigned char Temp, Temp2;
+static unsigned char temp, temp2;
 static char IniFile[MAX_PATH] = "";
 static char MPIPath[MAX_PATH];
 
@@ -103,21 +103,26 @@ int FileID(char*);
 BOOL WINAPI DllMain(
   HINSTANCE hinstDLL,  // handle to DLL module
   DWORD fdwReason,     // reason for calling function
-  LPVOID lpReserved)  // reserved
+  LPVOID lpReserved)   // reserved
 {
-  if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+  switch (fdwReason)
   {
+  case DLL_PROCESS_ATTACH:
+  case DLL_THREAD_ATTACH:
+  case DLL_THREAD_DETACH:
+    g_hinstDLL = hinstDLL;
+    break;
+
+  case DLL_PROCESS_DETACH:
     WriteConfig();
 
-    for (Temp = 0;Temp < 4;Temp++)
-      UnloadModule(Temp);
+    for (temp = 0; temp < 4; temp++)
+      UnloadModule(temp);
 
-    return(1);
+    break;
   }
 
-  g_hinstDLL = hinstDLL;
-
-  return(1);
+  return TRUE;
 }
 
 void MemWrite(unsigned char Data, unsigned short Address)
@@ -220,10 +225,10 @@ extern "C"
   __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
   {
     AssertInt = Dummy;
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
-      if (SetInteruptCallPointerCalls[Temp] != NULL)
-        SetInteruptCallPointerCalls[Temp](AssertInt);
+      if (SetInteruptCallPointerCalls[temp] != NULL)
+        SetInteruptCallPointerCalls[temp](AssertInt);
     }
   }
 }
@@ -263,16 +268,16 @@ extern "C"
       return(SlotRegister);
     }
 
-    Temp2 = 0;
+    temp2 = 0;
 
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
-      if (PakPortReadCalls[Temp] != NULL)
+      if (PakPortReadCalls[temp] != NULL)
       {
-        Temp2 = PakPortReadCalls[Temp](Port); //Find a Module that return a value 
+        temp2 = PakPortReadCalls[temp](Port); //Find a Module that return a value 
 
-        if (Temp2 != 0)
-          return(Temp2);
+        if (temp2 != 0)
+          return(temp2);
       }
     }
 
@@ -284,9 +289,9 @@ extern "C"
 {
   __declspec(dllexport) void HeartBeat(void)
   {
-    for (Temp = 0;Temp < 4;Temp++)
-      if (HeartBeatCalls[Temp] != NULL)
-        HeartBeatCalls[Temp]();
+    for (temp = 0; temp < 4; temp++)
+      if (HeartBeatCalls[temp] != NULL)
+        HeartBeatCalls[temp]();
   }
 }
 
@@ -328,13 +333,13 @@ extern "C"
     char TempStatus[64] = "";
     sprintf(MyStatus, "MPI:%i,%i", ChipSelectSlot, SpareSelectSlot);
 
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
       strcpy(TempStatus, "");
 
-      if (ModuleStatusCalls[Temp] != NULL)
+      if (ModuleStatusCalls[temp] != NULL)
       {
-        ModuleStatusCalls[Temp](TempStatus);
+        ModuleStatusCalls[temp](TempStatus);
         strcat(MyStatus, "|");
         strcat(MyStatus, TempStatus);
       }
@@ -348,9 +353,9 @@ extern "C"
   __declspec(dllexport) unsigned short ModuleAudioSample(void)
   {
     unsigned short TempSample = 0;
-    for (Temp = 0;Temp < 4;Temp++)
-      if (ModuleAudioSampleCalls[Temp] != NULL)
-        TempSample += ModuleAudioSampleCalls[Temp]();
+    for (temp = 0; temp < 4; temp++)
+      if (ModuleAudioSampleCalls[temp] != NULL)
+        TempSample += ModuleAudioSampleCalls[temp]();
 
     return(TempSample);
   }
@@ -363,12 +368,12 @@ extern "C"
     ChipSelectSlot = SwitchSlot;
     SpareSelectSlot = SwitchSlot;
 
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
-      BankedCartOffset[Temp] = 0; //Do I need to keep independant selects?
+      BankedCartOffset[temp] = 0; //Do I need to keep independant selects?
 
-      if (ModuleResetCalls[Temp] != NULL)
-        ModuleResetCalls[Temp]();
+      if (ModuleResetCalls[temp] != NULL)
+        ModuleResetCalls[temp]();
     }
 
     PakSetCart(0);
@@ -410,13 +415,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   unsigned short CONFIGBTN[4] = { ID_CONFIG1,ID_CONFIG2,ID_CONFIG3,ID_CONFIG4 };
   char ConfigText[1024] = "";
 
-  unsigned char Temp = 0;
+  unsigned char temp = 0;
 
   switch (message)
   {
   case WM_INITDIALOG:
-    for (Temp = 0;Temp < 4;Temp++)
-      SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, 5, (LPARAM)(LPCSTR)SlotLabel[Temp]);
+    for (temp = 0; temp < 4; temp++)
+      SendDlgItemMessage(hDlg, EDITBOXS[temp], WM_SETTEXT, 5, (LPARAM)(LPCSTR)SlotLabel[temp]);
     SendDlgItemMessage(hDlg, IDC_PAKSELECT, TBM_SETRANGE, TRUE, MAKELONG(0, 3));
     SendDlgItemMessage(hDlg, IDC_PAKSELECT, TBM_SETPOS, TRUE, SwitchSlot);
     ReadModuleParms(SwitchSlot, ConfigText);
@@ -433,36 +438,36 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       PersistPaks = (unsigned char)SendDlgItemMessage(hDlg, IDC_PAK, BM_GETCHECK, 0, 0);
       EndDialog(hDlg, LOWORD(wParam));
       WriteConfig();
+
       return TRUE;
-      break;
     }
 
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
-      if (LOWORD(wParam) == INSERTBTN[Temp])
+      if (LOWORD(wParam) == INSERTBTN[temp])
       {
-        LoadCartDLL(Temp, ModulePaths[Temp]);
+        LoadCartDLL(temp, ModulePaths[temp]);
 
-        for (Temp = 0;Temp < 4;Temp++)
-          SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, strlen(SlotLabel[Temp]), (LPARAM)(LPCSTR)SlotLabel[Temp]);
+        for (temp = 0; temp < 4; temp++)
+          SendDlgItemMessage(hDlg, EDITBOXS[temp], WM_SETTEXT, strlen(SlotLabel[temp]), (LPARAM)(LPCSTR)SlotLabel[temp]);
       }
     }
 
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
-      if (LOWORD(wParam) == REMOVEBTN[Temp])
+      if (LOWORD(wParam) == REMOVEBTN[temp])
       {
-        UnloadModule(Temp);
-        SendDlgItemMessage(hDlg, EDITBOXS[Temp], WM_SETTEXT, strlen(SlotLabel[Temp]), (LPARAM)(LPCSTR)SlotLabel[Temp]);
+        UnloadModule(temp);
+        SendDlgItemMessage(hDlg, EDITBOXS[temp], WM_SETTEXT, strlen(SlotLabel[temp]), (LPARAM)(LPCSTR)SlotLabel[temp]);
       }
     }
 
-    for (Temp = 0;Temp < 4;Temp++)
+    for (temp = 0; temp < 4; temp++)
     {
-      if (LOWORD(wParam) == CONFIGBTN[Temp])
+      if (LOWORD(wParam) == CONFIGBTN[temp])
       {
-        if (ConfigModuleCalls[Temp] != NULL)
-          ConfigModuleCalls[Temp](NULL);
+        if (ConfigModuleCalls[temp] != NULL)
+          ConfigModuleCalls[temp](NULL);
       }
     }
 
@@ -681,9 +686,9 @@ void LoadConfig(void)
   GetPrivateProfileString(ModName, "SLOT4", "", ModulePaths[3], MAX_PATH, IniFile);
   CheckPath(ModulePaths[3]);
 
-  for (Temp = 0;Temp < 4;Temp++)
-    if (strlen(ModulePaths[Temp]) != 0)
-      MountModule(Temp, ModulePaths[Temp]);
+  for (temp = 0; temp < 4; temp++)
+    if (strlen(ModulePaths[temp]) != 0)
+      MountModule(temp, ModulePaths[temp]);
 
   BuildDynaMenu();
 }
@@ -693,7 +698,7 @@ void WriteConfig(void)
   char ModName[MAX_LOADSTRING] = "";
 
   if (MPIPath != "") { WritePrivateProfileString("DefaultPaths", "MPIPath", MPIPath, IniFile); }
-  
+
   LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
   WritePrivateProfileInt(ModName, "SWPOSITION", SwitchSlot, IniFile);
   WritePrivateProfileInt(ModName, "PesistPaks", PersistPaks, IniFile);
@@ -793,7 +798,7 @@ void SetCartSlot3(unsigned char Tmp)
 
 void BuildDynaMenu(void)	//STUB
 {
-  unsigned char TempIndex = 0;
+  unsigned char tempIndex = 0;
   char TempMsg[512] = "";
 
   if (DynamicMenuCallback == NULL)
@@ -823,17 +828,17 @@ void BuildDynaMenu(void)	//STUB
   DynamicMenuCallback(TempMsg, 5017, SLAVE);
   DynamicMenuCallback("MPI Config", 5018, STANDALONE);
 
-  for (TempIndex = 0;TempIndex < MenuIndex[3];TempIndex++)
-    DynamicMenuCallback(MenuName3[TempIndex], MenuId3[TempIndex] + 80, Type3[TempIndex]);
+  for (tempIndex = 0; tempIndex < MenuIndex[3]; tempIndex++)
+    DynamicMenuCallback(MenuName3[tempIndex], MenuId3[tempIndex] + 80, Type3[tempIndex]);
 
-  for (TempIndex = 0;TempIndex < MenuIndex[2];TempIndex++)
-    DynamicMenuCallback(MenuName2[TempIndex], MenuId2[TempIndex] + 60, Type2[TempIndex]);
+  for (tempIndex = 0; tempIndex < MenuIndex[2]; tempIndex++)
+    DynamicMenuCallback(MenuName2[tempIndex], MenuId2[tempIndex] + 60, Type2[tempIndex]);
 
-  for (TempIndex = 0;TempIndex < MenuIndex[1];TempIndex++)
-    DynamicMenuCallback(MenuName1[TempIndex], MenuId1[TempIndex] + 40, Type1[TempIndex]);
+  for (tempIndex = 0; tempIndex < MenuIndex[1]; tempIndex++)
+    DynamicMenuCallback(MenuName1[tempIndex], MenuId1[tempIndex] + 40, Type1[tempIndex]);
 
-  for (TempIndex = 0;TempIndex < MenuIndex[0];TempIndex++)
-    DynamicMenuCallback(MenuName0[TempIndex], MenuId0[TempIndex] + 20, Type0[TempIndex]);
+  for (tempIndex = 0; tempIndex < MenuIndex[0]; tempIndex++)
+    DynamicMenuCallback(MenuName0[tempIndex], MenuId0[tempIndex] + 20, Type0[tempIndex]);
 
   DynamicMenuCallback("", 1, 0);
 }

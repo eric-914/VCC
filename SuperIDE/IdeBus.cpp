@@ -204,20 +204,20 @@ unsigned short IdeRegRead(unsigned char Reg)
 void ExecuteCommand(void)
 {
   CurrentCommand = Registers.Command;
-  char Temp = 0;
+  char temp = 0;
 
   switch (Registers.Command)
   {
   case 0x90:	//Diagnostics
-    for (Temp = 0;Temp <= 1;Temp++)
+    for (temp = 0; temp <= 1; temp++)
     {
-      Registers.Error[Temp] = 0;
-      Registers.Status[Temp] = 0;
+      Registers.Error[temp] = 0;
+      Registers.Status[temp] = 0;
 
-      if (hDiskFile[Temp] != INVALID_HANDLE_VALUE)
+      if (hDiskFile[temp] != INVALID_HANDLE_VALUE)
       {
-        Registers.Error[Temp] = 0x01;
-        Registers.Status[Temp] = 0x50;
+        Registers.Error[temp] = 0x01;
+        Registers.Status[temp] = 0x50;
       }
     }
 

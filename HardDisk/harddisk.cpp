@@ -53,24 +53,31 @@ static HINSTANCE g_hinstDLL;
 
 using namespace std;
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL,  // handle to DLL module
+BOOL WINAPI DllMain(
+  HINSTANCE hinstDLL,  // handle to DLL module
   DWORD fdwReason,     // reason for calling function
-  LPVOID lpReserved)  // reserved
+  LPVOID lpReserved)   // reserved
 {
-  if (fdwReason == DLL_PROCESS_DETACH) {
+  switch (fdwReason)
+  {
+  case DLL_PROCESS_ATTACH:
     UnmountHD(0);
     UnmountHD(1);
-  }
-  else {
+    break;
+
+  case DLL_THREAD_ATTACH:
+  case DLL_THREAD_DETACH:
+  case DLL_PROCESS_DETACH:
     g_hinstDLL = hinstDLL;
+    break;
   }
-  return(1);
+
+  return TRUE;
 }
 
 void MemWrite(unsigned char Data, unsigned short Address)
 {
   MemWrite8(Data, Address);
-  return;
 }
 
 unsigned char MemRead(unsigned short Address)
@@ -91,7 +98,6 @@ extern "C"
 
     if (DynamicMenuCallback != NULL)
       BuildDynaMenu();
-    return;
   }
 }
 
@@ -160,7 +166,6 @@ extern "C"
   {
     MemRead8 = Temp1;
     MemWrite8 = Temp2;
-    return;
   }
 }
 
@@ -191,6 +196,7 @@ extern "C"
     ModuleReset(void)
   {
     VhdReset();
+
     return 0;
   }
 }
@@ -206,9 +212,11 @@ void LoadHardDisk(int drive)
   case 0:
     FileName = VHDfile0;
     break;
+
   case 1:
     FileName = VHDfile1;
     break;
+
   default:
     return;
   }

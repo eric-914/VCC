@@ -43,7 +43,7 @@ void SetTimerLSB(unsigned char);
 unsigned char GetInit0(unsigned char port);
 static unsigned char IRQStearing[8] = { 0,0,0,0,0,0,0,0 };
 static unsigned char FIRQStearing[8] = { 0,0,0,0,0,0,0,0 };
-static unsigned char LastIrq = 0, LastFirq = 0, Temp = 0;
+static unsigned char LastIrq = 0, LastFirq = 0, temp = 0;
 
 static unsigned char KeyboardInteruptEnabled = 0;
 
@@ -167,15 +167,15 @@ unsigned char GimeRead(unsigned char port)
   switch (port)
   {
   case 0x92:
-    Temp = LastIrq;
+    temp = LastIrq;
     LastIrq = 0;
-    return(Temp);
+    return(temp);
     break;
 
   case 0x93:
-    Temp = LastFirq;
+    temp = LastFirq;
     LastFirq = 0;
-    return(Temp);
+    return(temp);
     break;
 
   case 0x94:

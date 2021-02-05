@@ -65,12 +65,13 @@ void LoadConfig(void);
 void SaveConfig(void);
 
 // dll entry hook
-BOOL APIENTRY DllMain(HINSTANCE  hinstDLL,
-  DWORD  ul_reason_for_call,
-  LPVOID lpReserved
+BOOL WINAPI DllMain(
+  HINSTANCE  hinstDLL,  // handle to DLL module
+  DWORD  fdwReason,     // reason for calling function
+  LPVOID lpReserved     // reserved
 )
 {
-  switch (ul_reason_for_call)
+  switch (fdwReason)
   {
   case DLL_PROCESS_ATTACH:
     // init

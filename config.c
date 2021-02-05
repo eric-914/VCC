@@ -605,10 +605,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
     SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
     SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
 
-    for (temp = 0;temp <= 3;temp++)
+    for (temp = 0; temp <= 3; temp++)
       SendDlgItemMessage(hDlg, Ramchoice[temp], BM_SETCHECK, (temp == TempConfig.RamSize), 0);
 
-    for (temp = 0;temp <= 1;temp++)
+    for (temp = 0; temp <= 1; temp++)
       SendDlgItemMessage(hDlg, Cpuchoice[temp], BM_SETCHECK, (temp == TempConfig.CpuType), 0);
 
     SendDlgItemMessage(hDlg, IDC_CPUICON, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)CpuIcons[TempConfig.CpuType]);
@@ -627,7 +627,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
     case IDC_512K:
     case IDC_2M:
     case IDC_8M:
-      for (temp = 0;temp <= 3;temp++)
+      for (temp = 0; temp <= 3; temp++)
         if (LOWORD(wParam) == Ramchoice[temp])
         {
           for (temp2 = 0;temp2 <= 3;temp2++)
@@ -640,10 +640,10 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 
     case IDC_6809:
     case IDC_6309:
-      for (temp = 0;temp <= 1;temp++)
+      for (temp = 0; temp <= 1; temp++)
         if (LOWORD(wParam) == Cpuchoice[temp])
         {
-          for (temp2 = 0;temp2 <= 1;temp2++)
+          for (temp2 = 0; temp2 <= 1; temp2++)
             SendDlgItemMessage(hDlg, Cpuchoice[temp2], BM_SETCHECK, 0, 0);
           SendDlgItemMessage(hDlg, Cpuchoice[temp], BM_SETCHECK, 1, 0);
           TempConfig.CpuType = temp;
@@ -808,7 +808,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     sprintf(OutBuffer, "%i", TempConfig.FrameSkip);
     SendDlgItemMessage(hDlg, IDC_FRAMEDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
 
-    for (temp = 0;temp <= 1;temp++)
+    for (temp = 0; temp <= 1; temp++)
       SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, (temp == TempConfig.MonitorType), 0);
 
     if (TempConfig.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
@@ -839,7 +839,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     TempConfig.ScanLines = (unsigned char)SendDlgItemMessage(hDlg, IDC_SCANLINES, BM_GETCHECK, 0, 0);
     TempConfig.SpeedThrottle = (unsigned char)SendDlgItemMessage(hDlg, IDC_THROTTLE, BM_GETCHECK, 0, 0);
     TempConfig.RememberSize = (unsigned char)SendDlgItemMessage(hDlg, IDC_REMEMBER_SIZE, BM_GETCHECK, 0, 0);
-    
+
     //POINT p = { 640,480 };
     switch (LOWORD(wParam))
     {
@@ -868,10 +868,10 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     case IDC_RGB:
       isRGB = TRUE;
 
-      for (temp = 0;temp <= 1;temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
+      for (temp = 0; temp <= 1; temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
         if (LOWORD(wParam) == Monchoice[temp])
         {
-          for (temp2 = 0;temp2 <= 1;temp2++)
+          for (temp2 = 0; temp2 <= 1; temp2++)
             SendDlgItemMessage(hDlg, Monchoice[temp2], BM_SETCHECK, 0, 0);
 
           SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
@@ -893,8 +893,8 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
         SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETCHECK, 0, 0);
         TempConfig.PaletteType = 0;
       }
-      else { 
-        SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0); 
+      else {
+        SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 1, 0);
       }
       break;
 
@@ -905,8 +905,8 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
         SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETCHECK, 0, 0);
         TempConfig.PaletteType = 1;
       }
-      else { 
-        SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0); 
+      else {
+        SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
       }
       break;
     }
@@ -973,7 +973,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
       EnableWindow(GetDlgItem(hDlg, RightJoyStick[temp]), (Right.UseMouse == 0));
     }
 
-    for (temp = 0;temp <= 2;temp++)
+    for (temp = 0; temp <= 2; temp++)
     {
       SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, (temp == Left.HiRes), 0);
       SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, (temp == Right.HiRes), 0);
@@ -988,7 +988,7 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     EnableWindow(GetDlgItem(hDlg, IDC_RIGHTJOYSTICK), (NumberofJoysticks > 0));	  //No Joysticks are present
 
     //populate joystick combo boxs
-    for (temp = 0;temp < NumberofJoysticks;temp++)
+    for (temp = 0; temp < NumberofJoysticks; temp++)
     {
       SendDlgItemMessage(hDlg, IDC_RIGHTJOYSTICKDEVICE, CB_ADDSTRING, (WPARAM)0, (LPARAM)StickName[temp]);
       SendDlgItemMessage(hDlg, IDC_LEFTJOYSTICKDEVICE, CB_ADDSTRING, (WPARAM)0, (LPARAM)StickName[temp]);
@@ -1178,7 +1178,7 @@ void RefreshJoystickStatus(void)
 
   if (Right.DiDevice > (NumberofJoysticks - 1))
     Right.DiDevice = 0;
-  
+
   if (Left.DiDevice > (NumberofJoysticks - 1))
     Left.DiDevice = 0;
 

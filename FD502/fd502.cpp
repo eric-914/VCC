@@ -78,20 +78,24 @@ unsigned char LoadExtRom(unsigned char, char*);
 BOOL WINAPI DllMain(
   HINSTANCE hinstDLL,  // handle to DLL module
   DWORD fdwReason,     // reason for calling function
-  LPVOID lpReserved)  // reserved
+  LPVOID lpReserved)   // reserved
 {
-  if (fdwReason == DLL_PROCESS_DETACH) //Clean Up 
+  switch (fdwReason)
   {
-    for (unsigned char Drive = 0;Drive <= 3;Drive++)
-      unmount_disk_image(Drive);
-  }
-  else
-  {
+  case DLL_PROCESS_ATTACH:
+  case DLL_THREAD_ATTACH:
+  case DLL_THREAD_DETACH:
     g_hinstDLL = hinstDLL;
     RealDisks = InitController();
+    break;
+
+  case DLL_PROCESS_DETACH:
+    for (unsigned char drive = 0; drive <= 3; drive++)
+      unmount_disk_image(drive);
+    break;
   }
 
-  return(1);
+  return TRUE;
 }
 
 extern "C"
@@ -253,11 +257,11 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     SendDlgItemMessage(hDlg, IDC_TURBO, BM_SETCHECK, SetTurboDisk(QUERY), 0);
     SendDlgItemMessage(hDlg, IDC_PERSIST, BM_SETCHECK, PersistDisks, 0);
 
-    for (temp = 0;temp <= 3;temp++)
+    for (temp = 0; temp <= 3; temp++)
       SendDlgItemMessage(hDlg, ChipChoice[temp], BM_SETCHECK, (temp == TempSelectRom), 0);
 
-    for (temp = 0;temp < 2;temp++)
-      for (temp2 = 0;temp2 < 5;temp2++)
+    for (temp = 0; temp < 2; temp++)
+      for (temp2 = 0; temp2 < 5; temp2++)
         SendDlgItemMessage(hDlg, VirtualDrive[temp], CB_ADDSTRING, NULL, (LPARAM)VirtualNames[temp2]);
 
     SendDlgItemMessage(hDlg, IDC_DISKA, CB_SETCURSEL, (WPARAM)PhysicalDriveA, (LPARAM)0);
@@ -313,10 +317,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDC_EXTROM:
     case IDC_TRSDOS:
     case IDC_RGB:
-      for (temp = 0;temp <= 3;temp++)
+      for (temp = 0; temp <= 3; temp++)
         if (LOWORD(wParam) == ChipChoice[temp])
         {
-          for (temp2 = 0;temp2 <= 3;temp2++)
+          for (temp2 = 0; temp2 <= 3; temp2++)
             SendDlgItemMessage(hDlg, ChipChoice[temp2], BM_SETCHECK, 0, 0);
 
           SendDlgItemMessage(hDlg, ChipChoice[temp], BM_SETCHECK, 1, 0);
@@ -360,7 +364,7 @@ void Load_Disk(unsigned char disk)
   HANDLE hr = NULL;
   OPENFILENAME ofn;
   unsigned char FileNotSelected = 0;
-  
+
   if (DialogOpen == 1)	//Only allow 1 dialog open 
     return;
 
@@ -433,7 +437,7 @@ void BuildDynaMenu(void)
 {
   char TempMsg[64] = "";
   char TempBuf[MAX_PATH] = "";
-  
+
   if (DynamicMenuCallback == NULL)
     MessageBox(0, "No good", "Ok", 0);
 
@@ -493,10 +497,10 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   switch (message)
   {
   case WM_INITDIALOG:
-    for (temp = 0;temp <= 2;temp++)
+    for (temp = 0; temp <= 2; temp++)
       SendDlgItemMessage(hDlg, DiskType[temp], BM_SETCHECK, (temp == NewDiskType), 0);
 
-    for (temp = 0;temp <= 3;temp++)
+    for (temp = 0; temp <= 3; temp++)
       SendDlgItemMessage(hDlg, DiskTracks[temp], BM_SETCHECK, (temp == NewDiskTracks), 0);
 
     SendDlgItemMessage(hDlg, IDC_DBLSIDE, BM_SETCHECK, DblSided, 0);
@@ -512,10 +516,10 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDC_DMK:
     case IDC_JVC:
     case IDC_VDK:
-      for (temp = 0;temp <= 2;temp++)
+      for (temp = 0; temp <= 2; temp++)
         if (LOWORD(wParam) == DiskType[temp])
         {
-          for (temp2 = 0;temp2 <= 2;temp2++)
+          for (temp2 = 0; temp2 <= 2; temp2++)
             SendDlgItemMessage(hDlg, DiskType[temp2], BM_SETCHECK, 0, 0);
           SendDlgItemMessage(hDlg, DiskType[temp], BM_SETCHECK, 1, 0);
           NewDiskType = temp;
@@ -525,10 +529,10 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDC_TR35:
     case IDC_TR40:
     case IDC_TR80:
-      for (temp = 0;temp <= 2;temp++)
+      for (temp = 0; temp <= 2; temp++)
         if (LOWORD(wParam) == DiskTracks[temp])
         {
-          for (temp2 = 0;temp2 <= 2;temp2++)
+          for (temp2 = 0; temp2 <= 2; temp2++)
             SendDlgItemMessage(hDlg, DiskTracks[temp2], BM_SETCHECK, 0, 0);
           SendDlgItemMessage(hDlg, DiskTracks[temp], BM_SETCHECK, 1, 0);
           NewDiskTracks = temp;
@@ -576,9 +580,9 @@ long CreateDiskHeader(char* FileName, unsigned char Type, unsigned char Tracks, 
   unsigned short TrackSize = 0x1900;
   unsigned char IgnoreDensity = 0, SingleDensity = 0, HeaderSize = 0;
   unsigned long BytesWritten = 0, FileSize = 0;
-  
+
   hr = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
-  
+
   if (hr == INVALID_HANDLE_VALUE)
     return(1); //Failed to create File
 
@@ -711,7 +715,7 @@ void SaveConfig(void)
 
   WritePrivateProfileInt(ModName, "ClkEnable", ClockEnabled, IniFile);
   WritePrivateProfileInt(ModName, "TurboDisk", SetTurboDisk(QUERY), IniFile);
-  
+
   if (FloppyPath != "") { WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); }
 }
 

@@ -146,7 +146,7 @@ void VhdReset(void)
 
 void HDcommand(unsigned char Command) 
 {
-  unsigned short Temp = 0;
+  unsigned short temp = 0;
 
   // Verify drive is mounted
   if (Mounted[DriveSelect] == 0) {
@@ -174,8 +174,8 @@ void HDcommand(unsigned char Command)
     }
     else {
       // Copy block to Coco RAM
-      for (Temp = 0; Temp < SECTORSIZE;Temp++) {
-        MemWrite(SectorBuffer[Temp], Temp + DMAaddress.word);
+      for (temp = 0; temp < SECTORSIZE;temp++) {
+        MemWrite(SectorBuffer[temp], temp + DMAaddress.word);
       }
       Status = HD_OK;
     }
@@ -199,8 +199,8 @@ void HDcommand(unsigned char Command)
     }
 
     // Copy block from from CoCo RAM
-    for (Temp = 0; Temp < SECTORSIZE;Temp++) {
-      SectorBuffer[Temp] = MemRead(Temp + DMAaddress.word);
+    for (temp = 0; temp < SECTORSIZE;temp++) {
+      SectorBuffer[temp] = MemRead(temp + DMAaddress.word);
     }
 
     // Seek desired sector

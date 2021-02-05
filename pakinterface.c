@@ -541,7 +541,7 @@ void RefreshDynamicMenu(void)
 {
   MENUITEMINFO	Mii;
   char MenuTitle[32] = "Cartridge";
-  unsigned char TempIndex = 0, Index = 0;
+  unsigned char tempIndex = 0, Index = 0;
   static HWND hOld;
   int SubMenuIndex = 0;
 
@@ -563,13 +563,13 @@ void RefreshDynamicMenu(void)
   InsertMenuItem(hMenu, 3, TRUE, &Mii);
   SubMenuIndex++;
 
-  for (TempIndex = 0;TempIndex < MenuIndex;TempIndex++)
+  for (tempIndex = 0; tempIndex < MenuIndex; tempIndex++)
   {
-    if (strlen(MenuItem[TempIndex].MenuName) == 0)
-      MenuItem[TempIndex].Type = STANDALONE;
+    if (strlen(MenuItem[tempIndex].MenuName) == 0)
+      MenuItem[tempIndex].Type = STANDALONE;
 
     //Create Menu item in title bar if no exist already
-    switch (MenuItem[TempIndex].Type)
+    switch (MenuItem[tempIndex].Type)
     {
     case HEAD:
       SubMenuIndex++;
@@ -578,10 +578,10 @@ void RefreshDynamicMenu(void)
       Mii.cbSize = sizeof(MENUITEMINFO);
       Mii.fMask = MIIM_TYPE | MIIM_SUBMENU | MIIM_ID;
       Mii.fType = MFT_STRING;
-      Mii.wID = MenuItem[TempIndex].MenuId;
+      Mii.wID = MenuItem[tempIndex].MenuId;
       Mii.hSubMenu = hSubMenu[SubMenuIndex];
-      Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-      Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
+      Mii.dwTypeData = MenuItem[tempIndex].MenuName;
+      Mii.cch = (UINT)strlen(MenuItem[tempIndex].MenuName);
       InsertMenuItem(hSubMenu[0], 0, FALSE, &Mii);
 
       break;
@@ -591,25 +591,25 @@ void RefreshDynamicMenu(void)
       Mii.cbSize = sizeof(MENUITEMINFO);
       Mii.fMask = MIIM_TYPE | MIIM_ID;
       Mii.fType = MFT_STRING;
-      Mii.wID = MenuItem[TempIndex].MenuId;
+      Mii.wID = MenuItem[tempIndex].MenuId;
       Mii.hSubMenu = hSubMenu[SubMenuIndex];
-      Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-      Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
+      Mii.dwTypeData = MenuItem[tempIndex].MenuName;
+      Mii.cch = (UINT)strlen(MenuItem[tempIndex].MenuName);
       InsertMenuItem(hSubMenu[SubMenuIndex], 0, FALSE, &Mii);
 
       break;
 
     case STANDALONE:
-      if (strlen(MenuItem[TempIndex].MenuName) == 0)
+      if (strlen(MenuItem[tempIndex].MenuName) == 0)
       {
         memset(&Mii, 0, sizeof(MENUITEMINFO));
         Mii.cbSize = sizeof(MENUITEMINFO);
         Mii.fMask = MIIM_TYPE | MIIM_ID;
         Mii.fType = MF_SEPARATOR;
-        Mii.wID = MenuItem[TempIndex].MenuId;
+        Mii.wID = MenuItem[tempIndex].MenuId;
         Mii.hSubMenu = hMenu;
-        Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-        Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
+        Mii.dwTypeData = MenuItem[tempIndex].MenuName;
+        Mii.cch = (UINT)strlen(MenuItem[tempIndex].MenuName);
         InsertMenuItem(hSubMenu[0], 0, FALSE, &Mii);
       }
       else
@@ -618,10 +618,10 @@ void RefreshDynamicMenu(void)
         Mii.cbSize = sizeof(MENUITEMINFO);
         Mii.fMask = MIIM_TYPE | MIIM_ID;
         Mii.fType = MFT_STRING;
-        Mii.wID = MenuItem[TempIndex].MenuId;
+        Mii.wID = MenuItem[tempIndex].MenuId;
         Mii.hSubMenu = hMenu;
-        Mii.dwTypeData = MenuItem[TempIndex].MenuName;
-        Mii.cch = (UINT)strlen(MenuItem[TempIndex].MenuName);
+        Mii.dwTypeData = MenuItem[tempIndex].MenuName;
+        Mii.cch = (UINT)strlen(MenuItem[tempIndex].MenuName);
         InsertMenuItem(hSubMenu[0], 0, FALSE, &Mii);
       }
       break;
