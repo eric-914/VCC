@@ -100,12 +100,12 @@ BOOL WINAPI DllMain(
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK Temp)
+  __declspec(dllexport) void ModuleName(char* moduleName, char* catNumber, DYNAMICMENUCALLBACK menuCallback)
   {
     int ErrorNumber = 0;
-    LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-    LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-    DynamicMenuCallback = Temp;
+    LoadString(g_hinstDLL, IDS_MODULE_NAME, moduleName, MAX_LOADSTRING);
+    LoadString(g_hinstDLL, IDS_CATNUMBER, catNumber, MAX_LOADSTRING);
+    DynamicMenuCallback = menuCallback;
 
     if (DynamicMenuCallback != NULL)
       BuildDynaMenu();
@@ -116,9 +116,9 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+  __declspec(dllexport) void ModuleConfig(unsigned char menuId)
   {
-    switch (MenuID)
+    switch (menuId)
     {
     case 10:
       Load_Disk(0);
@@ -159,41 +159,41 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) void SetIniPath(char* IniFilePath)
+  __declspec(dllexport) void SetIniPath(char* iniFilePath)
   {
-    strcpy(IniFile, IniFilePath);
+    strcpy(IniFile, iniFilePath);
     LoadConfig();
   }
 }
 
-// This captures the Fuction transfer point for the CPU assert interupt 
+// This captures the Function transfer point for the CPU assert interupt 
 extern "C"
 {
-  __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT Dummy)
+  __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT dummy)
   {
-    AssertInt = Dummy;
+    AssertInt = dummy;
   }
 }
 
 extern "C"
 {
-  __declspec(dllexport) void PackPortWrite(unsigned char Port, unsigned char Data)
+  __declspec(dllexport) void PackPortWrite(unsigned char port, unsigned char data)
   {
-    if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
-      write_time(Data, Port);
+    if (((port == 0x50) | (port == 0x51)) & ClockEnabled)
+      write_time(data, port);
     else
-      disk_io_write(Data, Port);
+      disk_io_write(data, port);
   }
 }
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+  __declspec(dllexport) unsigned char PackPortRead(unsigned char port)
   {
-    if (((Port == 0x50) | (Port == 0x51)) & ClockEnabled)
-      return(read_time(Port));
+    if (((port == 0x50) | (port == 0x51)) & ClockEnabled)
+      return(read_time(port));
 
-    return(disk_io_read(Port));
+    return(disk_io_read(port));
   }
 }
 
@@ -207,17 +207,17 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+  __declspec(dllexport) unsigned char PakMemRead8(unsigned short address)
   {
-    return(RomPointer[SelectRom][Address & (EXTROMSIZE - 1)]);
+    return(RomPointer[SelectRom][address & (EXTROMSIZE - 1)]);
   }
 }
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleStatus(char* MyStatus)
+  __declspec(dllexport) void ModuleStatus(char* status)
   {
-    DiskStatus(MyStatus);
+    DiskStatus(status);
     return;
   }
 }
@@ -425,10 +425,10 @@ void Load_Disk(unsigned char disk)
   }
 }
 
-unsigned char SetChip(unsigned char Tmp)
+unsigned char SetChip(unsigned char romChipId)
 {
-  if (Tmp != QUERY)
-    SelectRom = Tmp;
+  if (romChipId != QUERY)
+    SelectRom = romChipId;
 
   return(SelectRom);
 }
@@ -479,9 +479,9 @@ void BuildDynaMenu(void)
   DynamicMenuCallback("", 1, 0);
 }
 
-long CreateDisk(unsigned char Disk)
+long CreateDisk(unsigned char disk)
 {
-  NewDiskNumber = Disk;
+  NewDiskNumber = disk;
   DialogBox(g_hinstDLL, (LPCTSTR)IDD_NEWDISK, NULL, (DLGPROC)NewDisk);
   return(0);
 }
@@ -571,7 +571,7 @@ LRESULT CALLBACK NewDisk(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   return FALSE;
 }
 
-long CreateDiskHeader(char* FileName, unsigned char Type, unsigned char Tracks, unsigned char DblSided)
+long CreateDiskHeader(char* fileName, unsigned char type, unsigned char tracks, unsigned char dblSided)
 {
   HANDLE hr = NULL;
   unsigned char Dummy = 0;
@@ -581,33 +581,33 @@ long CreateDiskHeader(char* FileName, unsigned char Type, unsigned char Tracks, 
   unsigned char IgnoreDensity = 0, SingleDensity = 0, HeaderSize = 0;
   unsigned long BytesWritten = 0, FileSize = 0;
 
-  hr = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
+  hr = CreateFile(fileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
 
   if (hr == INVALID_HANDLE_VALUE)
     return(1); //Failed to create File
 
-  switch (Type)
+  switch (type)
   {
   case DMK:
     HeaderBuffer[0] = 0;
-    HeaderBuffer[1] = TrackTable[Tracks];
+    HeaderBuffer[1] = TrackTable[tracks];
     HeaderBuffer[2] = (TrackSize & 0xFF);
     HeaderBuffer[3] = (TrackSize >> 8);
-    HeaderBuffer[4] = (IgnoreDensity << 7) | (SingleDensity << 6) | ((!DblSided) << 4);
+    HeaderBuffer[4] = (IgnoreDensity << 7) | (SingleDensity << 6) | ((!dblSided) << 4);
     HeaderBuffer[0xC] = 0;
     HeaderBuffer[0xD] = 0;
     HeaderBuffer[0xE] = 0;
     HeaderBuffer[0xF] = 0;
     HeaderSize = 0x10;
-    FileSize = HeaderSize + (HeaderBuffer[1] * TrackSize * (DblSided + 1));
+    FileSize = HeaderSize + (HeaderBuffer[1] * TrackSize * (dblSided + 1));
     break;
 
   case JVC:	// has variable header size
     HeaderSize = 0;
     HeaderBuffer[0] = 18;			//18 Sectors
-    HeaderBuffer[1] = DblSided + 1;	// Double or single Sided;
-    FileSize = (HeaderBuffer[0] * 0x100 * TrackTable[Tracks] * (DblSided + 1));
-    if (DblSided)
+    HeaderBuffer[1] = dblSided + 1;	// Double or single Sided;
+    FileSize = (HeaderBuffer[0] * 0x100 * TrackTable[tracks] * (dblSided + 1));
+    if (dblSided)
     {
       FileSize += 2;
       HeaderSize = 2;
@@ -615,18 +615,18 @@ long CreateDiskHeader(char* FileName, unsigned char Type, unsigned char Tracks, 
     break;
 
   case VDK:
-    HeaderBuffer[9] = DblSided + 1;
+    HeaderBuffer[9] = dblSided + 1;
     HeaderSize = 12;
-    FileSize = (18 * 0x100 * TrackTable[Tracks] * (DblSided + 1));
+    FileSize = (18 * 0x100 * TrackTable[tracks] * (dblSided + 1));
     FileSize += HeaderSize;
     break;
 
   case 3:
     HeaderBuffer[0] = 0;
-    HeaderBuffer[1] = TrackTable[Tracks];
+    HeaderBuffer[1] = TrackTable[tracks];
     HeaderBuffer[2] = (TrackSize & 0xFF);
     HeaderBuffer[3] = (TrackSize >> 8);
-    HeaderBuffer[4] = ((!DblSided) << 4);
+    HeaderBuffer[4] = ((!dblSided) << 4);
     HeaderBuffer[0xC] = 0x12;
     HeaderBuffer[0xD] = 0x34;
     HeaderBuffer[0xE] = 0x56;
@@ -719,21 +719,21 @@ void SaveConfig(void)
   if (FloppyPath != "") { WritePrivateProfileString("DefaultPaths", "FloppyPath", FloppyPath, IniFile); }
 }
 
-unsigned char LoadExtRom(unsigned char RomType, char* FilePath)	//Returns 1 on if loaded
+unsigned char LoadExtRom(unsigned char romType, char* filePath)	//Returns 1 on if loaded
 {
   FILE* rom_handle = NULL;
   unsigned short index = 0;
   unsigned char RetVal = 0;
   unsigned char* ThisRom[3] = { ExternalRom,DiskRom,RGBDiskRom };
 
-  rom_handle = fopen(FilePath, "rb");
+  rom_handle = fopen(filePath, "rb");
 
   if (rom_handle == NULL)
-    memset(ThisRom[RomType], 0xFF, EXTROMSIZE);
+    memset(ThisRom[romType], 0xFF, EXTROMSIZE);
   else
   {
     while ((feof(rom_handle) == 0) & (index < EXTROMSIZE))
-      ThisRom[RomType][index++] = fgetc(rom_handle);
+      ThisRom[romType][index++] = fgetc(rom_handle);
 
     RetVal = 1;
     fclose(rom_handle);

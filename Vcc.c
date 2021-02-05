@@ -275,7 +275,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
       break;
 
-
     case IDOK:
       SendMessage(hWnd, WM_CLOSE, 0, 0);
       break;
@@ -414,6 +413,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     case DIK_F9:
       EmuState.EmulationRunning = !EmuState.EmulationRunning;
+
       if (EmuState.EmulationRunning)
         EmuState.ResetPending = 2;
       else
@@ -561,29 +561,29 @@ void SetTurboMode(unsigned char data)
     EmuState.CPUCurrentSpeed *= (EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
 }
 
-unsigned char SetCPUMultiplyer(unsigned char Multiplyer)
+unsigned char SetCPUMultiplyer(unsigned char multiplyer)
 {
-  if (Multiplyer != QUERY)
+  if (multiplyer != QUERY)
   {
-    EmuState.DoubleSpeedMultiplyer = Multiplyer;
+    EmuState.DoubleSpeedMultiplyer = multiplyer;
     SetCPUMultiplyerFlag(EmuState.DoubleSpeedFlag);
   }
 
   return(EmuState.DoubleSpeedMultiplyer);
 }
 
-void DoHardReset(SystemState* const HRState)
+void DoHardReset(SystemState* const systemState)
 {
-  HRState->RamBuffer = MmuInit(HRState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
-  HRState->WRamBuffer = (unsigned short*)HRState->RamBuffer;
+  systemState->RamBuffer = MmuInit(systemState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
+  systemState->WRamBuffer = (unsigned short*)systemState->RamBuffer;
 
-  if (HRState->RamBuffer == NULL)
+  if (systemState->RamBuffer == NULL)
   {
     MessageBox(NULL, "Can't allocate enough RAM, Out of memory", "Error", 0);
     exit(0);
   }
 
-  if (HRState->CpuType == 1)
+  if (systemState->CpuType == 1)
   {
     CPUInit = HD6309Init;
     CPUExec = HD6309Exec;
@@ -645,10 +645,10 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   return FALSE;
 }
 
-unsigned char SetRamSize(unsigned char Size)
+unsigned char SetRamSize(unsigned char size)
 {
-  if (Size != QUERY)
-    EmuState.RamSize = Size;
+  if (size != QUERY)
+    EmuState.RamSize = size;
 
   return(EmuState.RamSize);
 }
@@ -661,17 +661,17 @@ unsigned char SetSpeedThrottle(unsigned char throttle)
   return(Throttle);
 }
 
-unsigned char SetFrameSkip(unsigned char Skip)
+unsigned char SetFrameSkip(unsigned char skip)
 {
-  if (Skip != QUERY)
-    EmuState.FrameSkip = Skip;
+  if (skip != QUERY)
+    EmuState.FrameSkip = skip;
 
   return(EmuState.FrameSkip);
 }
 
-unsigned char SetCpuType(unsigned char Tmp)
+unsigned char SetCpuType(unsigned char cpuType)
 {
-  switch (Tmp)
+  switch (cpuType)
   {
   case 0:
     EmuState.CpuType = 0;
@@ -691,10 +691,10 @@ void DoReboot(void)
   EmuState.ResetPending = 2;
 }
 
-unsigned char SetAutoStart(unsigned char Tmp)
+unsigned char SetAutoStart(unsigned char autostart)
 {
-  if (Tmp != QUERY)
-    AutoStart = Tmp;
+  if (autostart != QUERY)
+    AutoStart = autostart;
 
   return(AutoStart);
 }
@@ -766,9 +766,9 @@ void SaveConfig(void) {
   }
 }
 
-unsigned __stdcall EmuLoop(void* Dummy)
+unsigned __stdcall EmuLoop(void* dummy)
 {
-  HANDLE hEvent = (HANDLE)Dummy;
+  HANDLE hEvent = (HANDLE)dummy;
   static float FPS;
   static unsigned int FrameCounter = 0;
   CalibrateThrottle();
@@ -862,7 +862,7 @@ void LoadPack(void)
   _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
 }
 
-unsigned __stdcall CartLoad(void* Dummy)
+unsigned __stdcall CartLoad(void* dummy)
 {
   LoadCart();
   EmuState.EmulationRunning = TRUE;

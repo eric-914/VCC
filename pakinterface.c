@@ -116,12 +116,12 @@ void ResetBus(void)
     ModuleReset();
 }
 
-void GetModuleStatus(SystemState* SMState)
+void GetModuleStatus(SystemState* systemState)
 {
   if (ModuleStatus != NULL)
-    ModuleStatus(SMState->StatusLine);
+    ModuleStatus(systemState->StatusLine);
   else
-    sprintf(SMState->StatusLine, "");
+    sprintf(systemState->StatusLine, "");
 }
 
 unsigned char PackPortRead(unsigned char port)
@@ -132,31 +132,31 @@ unsigned char PackPortRead(unsigned char port)
     return(NULL);
 }
 
-void PackPortWrite(unsigned char Port, unsigned char Data)
+void PackPortWrite(unsigned char port, unsigned char data)
 {
   if (PakPortWrite != NULL)
   {
-    PakPortWrite(Port, Data);
+    PakPortWrite(port, data);
     return;
   }
 
-  if ((Port == 0x40) && (RomPackLoaded == true)) {
-    BankedCartOffset = (Data & 15) << 14;
+  if ((port == 0x40) && (RomPackLoaded == true)) {
+    BankedCartOffset = (data & 15) << 14;
   }
 }
 
-unsigned char PackMem8Read(unsigned short Address)
+unsigned char PackMem8Read(unsigned short address)
 {
   if (PakMemRead8 != NULL)
-    return(PakMemRead8(Address & 32767));
+    return(PakMemRead8(address & 32767));
 
   if (ExternalRomBuffer != NULL)
-    return(ExternalRomBuffer[(Address & 32767) + BankedCartOffset]);
+    return(ExternalRomBuffer[(address & 32767) + BankedCartOffset]);
 
   return(0);
 }
 
-void PackMem8Write(unsigned char Port, unsigned char Data)
+void PackMem8Write(unsigned char port, unsigned char data)
 {
 }
 
@@ -203,15 +203,14 @@ int LoadCart(void)
   return(1);
 }
 
-int InsertModule(char* ModulePath)
+int InsertModule(char* modulePath)
 {
-  //	char Modname[MAX_LOADSTRING]="Blank";
   char CatNumber[MAX_LOADSTRING] = "";
   char Temp[MAX_LOADSTRING] = "";
   char String[1024] = "";
   char TempIni[MAX_PATH] = "";
   unsigned char FileType = 0;
-  FileType = FileID(ModulePath);
+  FileType = FileID(modulePath);
 
   switch (FileType)
   {
@@ -221,8 +220,8 @@ int InsertModule(char* ModulePath)
 
   case 2:		//File is a ROM image
     UnloadDll();
-    load_ext_rom(ModulePath);
-    strncpy(Modname, ModulePath, MAX_PATH);
+    load_ext_rom(modulePath);
+    strncpy(Modname, modulePath, MAX_PATH);
     PathStripPath(Modname);
     DynamicMenuCallback("", 0, 0); //Refresh Menus
     DynamicMenuCallback("", 1, 0);
@@ -233,7 +232,7 @@ int InsertModule(char* ModulePath)
 
   case 1:		//File is a DLL
     UnloadDll();
-    hinstLib = LoadLibrary(ModulePath);
+    hinstLib = LoadLibrary(modulePath);
 
     if (hinstLib == NULL)
       return(NOMODULE);
@@ -357,7 +356,7 @@ int InsertModule(char* ModulePath)
       PakSetCart(SetCart);
     }
 
-    strcpy(DllPath, ModulePath);
+    strcpy(DllPath, modulePath);
     EmuState.ResetPending = 2;
     return(0);
     break;
@@ -469,11 +468,11 @@ void UnloadPack(void)
   DynamicMenuCallback("", 1, 0);
 }
 
-int FileID(char* Filename)
+int FileID(char* filename)
 {
   FILE* DummyHandle = NULL;
   char Temp[3] = "";
-  DummyHandle = fopen(Filename, "rb");
+  DummyHandle = fopen(filename, "rb");
   
   if (DummyHandle == NULL)
     return(0);	//File Doesn't exist
@@ -489,9 +488,9 @@ int FileID(char* Filename)
   return(2);		//Rom Image 
 }
 
-void DynamicMenuActivated(unsigned char MenuItem)
+void DynamicMenuActivated(unsigned char menuItem)
 {
-  switch (MenuItem)
+  switch (menuItem)
   {
   case 1:
     LoadPack();
@@ -503,17 +502,17 @@ void DynamicMenuActivated(unsigned char MenuItem)
 
   default:
     if (ConfigModule != NULL)
-      ConfigModule(MenuItem);
+      ConfigModule(menuItem);
     break;
   }
 }
 
-void DynamicMenuCallback(char* MenuName, int MenuId, int Type)
+void DynamicMenuCallback(char* menuName, int menuId, int type)
 {
   char Temp[256] = "";
 
   //MenuId=0 Flush Buffer MenuId=1 Done 
-  switch (MenuId)
+  switch (menuId)
   {
   case 0:
     MenuIndex = 0;
@@ -529,9 +528,9 @@ void DynamicMenuCallback(char* MenuName, int MenuId, int Type)
     break;
 
   default:
-    strcpy(MenuItem[MenuIndex].MenuName, MenuName);
-    MenuItem[MenuIndex].MenuId = MenuId;
-    MenuItem[MenuIndex].Type = Type;
+    strcpy(MenuItem[MenuIndex].MenuName, menuName);
+    MenuItem[MenuIndex].MenuId = menuId;
+    MenuItem[MenuIndex].Type = type;
     MenuIndex++;
     break;
   }

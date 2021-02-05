@@ -241,9 +241,9 @@ void attemptDWConnection(void)
 }
 
 // TCP connection thread
-unsigned __stdcall DWTCPThread(void* Dummy)
+unsigned __stdcall DWTCPThread(void* dummy)
 {
-  HANDLE hEvent = (HANDLE)Dummy;
+  HANDLE hEvent = (HANDLE)dummy;
   WSADATA wsaData;
 
   int sz;
@@ -364,13 +364,13 @@ void SetDWTCPConnectionEnable(unsigned int enable)
 }
 
 // dll exported functions
-__declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK Temp)
+__declspec(dllexport) void ModuleName(char* moduleName, char* catNumber, DYNAMICMENUCALLBACK menuCallback)
 {
-  LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-  LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-  strcpy(ModName, "HDBDOS/DW/Becker");
+  LoadString(g_hinstDLL, IDS_MODULE_NAME, moduleName, MAX_LOADSTRING);
+  LoadString(g_hinstDLL, IDS_CATNUMBER, catNumber, MAX_LOADSTRING);
+  strcpy(moduleName, "HDBDOS/DW/Becker");
 
-  DynamicMenuCallback = Temp;
+  DynamicMenuCallback = menuCallback;
 
   if (DynamicMenuCallback != NULL)
     BuildDynaMenu();
@@ -378,21 +378,21 @@ __declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMEN
   return;
 }
 
-__declspec(dllexport) void PackPortWrite(unsigned char Port, unsigned char Data)
+__declspec(dllexport) void PackPortWrite(unsigned char port, unsigned char data)
 {
-  switch (Port)
+  switch (port)
   {
     // write data 
   case 0x42:
-    dw_write(Data);
+    dw_write(data);
     break;
   }
   return;
 }
 
-__declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+__declspec(dllexport) unsigned char PackPortRead(unsigned char port)
 {
-  switch (Port)
+  switch (port)
   {
     // read status
   case 0x41:
@@ -410,15 +410,15 @@ __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
   return 0;
 }
 
-__declspec(dllexport) unsigned char SetCart(SETCART Pointer)
+__declspec(dllexport) unsigned char SetCart(SETCART pointer)
 {
-  PakSetCart = Pointer;
+  PakSetCart = pointer;
   return(0);
 }
 
-__declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+__declspec(dllexport) unsigned char PakMemRead8(unsigned short address)
 {
-  return(HDBRom[Address & 8191]);
+  return(HDBRom[address & 8191]);
 
 }
 
@@ -428,7 +428,7 @@ __declspec(dllexport) void HeartBeat(void)
   return;
 }
 
-__declspec(dllexport) void ModuleStatus(char* DWStatus)
+__declspec(dllexport) void ModuleStatus(char* status)
 {
   // calculate speed
   DWORD sinceCalc = GetTickCount() - LastStats;
@@ -448,11 +448,11 @@ __declspec(dllexport) void ModuleStatus(char* DWStatus)
   {
     if (retry)
     {
-      sprintf(DWStatus, "DW: Try %s", curaddress);
+      sprintf(status, "DW: Try %s", curaddress);
     }
     else if (dwSocket == 0)
     {
-      sprintf(DWStatus, "DW: ConError");
+      sprintf(status, "DW: ConError");
     }
     else
     {
@@ -461,19 +461,18 @@ __declspec(dllexport) void ModuleStatus(char* DWStatus)
       if (InReadPos > InWritePos)
         buffersize = BUFFER_SIZE - InReadPos + InWritePos;
 
-      sprintf(DWStatus, "DW: ConOK  R:%04.1f W:%04.1f", ReadSpeed, WriteSpeed);
+      sprintf(status, "DW: ConOK  R:%04.1f W:%04.1f", ReadSpeed, WriteSpeed);
     }
   }
   else
   {
-    sprintf(DWStatus, "");
+    sprintf(status, "");
   }
   return;
 }
 
 void BuildDynaMenu(void)
 {
-
   if (DynamicMenuCallback == NULL)
     MessageBox(0, "No good", "Ok", 0);
 
@@ -483,20 +482,20 @@ void BuildDynaMenu(void)
   DynamicMenuCallback("", 1, 0);
 }
 
-__declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+__declspec(dllexport) void ModuleConfig(unsigned char menuID)
 {
   DialogBox(g_hinstDLL, (LPCTSTR)IDD_PROPPAGE, NULL, (DLGPROC)Config);
   BuildDynaMenu();
 }
 
-__declspec(dllexport) void SetIniPath(char* IniFilePath)
+__declspec(dllexport) void SetIniPath(char* iniFilePath)
 {
-  strcpy(IniFile, IniFilePath);
+  strcpy(IniFile, iniFilePath);
   LoadConfig();
 }
 
 
-void WriteLog(char* Message, unsigned char Type)
+void WriteLog(char* message, unsigned char type)
 {
   if (logging)
   {
@@ -504,7 +503,7 @@ void WriteLog(char* Message, unsigned char Type)
     static FILE* disk_handle = NULL;
     unsigned long dummy;
 
-    switch (Type)
+    switch (type)
     {
     case TOCONS:
       if (hout == NULL)
@@ -513,14 +512,14 @@ void WriteLog(char* Message, unsigned char Type)
         hout = GetStdHandle(STD_OUTPUT_HANDLE);
         SetConsoleTitle("Logging Window");
       }
-      WriteConsole(hout, Message, (DWORD)strlen(Message), &dummy, 0);
+      WriteConsole(hout, message, (DWORD)strlen(message), &dummy, 0);
       break;
 
     case TOFILE:
       if (disk_handle == NULL)
         disk_handle = fopen("c:\\VccLog.txt", "w");
 
-      fprintf(disk_handle, "%s\r\n", Message);
+      fprintf(disk_handle, "%s\r\n", message);
       fflush(disk_handle);
       break;
     }
@@ -629,13 +628,13 @@ void SaveConfig(void)
   WritePrivateProfileString(ModName, "DWServerPort", msg, IniFile);
 }
 
-unsigned char LoadExtRom(char* FilePath)	//Returns 1 on if loaded
+unsigned char LoadExtRom(char* filePath)	//Returns 1 on if loaded
 {
   FILE* rom_handle = NULL;
   unsigned short index = 0;
   unsigned char RetVal = 0;
 
-  rom_handle = fopen(FilePath, "rb");
+  rom_handle = fopen(filePath, "rb");
 
   if (rom_handle == NULL)
     memset(HDBRom, 0xFF, 8192);

@@ -76,11 +76,11 @@ BOOL WINAPI DllMain(
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK Temp)
+  __declspec(dllexport) void ModuleName(char* moduleName, char* catNumber, DYNAMICMENUCALLBACK menuCallback)
   {
-    LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-    LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-    DynamicMenuCallback = Temp;
+    LoadString(g_hinstDLL, IDS_MODULE_NAME, moduleName, MAX_LOADSTRING);
+    LoadString(g_hinstDLL, IDS_CATNUMBER, catNumber, MAX_LOADSTRING);
+    DynamicMenuCallback = menuCallback;
     IdeInit();
 
     if (DynamicMenuCallback != NULL)
@@ -90,21 +90,21 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) void PackPortWrite(unsigned char Port, unsigned char Data)
+  __declspec(dllexport) void PackPortWrite(unsigned char port, unsigned char data)
   {
-    if ((Port >= BaseAddress) & (Port <= (BaseAddress + 8)))
-      switch (Port - BaseAddress)
+    if ((port >= BaseAddress) & (port <= (BaseAddress + 8)))
+      switch (port - BaseAddress)
       {
       case 0x0:
-        IdeRegWrite(Port - BaseAddress, (DataLatch << 8) + Data);
+        IdeRegWrite(port - BaseAddress, (DataLatch << 8) + data);
         break;
 
       case 0x8:
-        DataLatch = Data & 0xFF;		//Latch
+        DataLatch = data & 0xFF;		//Latch
         break;
 
       default:
-        IdeRegWrite(Port - BaseAddress, Data);
+        IdeRegWrite(port - BaseAddress, data);
         break;
       }
   }
@@ -112,19 +112,19 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+  __declspec(dllexport) unsigned char PackPortRead(unsigned char port)
   {
     unsigned char RetVal = 0;
     unsigned short Temp = 0;
 
-    if (((Port == 0x78) | (Port == 0x79) | (Port == 0x7C)) & ClockEnabled)
-      RetVal = ReadTime(Port);
+    if (((port == 0x78) | (port == 0x79) | (port == 0x7C)) & ClockEnabled)
+      RetVal = ReadTime(port);
 
-    if ((Port >= BaseAddress) & (Port <= (BaseAddress + 8)))
-      switch (Port - BaseAddress)
+    if ((port >= BaseAddress) & (port <= (BaseAddress + 8)))
+      switch (port - BaseAddress)
       {
       case 0x0:
-        Temp = IdeRegRead(Port - BaseAddress);
+        Temp = IdeRegRead(port - BaseAddress);
 
         RetVal = Temp & 0xFF;
         DataLatch = Temp >> 8;
@@ -135,7 +135,7 @@ extern "C"
         break;
 
       default:
-        RetVal = IdeRegRead(Port - BaseAddress) & 0xFF;
+        RetVal = IdeRegRead(port - BaseAddress) & 0xFF;
         break;
       }
 
@@ -145,17 +145,17 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleStatus(char* MyStatus)
+  __declspec(dllexport) void ModuleStatus(char* status)
   {
-    DiskStatus(MyStatus);
+    DiskStatus(status);
   }
 }
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleConfig(unsigned char MenuID)
+  __declspec(dllexport) void ModuleConfig(unsigned char menuId)
   {
-    switch (MenuID)
+    switch (menuId)
     {
     case 10:
       Select_Disk(MASTER);
@@ -190,9 +190,9 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) void SetIniPath(char* IniFilePath)
+  __declspec(dllexport) void SetIniPath(char* iniFilePath)
   {
-    strcpy(IniFile, IniFilePath);
+    strcpy(IniFile, iniFilePath);
     LoadConfig();
   }
 }
@@ -289,7 +289,7 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   return(0);
 }
 
-void Select_Disk(unsigned char Disk)
+void Select_Disk(unsigned char disk)
 {
   OPENFILENAME ofn;
 
@@ -311,7 +311,7 @@ void Select_Disk(unsigned char Disk)
   ofn.lpstrTitle = "Mount IDE hard Disk Image";	// title bar string
 
   if (GetOpenFileName(&ofn)) {
-    if (!(MountDisk(TempFileName, Disk)))
+    if (!(MountDisk(TempFileName, disk)))
       MessageBox(0, "Can't Open File", "Can't open the Image specified.", 0);
 
     string tmp = ofn.lpstrFile;

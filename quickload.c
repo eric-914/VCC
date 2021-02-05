@@ -37,17 +37,17 @@ static unsigned char Flag = 1;
 static size_t temp = 255;
 static char Extension[MAX_PATH] = "";
 
-unsigned char QuickLoad(char* BinFileName)
+unsigned char QuickLoad(char* binFileName)
 {
   unsigned int MemIndex = 0;
 
-  hr = CreateFile(BinFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  hr = CreateFile(binFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
   if (hr == INVALID_HANDLE_VALUE)
     return(1);				//File Not Found
 
   CloseHandle(hr);
-  BinImage = fopen(BinFileName, "rb");
+  BinImage = fopen(binFileName, "rb");
   
   if (BinImage == NULL)
     return(2);				//Can't Open File
@@ -60,12 +60,12 @@ unsigned char QuickLoad(char* BinFileName)
     return(3);				//Not enough memory
   }
 
-  strcpy(Extension, PathFindExtension(BinFileName));
+  strcpy(Extension, PathFindExtension(binFileName));
   _strlwr(Extension);
 
   if ((strcmp(Extension, ".rom") == 0) | (strcmp(Extension, ".ccc") == 0) | (strcmp(Extension, "*.pak") == 0))
   {
-    InsertModule(BinFileName);
+    InsertModule(binFileName);
     return(0);
   }
   if (strcmp(Extension, ".bin") == 0)

@@ -52,27 +52,27 @@ BOOL WINAPI DllMain(
 
 extern "C"
 {
-  __declspec(dllexport) void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK Temp)
+  __declspec(dllexport) void ModuleName(char* moduleName, char* catNumber, DYNAMICMENUCALLBACK menuCallback)
   {
-    LoadString(g_hinstDLL, IDS_MODULE_NAME, ModName, MAX_LOADSTRING);
-    LoadString(g_hinstDLL, IDS_CATNUMBER, CatNumber, MAX_LOADSTRING);
-    strcpy(ModName, "Orchestra-90");
+    LoadString(g_hinstDLL, IDS_MODULE_NAME, moduleName, MAX_LOADSTRING);
+    LoadString(g_hinstDLL, IDS_CATNUMBER, catNumber, MAX_LOADSTRING);
+    strcpy(moduleName, "Orchestra-90");
   }
 }
 
 
 extern "C"
 {
-  __declspec(dllexport) void PackPortWrite(unsigned char Port, unsigned char Data)
+  __declspec(dllexport) void PackPortWrite(unsigned char port, unsigned char data)
   {
-    switch (Port)
+    switch (port)
     {
     case 0x7A:
-      RightChannel = Data;
+      RightChannel = data;
       break;
 
     case 0x7B:
-      LeftChannel = Data;
+      LeftChannel = data;
       break;
     }
   }
@@ -81,7 +81,7 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char PackPortRead(unsigned char Port)
+  __declspec(dllexport) unsigned char PackPortRead(unsigned char port)
   {
     return(NULL);
   }
@@ -107,19 +107,19 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char SetCart(SETCART Pointer)
+  __declspec(dllexport) unsigned char SetCart(SETCART pointer)
   {
 
-    PakSetCart = Pointer;
+    PakSetCart = pointer;
     return(NULL);
   }
 }
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char PakMemRead8(unsigned short Address)
+  __declspec(dllexport) unsigned char PakMemRead8(unsigned short address)
   {
-    return(Rom[Address & 8191]);
+    return(Rom[address & 8191]);
   }
 }
 
@@ -132,13 +132,13 @@ extern "C"
   }
 }
 
-unsigned char LoadExtRom(char* FilePath)	//Returns 1 on if loaded
+unsigned char LoadExtRom(char* filePath)	//Returns 1 on if loaded
 {
   FILE* rom_handle = NULL;
   unsigned short index = 0;
   unsigned char RetVal = 0;
 
-  rom_handle = fopen(FilePath, "rb");
+  rom_handle = fopen(filePath, "rb");
 
   if (rom_handle == NULL)
     memset(Rom, 0xFF, 8192);

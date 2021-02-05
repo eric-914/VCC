@@ -54,12 +54,12 @@ protected:
   virtual void LoadMenu();
 
 private:
-  friend void ModuleName(char* ModName, char* CatNumber, DYNAMICMENUCALLBACK addMenuCallback);
+  friend void ModuleName(char* moduleName, char* catNumber, DYNAMICMENUCALLBACK menuCallback);
   friend void ModuleStatus(char* statusBuffer);
   friend void ModuleConfig(unsigned char menuId);
   friend void SetIniPath(const char* iniFilePath);
   friend void ModuleReset(void);
-  friend void SetCart(SETCART Pointer);
+  friend void SetCart(SETCART pointer);
   friend unsigned char PakMemRead8(unsigned short address);
   friend void PackPortWrite(unsigned char port, unsigned char data);
   friend unsigned char PackPortRead(unsigned char port);

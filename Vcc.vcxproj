@@ -251,6 +251,9 @@
       <Project>{fc5d90df-a488-4e57-a4b2-7c74ae861f9e}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="library\library.vcxproj">
+      <Project>{151d692e-1469-44d9-90d5-fb59fdda4e31}</Project>
+    </ProjectReference>
     <ProjectReference Include="mpi\mpi.vcxproj">
       <Project>{678097f4-f33b-4739-b3e1-7a72bd1f4a3a}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -261,6 +264,7 @@
     </ProjectReference>
     <ProjectReference Include="ramdisk\Ramdisk.vcxproj">
       <Project>{23d3931c-364b-45e2-b58c-9b3fbc584c0f}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="superide\SuperIDE.vcxproj">
       <Project>{95713490-9812-4348-9e5e-818f736a271a}</Project>
