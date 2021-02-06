@@ -1,4 +1,3 @@
-/*****************************************************************************/
 /**
   xDebug.c
 
@@ -6,13 +5,10 @@
   Copyright 2010 by Wes Gale All rights reserved.
   Used by permission in VccX
 */
-/*****************************************************************************/
 
 #include "xDebug.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <Windows.h>
 
 int	g_bTraceMessageLogging = TRUE;

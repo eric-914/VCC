@@ -19,20 +19,19 @@ This file is part of VCC (Virtual Color Computer).
 #define DIRECTINPUT_VERSION 0x0800
 
 #include <windows.h>
-#include <commctrl.h>
-#include <stdio.h>
+//#include <commctrl.h>
+//#include <stdio.h>
 #include <Richedit.h>
 #include <iostream>
 
 #include <direct.h>
+#include <assert.h>
 
 #include "defines.h"
 #include "resource.h"
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "mc6821.h"
-#include "Vcc.h"
-#include "tcc1014mmu.h"
 #include "audio.h"
 #include "pakinterface.h"
 #include "vcc.h"
@@ -42,9 +41,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
+
 #include "library\CommandLine.h"
-//#include "logger.h"
-#include <assert.h>
 
 using namespace std;
 
@@ -73,11 +71,11 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 //	global variables
 //
 static unsigned short int	Ramchoice[4] = { IDC_128K,IDC_512K,IDC_2M,IDC_8M };
-static unsigned  int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
+static unsigned int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
 static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
 static unsigned short int	Cpuchoice[2] = { IDC_6809,IDC_6309 };
 static unsigned short int	Monchoice[2] = { IDC_COMPOSITE,IDC_RGB };
-static unsigned short int   PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
+static unsigned short int PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
 static HICON CpuIcons[2], MonIcons[2], JoystickIcons[4];
 static unsigned char temp = 0, temp2 = 0;
 static char IniFileName[] = "Vcc.ini";
@@ -155,9 +153,7 @@ void buildTransDisp2ScanTable()
     }
   }
 
-  // ???
   _TranslateDisp2Scan[0] = 0;
-  // ???
 
   // Left and Right Shift
   _TranslateDisp2Scan[51] = DIK_LSHIFT;
@@ -176,8 +172,10 @@ void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
   GetModuleFileName(NULL, ExecDirectory, MAX_PATH);
   PathRemoveFileSpec(ExecDirectory);
 
-  if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath)))
+  if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath))) {
     OutputDebugString(AppDataPath);
+  }
+
   strcpy(CurrentConfig.PathtoExe, ExecDirectory);
 
   strcat(AppDataPath, "\\VCC");
@@ -205,6 +203,7 @@ void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
   hr = CreateFile(IniFilePath,
     GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
     NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
   lasterror = GetLastError();
 
   if (hr == INVALID_HANDLE_VALUE) { // Fatal could not open ini file
@@ -315,8 +314,9 @@ unsigned char ReadIniFile(void)
 
   CurrentConfig.KeyMap = GetPrivateProfileInt("Misc", "KeyMapIndex", 0, IniFilePath);
 
-  if (CurrentConfig.KeyMap > 3)
+  if (CurrentConfig.KeyMap > 3) {
     CurrentConfig.KeyMap = 0;	//Default to DECB Mapping
+  }
 
   vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
@@ -346,10 +346,8 @@ unsigned char ReadIniFile(void)
   GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
   GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
 
-  for (Index = 0; Index < NumberOfSoundCards; Index++)
-  {
-    if (!strcmp(SoundCards[Index].CardName, CurrentConfig.SoundCardName))
-    {
+  for (Index = 0; Index < NumberOfSoundCards; Index++) {
+    if (!strcmp(SoundCards[Index].CardName, CurrentConfig.SoundCardName)) {
       CurrentConfig.SndOutDev = Index;
     }
   }
@@ -680,7 +678,6 @@ LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 
 LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  //	HWND hCounter=NULL;
   CounterText.cbSize = sizeof(CHARFORMAT);
   CounterText.dwMask = CFM_BOLD | CFM_COLOR;
   CounterText.dwEffects = CFE_BOLD;

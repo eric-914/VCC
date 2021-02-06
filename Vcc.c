@@ -16,13 +16,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*---------------------------------------------------------------
-
----------------------------------------------------------------*/
-//#define STRICT
-//#define WIN32_LEAN_AND_MEAN
-/*--------------------------------------------------------------------------*/
-
 #define DIRECTINPUT_VERSION 0x0800
 #define _WIN32_WINNT 0x0500
 
@@ -34,12 +27,8 @@ This file is part of VCC (Virtual Color Computer).
 #define TH_REQWAIT	1
 #define TH_WAITING	2
 
-#include <objbase.h>
 #include <windows.h>
 #include <process.h>
-#include <commdlg.h>
-#include <stdio.h>
-#include <Mmsystem.h>
 #include "fileops.h"
 #include "defines.h"
 #include "resource.h"
@@ -60,8 +49,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 
-#include "logger.h"
-
 #include "library\CommandLine.h"
 
 static HANDLE hout = NULL;
@@ -76,8 +63,8 @@ static char CpuName[20] = "CPUNAME";
 char QuickLoadFile[256];
 
 /***Forward declarations of functions included in this code module*****/
-BOOL				InitInstance(HINSTANCE, int);
-LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+BOOL InitInstance(HINSTANCE, int);
+LRESULT CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void SoftReset(void);

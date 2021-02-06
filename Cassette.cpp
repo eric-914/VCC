@@ -23,8 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "config.h"
 #include "cassette.h"
-#include "stdio.h"
-#include "logger.h"
 
 static unsigned char MotorState = 0, TapeMode = STOP, WriteProtect = 0, Quiet = 30;
 static HANDLE TapeHandle = NULL;

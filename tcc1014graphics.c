@@ -19,22 +19,15 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include "defines.h"
 #include "tcc1014graphics.h"
-#include "ddraw.h"
 #include "coco3.h"
 #include "cc2font.h"
 #include "cc3font.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
-#include "logger.h"
-#include "math.h"
-#include <stdio.h>
-#include <commctrl.h>	// Windows common controls
 
 void SetupDisplay(void); //This routine gets called every time a software video register get updated.
 void MakeRGBPalette(void);
 void MakeCMPpalette(void);
-bool  DDFailedCheck(HRESULT hr, char* szMessage);
-char* DDErrorString(HRESULT hr);
 
 static unsigned char ColorValues[4] = { 0,85,170,255 };
 static unsigned char ColorTable16Bit[4] = { 0,10,21,31 };	//Color brightness at 0 1 2 and 3 (2 bits)
@@ -82,7 +75,7 @@ static unsigned char MasterMode = 0;
 static unsigned char ColorInvert = 1;
 static unsigned char BlinkState = 1;
 
-void UpdateScreen8(SystemState* US8State)
+void UpdateScreen8(SystemState* systemState)
 {
   register unsigned int YStride = 0;
   unsigned char Pixel = 0;
@@ -92,35 +85,35 @@ void UpdateScreen8(SystemState* US8State)
   char Pix = 0, Bit = 0, Sphase = 0;
   static char Carry1 = 0, Carry2 = 0;
   static char Pcolor = 0;
-  unsigned char* buffer = US8State->RamBuffer;
+  unsigned char* buffer = systemState->RamBuffer;
   Carry1 = 1;
   Pcolor = 0;
 
   if ((HorzCenter != 0) & (BoarderChange > 0))
     for (unsigned short x = 0;x < HorzCenter;x++)
     {
-      US8State->PTRsurface8[x + (((US8State->LineCounter + VertCenter) * 2) * US8State->SurfacePitch)] = BoarderColor8;
+      systemState->PTRsurface8[x + (((systemState->LineCounter + VertCenter) * 2) * systemState->SurfacePitch)] = BoarderColor8;
 
-      if (!US8State->ScanLines)
-        US8State->PTRsurface8[x + (((US8State->LineCounter + VertCenter) * 2 + 1) * US8State->SurfacePitch)] = BoarderColor8;
+      if (!systemState->ScanLines)
+        systemState->PTRsurface8[x + (((systemState->LineCounter + VertCenter) * 2 + 1) * systemState->SurfacePitch)] = BoarderColor8;
 
-      US8State->PTRsurface8[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((US8State->LineCounter + VertCenter) * 2) * US8State->SurfacePitch)] = BoarderColor8;
+      systemState->PTRsurface8[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((systemState->LineCounter + VertCenter) * 2) * systemState->SurfacePitch)] = BoarderColor8;
 
-      if (!US8State->ScanLines)
-        US8State->PTRsurface8[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((US8State->LineCounter + VertCenter) * 2 + 1) * US8State->SurfacePitch)] = BoarderColor8;
+      if (!systemState->ScanLines)
+        systemState->PTRsurface8[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((systemState->LineCounter + VertCenter) * 2 + 1) * systemState->SurfacePitch)] = BoarderColor8;
     }
 
   if (LinesperRow < 13)
     TagY++;
 
-  if (!US8State->LineCounter)
+  if (!systemState->LineCounter)
   {
     StartofVidram = NewStartofVidram;
-    TagY = US8State->LineCounter;
+    TagY = systemState->LineCounter;
   }
 
   Start = StartofVidram + (TagY / LinesperRow) * (VPitch * ExtendedText);
-  YStride = (((US8State->LineCounter + VertCenter) * 2) * US8State->SurfacePitch) + (HorzCenter)-1;
+  YStride = (((systemState->LineCounter + VertCenter) * 2) * systemState->SurfacePitch) + (HorzCenter)-1;
 
   switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
   {
@@ -130,13 +123,13 @@ void UpdateScreen8(SystemState* US8State)
     for (HorzBeam = 0;HorzBeam < BytesperRow * ExtendedText;HorzBeam += ExtendedText)
     {
       Character = buffer[Start + (unsigned char)(HorzBeam + Hoffset)];
-      Pixel = cc3Fontdata8x12[Character * 12 + (US8State->LineCounter % LinesperRow)];
+      Pixel = cc3Fontdata8x12[Character * 12 + (systemState->LineCounter % LinesperRow)];
 
       if (ExtendedText == 2)
       {
         Attributes = buffer[Start + (unsigned char)(HorzBeam + Hoffset) + 1];
 
-        if ((Attributes & 64) && (US8State->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
+        if ((Attributes & 64) && (systemState->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
           Pixel = 255;
         if ((!BlinkState) & !!(Attributes & 128))
           Pixel = 0;
@@ -144,28 +137,28 @@ void UpdateScreen8(SystemState* US8State)
 
       TextPallete[1] = Pallete8Bit[8 + ((Attributes & 56) >> 3)];
       TextPallete[0] = Pallete8Bit[Attributes & 7];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel & 1];
       
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel & 1];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel & 1];
+        YStride -= systemState->SurfacePitch;
       }
     }
 
@@ -177,13 +170,13 @@ void UpdateScreen8(SystemState* US8State)
     for (HorzBeam = 0;HorzBeam < BytesperRow * ExtendedText;HorzBeam += ExtendedText)
     {
       Character = buffer[Start + (unsigned char)(HorzBeam + Hoffset)];
-      Pixel = cc3Fontdata8x12[Character * 12 + (US8State->LineCounter % LinesperRow)];
+      Pixel = cc3Fontdata8x12[Character * 12 + (systemState->LineCounter % LinesperRow)];
 
       if (ExtendedText == 2)
       {
         Attributes = buffer[Start + (unsigned char)(HorzBeam + Hoffset) + 1];
 
-        if ((Attributes & 64) && (US8State->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
+        if ((Attributes & 64) && (systemState->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
           Pixel = 255;
 
         if ((!BlinkState) & !!(Attributes & 128))
@@ -192,43 +185,43 @@ void UpdateScreen8(SystemState* US8State)
 
       TextPallete[1] = Pallete8Bit[8 + ((Attributes & 56) >> 3)];
       TextPallete[0] = Pallete8Bit[Attributes & 7];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-      if (!US8State->ScanLines)
+      systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[Pixel >> 7];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -306,9 +299,9 @@ void UpdateScreen8(SystemState* US8State)
       else
         Attributes = 0;
 
-      Pixel = cc3Fontdata8x12[(Character & 127) * 8 + (US8State->LineCounter % 8)];
+      Pixel = cc3Fontdata8x12[(Character & 127) * 8 + (systemState->LineCounter % 8)];
 
-      if ((Attributes & 64) && (US8State->LineCounter % 8 == 7))	//UnderLine
+      if ((Attributes & 64) && (systemState->LineCounter % 8 == 7))	//UnderLine
         Pixel = 255;
 
       if ((!BlinkState) & !!(Attributes & 128))
@@ -316,14 +309,14 @@ void UpdateScreen8(SystemState* US8State)
 
       TextPallete[1] = Pallete8Bit[8 + ((Attributes & 56) >> 3)];
       TextPallete[0] = Pallete8Bit[Attributes & 7];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 128) / 128];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 64) / 64];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 32) / 32];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 16) / 16];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 8) / 8];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 4) / 4];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 2) / 2];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 128) / 128];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 64) / 64];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 32) / 32];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 16) / 16];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 8) / 8];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 4) / 4];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 2) / 2];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
     }
     break;
 
@@ -404,16 +397,16 @@ void UpdateScreen8(SystemState* US8State)
         TextPallete[1] = Pallete8Bit[TextFGPallete];
 
         if (LowerCase & (Character < 32))
-          Pixel = ntsc_round_fontdata8x12[(Character + 80) * 12 + (US8State->LineCounter % 12)];
+          Pixel = ntsc_round_fontdata8x12[(Character + 80) * 12 + (systemState->LineCounter % 12)];
         else
-          Pixel = ~ntsc_round_fontdata8x12[(Character) * 12 + (US8State->LineCounter % 12)];
+          Pixel = ~ntsc_round_fontdata8x12[(Character) * 12 + (systemState->LineCounter % 12)];
         break;
 
       case 1:
         Character = Character & 63;
         TextPallete[0] = Pallete8Bit[TextBGPallete];
         TextPallete[1] = Pallete8Bit[TextFGPallete];
-        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (US8State->LineCounter % 12)];
+        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (systemState->LineCounter % 12)];
         break;
 
       case 2:
@@ -421,49 +414,49 @@ void UpdateScreen8(SystemState* US8State)
         TextPallete[1] = Pallete8Bit[(Character & 112) >> 4];
         TextPallete[0] = Pallete8Bit[8];
         Character = 64 + (Character & 0xF);
-        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (US8State->LineCounter % 12)];
+        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (systemState->LineCounter % 12)];
         break;
 
       }
 
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-      US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
       
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-        US8State->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+        systemState->PTRsurface8[YStride += 1] = TextPallete[(Pixel & 1)];
+        YStride -= systemState->SurfacePitch;
       }
 
     } // Next HorzBeam
@@ -473,45 +466,45 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 0: //Bpp=0 Sr=0 1BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=1
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
       
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -521,78 +514,78 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 2:	//Bpp=0 Sr=2 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=2
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -603,142 +596,142 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 6: //Bpp=0 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=4
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -753,269 +746,269 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 14: //Bpp=0 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=8
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1024,29 +1017,29 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 16: //BPP=1 Sr=0  2BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=1
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1055,45 +1048,45 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 18: //Bpp=1 Sr=2
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=2
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1104,77 +1097,77 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 22: //Bpp=1 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=4
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1189,141 +1182,141 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 30: //Bpp=1 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=8
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1331,269 +1324,269 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 31: //Bpp=1 Sr=15 2BPP Stretch=16 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=16
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1601,20 +1594,20 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 32: //Bpp=2 Sr=0 4BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=1
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      if (!US8State->ScanLines)
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      if (!systemState->ScanLines)
       {
         YStride -= (4);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1623,29 +1616,29 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 34: //Bpp=2 Sr=2
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=2
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1656,45 +1649,45 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 38: //Bpp=2 Sr=6 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=4
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1709,77 +1702,77 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 46: //Bpp=2 Sr=14 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=8
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1787,141 +1780,141 @@ void UpdateScreen8(SystemState* US8State)
   case 128 + 47: //Bpp=2 Sr=15 4BPP Stretch=16
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=16
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & WidePixel];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1948,45 +1941,45 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 0: //Bpp=0 Sr=0 1BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=1
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -1995,7 +1988,7 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 2:	//Bpp=0 Sr=2 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=2
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
       if (!MonType)
       { //Pcolor
@@ -2022,15 +2015,15 @@ void UpdateScreen8(SystemState* US8State)
 
           case 3:
             Pcolor = 3;
-            US8State->PTRsurface8[YStride - 1] = Afacts8[ColorInvert][3];
+            systemState->PTRsurface8[YStride - 1] = Afacts8[ColorInvert][3];
             
-            if (!US8State->ScanLines)
-              US8State->PTRsurface8[YStride + US8State->SurfacePitch - 1] = Afacts8[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface8[YStride + systemState->SurfacePitch - 1] = Afacts8[ColorInvert][3];
             
-            US8State->PTRsurface8[YStride] = Afacts8[ColorInvert][3];
+            systemState->PTRsurface8[YStride] = Afacts8[ColorInvert][3];
             
-            if (!US8State->ScanLines)
-              US8State->PTRsurface8[YStride + US8State->SurfacePitch] = Afacts8[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface8[YStride + systemState->SurfacePitch] = Afacts8[ColorInvert][3];
             
             break;
 
@@ -2039,15 +2032,15 @@ void UpdateScreen8(SystemState* US8State)
             break;
           }
 
-          US8State->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
+          systemState->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
 
-          if (!US8State->ScanLines)
-            US8State->PTRsurface8[YStride + US8State->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface8[YStride + systemState->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
 
-          US8State->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
+          systemState->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
 
-          if (!US8State->ScanLines)
-            US8State->PTRsurface8[YStride + US8State->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface8[YStride + systemState->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
 
           Carry2 = Carry1;
           Carry1 = Pix;
@@ -2076,15 +2069,15 @@ void UpdateScreen8(SystemState* US8State)
 
           case 3:
             Pcolor = 3;
-            US8State->PTRsurface8[YStride - 1] = Afacts8[ColorInvert][3];
+            systemState->PTRsurface8[YStride - 1] = Afacts8[ColorInvert][3];
             
-            if (!US8State->ScanLines)
-              US8State->PTRsurface8[YStride + US8State->SurfacePitch - 1] = Afacts8[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface8[YStride + systemState->SurfacePitch - 1] = Afacts8[ColorInvert][3];
             
-            US8State->PTRsurface8[YStride] = Afacts8[ColorInvert][3];
+            systemState->PTRsurface8[YStride] = Afacts8[ColorInvert][3];
             
-            if (!US8State->ScanLines)
-              US8State->PTRsurface8[YStride + US8State->SurfacePitch] = Afacts8[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface8[YStride + systemState->SurfacePitch] = Afacts8[ColorInvert][3];
             
             break;
 
@@ -2093,15 +2086,15 @@ void UpdateScreen8(SystemState* US8State)
             break;
           }
 
-          US8State->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
+          systemState->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
 
-          if (!US8State->ScanLines)
-            US8State->PTRsurface8[YStride + US8State->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface8[YStride + systemState->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
 
-          US8State->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
+          systemState->PTRsurface8[YStride += 1] = Afacts8[ColorInvert][Pcolor];
 
-          if (!US8State->ScanLines)
-            US8State->PTRsurface8[YStride + US8State->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface8[YStride + systemState->SurfacePitch] = Afacts8[ColorInvert][Pcolor];
 
           Carry2 = Carry1;
           Carry1 = Pix;
@@ -2109,76 +2102,76 @@ void UpdateScreen8(SystemState* US8State)
       }
       else
       {
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-        if (!US8State->ScanLines)
+        if (!systemState->ScanLines)
         {
           YStride -= (32);
-          YStride += US8State->SurfacePitch;
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-          US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-          YStride -= US8State->SurfacePitch;
+          YStride += systemState->SurfacePitch;
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+          systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+          YStride -= systemState->SurfacePitch;
         }
       }
 
@@ -2191,142 +2184,142 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 6: //Bpp=0 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=4
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -2341,269 +2334,269 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 14: //Bpp=0 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=8
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -2612,29 +2605,29 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 16: //BPP=1 Sr=0  2BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=1
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
       
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -2643,45 +2636,45 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 18: //Bpp=1 Sr=2
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=2
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -2692,77 +2685,77 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 22: //Bpp=1 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=4
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -2777,141 +2770,141 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 30: //Bpp=1 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=8
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -2919,269 +2912,269 @@ void UpdateScreen8(SystemState* US8State)
   case 192 + 31: //Bpp=1 Sr=15 2BPP Stretch=16 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=16
     {
-      WidePixel = US8State->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!US8State->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += US8State->SurfacePitch;
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        US8State->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= US8State->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface8[YStride += 1] = Pallete8Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -3225,7 +3218,7 @@ void UpdateScreen8(SystemState* US8State)
   return;
 }
 
-void UpdateScreen16(SystemState* USState16)
+void UpdateScreen16(SystemState* systemState)
 {
   register unsigned int YStride = 0;
   static unsigned int TextColor = 0;
@@ -3241,28 +3234,28 @@ void UpdateScreen16(SystemState* USState16)
   if ((HorzCenter != 0) & (BoarderChange > 0))
     for (unsigned short x = 0;x < HorzCenter;x++)
     {
-      USState16->PTRsurface16[x + (((USState16->LineCounter + VertCenter) * 2) * (USState16->SurfacePitch))] = BoarderColor16;
+      systemState->PTRsurface16[x + (((systemState->LineCounter + VertCenter) * 2) * (systemState->SurfacePitch))] = BoarderColor16;
 
-      if (!USState16->ScanLines)
-        USState16->PTRsurface16[x + (((USState16->LineCounter + VertCenter) * 2 + 1) * (USState16->SurfacePitch))] = BoarderColor16;
+      if (!systemState->ScanLines)
+        systemState->PTRsurface16[x + (((systemState->LineCounter + VertCenter) * 2 + 1) * (systemState->SurfacePitch))] = BoarderColor16;
 
-      USState16->PTRsurface16[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((USState16->LineCounter + VertCenter) * 2) * (USState16->SurfacePitch))] = BoarderColor16;
+      systemState->PTRsurface16[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((systemState->LineCounter + VertCenter) * 2) * (systemState->SurfacePitch))] = BoarderColor16;
 
-      if (!USState16->ScanLines)
-        USState16->PTRsurface16[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((USState16->LineCounter + VertCenter) * 2 + 1) * (USState16->SurfacePitch))] = BoarderColor16;
+      if (!systemState->ScanLines)
+        systemState->PTRsurface16[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((systemState->LineCounter + VertCenter) * 2 + 1) * (systemState->SurfacePitch))] = BoarderColor16;
     }
 
   if (LinesperRow < 13)
     TagY++;
 
-  if (!USState16->LineCounter)
+  if (!systemState->LineCounter)
   {
     StartofVidram = NewStartofVidram;
-    TagY = USState16->LineCounter;
+    TagY = systemState->LineCounter;
   }
 
   Start = StartofVidram + (TagY / LinesperRow) * (VPitch * ExtendedText);
-  YStride = (((USState16->LineCounter + VertCenter) * 2) * USState16->SurfacePitch) + (HorzCenter * 1) - 1;
+  YStride = (((systemState->LineCounter + VertCenter) * 2) * systemState->SurfacePitch) + (HorzCenter * 1) - 1;
 
   switch (MasterMode) // (GraphicsMode <<7) | (CompatMode<<6)  | ((Bpp & 3)<<4) | (Stretch & 15);
   {
@@ -3270,14 +3263,14 @@ void UpdateScreen16(SystemState* USState16)
     Attributes = 0;
     for (HorzBeam = 0;HorzBeam < BytesperRow * ExtendedText;HorzBeam += ExtendedText)
     {
-      Character = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
-      Pixel = cc3Fontdata8x12[Character * 12 + (USState16->LineCounter % LinesperRow)];
+      Character = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
+      Pixel = cc3Fontdata8x12[Character * 12 + (systemState->LineCounter % LinesperRow)];
 
       if (ExtendedText == 2)
       {
-        Attributes = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset) + 1)];
+        Attributes = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset) + 1)];
 
-        if ((Attributes & 64) && (USState16->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
+        if ((Attributes & 64) && (systemState->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
           Pixel = 255;
 
         if ((!BlinkState) & !!(Attributes & 128))
@@ -3286,28 +3279,28 @@ void UpdateScreen16(SystemState* USState16)
 
       TextPallete[1] = Pallete16Bit[8 + ((Attributes & 56) >> 3)];
       TextPallete[0] = Pallete16Bit[Attributes & 7];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel & 1];
       
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel & 1];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel & 1];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -3318,14 +3311,14 @@ void UpdateScreen16(SystemState* USState16)
 
     for (HorzBeam = 0;HorzBeam < BytesperRow * ExtendedText;HorzBeam += ExtendedText)
     {
-      Character = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
-      Pixel = cc3Fontdata8x12[Character * 12 + (USState16->LineCounter % LinesperRow)];
+      Character = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
+      Pixel = cc3Fontdata8x12[Character * 12 + (systemState->LineCounter % LinesperRow)];
 
       if (ExtendedText == 2)
       {
-        Attributes = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset) + 1)];
+        Attributes = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset) + 1)];
 
-        if ((Attributes & 64) && (USState16->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
+        if ((Attributes & 64) && (systemState->LineCounter % LinesperRow == (LinesperRow - 1)))	//UnderLine
           Pixel = 255;
 
         if ((!BlinkState) & !!(Attributes & 128))
@@ -3334,44 +3327,44 @@ void UpdateScreen16(SystemState* USState16)
 
       TextPallete[1] = Pallete16Bit[8 + ((Attributes & 56) >> 3)];
       TextPallete[0] = Pallete16Bit[Attributes & 7];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
       
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[Pixel >> 7];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -3443,16 +3436,16 @@ void UpdateScreen16(SystemState* USState16)
 
     for (HorzBeam = 0;HorzBeam < BytesperRow * ExtendedText;HorzBeam += ExtendedText)
     {
-      Character = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
+      Character = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
 
       if (ExtendedText == 2)
-        Attributes = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset) + 1)];
+        Attributes = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset) + 1)];
       else
         Attributes = 0;
 
-      Pixel = cc3Fontdata8x12[(Character & 127) * 8 + (USState16->LineCounter % 8)];
+      Pixel = cc3Fontdata8x12[(Character & 127) * 8 + (systemState->LineCounter % 8)];
 
-      if ((Attributes & 64) && (USState16->LineCounter % 8 == 7))	//UnderLine
+      if ((Attributes & 64) && (systemState->LineCounter % 8 == 7))	//UnderLine
         Pixel = 255;
 
       if ((!BlinkState) & !!(Attributes & 128))
@@ -3460,14 +3453,14 @@ void UpdateScreen16(SystemState* USState16)
 
       TextPallete[1] = Pallete16Bit[8 + ((Attributes & 56) >> 3)];
       TextPallete[0] = Pallete16Bit[Attributes & 7];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 128) / 128];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 64) / 64];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 32) / 32];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 16) / 16];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 8) / 8];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 4) / 4];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 2) / 2];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 128) / 128];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 64) / 64];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 32) / 32];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 16) / 16];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 8) / 8];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 4) / 4];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 2) / 2];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
     }
     break;
 
@@ -3539,7 +3532,7 @@ void UpdateScreen16(SystemState* USState16)
 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam++)
     {
-      Character = USState16->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
+      Character = systemState->RamBuffer[VidMask & (Start + (unsigned char)(HorzBeam + Hoffset))];
       
       switch ((Character & 192) >> 6)
       {
@@ -3549,16 +3542,16 @@ void UpdateScreen16(SystemState* USState16)
         TextPallete[1] = Pallete16Bit[TextFGPallete];
 
         if (LowerCase & (Character < 32))
-          Pixel = ntsc_round_fontdata8x12[(Character + 80) * 12 + (USState16->LineCounter % 12)];
+          Pixel = ntsc_round_fontdata8x12[(Character + 80) * 12 + (systemState->LineCounter % 12)];
         else
-          Pixel = ~ntsc_round_fontdata8x12[(Character) * 12 + (USState16->LineCounter % 12)];
+          Pixel = ~ntsc_round_fontdata8x12[(Character) * 12 + (systemState->LineCounter % 12)];
         break;
 
       case 1:
         Character = Character & 63;
         TextPallete[0] = Pallete16Bit[TextBGPallete];
         TextPallete[1] = Pallete16Bit[TextFGPallete];
-        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (USState16->LineCounter % 12)];
+        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (systemState->LineCounter % 12)];
         break;
 
       case 2:
@@ -3566,49 +3559,49 @@ void UpdateScreen16(SystemState* USState16)
         TextPallete[1] = Pallete16Bit[(Character & 112) >> 4];
         TextPallete[0] = Pallete16Bit[8];
         Character = 64 + (Character & 0xF);
-        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (USState16->LineCounter % 12)];
+        Pixel = ntsc_round_fontdata8x12[(Character) * 12 + (systemState->LineCounter % 12)];
         break;
 
       }
 
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
-      USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+      systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
       
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
-        USState16->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 6) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 5) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 4) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 3) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 2) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+        systemState->PTRsurface16[YStride += 1] = TextPallete[(Pixel & 1)];
+        YStride -= systemState->SurfacePitch;
       }
     }
 
@@ -3617,45 +3610,45 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 0: //Bpp=0 Sr=0 1BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=1
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -3665,78 +3658,78 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 2:	//Bpp=0 Sr=2 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=2
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -3747,142 +3740,142 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 6: //Bpp=0 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=4
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -3897,269 +3890,269 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 14: //Bpp=0 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=8
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 7)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 5)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 3)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 1)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 15)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 13)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 11)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 9)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[1 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4168,29 +4161,29 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 16: //BPP=1 Sr=0  2BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=1
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4199,45 +4192,45 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 18: //Bpp=1 Sr=2
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=2
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4248,77 +4241,77 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 22: //Bpp=1 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=4
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4333,141 +4326,141 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 30: //Bpp=1 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=8
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4475,269 +4468,269 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 31: //Bpp=1 Sr=15 2BPP Stretch=16 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=16
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 6)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 2)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 14)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 10)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[3 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4745,21 +4738,21 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 32: //Bpp=2 Sr=0 4BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=1
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
       
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (4);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4768,29 +4761,29 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 34: //Bpp=2 Sr=2
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=2
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
       
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4801,45 +4794,45 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 38: //Bpp=2 Sr=6 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=4
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4854,77 +4847,77 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 46: //Bpp=2 Sr=14 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=8
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -4932,141 +4925,141 @@ void UpdateScreen16(SystemState* USState16)
   case 128 + 47: //Bpp=2 Sr=15 4BPP Stretch=16
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //4bbp Stretch=16
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 4)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & WidePixel];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 12)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[15 & (WidePixel >> 8)];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5093,45 +5086,45 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 0: //Bpp=0 Sr=0 1BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=1
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5140,7 +5133,7 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 2:	//Bpp=0 Sr=2 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=2
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
       if (!MonType)
       { //Pcolor
@@ -5167,15 +5160,15 @@ void UpdateScreen16(SystemState* USState16)
 
           case 3:
             Pcolor = 3;
-            USState16->PTRsurface16[YStride - 1] = Afacts16[ColorInvert][3];
+            systemState->PTRsurface16[YStride - 1] = Afacts16[ColorInvert][3];
 
-            if (!USState16->ScanLines)
-              USState16->PTRsurface16[YStride + USState16->SurfacePitch - 1] = Afacts16[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface16[YStride + systemState->SurfacePitch - 1] = Afacts16[ColorInvert][3];
 
-            USState16->PTRsurface16[YStride] = Afacts16[ColorInvert][3];
+            systemState->PTRsurface16[YStride] = Afacts16[ColorInvert][3];
 
-            if (!USState16->ScanLines)
-              USState16->PTRsurface16[YStride + USState16->SurfacePitch] = Afacts16[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface16[YStride + systemState->SurfacePitch] = Afacts16[ColorInvert][3];
             break;
 
           case 7:
@@ -5183,15 +5176,15 @@ void UpdateScreen16(SystemState* USState16)
             break;
           }
 
-          USState16->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
+          systemState->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
 
-          if (!USState16->ScanLines)
-            USState16->PTRsurface16[YStride + USState16->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface16[YStride + systemState->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
 
-          USState16->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
+          systemState->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
 
-          if (!USState16->ScanLines)
-            USState16->PTRsurface16[YStride + USState16->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface16[YStride + systemState->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
 
           Carry2 = Carry1;
           Carry1 = Pix;
@@ -5220,15 +5213,15 @@ void UpdateScreen16(SystemState* USState16)
 
           case 3:
             Pcolor = 3;
-            USState16->PTRsurface16[YStride - 1] = Afacts16[ColorInvert][3];
+            systemState->PTRsurface16[YStride - 1] = Afacts16[ColorInvert][3];
             
-            if (!USState16->ScanLines)
-              USState16->PTRsurface16[YStride + USState16->SurfacePitch - 1] = Afacts16[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface16[YStride + systemState->SurfacePitch - 1] = Afacts16[ColorInvert][3];
             
-            USState16->PTRsurface16[YStride] = Afacts16[ColorInvert][3];
+            systemState->PTRsurface16[YStride] = Afacts16[ColorInvert][3];
             
-            if (!USState16->ScanLines)
-              USState16->PTRsurface16[YStride + USState16->SurfacePitch] = Afacts16[ColorInvert][3];
+            if (!systemState->ScanLines)
+              systemState->PTRsurface16[YStride + systemState->SurfacePitch] = Afacts16[ColorInvert][3];
             
             break;
 
@@ -5237,15 +5230,15 @@ void UpdateScreen16(SystemState* USState16)
             break;
           }
 
-          USState16->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
+          systemState->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
           
-          if (!USState16->ScanLines)
-            USState16->PTRsurface16[YStride + USState16->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface16[YStride + systemState->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
 
-          USState16->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
+          systemState->PTRsurface16[YStride += 1] = Afacts16[ColorInvert][Pcolor];
           
-          if (!USState16->ScanLines)
-            USState16->PTRsurface16[YStride + USState16->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
+          if (!systemState->ScanLines)
+            systemState->PTRsurface16[YStride + systemState->SurfacePitch] = Afacts16[ColorInvert][Pcolor];
 
           Carry2 = Carry1;
           Carry1 = Pix;
@@ -5253,76 +5246,76 @@ void UpdateScreen16(SystemState* USState16)
       }
       else
       {
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-        if (!USState16->ScanLines)
+        if (!systemState->ScanLines)
         {
           YStride -= (32);
-          YStride += USState16->SurfacePitch;
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-          USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-          YStride -= USState16->SurfacePitch;
+          YStride += systemState->SurfacePitch;
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+          systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+          YStride -= systemState->SurfacePitch;
         }
       }
     }
@@ -5334,142 +5327,142 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 6: //Bpp=0 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=4
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
 
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5484,269 +5477,269 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 14: //Bpp=0 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //1bbp Stretch=8
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 7))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 5))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 3))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 1))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 15))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 13))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 11))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 9))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (1 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5755,29 +5748,29 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 16: //BPP=1 Sr=0  2BPP Stretch=1
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=1
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5786,45 +5779,45 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 18: //Bpp=1 Sr=2
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=2
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5835,77 +5828,77 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 22: //Bpp=1 Sr=6
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=4
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -5920,141 +5913,141 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 30: //Bpp=1 Sr=14
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=8
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -6062,269 +6055,269 @@ void UpdateScreen16(SystemState* USState16)
   case 192 + 31: //Bpp=1 Sr=15 2BPP Stretch=16 
     for (HorzBeam = 0;HorzBeam < BytesperRow;HorzBeam += 2) //2bbp Stretch=16
     {
-      WidePixel = USState16->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-      USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      WidePixel = systemState->WRamBuffer[(VidMask & (Start + (unsigned char)(Hoffset + HorzBeam))) >> 1];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+      systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState16->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
-        YStride += USState16->SurfacePitch;
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        USState16->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
-        YStride -= USState16->SurfacePitch;
+        YStride += systemState->SurfacePitch;
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 6))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 4))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 2))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & WidePixel)];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 14))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 12))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 10))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        systemState->PTRsurface16[YStride += 1] = Pallete16Bit[PalleteIndex + (3 & (WidePixel >> 8))];
+        YStride -= systemState->SurfacePitch;
       }
     }
     break;
@@ -6369,26 +6362,26 @@ void UpdateScreen16(SystemState* USState16)
   return;
 }
 
-void UpdateScreen24(SystemState* USState24)
+void UpdateScreen24(SystemState* systemState)
 {
   return;
 }
 
-void UpdateScreen32(SystemState* USState32)
+void UpdateScreen32(SystemState* systemState)
 {
   register unsigned int YStride = 0;
   unsigned char Pixel = 0;
   unsigned char Character = 0, Attributes = 0;
   unsigned int TextPallete[2] = { 0,0 };
-  unsigned short* WideBuffer = (unsigned short*)USState32->RamBuffer;
-  unsigned char* buffer = USState32->RamBuffer;
+  unsigned short* WideBuffer = (unsigned short*)systemState->RamBuffer;
+  unsigned char* buffer = systemState->RamBuffer;
   unsigned short WidePixel = 0;
   char Pix = 0, Bit = 0, Sphase = 0;
   static char Carry1 = 0, Carry2 = 0;
   static char Pcolor = 0;
-  unsigned int* szSurface32 = USState32->PTRsurface32;
-  unsigned short y = USState32->LineCounter;
-  long Xpitch = USState32->SurfacePitch;
+  unsigned int* szSurface32 = systemState->PTRsurface32;
+  unsigned short y = systemState->LineCounter;
+  long Xpitch = systemState->SurfacePitch;
   Carry1 = 1;
   Pcolor = 0;
 
@@ -6397,12 +6390,12 @@ void UpdateScreen32(SystemState* USState32)
     {
       szSurface32[x + (((y + VertCenter) * 2) * Xpitch)] = BoarderColor32;
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
         szSurface32[x + (((y + VertCenter) * 2 + 1) * Xpitch)] = BoarderColor32;
 
       szSurface32[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((y + VertCenter) * 2) * Xpitch)] = BoarderColor32;
       
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
         szSurface32[x + (PixelsperLine * (Stretch + 1)) + HorzCenter + (((y + VertCenter) * 2 + 1) * Xpitch)] = BoarderColor32;
     }
 
@@ -6450,7 +6443,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = TextPallete[(Pixel >> 1) & 1];
       szSurface32[YStride += 1] = TextPallete[Pixel & 1];
       
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
         YStride += Xpitch;
@@ -6507,7 +6500,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = TextPallete[(Pixel & 1)];
       szSurface32[YStride += 1] = TextPallete[(Pixel & 1)];
       
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -6742,7 +6735,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = TextPallete[(Pixel & 1)];
       szSurface32[YStride += 1] = TextPallete[(Pixel & 1)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -6789,7 +6782,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 9)];
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -6854,7 +6847,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
         YStride += Xpitch;
@@ -6968,7 +6961,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
         YStride += Xpitch;
@@ -7181,7 +7174,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[1 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
         YStride += Xpitch;
@@ -7332,7 +7325,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 10)];
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
         YStride += Xpitch;
@@ -7371,7 +7364,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -7436,7 +7429,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
         YStride += Xpitch;
@@ -7553,7 +7546,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
         YStride += Xpitch;
@@ -7759,7 +7752,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[3 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
         YStride += Xpitch;
@@ -7905,7 +7898,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 12)];
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
       
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (4);
         YStride += Xpitch;
@@ -7932,7 +7925,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
       
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
         YStride += Xpitch;
@@ -7973,7 +7966,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -8042,7 +8035,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
         YStride += Xpitch;
@@ -8152,7 +8145,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
       szSurface32[YStride += 1] = Pallete32Bit[15 & (WidePixel >> 8)];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
         YStride += Xpitch;
@@ -8265,7 +8258,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 9))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -8323,12 +8316,12 @@ void UpdateScreen32(SystemState* USState32)
             Pcolor = 3;
             szSurface32[YStride - 1] = Afacts32[ColorInvert][3];
             
-            if (!USState32->ScanLines)
+            if (!systemState->ScanLines)
               szSurface32[YStride + Xpitch - 1] = Afacts32[ColorInvert][3];
 
             szSurface32[YStride] = Afacts32[ColorInvert][3];
 
-            if (!USState32->ScanLines)
+            if (!systemState->ScanLines)
               szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][3];
 
             break;
@@ -8340,12 +8333,12 @@ void UpdateScreen32(SystemState* USState32)
 
           szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
 
-          if (!USState32->ScanLines)
+          if (!systemState->ScanLines)
             szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 
           szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
 
-          if (!USState32->ScanLines)
+          if (!systemState->ScanLines)
             szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 
           Carry2 = Carry1;
@@ -8377,12 +8370,12 @@ void UpdateScreen32(SystemState* USState32)
             Pcolor = 3;
             szSurface32[YStride - 1] = Afacts32[ColorInvert][3];
             
-            if (!USState32->ScanLines)
+            if (!systemState->ScanLines)
               szSurface32[YStride + Xpitch - 1] = Afacts32[ColorInvert][3];
             
             szSurface32[YStride] = Afacts32[ColorInvert][3];
             
-            if (!USState32->ScanLines)
+            if (!systemState->ScanLines)
               szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][3];
             break;
 
@@ -8393,12 +8386,12 @@ void UpdateScreen32(SystemState* USState32)
 
           szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
 
-          if (!USState32->ScanLines)
+          if (!systemState->ScanLines)
             szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 
           szSurface32[YStride += 1] = Afacts32[ColorInvert][Pcolor];
 
-          if (!USState32->ScanLines)
+          if (!systemState->ScanLines)
             szSurface32[YStride + Xpitch] = Afacts32[ColorInvert][Pcolor];
 
           Carry2 = Carry1;
@@ -8440,7 +8433,7 @@ void UpdateScreen32(SystemState* USState32)
         szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
         szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-        if (!USState32->ScanLines)
+        if (!systemState->ScanLines)
         {
           YStride -= (32);
           YStride += Xpitch;
@@ -8555,7 +8548,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
         YStride += Xpitch;
@@ -8768,7 +8761,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (1 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
         YStride += Xpitch;
@@ -8919,7 +8912,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 10))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (8);
         YStride += Xpitch;
@@ -8958,7 +8951,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (16);
         YStride += Xpitch;
@@ -9023,7 +9016,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (32);
         YStride += Xpitch;
@@ -9140,7 +9133,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (64);
         YStride += Xpitch;
@@ -9346,7 +9339,7 @@ void UpdateScreen32(SystemState* USState32)
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
       szSurface32[YStride += 1] = Pallete32Bit[PalleteIndex + (3 & (WidePixel >> 8))];
 
-      if (!USState32->ScanLines)
+      if (!systemState->ScanLines)
       {
         YStride -= (128);
         YStride += Xpitch;
@@ -9520,140 +9513,139 @@ void UpdateScreen32(SystemState* USState32)
   }
 }
 
-void DrawTopBoarder8(SystemState* DTState)
+void DrawTopBoarder8(SystemState* systemState)
 {
   unsigned short x;
 
   if (BoarderChange == 0)
     return;
 
-  for (x = 0;x < DTState->WindowSize.x;x++)
+  for (x = 0;x < systemState->WindowSize.x;x++)
   {
-    DTState->PTRsurface8[x + ((DTState->LineCounter * 2) * DTState->SurfacePitch)] = BoarderColor8 | 128;
+    systemState->PTRsurface8[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = BoarderColor8 | 128;
   
-    if (!DTState->ScanLines)
-      DTState->PTRsurface8[x + ((DTState->LineCounter * 2 + 1) * DTState->SurfacePitch)] = BoarderColor8 | 128;
+    if (!systemState->ScanLines)
+      systemState->PTRsurface8[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = BoarderColor8 | 128;
   }
 }
 
-void DrawTopBoarder16(SystemState* DTState)
+void DrawTopBoarder16(SystemState* systemState)
 {
   unsigned short x;
 
   if (BoarderChange == 0)
     return;
 
-  for (x = 0;x < DTState->WindowSize.x;x++)
+  for (x = 0;x < systemState->WindowSize.x;x++)
   {
-    DTState->PTRsurface16[x + ((DTState->LineCounter * 2) * DTState->SurfacePitch)] = BoarderColor16;
+    systemState->PTRsurface16[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = BoarderColor16;
 
-    if (!DTState->ScanLines)
-      DTState->PTRsurface16[x + ((DTState->LineCounter * 2 + 1) * DTState->SurfacePitch)] = BoarderColor16;
+    if (!systemState->ScanLines)
+      systemState->PTRsurface16[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = BoarderColor16;
   }
 }
 
-void DrawTopBoarder24(SystemState* DTState)
+void DrawTopBoarder24(SystemState* systemState)
 {
 }
 
-void DrawTopBoarder32(SystemState* DTState)
+void DrawTopBoarder32(SystemState* systemState)
 {
   unsigned short x;
 
   if (BoarderChange == 0)
     return;
 
-  for (x = 0;x < DTState->WindowSize.x;x++)
+  for (x = 0;x < systemState->WindowSize.x;x++)
   {
-    DTState->PTRsurface32[x + ((DTState->LineCounter * 2) * DTState->SurfacePitch)] = BoarderColor32;
-    if (!DTState->ScanLines)
-      DTState->PTRsurface32[x + ((DTState->LineCounter * 2 + 1) * DTState->SurfacePitch)] = BoarderColor32;
+    systemState->PTRsurface32[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = BoarderColor32;
+    if (!systemState->ScanLines)
+      systemState->PTRsurface32[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = BoarderColor32;
   }
 }
 
-void DrawBottomBoarder8(SystemState* DTState)
+void DrawBottomBoarder8(SystemState* systemState)
 {
   if (BoarderChange == 0)
     return;
 
   unsigned short x;
 
-  for (x = 0;x < DTState->WindowSize.x;x++)
+  for (x = 0;x < systemState->WindowSize.x;x++)
   {
-    DTState->PTRsurface8[x + (2 * (DTState->LineCounter + LinesperScreen + VertCenter) * DTState->SurfacePitch)] = BoarderColor8 | 128;
+    systemState->PTRsurface8[x + (2 * (systemState->LineCounter + LinesperScreen + VertCenter) * systemState->SurfacePitch)] = BoarderColor8 | 128;
 
-    if (!DTState->ScanLines)
-      DTState->PTRsurface8[x + DTState->SurfacePitch + (2 * (DTState->LineCounter + LinesperScreen + VertCenter) * DTState->SurfacePitch)] = BoarderColor8 | 128;
+    if (!systemState->ScanLines)
+      systemState->PTRsurface8[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + LinesperScreen + VertCenter) * systemState->SurfacePitch)] = BoarderColor8 | 128;
   }
 }
 
-void DrawBottomBoarder16(SystemState* DTState)
+void DrawBottomBoarder16(SystemState* systemState)
 {
   if (BoarderChange == 0)
     return;
 
   unsigned short x;
 
-  for (x = 0;x < DTState->WindowSize.x;x++)
+  for (x = 0;x < systemState->WindowSize.x;x++)
   {
-    DTState->PTRsurface16[x + (2 * (DTState->LineCounter + LinesperScreen + VertCenter) * DTState->SurfacePitch)] = BoarderColor16;
+    systemState->PTRsurface16[x + (2 * (systemState->LineCounter + LinesperScreen + VertCenter) * systemState->SurfacePitch)] = BoarderColor16;
 
-    if (!DTState->ScanLines)
-      DTState->PTRsurface16[x + DTState->SurfacePitch + (2 * (DTState->LineCounter + LinesperScreen + VertCenter) * DTState->SurfacePitch)] = BoarderColor16;
+    if (!systemState->ScanLines)
+      systemState->PTRsurface16[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + LinesperScreen + VertCenter) * systemState->SurfacePitch)] = BoarderColor16;
   }
 }
 
-void DrawBottomBoarder24(SystemState* DTState)
+void DrawBottomBoarder24(SystemState* systemState)
 {
 }
 
-
-void DrawBottomBoarder32(SystemState* DTState)
+void DrawBottomBoarder32(SystemState* systemState)
 {
   if (BoarderChange == 0)
     return;
 
   unsigned short x;
 
-  for (x = 0;x < DTState->WindowSize.x;x++)
+  for (x = 0;x < systemState->WindowSize.x;x++)
   {
-    DTState->PTRsurface32[x + (2 * (DTState->LineCounter + LinesperScreen + VertCenter) * DTState->SurfacePitch)] = BoarderColor32;
+    systemState->PTRsurface32[x + (2 * (systemState->LineCounter + LinesperScreen + VertCenter) * systemState->SurfacePitch)] = BoarderColor32;
 
-    if (!DTState->ScanLines)
-      DTState->PTRsurface32[x + DTState->SurfacePitch + (2 * (DTState->LineCounter + LinesperScreen + VertCenter) * DTState->SurfacePitch)] = BoarderColor32;
+    if (!systemState->ScanLines)
+      systemState->PTRsurface32[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + LinesperScreen + VertCenter) * systemState->SurfacePitch)] = BoarderColor32;
   }
 }
 
-void SetBlinkState(unsigned char Tmp)
+void SetBlinkState(unsigned char blinkState)
 {
-  BlinkState = Tmp;
+  BlinkState = blinkState;
 }
 
 // These grab the Video info for all COCO 2 modes
-void SetGimeVdgOffset(unsigned char Offset)
+void SetGimeVdgOffset(unsigned char offset)
 {
-  if (CC2Offset != Offset)
+  if (CC2Offset != offset)
   {
-    CC2Offset = Offset;
+    CC2Offset = offset;
     SetupDisplay();
   }
 }
 
-void SetGimeVdgMode(unsigned char VdgMode) //3 bits from SAM Registers
+void SetGimeVdgMode(unsigned char vdgMode) //3 bits from SAM Registers
 {
-  if (CC2VDGMode != VdgMode)
+  if (CC2VDGMode != vdgMode)
   {
-    CC2VDGMode = VdgMode;
+    CC2VDGMode = vdgMode;
     SetupDisplay();
     BoarderChange = 3;
   }
 }
 
-void SetGimeVdgMode2(unsigned char Vdgmode2) //5 bits from PIA Register
+void SetGimeVdgMode2(unsigned char vdgmode2) //5 bits from PIA Register
 {
-  if (CC2VDGPiaMode != Vdgmode2)
+  if (CC2VDGPiaMode != vdgmode2)
   {
-    CC2VDGPiaMode = Vdgmode2;
+    CC2VDGPiaMode = vdgmode2;
     SetupDisplay();
     BoarderChange = 3;
   }
@@ -9661,21 +9653,21 @@ void SetGimeVdgMode2(unsigned char Vdgmode2) //5 bits from PIA Register
 
 //These grab the Video info for all COCO 3 modes
 
-void SetVerticalOffsetRegister(unsigned short Register)
+void SetVerticalOffsetRegister(unsigned short voRegister)
 {
-  if (VerticalOffsetRegister != Register)
+  if (VerticalOffsetRegister != voRegister)
   {
-    VerticalOffsetRegister = Register;
+    VerticalOffsetRegister = voRegister;
 
     SetupDisplay();
   }
 }
 
-void SetCompatMode(unsigned char Register)
+void SetCompatMode(unsigned char mode)
 {
-  if (CompatMode != Register)
+  if (CompatMode != mode)
   {
-    CompatMode = Register;
+    CompatMode = mode;
     SetupDisplay();
     BoarderChange = 3;
   }
@@ -10054,15 +10046,15 @@ void MakeCMPpalette(void)
   }
 }
 
-unsigned char SetMonitorType(unsigned char Type)
+unsigned char SetMonitorType(unsigned char type)
 {
   unsigned char PalNum = 0;
-  int tmp = CC3BoarderColor;
+  int borderColor = CC3BoarderColor;
   SetGimeBoarderColor(0);
 
-  if (Type != QUERY)
+  if (type != QUERY)
   {
-    MonType = Type & 1;
+    MonType = type & 1;
 
     for (PalNum = 0;PalNum < 16;PalNum++)
     {
@@ -10072,25 +10064,25 @@ unsigned char SetMonitorType(unsigned char Type)
     }
   }
 
-  SetGimeBoarderColor(tmp);
+  SetGimeBoarderColor(borderColor);
 
   return(MonType);
 }
 
 void SetPaletteType() {
-  int tmp = CC3BoarderColor;
+  int borderColor = CC3BoarderColor;
   SetGimeBoarderColor(0);
   MakeCMPpalette();
-  SetGimeBoarderColor(tmp);
+  SetGimeBoarderColor(borderColor);
 }
 
-unsigned char SetScanLines(unsigned char Lines)
+unsigned char SetScanLines(unsigned char lines)
 {
   extern SystemState EmuState;
 
-  if (Lines != QUERY)
+  if (lines != QUERY)
   {
-    EmuState.ScanLines = Lines;
+    EmuState.ScanLines = lines;
     Cls(0, &EmuState);
     BoarderChange = 3;
   }

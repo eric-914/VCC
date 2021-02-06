@@ -18,13 +18,11 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <stdio.h>
+
 #include "defines.h"
 #include "pakinterface.h"
-#include "Vcc.h"
-#include "coco3.h"
 #include "tcc1014mmu.h"
 #include "fileops.h"
-
 
 static unsigned char FileType = 0;
 static unsigned short FileLenth = 0;

@@ -17,18 +17,14 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
-#include <windowsx.h>
-#include "commdlg.h"
-#include <stdio.h>
-#include <process.h>
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
-#include "logger.h"
 #include "fileops.h"
+
 #define HASCONFIG		1
 #define HASIOWRITE		2
 #define HASIOREAD		4
@@ -179,12 +175,12 @@ int LoadCart(void)
   ofn.lStructSize = sizeof(OPENFILENAME);
   ofn.hwndOwner = EmuState.WindowHandle;
   ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL;*.pak\0\0";			// filter string
-  ofn.nFilterIndex = 1;							// current filter index
-  ofn.lpstrFile = szFileName;				// contains full path and filename on return
-  ofn.nMaxFile = MAX_PATH;					// sizeof lpstrFile
-  ofn.lpstrFileTitle = NULL;						// filename and extension only
-  ofn.nMaxFileTitle = MAX_PATH;					// sizeof lpstrFileTitle
-  ofn.lpstrInitialDir = PakPath;						// initial directory
+  ofn.nFilterIndex = 1;							          // current filter index
+  ofn.lpstrFile = szFileName;				          // contains full path and filename on return
+  ofn.nMaxFile = MAX_PATH;					          // sizeof lpstrFile
+  ofn.lpstrFileTitle = NULL;						      // filename and extension only
+  ofn.nMaxFileTitle = MAX_PATH;					      // sizeof lpstrFileTitle
+  ofn.lpstrInitialDir = PakPath;				      // initial directory
   ofn.lpstrTitle = TEXT("Load Program Pack");	// title bar string
   ofn.Flags = OFN_HIDEREADONLY;
 

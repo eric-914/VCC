@@ -21,7 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>		// For PrintLogC
-#include "tcc1014mmu.h"	// Need memread for CpuDump
+//#include "tcc1014mmu.h"	// Need memread for CpuDump
 #include "logger.h"
 
 static FILE* fLogOut = NULL;
@@ -69,11 +69,11 @@ void WriteLog(char* Message, unsigned char Type)
 void CpuDump(void)
 {
   FILE* disk_handle = NULL;
-  int x;
+
   disk_handle = fopen("c:\\cpuspace_dump.txt", "wb");
 
-  for (x = 0;x <= 65535;x++)
-    fprintf(disk_handle, "%c", MemRead8(x));
+  //for (int x = 0;x <= 65535;x++)
+  //  fprintf(disk_handle, "%c", MemRead8(x));
 
   fflush(disk_handle);
   fclose(disk_handle);

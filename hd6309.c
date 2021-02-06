@@ -23,7 +23,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "hd6309.h"
 #include "hd6309defs.h"
 #include "tcc1014mmu.h"
-#include "logger.h"
 
 #if defined(_WIN64)
 #define MSABI 

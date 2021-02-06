@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "audio.h"
 #include "defines.h"
-#include "vcc.h"
 
 static _LARGE_INTEGER StartTime, EndTime, OneFrame, CurrentTime, SleepRes, TargetTime, OneMs;
 static _LARGE_INTEGER MasterClock, Now;
@@ -41,9 +40,9 @@ void StartRender(void)
   QueryPerformanceCounter(&StartTime);
 }
 
-void EndRender(unsigned char Skip)
+void EndRender(unsigned char skip)
 {
-  FrameSkip = Skip;
+  FrameSkip = skip;
   TargetTime.QuadPart = (StartTime.QuadPart + (OneFrame.QuadPart * FrameSkip));
 }
 

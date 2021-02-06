@@ -20,27 +20,26 @@ This file is part of VCC (Virtual Color Computer).
 #include <dsound.h>
 #include <stdio.h>
 #include "defines.h"
-#include "Vcc.h"
 #include "config.h"
 #include "coco3.h"
 #include "audio.h"
-#include "logger.h"
 
 #define MAXCARDS	12
+
 //PlayBack
 static LPDIRECTSOUND	lpds;           // directsound interface pointer
 static DSBUFFERDESC		dsbd;           // directsound description
 static DSCAPS			    dscaps;         // directsound caps
 static DSBCAPS			  dsbcaps;        // directsound buffer caps
+
 //Record
 static LPDIRECTSOUNDCAPTURE8	lpdsin;
 static DSCBUFFERDESC			    dsbdin;           // directsound description
 
-
 HRESULT hr;
-static LPDIRECTSOUNDBUFFER	lpdsbuffer1 = NULL;			//the sound buffers
+static LPDIRECTSOUNDBUFFER	lpdsbuffer1 = NULL;			  //the sound buffers
 static LPDIRECTSOUNDCAPTUREBUFFER	lpdsbuffer2 = NULL;	//the sound buffers for capture
-static WAVEFORMATEX pcmwf;								//generic waveformat structure
+static WAVEFORMATEX pcmwf;								            //generic waveformat structure
 static void* SndPointer1 = NULL, * SndPointer2 = NULL;
 static unsigned short BitRate = 0;
 static DWORD SndLenth1 = 0, SndLenth2 = 0, SndBuffLenth = 0;
@@ -98,7 +97,7 @@ int SoundInit(HWND main_window_handle, _GUID* Guid, unsigned short Rate)
     if (hr != DS_OK)
       return(1);
 
-    hr = lpds->SetCooperativeLevel(main_window_handle, DSSCL_NORMAL);//DSSCL_NORMAL);// set cooperation level normal DSSCL_EXCLUSIVE
+    hr = lpds->SetCooperativeLevel(main_window_handle, DSSCL_NORMAL); // set cooperation level normal DSSCL_EXCLUSIVE
 
     if (hr != DS_OK)
       return(1);

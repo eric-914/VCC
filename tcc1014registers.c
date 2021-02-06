@@ -19,12 +19,9 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include "defines.h"
 #include "tcc1014mmu.h"
-#include "tcc1014registers.h"
 #include "tcc1014graphics.h"
 #include "coco3.h"
-#include "keyboard.h"
 #include "Vcc.h"
-
 
 static unsigned char VDG_Mode = 0;
 static unsigned char Dis_Offset = 0;
@@ -34,6 +31,7 @@ static unsigned char GimeRegisters[256];
 static unsigned short VerticalOffsetRegister = 0;
 static unsigned char EnhancedFIRQFlag = 0, EnhancedIRQFlag = 0;
 static int InteruptTimer = 0;
+
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
 void SetGimeIRQStearing(unsigned char);
@@ -52,9 +50,9 @@ unsigned char GimeGetKeyboardInteruptState()
   return KeyboardInteruptEnabled;
 }
 
-void GimeSetKeyboardInteruptState(unsigned char State)
+void GimeSetKeyboardInteruptState(unsigned char state)
 {
-  KeyboardInteruptEnabled = !!State;
+  KeyboardInteruptEnabled = !!state;
 }
 
 void GimeWrite(unsigned char port, unsigned char data)

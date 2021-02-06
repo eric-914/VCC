@@ -4,10 +4,10 @@
 #include <windows.h>
 #include <process.h>
 #include <stdio.h>
-#include "..\logger.h"
 #include "becker.h"
 #include "resource.h" 
 #include "..\fileops.h"
+#include "..\library\logger.h"
 
 // socket
 static SOCKET dwSocket = 0;
@@ -39,7 +39,6 @@ static float ReadSpeed = 0;
 static float WriteSpeed = 0;
 
 // hostname and port
-
 static char dwaddress[MAX_PATH];
 static unsigned short dwsport = 65504;
 static char curaddress[MAX_PATH];

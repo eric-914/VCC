@@ -18,16 +18,11 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "windows.h"
 #include "defines.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
 #include "tcc1014mmu.h"
 #include "iobus.h"
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
-#include "logger.h"
-#include "hd6309.h"
 #include "fileops.h"
 
 static unsigned char* MemPages[1024];

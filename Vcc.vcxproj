@@ -174,7 +174,6 @@
     <ClCompile Include="joystickinput.c" />
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="keyboardLayout.c" />
-    <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
     <ClCompile Include="pakinterface.c" />
@@ -205,7 +204,6 @@
     <ClInclude Include="joystickinput.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="keyboardLayout.h" />
-    <ClInclude Include="logger.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />

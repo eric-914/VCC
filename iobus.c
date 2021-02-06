@@ -17,15 +17,11 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
-#include "stdio.h"
 #include "defines.h"
 #include "iobus.h"
 #include "mc6821.h"
 #include "pakinterface.h"
 #include "tcc1014registers.h"
-#include "tcc1014mmu.h"
-#include "logger.h"
-#include "config.h"
 
 unsigned char port_read(unsigned short addr)
 {

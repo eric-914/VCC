@@ -17,7 +17,6 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "windows.h"
-#include "stdio.h"
 #include "mc6809.h"
 #include "mc6809defs.h"
 #include "tcc1014mmu.h"
