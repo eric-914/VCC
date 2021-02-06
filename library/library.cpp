@@ -41,16 +41,3 @@ BOOL WINAPI DllMain(
 
   return TRUE;
 }
-
-#ifdef __cplusplus    // If used by C++ code, 
-extern "C" {          // we need to export the C interface
-#endif
-
-  __declspec(dllexport) int __cdecl eric(int value)
-  {
-    return value + 5;
-  }
-
-#ifdef __cplusplus
-}
-#endif

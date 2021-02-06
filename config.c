@@ -42,10 +42,12 @@ This file is part of VCC (Virtual Color Computer).
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
-#include "CommandLine.h"
+#include "library\CommandLine.h"
 //#include "logger.h"
 #include <assert.h>
+
 using namespace std;
+
 //
 // forward declarations
 //
@@ -163,7 +165,7 @@ void buildTransDisp2ScanTable()
 
 /*****************************************************************************/
 
-void LoadConfig(SystemState* LCState)
+void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 {
   HANDLE hr = NULL;
   int lasterror;
@@ -182,8 +184,8 @@ void LoadConfig(SystemState* LCState)
 
   if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
 
-  if (*CmdArg.IniFile) {
-    GetFullPathNameA(CmdArg.IniFile, MAX_PATH, IniFilePath, 0);
+  if (*cmdArg.IniFile) {
+    GetFullPathNameA(cmdArg.IniFile, MAX_PATH, IniFilePath, 0);
   }
   else {
     strcpy(IniFilePath, AppDataPath);
@@ -191,7 +193,7 @@ void LoadConfig(SystemState* LCState)
     strcat(IniFilePath, IniFileName);
   }
 
-  LCState->ScanLines = 0;
+  systemState->ScanLines = 0;
   NumberOfSoundCards = GetSoundCardList(SoundCards);
   ReadIniFile();
   CurrentConfig.RebootNow = 0;

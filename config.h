@@ -17,9 +17,13 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include<iostream>
+
+#include "library\CommandLine.h"
+
 using namespace std;
-void LoadConfig(SystemState*);
+void LoadConfig(SystemState*, CmdLineArguments cmdArg);
 unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);
 char* BasicRomName(void);

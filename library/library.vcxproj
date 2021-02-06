@@ -175,9 +175,11 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CommandLine.c" />
     <ClCompile Include="library.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CommandLine.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="resource.h" />

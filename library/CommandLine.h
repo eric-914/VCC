@@ -26,10 +26,10 @@ struct CmdLineArguments {
   char IniFile[CL_MAX_PATH];
   int  Logging;
 };
-extern struct CmdLineArguments CmdArg;
+//extern struct CmdLineArguments CmdArg;
 
 // Get Settings from Command line string 
-int  GetCmdLineArgs(char* lpCmdLine);
+extern "C" __declspec(dllexport) int __cdecl GetCmdLineArgs(char* lpCmdLine, CmdLineArguments* cmdArg);
 
 // Errors returned
 #define CL_ERR_UNKOPT 1  // Unknown option found

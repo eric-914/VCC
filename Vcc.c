@@ -60,10 +60,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 
-#include "CommandLine.h"
 #include "logger.h"
 
-#include "library\library.h"
+#include "library\CommandLine.h"
 
 static HANDLE hout = NULL;
 
@@ -79,7 +78,7 @@ char QuickLoadFile[256];
 /***Forward declarations of functions included in this code module*****/
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void SoftReset(void);
 void LoadIniFile(void);
@@ -103,15 +102,14 @@ static char g_szAppName[MAX_LOADSTRING] = "";
 bool BinaryRunning;
 static unsigned char FlagEmuStop = TH_RUNNING;
 
+struct CmdLineArguments CmdArg;
+
 INT WINAPI WinMain(_In_ HINSTANCE hInstance, 
   _In_opt_ HINSTANCE hPrevInstance,
   _In_ PSTR lpCmdLine, 
   _In_ INT nCmdShow)
 {
   MSG  Msg;
-
-  int test = eric(7);
-  test = eric(test);
 
   EmuState.WindowInstance = hInstance;
   char temp1[MAX_PATH] = "";
@@ -122,7 +120,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
 
   LoadString(hInstance, IDS_APP_TITLE, g_szAppName, MAX_LOADSTRING);
 
-  GetCmdLineArgs(lpCmdLine);                   //Parse command line
+  GetCmdLineArgs(lpCmdLine, &CmdArg); //Parse command line
 
   if (strlen(CmdArg.QLoadFile) != 0)
   {
@@ -138,7 +136,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
 
   EmuState.WindowSize.x = 640;
   EmuState.WindowSize.y = 480;
-  LoadConfig(&EmuState);
+  LoadConfig(&EmuState, CmdArg);
   InitInstance(hInstance, nCmdShow);
 
   if (!CreateDDWindow(&EmuState))
@@ -150,7 +148,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
   Cls(0, &EmuState);
   DynamicMenuCallback("", 0, 0);
   DynamicMenuCallback("", 1, 0);
-  LoadConfig(&EmuState);			//Loads the default config file Vcc.ini from the exec directory
+  LoadConfig(&EmuState, CmdArg);			//Loads the default config file Vcc.ini from the exec directory
   EmuState.ResetPending = 2;
   SetClockSpeed(1);	//Default clock speed .89 MHZ	
   BinaryRunning = true;
