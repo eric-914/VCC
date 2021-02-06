@@ -63,6 +63,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "CommandLine.h"
 #include "logger.h"
 
+#include "library\library.h"
+
 static HANDLE hout = NULL;
 
 SystemState EmuState;
@@ -107,6 +109,9 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
   _In_ INT nCmdShow)
 {
   MSG  Msg;
+
+  int test = eric(7);
+  test = eric(test);
 
   EmuState.WindowInstance = hInstance;
   char temp1[MAX_PATH] = "";

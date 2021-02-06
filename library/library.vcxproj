@@ -101,6 +101,9 @@
       <EnableUAC>false</EnableUAC>
       <LinkDLL>true</LinkDLL>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(SolutionDir)bin\$(Configuration)\x86\$(ProjectName)\*.dll" "$(SolutionDir)bin\$(Configuration)\x86\vcc"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -123,6 +126,9 @@
       <EnableUAC>false</EnableUAC>
       <LinkDLL>true</LinkDLL>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(SolutionDir)bin\$(Configuration)\x86\$(ProjectName)\*.dll" "$(SolutionDir)bin\$(Configuration)\x86\vcc"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -139,6 +145,9 @@
       <EnableUAC>false</EnableUAC>
       <LinkDLL>true</LinkDLL>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(SolutionDir)bin\$(Configuration)\x64\$(ProjectName)\*.dll" "$(SolutionDir)bin\$(Configuration)\x64\vcc"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -161,6 +170,9 @@
       <EnableUAC>false</EnableUAC>
       <LinkDLL>true</LinkDLL>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y "$(SolutionDir)bin\$(Configuration)\x64\$(ProjectName)\*.dll" "$(SolutionDir)bin\$(Configuration)\x64\vcc"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="library.cpp" />
