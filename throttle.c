@@ -17,9 +17,12 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
+
 #include "throttle.h"
 #include "audio.h"
 #include "defines.h"
+
+#include "library/defines.h"
 
 static _LARGE_INTEGER StartTime, EndTime, OneFrame, CurrentTime, SleepRes, TargetTime, OneMs;
 static _LARGE_INTEGER MasterClock, Now;

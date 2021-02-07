@@ -15,19 +15,26 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+
 //Speed throttling
 #define FRAMEINTERVAL 120	//Number of frames to sum the framecounter over
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
+#define SAMPLESPERFRAME 262
 
 // Audio handling
-#define BITRATE (LINESPERFIELD*TARGETFRAMERATE)
-#define BLOCK_SIZE  LINESPERFIELD*2
+#define BITRATE (LINESPERFIELD * TARGETFRAMERATE)
+#define BLOCK_SIZE 2 * LINESPERFIELD
 #define BLOCK_COUNT 6
 
 //CPU 
 #define _894KHZ	57
-#define JIFFIESPERLINE  (_894KHZ*4)
+#define JIFFIESPERLINE (_894KHZ * 4)
 #define LINESPERFIELD 262
+
+#define FRAMESPERSECORD (double)59.923	//The coco really runs at about 59.923 Frames per second
+#define PICOSECOND (double)1000000000
+#define COLORBURST (double)3579545 
+#define AUDIOBUFFERS 12
 
 //Misc
 #define MAX_LOADSTRING 100
@@ -38,3 +45,5 @@ This file is part of VCC (Virtual Color Computer).
 #define IRQ		1
 #define FIRQ	2
 #define NMI		3
+
+#define TAPEAUDIORATE 44100

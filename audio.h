@@ -24,7 +24,7 @@ int SoundInit(HWND, _GUID*, unsigned short);
 int SoundDeInit(void);
 void FlushAudioBuffer(unsigned int*, unsigned short);
 void ResetAudio(void);
-unsigned char PauseAudio(unsigned char Pause);
+unsigned char PauseAudio(unsigned char pause);
 int GetFreeBlockCount(void);
 void PurgeAuxBuffer(void);
 unsigned short GetSoundStatus(void);

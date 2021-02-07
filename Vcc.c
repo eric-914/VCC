@@ -30,7 +30,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <process.h>
 
-#include "defines.h"
 #include "resource.h"
 #include "Vcc.h"
 #include "tcc1014mmu.h"
@@ -49,6 +48,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "DirectDrawInterface.h"
 
 #include "library\commandline.h"
+#include "library\defines.h"
 #include "library\fileoperations.h"
 #include "library\joystickinput.h"
 

@@ -20,7 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #include<iostream>
 
-#include "library\commandline.h"
+#include "library/commandline.h"
+#include "library/systemstate.h"
 
 using namespace std;
 void LoadConfig(SystemState*, CmdLineArguments cmdArg);

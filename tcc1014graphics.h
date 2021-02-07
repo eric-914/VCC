@@ -18,6 +18,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "library/systemstate.h"
+
 void UpdateScreen8(SystemState*);
 void UpdateScreen16(SystemState*);
 void UpdateScreen24(SystemState*);

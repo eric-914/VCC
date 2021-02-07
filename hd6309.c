@@ -20,6 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "hd6309.h"
 #include "hd6309defs.h"
 #include "tcc1014mmu.h"

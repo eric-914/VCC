@@ -17,6 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
+#include <cstdint>
 
 #include "defines.h"
 #include "mc6821.h"
@@ -24,6 +25,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
 #include "cassette.h"
+
+#include "library/defines.h"
 
 static unsigned char rega[4] = { 0,0,0,0 };
 static unsigned char regb[4] = { 0,0,0,0 };

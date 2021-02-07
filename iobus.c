@@ -17,7 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
-#include "defines.h"
+
 #include "iobus.h"
 #include "mc6821.h"
 #include "pakinterface.h"

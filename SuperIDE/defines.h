@@ -22,13 +22,13 @@ This file is part of VCC (Virtual Color Computer).
 #define TARGETFRAMERATE 60	//Number of throttled Frames per second to render
 
 // Audio handling
-#define BITRATE (LINESPERFIELD*TARGETFRAMERATE)
-#define BLOCK_SIZE  LINESPERFIELD*2
+#define BITRATE (LINESPERFIELD * TARGETFRAMERATE)
+#define BLOCK_SIZE 2 * LINESPERFIELD
 #define BLOCK_COUNT 6
 
 //CPU 
 #define _894KHZ	57
-#define JIFFIESPERLINE  (_894KHZ*4)
+#define JIFFIESPERLINE (_894KHZ*4)
 #define LINESPERFIELD 262
 
 //Misc

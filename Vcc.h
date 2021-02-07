@@ -24,6 +24,8 @@ This file is part of VCC (Virtual Color Computer).
 // while the config dialog is open
 //#define CONFIG_DIALOG_MODAL
 
+#include "library/systemstate.h"
+
 void SetCPUMultiplyerFlag(unsigned char);
 void SetTurboMode(unsigned char);
 unsigned char SetCPUMultiplyer(unsigned char);

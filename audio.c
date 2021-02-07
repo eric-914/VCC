@@ -16,13 +16,15 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#include <dplay.h>
 #include <dsound.h>
 #include <stdio.h>
+
 #include "defines.h"
 #include "config.h"
 #include "coco3.h"
 #include "audio.h"
+
+#include "library\defines.h"
 
 #define MAXCARDS	12
 
@@ -55,14 +57,14 @@ static unsigned char AudioPause = 0;
 static SndCardList* Cards = NULL;
 BOOL CALLBACK DSEnumCallback(LPGUID, LPCSTR, LPCSTR, LPVOID);
 
-int SoundInit(HWND main_window_handle, _GUID* Guid, unsigned short Rate)
+int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
 {
-  Rate = (Rate & 3);
+  rate = (rate & 3);
 
-  if (Rate != 0)	//Force 44100 or Mute
-    Rate = 3;
+  if (rate != 0)	//Force 44100 or Mute
+    rate = 3;
 
-  CurrentRate = Rate;
+  CurrentRate = rate;
 
   if (InitPassed)
   {
@@ -86,13 +88,13 @@ int SoundInit(HWND main_window_handle, _GUID* Guid, unsigned short Rate)
   SndLenth2 = 0;
   BuffOffset = 0;
   AuxBufferPointer = 0;
-  BitRate = iRateList[Rate];
+  BitRate = iRateList[rate];
   BlockSize = BitRate * 4 / TARGETFRAMERATE;
   SndBuffLenth = (BlockSize * AUDIOBUFFERS);
 
-  if (Rate)
+  if (rate)
   {
-    hr = DirectSoundCreate(Guid, &lpds, NULL);	// create a directsound object
+    hr = DirectSoundCreate(guid, &lpds, NULL);	// create a directsound object
 
     if (hr != DS_OK)
       return(1);
@@ -146,18 +148,18 @@ int SoundInit(HWND main_window_handle, _GUID* Guid, unsigned short Rate)
     AudioPause = 0;
   }
 
-  SetAudioRate(iRateList[Rate]);
+  SetAudioRate(iRateList[rate]);
 
   return(0);
 }
 
-void FlushAudioBuffer(unsigned int* Abuffer, unsigned short Lenth)
+void FlushAudioBuffer(unsigned int* aBuffer, unsigned short length)
 {
   unsigned short LeftAverage = 0, RightAverage = 0, Index = 0;
   unsigned char Flag = 0;
-  unsigned char* Abuffer2 = (unsigned char*)Abuffer;
-  LeftAverage = Abuffer[0] >> 16;
-  RightAverage = Abuffer[0] & 0xFFFF;
+  unsigned char* Abuffer2 = (unsigned char*)aBuffer;
+  LeftAverage = aBuffer[0] >> 16;
+  RightAverage = aBuffer[0] & 0xFFFF;
   UpdateSoundBar(LeftAverage, RightAverage);
 
   if ((!InitPassed) | (AudioPause))
@@ -165,13 +167,13 @@ void FlushAudioBuffer(unsigned int* Abuffer, unsigned short Lenth)
 
   if (GetFreeBlockCount() <= 0)	//this should only kick in when frame skipping or unthrottled
   {
-    memcpy(AuxBuffer[AuxBufferPointer], Abuffer2, Lenth);	//Saving buffer to aux stack
+    memcpy(AuxBuffer[AuxBufferPointer], Abuffer2, length);	//Saving buffer to aux stack
     AuxBufferPointer++;		//and chase your own tail
     AuxBufferPointer %= 5;	//At this point we are so far behind we may as well drop the buffer
     return;
   }
 
-  hr = lpdsbuffer1->Lock(BuffOffset, Lenth, &SndPointer1, &SndLenth1, &SndPointer2, &SndLenth2, 0);
+  hr = lpdsbuffer1->Lock(BuffOffset, length, &SndPointer1, &SndLenth1, &SndPointer2, &SndLenth2, 0);
 
   if (hr != DS_OK)
     return;
@@ -182,7 +184,7 @@ void FlushAudioBuffer(unsigned int* Abuffer, unsigned short Lenth)
     memcpy(SndPointer2, Abuffer2 + SndLenth1, SndLenth2);
 
   hr = lpdsbuffer1->Unlock(SndPointer1, SndLenth1, SndPointer2, SndLenth2);// unlock the buffer
-  BuffOffset = (BuffOffset + Lenth) % SndBuffLenth;	//Where to write next
+  BuffOffset = (BuffOffset + length) % SndBuffLenth;	//Where to write next
 }
 
 int GetFreeBlockCount(void) //return 0 on full buffer
@@ -234,10 +236,10 @@ void PurgeAuxBuffer(void)
   AuxBufferPointer = 0;
 }
 
-int GetSoundCardList(SndCardList* List)
+int GetSoundCardList(SndCardList* list)
 {
   CardCount = 0;
-  Cards = List;
+  Cards = list;
   DirectSoundEnumerate(DSEnumCallback, NULL);
 
   return(CardCount);
@@ -263,9 +265,9 @@ int SoundDeInit(void)
   return(0);
 }
 
-int SoundInInit(HWND main_window_handle, _GUID* Guid)
+int SoundInInit(HWND main_window_handle, _GUID* guid)
 {
-  hr = DirectSoundCaptureCreate(Guid, &lpdsin, NULL);
+  hr = DirectSoundCaptureCreate(guid, &lpdsin, NULL);
 
   if (hr != DS_OK)
     return(1);
@@ -301,9 +303,9 @@ void ResetAudio(void)
   AuxBufferPointer = 0;
 }
 
-unsigned char PauseAudio(unsigned char Pause)
+unsigned char PauseAudio(unsigned char pause)
 {
-  AudioPause = Pause;
+  AudioPause = pause;
 
   if (InitPassed)
   {

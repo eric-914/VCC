@@ -23,12 +23,14 @@ This file is part of VCC (Virtual Color Computer).
 #include <commctrl.h>	// Windows common controls
 #include <iostream>
 #include <string>
-#include "defines.h"
+
 #include "ddraw.h"
 #include "DirectDrawInterface.h"
 #include "resource.h"
 #include "throttle.h"
 #include "config.h"
+
+#include "library/defines.h"
 
 //Global Variables for Direct Draw functions
 LPDIRECTDRAW        g_pDD = NULL;       // The DirectDraw object

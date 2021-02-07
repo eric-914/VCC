@@ -18,9 +18,10 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//unsigned short RenderFrame (unsigned char);
-void SetClockSpeed(unsigned short Cycles);
-void SetLinesperScreen(unsigned char Lines);
+#include "library/systemstate.h"
+
+void SetClockSpeed(unsigned short cycles);
+void SetLinesperScreen(unsigned char lines);
 void SetHorzInteruptState(unsigned char);
 void SetVertInteruptState(unsigned char);
 unsigned char SetSndOutMode(unsigned char);

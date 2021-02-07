@@ -17,13 +17,15 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
-#include "defines.h"
+
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "cc2font.h"
 #include "cc3font.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
+
+#include "library/defines.h"
 
 void SetupDisplay(void); //This routine gets called every time a software video register get updated.
 void MakeRGBPalette(void);

@@ -18,11 +18,13 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <iostream>
+
 #include "resource.h"
-#include "defines.h"
 #include "coco3.h"
 #include "config.h"
 #include "cassette.h"
+
+#include "library/defines.h"
 
 static unsigned char MotorState = 0, TapeMode = STOP, WriteProtect = 0, Quiet = 30;
 static HANDLE TapeHandle = NULL;
@@ -48,9 +50,9 @@ void CloseTapeFile(void);
 void SyncFileBuffer(void);
 void CastoWav(unsigned char*, unsigned int, unsigned long*);
 
-void Motor(unsigned char State)
+void Motor(unsigned char state)
 {
-  MotorState = State;
+  MotorState = state;
 
   switch (MotorState)
   {
@@ -103,9 +105,9 @@ unsigned int GetTapeCounter(void)
   return(TapeOffset);
 }
 
-void SetTapeCounter(unsigned int Count)
+void SetTapeCounter(unsigned int count)
 {
-  TapeOffset = Count;
+  TapeOffset = count;
 
   if (TapeOffset > TotalSize)
     TotalSize = TapeOffset;
@@ -113,9 +115,9 @@ void SetTapeCounter(unsigned int Count)
   UpdateTapeCounter(TapeOffset, TapeMode);
 }
 
-void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
+void SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog
 {
-  TapeMode = Mode;
+  TapeMode = mode;
 
   switch (TapeMode)
   {
@@ -127,7 +129,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
       if (!LoadTape())
         TapeMode = STOP;
       else
-        TapeMode = Mode;
+        TapeMode = mode;
 
     if (MotorState)
       Motor(1);
@@ -139,7 +141,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
       if (!LoadTape())
         TapeMode = STOP;
       else
-        TapeMode = Mode;
+        TapeMode = mode;
     break;
 
   case EJECT:
@@ -151,7 +153,7 @@ void SetTapeMode(unsigned char Mode)	//Handles button pressed from Dialog
   UpdateTapeCounter(TapeOffset, TapeMode);
 }
 
-void FlushCassetteBuffer(unsigned char* Buffer, unsigned int Lenth)
+void FlushCassetteBuffer(unsigned char* buffer, unsigned int length)
 {
   if (TapeMode != REC)
     return;
@@ -160,12 +162,12 @@ void FlushCassetteBuffer(unsigned char* Buffer, unsigned int Lenth)
   {
   case WAV:
     SetFilePointer(TapeHandle, TapeOffset + 44, 0, FILE_BEGIN);
-    WriteFile(TapeHandle, Buffer, Lenth, &BytesMoved, NULL);
+    WriteFile(TapeHandle, buffer, length, &BytesMoved, NULL);
 
-    if (Lenth != BytesMoved)
+    if (length != BytesMoved)
       return;
 
-    TapeOffset += Lenth;
+    TapeOffset += length;
 
     if (TapeOffset > TotalSize)
       TotalSize = TapeOffset;
@@ -173,14 +175,14 @@ void FlushCassetteBuffer(unsigned char* Buffer, unsigned int Lenth)
     break;
 
   case CAS:
-    WavtoCas(Buffer, Lenth);
+    WavtoCas(buffer, length);
     break;
   }
 
   UpdateTapeCounter(TapeOffset, TapeMode);
 }
 
-void LoadCassetteBuffer(unsigned char* CassBuffer)
+void LoadCassetteBuffer(unsigned char* cassBuffer)
 {
   unsigned long BytesMoved = 0;
 
@@ -191,7 +193,7 @@ void LoadCassetteBuffer(unsigned char* CassBuffer)
   {
   case WAV:
     SetFilePointer(TapeHandle, TapeOffset + 44, 0, FILE_BEGIN);
-    ReadFile(TapeHandle, CassBuffer, TAPEAUDIORATE / 60, &BytesMoved, NULL);
+    ReadFile(TapeHandle, cassBuffer, TAPEAUDIORATE / 60, &BytesMoved, NULL);
     TapeOffset += BytesMoved;
 
     if (TapeOffset > TotalSize)
@@ -200,7 +202,7 @@ void LoadCassetteBuffer(unsigned char* CassBuffer)
     break;
 
   case CAS:
-    CastoWav(CassBuffer, TAPEAUDIORATE / 60, &BytesMoved);
+    CastoWav(cassBuffer, TAPEAUDIORATE / 60, &BytesMoved);
 
     break;
   }
@@ -208,7 +210,7 @@ void LoadCassetteBuffer(unsigned char* CassBuffer)
   UpdateTapeCounter(TapeOffset, TapeMode);
 }
 
-int MountTape(char* FileName)	//Return 1 on sucess 0 on fail
+int MountTape(char* filename)	//Return 1 on sucess 0 on fail
 {
   char Extension[4] = "";
   unsigned char Index = 0;
@@ -221,11 +223,11 @@ int MountTape(char* FileName)	//Return 1 on sucess 0 on fail
 
   WriteProtect = 0;
   FileType = 0;	//0=wav 1=cas
-  TapeHandle = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+  TapeHandle = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 
   if (TapeHandle == INVALID_HANDLE_VALUE)	//Can't open read/write. try read only
   {
-    TapeHandle = CreateFile(FileName, GENERIC_READ, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    TapeHandle = CreateFile(filename, GENERIC_READ, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
     WriteProtect = 1;
   }
 
@@ -237,7 +239,7 @@ int MountTape(char* FileName)	//Return 1 on sucess 0 on fail
 
   TotalSize = SetFilePointer(TapeHandle, 0, 0, FILE_END);
   TapeOffset = 0;
-  strcpy(Extension, &FileName[strlen(FileName) - 3]);
+  strcpy(Extension, &filename[strlen(filename) - 3]);
 
   for (Index = 0;Index < strlen(Extension);Index++)
     Extension[Index] = toupper(Extension[Index]);
@@ -327,9 +329,9 @@ unsigned int LoadTape(void)
   return(RetVal);
 }
 
-void GetTapeName(char* Name)
+void GetTapeName(char* name)
 {
-  strcpy(Name, TapeFileName);
+  strcpy(name, TapeFileName);
 }
 
 void SyncFileBuffer(void)
@@ -384,7 +386,7 @@ void SyncFileBuffer(void)
   FlushFileBuffers(TapeHandle);
 }
 
-void CastoWav(unsigned char* Buffer, unsigned int BytestoConvert, unsigned long* BytesConverted)
+void CastoWav(unsigned char* buffer, unsigned int bytesToConvert, unsigned long* bytesConverted)
 {
   unsigned char Byte = 0;
   char Mask = 0;
@@ -392,18 +394,18 @@ void CastoWav(unsigned char* Buffer, unsigned int BytestoConvert, unsigned long*
   if (Quiet > 0)
   {
     Quiet--;
-    memset(Buffer, 0, BytestoConvert);
+    memset(buffer, 0, bytesToConvert);
     return;
   }
 
   if ((TapeOffset > TotalSize) | (TotalSize == 0))	//End of tape return nothing
   {
-    memset(Buffer, 0, BytestoConvert);
+    memset(buffer, 0, bytesToConvert);
     TapeMode = STOP;	//Stop at end of tape
     return;
   }
 
-  while ((TempIndex < BytestoConvert) & (TapeOffset <= TotalSize))
+  while ((TempIndex < bytesToConvert) & (TapeOffset <= TotalSize))
   {
     Byte = CasBuffer[(TapeOffset++) % TotalSize];
 
@@ -422,28 +424,28 @@ void CastoWav(unsigned char* Buffer, unsigned int BytestoConvert, unsigned long*
     }
   }
 
-  if (TempIndex >= BytestoConvert)
+  if (TempIndex >= bytesToConvert)
   {
-    memcpy(Buffer, TempBuffer, BytestoConvert);									//Fill the return Buffer
-    memcpy(TempBuffer, &TempBuffer[BytestoConvert], TempIndex - BytestoConvert);	//Slide the overage to the front
-    TempIndex -= BytestoConvert;													//Point to the Next free byte in the tempbuffer
+    memcpy(buffer, TempBuffer, bytesToConvert);									//Fill the return Buffer
+    memcpy(TempBuffer, &TempBuffer[bytesToConvert], TempIndex - bytesToConvert);	//Slide the overage to the front
+    TempIndex -= bytesToConvert;													//Point to the Next free byte in the tempbuffer
   }
   else	//We ran out of source bytes
   {
-    memcpy(Buffer, TempBuffer, TempIndex);						//Partial Fill of return buffer;
-    memset(&Buffer[TempIndex], 0, BytestoConvert - TempIndex);		//and silence for the rest
+    memcpy(buffer, TempBuffer, TempIndex);						//Partial Fill of return buffer;
+    memset(&buffer[TempIndex], 0, bytesToConvert - TempIndex);		//and silence for the rest
     TempIndex = 0;
   }
 }
 
-void WavtoCas(unsigned char* WaveBuffer, unsigned int Lenth)
+void WavtoCas(unsigned char* waveBuffer, unsigned int length)
 {
   unsigned char Bit = 0, Sample = 0;
   unsigned int Index = 0, Width = 0;
 
-  for (Index = 0;Index < Lenth;Index++)
+  for (Index = 0;Index < length;Index++)
   {
-    Sample = WaveBuffer[Index];
+    Sample = waveBuffer[Index];
 
     if ((LastSample <= 0x80) & (Sample > 0x80))	//Low to High transition
     {
@@ -483,7 +485,7 @@ void WavtoCas(unsigned char* WaveBuffer, unsigned int Lenth)
     LastSample = Sample;
   }
 
-  LastTrans -= Lenth;
+  LastTrans -= length;
 
   if (TapeOffset > TotalSize)
     TotalSize = TapeOffset;

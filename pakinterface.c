@@ -25,6 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Vcc.h"
 #include "mc6821.h"
 
+#include "library\defines.h"
 #include "library\fileoperations.h"
 
 #define HASCONFIG		1

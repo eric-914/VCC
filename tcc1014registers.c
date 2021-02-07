@@ -17,11 +17,14 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
+
 #include "defines.h"
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "Vcc.h"
+
+#include "library/defines.h"
 
 static unsigned char VDG_Mode = 0;
 static unsigned char Dis_Offset = 0;

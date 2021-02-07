@@ -18,8 +18,10 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "library/systemstate.h"
+
 BOOL InitInstance(HINSTANCE, int);
-BOOL InitDrawSurface(bool);
+//BOOL InitDrawSurface(bool);
 void UnlockScreen(SystemState*);
 unsigned char LockScreen(SystemState*);
 void SetStatusBarText(char*, SystemState*);

@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <string>
 #include <iostream>
 #include <math.h>
+
 #include "windows.h"
 #include "defines.h"
 #include "tcc1014graphics.h"
@@ -35,12 +36,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014mmu.h"
 
-#include "library\configdef.h"
+#include "library/configdef.h"
+#include "library/defines.h"
+#include "library/systemstate.h"
 
 static double SoundInterupt = 0;
 static double PicosToSoundSample = SoundInterupt;
 static double CyclesPerSecord = (COLORBURST / 4) * (TARGETFRAMERATE / FRAMESPERSECORD);
-static double LinesPerSecond = TARGETFRAMERATE * LINESPERSCREEN;
+static double LinesPerSecond = TARGETFRAMERATE * LINESPERFIELD;
 static double PicosPerLine = PICOSECOND / LinesPerSecond;
 static double CyclesPerLine = CyclesPerSecord / LinesPerSecond;
 static double CycleDrift = 0;
@@ -76,9 +79,9 @@ void CassOut(void);
 void CassIn(void);
 void (*AudioEvent)(void) = AudioOut;
 void SetMasterTickCounter(void);
-void (*DrawTopBoarder[4]) (SystemState*) = { DrawTopBoarder8,DrawTopBoarder16,DrawTopBoarder24,DrawTopBoarder32 };
-void (*DrawBottomBoarder[4]) (SystemState*) = { DrawBottomBoarder8,DrawBottomBoarder16,DrawBottomBoarder24,DrawBottomBoarder32 };
-void (*UpdateScreen[4]) (SystemState*) = { UpdateScreen8,UpdateScreen16,UpdateScreen24,UpdateScreen32 };
+void (*DrawTopBoarder[4]) (SystemState*) = { DrawTopBoarder8, DrawTopBoarder16, DrawTopBoarder24, DrawTopBoarder32 };
+void (*DrawBottomBoarder[4]) (SystemState*) = { DrawBottomBoarder8, DrawBottomBoarder16, DrawBottomBoarder24, DrawBottomBoarder32 };
+void (*UpdateScreen[4]) (SystemState*) = { UpdateScreen8, UpdateScreen16, UpdateScreen24, UpdateScreen32 };
 std::string GetClipboardText();
 
 using namespace std;
@@ -86,7 +89,8 @@ string clipboard;
 STRConfig ClipConfig;
 
 _inline int CPUCycle(void);
-float RenderFrame(SystemState* RFState)
+
+float RenderFrame(SystemState* systemState)
 {
   static unsigned short FrameCounter = 0;
 
@@ -94,30 +98,30 @@ float RenderFrame(SystemState* RFState)
   SetBlinkState(BlinkPhase);
   irq_fs(0);				//FS low to High transition start of display Boink needs this
 
-  for (RFState->LineCounter = 0;RFState->LineCounter < 13;RFState->LineCounter++)		//Vertical Blanking 13 H lines
+  for (systemState->LineCounter = 0; systemState->LineCounter < 13; systemState->LineCounter++)		//Vertical Blanking 13 H lines
     CPUCycle();
 
-  for (RFState->LineCounter = 0;RFState->LineCounter < 4;RFState->LineCounter++)		//4 non-Rendered top Boarder lines
+  for (systemState->LineCounter = 0; systemState->LineCounter < 4; systemState->LineCounter++)		//4 non-Rendered top Boarder lines
     CPUCycle();
 
-  if (!(FrameCounter % RFState->FrameSkip))
-    if (LockScreen(RFState))
+  if (!(FrameCounter % systemState->FrameSkip))
+    if (LockScreen(systemState))
       return(0);
 
-  for (RFState->LineCounter = 0;RFState->LineCounter < (TopBoarder - 4);RFState->LineCounter++)
+  for (systemState->LineCounter = 0; systemState->LineCounter < (TopBoarder - 4); systemState->LineCounter++)
   {
-    if (!(FrameCounter % RFState->FrameSkip))
-      DrawTopBoarder[RFState->BitDepth](RFState);
+    if (!(FrameCounter % systemState->FrameSkip))
+      DrawTopBoarder[systemState->BitDepth](systemState);
 
     CPUCycle();
   }
 
-  for (RFState->LineCounter = 0;RFState->LineCounter < LinesperScreen;RFState->LineCounter++)		//Active Display area		
+  for (systemState->LineCounter = 0; systemState->LineCounter < LinesperScreen; systemState->LineCounter++)		//Active Display area		
   {
     CPUCycle();
 
-    if (!(FrameCounter % RFState->FrameSkip))
-      UpdateScreen[RFState->BitDepth](RFState);
+    if (!(FrameCounter % systemState->FrameSkip))
+      UpdateScreen[systemState->BitDepth](systemState);
   }
 
   irq_fs(1);  //End of active display FS goes High to Low
@@ -125,21 +129,21 @@ float RenderFrame(SystemState* RFState)
   if (VertInteruptEnabled)
     GimeAssertVertInterupt();
 
-  for (RFState->LineCounter = 0;RFState->LineCounter < (BottomBoarder);RFState->LineCounter++)	// Bottom boarder
+  for (systemState->LineCounter = 0; systemState->LineCounter < (BottomBoarder); systemState->LineCounter++)	// Bottom boarder
   {
     CPUCycle();
 
-    if (!(FrameCounter % RFState->FrameSkip))
-      DrawBottomBoarder[RFState->BitDepth](RFState);
+    if (!(FrameCounter % systemState->FrameSkip))
+      DrawBottomBoarder[systemState->BitDepth](systemState);
   }
 
-  if (!(FrameCounter % RFState->FrameSkip))
+  if (!(FrameCounter % systemState->FrameSkip))
   {
-    UnlockScreen(RFState);
+    UnlockScreen(systemState);
     SetBoarderChange(0);
   }
 
-  for (RFState->LineCounter = 0;RFState->LineCounter < 6;RFState->LineCounter++)		//Vertical Retrace 6 H lines
+  for (systemState->LineCounter = 0; systemState->LineCounter < 6; systemState->LineCounter++)		//Vertical Retrace 6 H lines
     CPUCycle();
 
   switch (SoundOutputMode)
@@ -163,26 +167,26 @@ float RenderFrame(SystemState* RFState)
   return(CalculateFPS());
 }
 
-void SetClockSpeed(unsigned short Cycles)
+void SetClockSpeed(unsigned short cycles)
 {
-  OverClock = Cycles;
+  OverClock = cycles;
 }
 
-void SetHorzInteruptState(unsigned char State)
+void SetHorzInteruptState(unsigned char state)
 {
-  HorzInteruptEnabled = !!State;
+  HorzInteruptEnabled = !!state;
 }
 
-void SetVertInteruptState(unsigned char State)
+void SetVertInteruptState(unsigned char state)
 {
-  VertInteruptEnabled = !!State;
+  VertInteruptEnabled = !!state;
 }
 
-void SetLinesperScreen(unsigned char Lines)
+void SetLinesperScreen(unsigned char lines)
 {
-  Lines = (Lines & 3);
-  LinesperScreen = Lpf[Lines];
-  TopBoarder = VcenterTable[Lines];
+  lines = (lines & 3);
+  LinesperScreen = Lpf[lines];
+  TopBoarder = VcenterTable[lines];
   BottomBoarder = 243 - (TopBoarder + LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
 }
 
@@ -397,26 +401,26 @@ _inline int CPUCycle(void)
   return(0);
 }
 
-void SetTimerInteruptState(unsigned char State)
+void SetTimerInteruptState(unsigned char state)
 {
-  TimerInteruptEnabled = State;
+  TimerInteruptEnabled = state;
 }
 
-void SetInteruptTimer(unsigned short Timer)
+void SetInteruptTimer(unsigned short timer)
 {
-  UnxlatedTickCounter = (Timer & 0xFFF);
+  UnxlatedTickCounter = (timer & 0xFFF);
   SetMasterTickCounter();
 }
 
-void SetTimerClockRate(unsigned char Tmp)	//1= 279.265nS (1/ColorBurst)
+void SetTimerClockRate(unsigned char clockRate)	//1= 279.265nS (1/ColorBurst)
 {											                    //0= 63.695uS  (1/60*262)  1 scanline time
-  TimerClockRate = !!Tmp;
+  TimerClockRate = !!clockRate;
   SetMasterTickCounter();
 }
 
 void SetMasterTickCounter(void)
 {
-  double Rate[2] = { PICOSECOND / (TARGETFRAMERATE * LINESPERSCREEN),PICOSECOND / COLORBURST };
+  double Rate[2] = { PICOSECOND / (TARGETFRAMERATE * LINESPERFIELD), PICOSECOND / COLORBURST };
 
   if (UnxlatedTickCounter == 0)
     MasterTickCounter = 0;
@@ -456,25 +460,25 @@ void MiscReset(void)
   ResetAudio();
 }
 
-unsigned short SetAudioRate(unsigned short Rate)
+unsigned short SetAudioRate(unsigned short rate)
 {
   SndEnable = 1;
   SoundInterupt = 0;
   CycleDrift = 0;
   AudioIndex = 0;
 
-  if (Rate != 0)	//Force Mute or 44100Hz
-    Rate = 44100;
+  if (rate != 0)	//Force Mute or 44100Hz
+    rate = 44100;
 
-  if (Rate == 0)
+  if (rate == 0)
     SndEnable = 0;
   else
   {
-    SoundInterupt = PICOSECOND / Rate;
+    SoundInterupt = PICOSECOND / rate;
     PicosToSoundSample = SoundInterupt;
   }
 
-  SoundRate = Rate;
+  SoundRate = rate;
 
   return(0);
 }
@@ -495,12 +499,12 @@ void CassIn(void)
   SetCassetteSample(CassBuffer[AudioIndex++]);
 }
 
-unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
+unsigned char SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
 {
   static unsigned char LastMode = 0;
   static unsigned short PrimarySoundRate = SoundRate;
 
-  switch (Mode)
+  switch (mode)
   {
   case 0:
     if (LastMode == 1)	//Send the last bits to be encoded
@@ -528,13 +532,13 @@ unsigned char SetSndOutMode(unsigned char Mode)  //0 = Speaker 1= Cassette Out 2
     break;
   }
 
-  if (Mode != LastMode)
+  if (mode != LastMode)
   {
     AudioIndex = 0;	//Reset Buffer on true mode switch
-    LastMode = Mode;
+    LastMode = mode;
   }
 
-  SoundOutputMode = Mode;
+  SoundOutputMode = mode;
 
   return(SoundOutputMode);
 }
