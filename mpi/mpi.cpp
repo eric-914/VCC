@@ -19,11 +19,13 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <iostream>
+#include <commctrl.h>
+
 #include "stdio.h"
 #include "resource.h" 
-#include <commctrl.h>
 #include "mpi.h"
-#include "..\fileops.h"
+
+#include "..\fileops\fileops.h"
 
 #define MAXPAX 4
 static void (*AssertInt)(unsigned char, unsigned char) = NULL;

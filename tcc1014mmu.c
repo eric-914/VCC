@@ -23,7 +23,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
-#include "fileops.h"
+
+#include "fileops\fileops.h"
 
 static unsigned char* MemPages[1024];
 static unsigned short MemPageOffsets[1024];

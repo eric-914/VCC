@@ -34,9 +34,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "vcc.h"
 #include "DirectDrawInterface.h"
 #include "keyboard.h"
-#include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
+
+#include "fileops\fileops.h"
 
 #include "library\commandline.h"
 #include "library\configdef.h"
@@ -121,6 +122,7 @@ unsigned char _TranslateDisp2Scan[SCAN_TRANS_COUNT];
 unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,32,38,20,33,35,40,36,24,30,31,42,43,55,52,16,34,19,21,22,23,25,26,27,45,46,0,51,44,41,39,18,37,17,29,28,47,48,49,51,0,53,54,50,66,67,0,0,0,0,0,0,0,0,0,0,58,64,60,0,62,0,63,0,59,65,61,56,57 };
 
 #define TABS 8
+
 static HWND g_hWndConfig[TABS]; // Moved this outside the initialization function so that other functions could access the window handles when necessary.
 
 unsigned char TranslateDisp2Scan(LRESULT x)
@@ -155,8 +157,6 @@ void buildTransDisp2ScanTable()
   // Left and Right Shift
   _TranslateDisp2Scan[51] = DIK_LSHIFT;
 }
-
-/*****************************************************************************/
 
 void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 {
@@ -501,15 +501,15 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   return FALSE;
 }
 
-void GetIniFilePath(char* Path)
+void GetIniFilePath(char* path)
 {
-  strcpy(Path, IniFilePath);
+  strcpy(path, IniFilePath);
 }
 
-void SetIniFilePath(char* Path)
+void SetIniFilePath(char* path)
 {
   //  Path must be to an existing ini file
-  strcpy(IniFilePath, Path);
+  strcpy(IniFilePath, path);
 }
 
 char* AppDirectory()
@@ -1111,55 +1111,55 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
   return(0);
 }
 
-unsigned char XY2Disp(unsigned char Row, unsigned char Col)
+unsigned char XY2Disp(unsigned char row, unsigned char column)
 {
-  switch (Row)
+  switch (row)
   {
   case 0:
     return(0);
 
   case 1:
-    return(1 + Col);
+    return(1 + column);
 
   case 2:
-    return(9 + Col);
+    return(9 + column);
 
   case 4:
-    return(17 + Col);
+    return(17 + column);
 
   case 8:
-    return (25 + Col);
+    return (25 + column);
 
   case 16:
-    return(33 + Col);
+    return(33 + column);
 
   case 32:
-    return (41 + Col);
+    return (41 + column);
 
   case 64:
-    return (49 + Col);
+    return (49 + column);
 
   default:
     return (0);
   }
 }
 
-void Disp2XY(unsigned char* Col, unsigned char* Row, unsigned char Disp)
+void Disp2XY(unsigned char* column, unsigned char* row, unsigned char display)
 {
   unsigned char temp = 0;
 
-  if (Disp == 0)
+  if (display == 0)
   {
-    Col = 0;
-    Row = 0;
+    column = 0;
+    row = 0;
     return;
   }
 
-  Disp -= 1;
-  temp = Disp & 56;
+  display -= 1;
+  temp = display & 56;
   temp = temp >> 3;
-  *Row = 1 << temp;
-  *Col = Disp & 7;
+  *row = 1 << temp;
+  *column = display & 7;
 }
 
 void RefreshJoystickStatus(void)
@@ -1190,22 +1190,22 @@ void RefreshJoystickStatus(void)
   }
 }
 
-void UpdateSoundBar(unsigned short Left, unsigned short Right)
+void UpdateSoundBar(unsigned short left, unsigned short right)
 {
   if (hDlgBar == NULL)
     return;
 
-  SendDlgItemMessage(hDlgBar, IDC_PROGRESSLEFT, PBM_SETPOS, Left >> 8, 0);
-  SendDlgItemMessage(hDlgBar, IDC_PROGRESSRIGHT, PBM_SETPOS, Right >> 8, 0);
+  SendDlgItemMessage(hDlgBar, IDC_PROGRESSLEFT, PBM_SETPOS, left >> 8, 0);
+  SendDlgItemMessage(hDlgBar, IDC_PROGRESSRIGHT, PBM_SETPOS, right >> 8, 0);
 }
 
-void UpdateTapeCounter(unsigned int Counter, unsigned char TapeMode)
+void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode)
 {
   if (hDlgTape == NULL)
     return;
 
-  TapeCounter = Counter;
-  Tmode = TapeMode;
+  TapeCounter = counter;
+  Tmode = tapeMode;
   sprintf(OutBuffer, "%i", TapeCounter);
   SendDlgItemMessage(hDlgTape, IDC_TCOUNT, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
   SendDlgItemMessage(hDlgTape, IDC_MODE, WM_SETTEXT, strlen(Tmodes[Tmode]), (LPARAM)(LPCSTR)Tmodes[Tmode]);
@@ -1228,7 +1228,6 @@ void UpdateTapeCounter(unsigned int Counter, unsigned char TapeMode)
     break;
   }
 }
-
 
 LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1282,7 +1281,7 @@ LRESULT CALLBACK Paths(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
   return 1;
 }
 
-int SelectFile(char* FileName)
+int SelectFile(char* filename)
 {
   OPENFILENAME ofn;
   char Dummy[MAX_PATH] = "";
@@ -1321,7 +1320,7 @@ int SelectFile(char* FileName)
     }
   }
 
-  strcpy(FileName, TempFileName);
+  strcpy(filename, TempFileName);
 
   return(1);
 }

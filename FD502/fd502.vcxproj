@@ -163,13 +163,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\fileops.c" />
+    <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="distortc.c" />
     <ClCompile Include="fd502.cpp" />
     <ClCompile Include="wd1793.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fileops.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="distortc.h" />
     <ClInclude Include="fd502.h" />

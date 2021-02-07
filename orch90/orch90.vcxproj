@@ -163,11 +163,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="orch90.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fileops.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="orch90.h" />
   </ItemGroup>

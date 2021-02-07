@@ -168,7 +168,7 @@
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
-    <ClCompile Include="Fileops.c" />
+    <ClCompile Include="fileops\fileops.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
     <ClCompile Include="keyboard.c" />
@@ -194,7 +194,6 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="DirectDrawInterface.h" />
-    <ClInclude Include="fileops.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />

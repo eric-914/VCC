@@ -163,12 +163,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="becker.c">
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fileops.h" />
     <ClInclude Include="becker.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

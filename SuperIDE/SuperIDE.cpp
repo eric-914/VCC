@@ -19,13 +19,15 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include "stdio.h"
 #include <iostream>
+
 #include "resource.h" 
 #include "defines.h"
 #include "Superide.h"
 #include "idebus.h"
 #include "cloud9.h"
 #include "logger.h"
-#include "../fileops.h"
+
+#include "..\fileops\fileops.h"
 
 static char FileName[MAX_PATH]{ 0 };
 static char IniFile[MAX_PATH]{ 0 };

@@ -163,7 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fileops.c" />
+    <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="cc3vhd.c" />
     <ClCompile Include="cloud9.cpp" />
     <ClCompile Include="harddisk.cpp" />

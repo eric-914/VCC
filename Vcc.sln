@@ -26,6 +26,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gmc", "GMC\gmc.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "library", "library\library.vcxproj", "{151D692E-1469-44D9-90D5-FB59FDDA4E31}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fileops", "fileops", "{73748C7D-3D67-4169-8EAD-2178318148E4}"
+	ProjectSection(SolutionItems) = preProject
+		fileops\fileops.c = fileops\fileops.c
+		fileops\fileops.h = fileops\fileops.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

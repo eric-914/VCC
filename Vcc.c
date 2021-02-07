@@ -29,7 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <process.h>
-#include "fileops.h"
+
 #include "defines.h"
 #include "resource.h"
 #include "Vcc.h"
@@ -47,6 +47,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "quickload.h"
 #include "throttle.h"
 #include "DirectDrawInterface.h"
+
+#include "fileops\fileops.h"
 
 #include "library\commandline.h"
 #include "library\joystickinput.h"

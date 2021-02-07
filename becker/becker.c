@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include "becker.h"
 #include "resource.h" 
-#include "..\fileops.h"
+#include "..\fileops\fileops.h"
 #include "..\library\logger.h"
 
 // socket

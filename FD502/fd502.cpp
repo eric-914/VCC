@@ -25,11 +25,14 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <stdio.h>
 #include <iostream>
+
 #include "resource.h" 
 #include "wd1793.h"
 #include "distortc.h"
 #include "fd502.h"
-#include "..\fileops.h"
+
+#include "..\fileops\fileops.h"
+
 #define EXTROMSIZE 16384
 
 using namespace std;

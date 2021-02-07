@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 #include "defines.h"
 #include "resource.h" 
-#include "..\fileops.h"
+#include "..\fileops\fileops.h"
 
 typedef void (*SETCART)(unsigned char);
 typedef void (*SETCARTPOINTER)(SETCART);

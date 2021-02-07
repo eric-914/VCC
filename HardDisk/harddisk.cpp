@@ -20,12 +20,14 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <stdio.h>
-#include<iostream>
+#include <iostream>
+
 #include "resource.h"
 #include "cc3vhd.h"
 #include "defines.h"
 #include "cloud9.h"
-#include "..\fileops.h"
+
+#include "..\fileops\fileops.h"
 
 static char VHDfile0[MAX_PATH]{ 0 };
 static char VHDfile1[MAX_PATH]{ 0 };
