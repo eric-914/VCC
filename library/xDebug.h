@@ -12,7 +12,7 @@
 
 extern "C"
 {
-  void _xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...);
+  __declspec(dllexport) void __cdecl _xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...);
 }
 
 #endif

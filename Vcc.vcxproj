@@ -183,7 +183,6 @@
     <ClCompile Include="tcc1014registers.c" />
     <ClCompile Include="throttle.c" />
     <ClCompile Include="Vcc.c" />
-    <ClCompile Include="_xDebug.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.md" />
@@ -215,7 +214,6 @@
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
     <ClInclude Include="Vcc.h" />
-    <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\binfile.ico" />

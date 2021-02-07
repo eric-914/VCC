@@ -40,7 +40,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014registers.h"
 #include "joystickinput.h"
 #include "keyboardLayout.h"
-#include "xDebug.h"
+#include "library\xDebug.h"
 
 /*
   Forward declarations
