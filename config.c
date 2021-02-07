@@ -38,7 +38,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "Cassette.h"
 #include "shlobj.h"
 
-#include "library\CommandLine.h"
+#include "library\commandline.h"
+#include "library\configdef.h"
 #include "library\joystickinput.h"
 
 using namespace std;

@@ -48,7 +48,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 
-#include "library\CommandLine.h"
+#include "library\commandline.h"
 #include "library\joystickinput.h"
 
 static HANDLE hout = NULL;

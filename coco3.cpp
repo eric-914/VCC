@@ -35,6 +35,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014mmu.h"
 
+#include "library\configdef.h"
+
 static double SoundInterupt = 0;
 static double PicosToSoundSample = SoundInterupt;
 static double CyclesPerSecord = (COLORBURST / 4) * (TARGETFRAMERATE / FRAMESPERSECORD);

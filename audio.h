@@ -18,20 +18,16 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "library\audiodef.h"
+
 int SoundInit(HWND, _GUID*, unsigned short);
 int SoundDeInit(void);
 void FlushAudioBuffer(unsigned int*, unsigned short);
 void ResetAudio(void);
 unsigned char PauseAudio(unsigned char Pause);
 int GetFreeBlockCount(void);
-int GetAuxBlockCount(void);
 void PurgeAuxBuffer(void);
 unsigned short GetSoundStatus(void);
-
-typedef struct CardList {
-  char CardName[64];
-  _GUID* Guid;
-} SndCardList;
 
 int GetSoundCardList(SndCardList*);
 

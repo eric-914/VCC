@@ -46,6 +46,7 @@ static unsigned char CurrentRamConfig = 1;
 static unsigned short MmuPrefix = 0;
 
 void UpdateMmuArray(void);
+int load_int_rom(TCHAR filename[MAX_PATH]);
 
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *

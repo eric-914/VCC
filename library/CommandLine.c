@@ -76,7 +76,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "CommandLine.h"
+
+#include "commandline.h"
 
 #define SEPMARK 3  //To mark spaces as separators
 
@@ -88,7 +89,7 @@ static char* _nextTokenPtr;
 //-------------------------------------------------------------------
 // Parse the VCC command string and set ConfigFile, QuickLoadFile, and 
 // possibly other things.  Variables set by this routine are global and 
-// are defined in CommandLine.h
+// are defined in commandline.h
 //
 // vcc.exe [-d[level]] [-i ConfigFile] [QuickLoadFile] 
 //

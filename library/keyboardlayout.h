@@ -21,20 +21,11 @@
 #ifndef _KEYBOARDLAYOUT_H_
 #define _KEYBOARDLAYOUT_H_
 
-#include "library\keyboarddef.h"
+#include "keyboarddef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-  extern keytranslationentry_t keyTranslationsCoCo[];
-  extern keytranslationentry_t keyTranslationsNatural[];
-  extern keytranslationentry_t keyTranslationsCompact[];
-  extern keytranslationentry_t keyTranslationsCustom[];
-
-#ifdef __cplusplus
-}
-#endif
+extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCoCo(void);
+extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsNatural(void);
+extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCompact(void);
+extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCustom(void);
 
 #endif

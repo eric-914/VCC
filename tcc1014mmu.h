@@ -19,22 +19,19 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 void MemWrite8(unsigned char, unsigned short);
 void MemWrite16(unsigned short, unsigned short);
 
-unsigned short MemRead16(short unsigned int);
-unsigned char MemRead8(short unsigned int);
+unsigned short MemRead16(unsigned short);
+unsigned char MemRead8(unsigned short);
 unsigned char* MmuInit(unsigned char);
 unsigned char* Getint_rom_pointer(void);
-unsigned char* Getext_rom_pointer(void);
 unsigned short GetMem(long);
 void SetMem(long, unsigned short);
 
 void __fastcall fMemWrite8(unsigned char, unsigned short);
-unsigned char __fastcall fMemRead8(short unsigned int);
+unsigned char __fastcall fMemRead8(unsigned short);
 
-int load_int_rom(char*);
 void SetMapType(unsigned char);
 void CopyRom(void);
 void Set_MmuTask(unsigned char);
@@ -45,7 +42,6 @@ void SetVectors(unsigned char);
 void MmuReset(void);
 void SetDistoRamBank(unsigned char);
 void SetMmuPrefix(unsigned char);
-void SetCartMMU(unsigned char);
 
 #define _128K	0	
 #define _512K	1

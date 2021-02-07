@@ -98,6 +98,8 @@ static HMENU hMenu = NULL;
 static HMENU hSubMenu[64];
 static char Modname[MAX_PATH] = "Blank";
 
+int load_ext_rom(char filename[MAX_PATH]);
+
 void PakTimer(void)
 {
   if (HeartBeat != NULL)

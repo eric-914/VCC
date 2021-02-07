@@ -39,8 +39,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "mc6821.h"
 #include "tcc1014registers.h"
-#include "keyboardLayout.h"
 
+#include "library\keyboardlayout.h"
 #include "library\joystickinput.h"
 #include "library\xDebug.h"
 
@@ -415,26 +415,26 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
   int Index1 = 0;
   int Index2 = 0;
   keytranslationentry_t* keyLayoutTable = NULL;
-  keytranslationentry_t		keyTransEntry;
+  keytranslationentry_t	keyTransEntry;
 
   assert(keyBoardLayout >= 0 && keyBoardLayout < kKBLayoutCount);
 
   switch (keyBoardLayout)
   {
   case kKBLayoutCoCo:
-    keyLayoutTable = keyTranslationsCoCo;
+    keyLayoutTable = GetKeyTranslationsCoCo();
     break;
 
   case kKBLayoutNatural:
-    keyLayoutTable = keyTranslationsNatural;
+    keyLayoutTable = GetKeyTranslationsNatural();
     break;
 
   case kKBLayoutCompact:
-    keyLayoutTable = keyTranslationsCompact;
+    keyLayoutTable = GetKeyTranslationsCompact();
     break;
 
   case kKBLayoutCustom:
-    keyLayoutTable = keyTranslationsCustom;
+    keyLayoutTable = GetKeyTranslationsCustom();
     break;
 
   default:

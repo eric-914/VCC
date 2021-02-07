@@ -27,7 +27,6 @@ void GetModuleStatus(SystemState*);
 int LoadCart(void);
 unsigned short PackAudioSample(void);
 void ResetBus(void);
-int load_ext_rom(char*);
 void GetCurrentModule(char*);
 int InsertModule(char*);
 void UpdateBusPointer(void);

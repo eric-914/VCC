@@ -18,7 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 void GimeWrite(unsigned char, unsigned char);
 unsigned char GimeRead(unsigned char);
 void GimeAssertKeyboardInterupt(void);
