@@ -185,6 +185,7 @@
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="joystickinput.h" />
+    <ClInclude Include="keyboarddef.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="resource.h" />

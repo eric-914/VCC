@@ -18,14 +18,10 @@
 */
 /*****************************************************************************/
 
-#ifndef _keyboardLayout_h_
-#define _keyboardLayout_h_
+#ifndef _KEYBOARDLAYOUT_H_
+#define _KEYBOARDLAYOUT_H_
 
-/*****************************************************************************/
-
-#include "keyboard.h"
-
-/*****************************************************************************/
+#include "library\keyboarddef.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -41,4 +37,4 @@ extern "C"
 }
 #endif
 
-#endif // _keyboardLayout_h_
+#endif
