@@ -171,7 +171,6 @@
     <ClCompile Include="Fileops.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
-    <ClCompile Include="joystickinput.c" />
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="keyboardLayout.c" />
     <ClCompile Include="mc6809.c" />
@@ -200,7 +199,6 @@
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />
-    <ClInclude Include="joystickinput.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="keyboardLayout.h" />
     <ClInclude Include="mc6809.h" />

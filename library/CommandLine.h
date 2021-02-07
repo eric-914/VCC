@@ -26,7 +26,6 @@ struct CmdLineArguments {
   char IniFile[CL_MAX_PATH];
   int  Logging;
 };
-//extern struct CmdLineArguments CmdArg;
 
 // Get Settings from Command line string 
 extern "C" __declspec(dllexport) int __cdecl GetCmdLineArgs(char* lpCmdLine, CmdLineArguments* cmdArg);

@@ -176,6 +176,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CommandLine.c" />
+    <ClCompile Include="joystickinput.c" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="xDebug.c" />
@@ -183,6 +184,7 @@
   <ItemGroup>
     <ClInclude Include="CommandLine.h" />
     <ClInclude Include="defines.h" />
+    <ClInclude Include="joystickinput.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="resource.h" />

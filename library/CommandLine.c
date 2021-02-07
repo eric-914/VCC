@@ -78,9 +78,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <string.h>
 #include "CommandLine.h"
 
-// Define global command line settings
-//struct CmdLineArguments CmdArg;
-
 #define SEPMARK 3  //To mark spaces as separators
 
 char* ParseCmdString(char*, const char*);

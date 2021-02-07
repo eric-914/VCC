@@ -21,25 +21,36 @@ This file is part of VCC (Virtual Color Computer).
 #include "joystickinput.h"
 
 static LPDIRECTINPUTDEVICE8 Joysticks[MAXSTICKS];
-char StickName[MAXSTICKS][STRLEN];
 static unsigned char JoyStickIndex = 0;
 static LPDIRECTINPUT8 di;
 BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE*, VOID*);
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE*, VOID*);
 static unsigned char CurrentStick;
 
-int EnumerateJoysticks(void)
-{
-  HRESULT hr;
-  JoyStickIndex = 0;
+char StickName[MAXSTICKS][STRLEN];
 
-  if (FAILED(hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&di, NULL)))
-    return(0);
+extern "C" {
+  __declspec(dllexport) char* __cdecl GetStickName(int index) {
+    return StickName[index];
+  }
+}
 
-  if (FAILED(hr = di->EnumDevices(DI8DEVCLASS_GAMECTRL, enumCallback, NULL, DIEDFL_ATTACHEDONLY)))
-    return(0);
+extern "C" {
+  __declspec(dllexport) int __cdecl EnumerateJoysticks(void)
+  {
+    HRESULT hr;
+    JoyStickIndex = 0;
 
-  return(JoyStickIndex);
+    if (FAILED(hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&di, NULL))) {
+      return(0);
+    }
+
+    if (FAILED(hr = di->EnumDevices(DI8DEVCLASS_GAMECTRL, enumCallback, NULL, DIEDFL_ATTACHEDONLY))) {
+      return(0);
+    }
+
+    return(JoyStickIndex);
+  }
 }
 
 BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
@@ -53,24 +64,28 @@ BOOL CALLBACK enumCallback(const DIDEVICEINSTANCE* instance, VOID* context)
   return(JoyStickIndex < MAXSTICKS);
 }
 
+extern "C" {
+  __declspec(dllexport) bool __cdecl InitJoyStick(unsigned char stickNumber)
+  {
+    //	DIDEVCAPS capabilities;
+    HRESULT hr;
 
-bool InitJoyStick(unsigned char StickNumber)
-{
-  //	DIDEVCAPS capabilities;
-  HRESULT hr;
+    CurrentStick = stickNumber;
 
-  CurrentStick = StickNumber;
+    if (Joysticks[stickNumber] == NULL) {
+      return(0);
+    }
 
-  if (Joysticks[StickNumber] == NULL)
-    return(0);
+    if (FAILED(hr = Joysticks[stickNumber]->SetDataFormat(&c_dfDIJoystick2))) {
+      return(0);
+    }
 
-  if (FAILED(hr = Joysticks[StickNumber]->SetDataFormat(&c_dfDIJoystick2)))
-    return(0);
+    if (FAILED(hr = Joysticks[stickNumber]->EnumObjects(enumAxesCallback, NULL, DIDFT_AXIS))) {
+      return(0);
+    }
 
-  if (FAILED(hr = Joysticks[StickNumber]->EnumObjects(enumAxesCallback, NULL, DIDFT_AXIS)))
-    return(0);
-
-  return(1); //return true on success
+    return(1); //return true on success
+  }
 }
 
 BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* context)
@@ -84,37 +99,45 @@ BOOL CALLBACK enumAxesCallback(const DIDEVICEOBJECTINSTANCE* instance, VOID* con
   propRange.lMin = 0;
   propRange.lMax = 0xFFFF;
 
-  if (FAILED(Joysticks[CurrentStick]->SetProperty(DIPROP_RANGE, &propRange.diph)))
+  if (FAILED(Joysticks[CurrentStick]->SetProperty(DIPROP_RANGE, &propRange.diph))) {
     return(DIENUM_STOP);
+  }
 
   return(DIENUM_CONTINUE);
 }
 
-HRESULT JoyStickPoll(DIJOYSTATE2* js, unsigned char StickNumber)
-{
-  HRESULT hr;
-
-  if (Joysticks[StickNumber] == NULL)
-    return (S_OK);
-
-  hr = Joysticks[StickNumber]->Poll();
-
-  if (FAILED(hr))
+extern "C" {
+  __declspec(dllexport) HRESULT __cdecl JoyStickPoll(DIJOYSTATE2* js, unsigned char stickNumber)
   {
-    hr = Joysticks[StickNumber]->Acquire();
+    HRESULT hr;
 
-    while (hr == DIERR_INPUTLOST)
-      hr = Joysticks[StickNumber]->Acquire();
+    if (Joysticks[stickNumber] == NULL) {
+      return (S_OK);
+    }
 
-    if (hr == DIERR_INVALIDPARAM)
-      return(E_FAIL);
+    hr = Joysticks[stickNumber]->Poll();
 
-    if (hr == DIERR_OTHERAPPHASPRIO)
-      return(S_OK);
+    if (FAILED(hr))
+    {
+      hr = Joysticks[stickNumber]->Acquire();
+
+      while (hr == DIERR_INPUTLOST) {
+        hr = Joysticks[stickNumber]->Acquire();
+      }
+
+      if (hr == DIERR_INVALIDPARAM) {
+        return(E_FAIL);
+      }
+
+      if (hr == DIERR_OTHERAPPHASPRIO) {
+        return(S_OK);
+      }
+    }
+
+    if (FAILED(hr = Joysticks[stickNumber]->GetDeviceState(sizeof(DIJOYSTATE2), js))) {
+      return(hr);
+    }
+
+    return(S_OK);
   }
-
-  if (FAILED(hr = Joysticks[StickNumber]->GetDeviceState(sizeof(DIJOYSTATE2), js)))
-    return(hr);
-
-  return(S_OK);
 }

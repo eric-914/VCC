@@ -29,6 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 /*****************************************************************************/
 
 #define DIRECTINPUT_VERSION 0x0800
+
 // this must be before defines.h as it contains Windows types and not Windows.h include
 #include <windows.h>
 #include <dinput.h>
@@ -38,8 +39,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "mc6821.h"
 #include "tcc1014registers.h"
-#include "joystickinput.h"
 #include "keyboardLayout.h"
+
+#include "library\joystickinput.h"
 #include "library\xDebug.h"
 
 /*

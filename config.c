@@ -19,11 +19,8 @@ This file is part of VCC (Virtual Color Computer).
 #define DIRECTINPUT_VERSION 0x0800
 
 #include <windows.h>
-//#include <commctrl.h>
-//#include <stdio.h>
 #include <Richedit.h>
 #include <iostream>
-
 #include <direct.h>
 #include <assert.h>
 
@@ -36,13 +33,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 #include "vcc.h"
 #include "DirectDrawInterface.h"
-#include "joystickinput.h"
 #include "keyboard.h"
 #include "fileops.h"
 #include "Cassette.h"
 #include "shlobj.h"
 
 #include "library\CommandLine.h"
+#include "library\joystickinput.h"
 
 using namespace std;
 
@@ -93,7 +90,6 @@ STRConfig CurrentConfig;
 static STRConfig TempConfig;
 
 extern SystemState EmuState;
-extern char StickName[MAXSTICKS][STRLEN];
 
 static unsigned int TapeCounter = 0;
 static unsigned char Tmode = STOP;
@@ -987,10 +983,10 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     EnableWindow(GetDlgItem(hDlg, IDC_RIGHTJOYSTICK), (NumberofJoysticks > 0));	  //No Joysticks are present
 
     //populate joystick combo boxs
-    for (temp = 0; temp < NumberofJoysticks; temp++)
+    for (unsigned char index = 0; index < NumberofJoysticks; index++)
     {
-      SendDlgItemMessage(hDlg, IDC_RIGHTJOYSTICKDEVICE, CB_ADDSTRING, (WPARAM)0, (LPARAM)StickName[temp]);
-      SendDlgItemMessage(hDlg, IDC_LEFTJOYSTICKDEVICE, CB_ADDSTRING, (WPARAM)0, (LPARAM)StickName[temp]);
+      SendDlgItemMessage(hDlg, IDC_RIGHTJOYSTICKDEVICE, CB_ADDSTRING, (WPARAM)0, (LPARAM)GetStickName(index));
+      SendDlgItemMessage(hDlg, IDC_LEFTJOYSTICKDEVICE, CB_ADDSTRING, (WPARAM)0, (LPARAM)GetStickName(index));
     }
 
     SendDlgItemMessage(hDlg, IDC_RIGHTJOYSTICKDEVICE, CB_SETCURSEL, (WPARAM)Right.DiDevice, (LPARAM)0);
