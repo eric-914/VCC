@@ -25,7 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "Vcc.h"
 #include "mc6821.h"
 
-#include "fileops\fileops.h"
+#include "library\fileoperations.h"
 
 #define HASCONFIG		1
 #define HASIOWRITE		2
@@ -222,7 +222,7 @@ int InsertModule(char* modulePath)
     UnloadDll();
     load_ext_rom(modulePath);
     strncpy(Modname, modulePath, MAX_PATH);
-    PathStripPath(Modname);
+    FilePathStripPath(Modname);
     DynamicMenuCallback("", 0, 0); //Refresh Menus
     DynamicMenuCallback("", 1, 0);
     EmuState.ResetPending = 2;

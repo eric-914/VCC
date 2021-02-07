@@ -24,7 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
 
-#include "fileops\fileops.h"
+#include "library\fileoperations.h"
 
 static unsigned char* MemPages[1024];
 static unsigned short MemPageOffsets[1024];
@@ -184,7 +184,7 @@ void CopyRom(void)
   if (temp == 0)
   {	// If we can't find it use default copy
     GetModuleFileName(NULL, ExecPath, MAX_PATH);
-    PathRemoveFileSpec(ExecPath);
+    FilePathRemoveFileSpec(ExecPath);
     strcat(ExecPath, "coco3.rom");
     temp = load_int_rom(ExecPath);
   }

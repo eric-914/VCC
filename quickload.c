@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 #include "tcc1014mmu.h"
 
-#include "fileops\fileops.h"
+#include "library\fileoperations.h"
 
 static unsigned char FileType = 0;
 static unsigned short FileLenth = 0;
@@ -59,7 +59,7 @@ unsigned char QuickLoad(char* binFileName)
     return(3);				//Not enough memory
   }
 
-  strcpy(Extension, PathFindExtension(binFileName));
+  strcpy(Extension, FilePathFindExtension(binFileName));
   _strlwr(Extension);
 
   if ((strcmp(Extension, ".rom") == 0) | (strcmp(Extension, ".ccc") == 0) | (strcmp(Extension, "*.pak") == 0))

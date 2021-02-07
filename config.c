@@ -37,10 +37,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "Cassette.h"
 #include "shlobj.h"
 
-#include "fileops\fileops.h"
-
 #include "library\commandline.h"
 #include "library\configdef.h"
+#include "library\fileoperations.h"
 #include "library\joystickinput.h"
 
 using namespace std;
@@ -167,7 +166,7 @@ void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 
   LoadString(NULL, IDS_APP_TITLE, AppName, MAX_LOADSTRING);
   GetModuleFileName(NULL, ExecDirectory, MAX_PATH);
-  PathRemoveFileSpec(ExecDirectory);
+  FilePathRemoveFileSpec(ExecDirectory);
 
   if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, AppDataPath))) {
     OutputDebugString(AppDataPath);
@@ -220,55 +219,55 @@ unsigned char WriteIniFile(void)
   POINT tp = GetCurWindowSize();
   CurrentConfig.Resize = 1;
   GetCurrentModule(CurrentConfig.ModulePath);
-  ValidatePath(CurrentConfig.ModulePath);
-  ValidatePath(CurrentConfig.ExternalBasicImage);
+  FileValidatePath(CurrentConfig.ModulePath);
+  FileValidatePath(CurrentConfig.ExternalBasicImage);
 
   WritePrivateProfileString("Version", "Release", AppName, IniFilePath);
-  WritePrivateProfileInt("CPU", "DoubleSpeedClock", CurrentConfig.CPUMultiplyer, IniFilePath);
-  WritePrivateProfileInt("CPU", "FrameSkip", CurrentConfig.FrameSkip, IniFilePath);
-  WritePrivateProfileInt("CPU", "Throttle", CurrentConfig.SpeedThrottle, IniFilePath);
-  WritePrivateProfileInt("CPU", "CpuType", CurrentConfig.CpuType, IniFilePath);
-  WritePrivateProfileInt("CPU", "MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
+  FileWritePrivateProfileInt("CPU", "DoubleSpeedClock", CurrentConfig.CPUMultiplyer, IniFilePath);
+  FileWritePrivateProfileInt("CPU", "FrameSkip", CurrentConfig.FrameSkip, IniFilePath);
+  FileWritePrivateProfileInt("CPU", "Throttle", CurrentConfig.SpeedThrottle, IniFilePath);
+  FileWritePrivateProfileInt("CPU", "CpuType", CurrentConfig.CpuType, IniFilePath);
+  FileWritePrivateProfileInt("CPU", "MaxOverClock", CurrentConfig.MaxOverclock, IniFilePath);
 
   WritePrivateProfileString("Audio", "SndCard", CurrentConfig.SoundCardName, IniFilePath);
-  WritePrivateProfileInt("Audio", "Rate", CurrentConfig.AudioRate, IniFilePath);
+  FileWritePrivateProfileInt("Audio", "Rate", CurrentConfig.AudioRate, IniFilePath);
 
-  WritePrivateProfileInt("Video", "MonitorType", CurrentConfig.MonitorType, IniFilePath);
-  WritePrivateProfileInt("Video", "PaletteType", CurrentConfig.PaletteType, IniFilePath);
-  WritePrivateProfileInt("Video", "ScanLines", CurrentConfig.ScanLines, IniFilePath);
-  WritePrivateProfileInt("Video", "AllowResize", CurrentConfig.Resize, IniFilePath);
-  WritePrivateProfileInt("Video", "ForceAspect", CurrentConfig.Aspect, IniFilePath);
-  WritePrivateProfileInt("Video", "RememberSize", CurrentConfig.RememberSize, IniFilePath);
-  WritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
-  WritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
+  FileWritePrivateProfileInt("Video", "MonitorType", CurrentConfig.MonitorType, IniFilePath);
+  FileWritePrivateProfileInt("Video", "PaletteType", CurrentConfig.PaletteType, IniFilePath);
+  FileWritePrivateProfileInt("Video", "ScanLines", CurrentConfig.ScanLines, IniFilePath);
+  FileWritePrivateProfileInt("Video", "AllowResize", CurrentConfig.Resize, IniFilePath);
+  FileWritePrivateProfileInt("Video", "ForceAspect", CurrentConfig.Aspect, IniFilePath);
+  FileWritePrivateProfileInt("Video", "RememberSize", CurrentConfig.RememberSize, IniFilePath);
+  FileWritePrivateProfileInt("Video", "WindowSizeX", tp.x, IniFilePath);
+  FileWritePrivateProfileInt("Video", "WindowSizeY", tp.y, IniFilePath);
 
-  WritePrivateProfileInt("Memory", "RamSize", CurrentConfig.RamSize, IniFilePath);
+  FileWritePrivateProfileInt("Memory", "RamSize", CurrentConfig.RamSize, IniFilePath);
   WritePrivateProfileString("Memory", "ExternalBasicImage", CurrentConfig.ExternalBasicImage, IniFilePath);
 
-  WritePrivateProfileInt("Misc", "AutoStart", CurrentConfig.AutoStart, IniFilePath);
-  WritePrivateProfileInt("Misc", "CartAutoStart", CurrentConfig.CartAutoStart, IniFilePath);
-  WritePrivateProfileInt("Misc", "KeyMapIndex", CurrentConfig.KeyMap, IniFilePath);
+  FileWritePrivateProfileInt("Misc", "AutoStart", CurrentConfig.AutoStart, IniFilePath);
+  FileWritePrivateProfileInt("Misc", "CartAutoStart", CurrentConfig.CartAutoStart, IniFilePath);
+  FileWritePrivateProfileInt("Misc", "KeyMapIndex", CurrentConfig.KeyMap, IniFilePath);
 
   WritePrivateProfileString("Module", "OnBoot", CurrentConfig.ModulePath, IniFilePath);
 
-  WritePrivateProfileInt("LeftJoyStick", "UseMouse", Left.UseMouse, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "Left", Left.Left, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "Right", Left.Right, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "Up", Left.Up, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "Down", Left.Down, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "Fire1", Left.Fire1, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "Fire2", Left.Fire2, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "DiDevice", Left.DiDevice, IniFilePath);
-  WritePrivateProfileInt("LeftJoyStick", "HiResDevice", Left.HiRes, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "UseMouse", Right.UseMouse, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "Left", Right.Left, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "Right", Right.Right, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "Up", Right.Up, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "Down", Right.Down, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "Fire1", Right.Fire1, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "Fire2", Right.Fire2, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "DiDevice", Right.DiDevice, IniFilePath);
-  WritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "UseMouse", Left.UseMouse, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "Left", Left.Left, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "Right", Left.Right, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "Up", Left.Up, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "Down", Left.Down, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "Fire1", Left.Fire1, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "Fire2", Left.Fire2, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "DiDevice", Left.DiDevice, IniFilePath);
+  FileWritePrivateProfileInt("LeftJoyStick", "HiResDevice", Left.HiRes, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "UseMouse", Right.UseMouse, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "Left", Right.Left, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "Right", Right.Right, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "Up", Right.Up, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "Down", Right.Down, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "Fire1", Right.Fire1, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "Fire2", Right.Fire2, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "DiDevice", Right.DiDevice, IniFilePath);
+  FileWritePrivateProfileInt("RightJoyStick", "HiResDevice", Right.HiRes, IniFilePath);
 
   //  Flush inifile
   WritePrivateProfileString(NULL, NULL, NULL, IniFilePath);
@@ -317,8 +316,8 @@ unsigned char ReadIniFile(void)
 
   vccKeyboardBuildRuntimeTable((keyboardlayout_e)CurrentConfig.KeyMap);
 
-  CheckPath(CurrentConfig.ModulePath);
-  CheckPath(CurrentConfig.ExternalBasicImage);
+  FileCheckPath(CurrentConfig.ModulePath);
+  FileCheckPath(CurrentConfig.ExternalBasicImage);
 
   Left.UseMouse = GetPrivateProfileInt("LeftJoyStick", "UseMouse", 1, IniFilePath);
   Left.Left = GetPrivateProfileInt("LeftJoyStick", "Left", 75, IniFilePath);
@@ -1210,7 +1209,7 @@ void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode)
   SendDlgItemMessage(hDlgTape, IDC_TCOUNT, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
   SendDlgItemMessage(hDlgTape, IDC_MODE, WM_SETTEXT, strlen(Tmodes[Tmode]), (LPARAM)(LPCSTR)Tmodes[Tmode]);
   GetTapeName(TapeFileName);
-  PathStripPath(TapeFileName);
+  FilePathStripPath(TapeFileName);
   SendDlgItemMessage(hDlgTape, IDC_TAPEFILE, WM_SETTEXT, strlen(TapeFileName), (LPARAM)(LPCSTR)TapeFileName);
 
   switch (Tmode)

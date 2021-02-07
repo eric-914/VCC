@@ -48,9 +48,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 
-#include "fileops\fileops.h"
-
 #include "library\commandline.h"
+#include "library\fileoperations.h"
 #include "library\joystickinput.h"
 
 static HANDLE hout = NULL;
@@ -115,7 +114,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
   {
     strcpy(QuickLoadFile, CmdArg.QLoadFile);
     strcpy(temp1, CmdArg.QLoadFile);
-    PathStripPath(temp1);
+    FilePathStripPath(temp1);
     _strlwr(temp1);
     temp1[0] = toupper(temp1[0]);
     strcat(temp1, temp2);
