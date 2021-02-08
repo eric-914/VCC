@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "throttle.h"
 #include "audio.h"
-#include "defines.h"
 
 #include "library/defines.h"
 

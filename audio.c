@@ -19,7 +19,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <dsound.h>
 #include <stdio.h>
 
-#include "defines.h"
 #include "config.h"
 #include "coco3.h"
 #include "audio.h"

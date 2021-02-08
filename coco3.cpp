@@ -21,7 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <math.h>
 
 #include "windows.h"
-#include "defines.h"
+#include "cpudef.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "mc6821.h"

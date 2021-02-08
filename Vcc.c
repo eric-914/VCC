@@ -74,12 +74,14 @@ void LoadIniFile(void);
 void SaveConfig(void);
 unsigned __stdcall EmuLoop(void*);
 unsigned __stdcall CartLoad(void*);
+
 void (*CPUInit)(void) = NULL;
 int  (*CPUExec)(int) = NULL;
 void (*CPUReset)(void) = NULL;
 void (*CPUAssertInterupt)(unsigned char, unsigned char) = NULL;
 void (*CPUDeAssertInterupt)(unsigned char) = NULL;
 void (*CPUForcePC)(unsigned short) = NULL;
+
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);

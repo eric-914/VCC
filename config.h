@@ -24,26 +24,30 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/systemstate.h"
 
 using namespace std;
+
+LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
+
 void LoadConfig(SystemState*, CmdLineArguments cmdArg);
+
+char* AppDirectory();
+char* BasicRomName(void);
+
+void GetIniFilePath(char*);
+void SetIniFilePath(char*);
+
+int GetKeyboardLayout();
+int GetPaletteType();
+int GetRememberSize();
+
+POINT GetIniWindowSize();
+void SetWindowSize(POINT);
+
 unsigned char WriteIniFile(void);
 unsigned char ReadIniFile(void);
-char* BasicRomName(void);
-void GetIniFilePath(char*);
+
 void UpdateConfig(void);
 void UpdateSoundBar(unsigned short, unsigned short);
 void UpdateTapeCounter(unsigned int, unsigned char);
-int GetKeyboardLayout();
-void SetWindowSize(POINT);
-
-void SetIniFilePath(char*);
-char* AppDirectory();
-
-int GetPaletteType();
-POINT GetIniWindowSize();
-int GetRememberSize();
-//void SetConfigPath(int, string);
-
-LRESULT CALLBACK	Config(HWND, UINT, WPARAM, LPARAM);
 
 void DecreaseOverclockSpeed();
 void IncreaseOverclockSpeed();

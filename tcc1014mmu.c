@@ -18,7 +18,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
-#include "defines.h"
 #include "tcc1014mmu.h"
 #include "iobus.h"
 #include "config.h"

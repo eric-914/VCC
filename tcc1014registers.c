@@ -18,7 +18,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
-#include "defines.h"
+#include "cpudef.h"
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
 #include "coco3.h"

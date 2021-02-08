@@ -19,12 +19,11 @@ This file is part of VCC (Virtual Color Computer).
 #define DIRECTINPUT_VERSION 0x0800
 
 #include <windows.h>
-#include <Richedit.h>
+#include <richedit.h>
 #include <iostream>
 #include <direct.h>
 #include <assert.h>
 
-#include "defines.h"
 #include "resource.h"
 #include "config.h"
 #include "tcc1014graphics.h"
@@ -34,7 +33,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "vcc.h"
 #include "DirectDrawInterface.h"
 #include "keyboard.h"
-#include "Cassette.h"
+#include "cassette.h"
 #include "shlobj.h"
 
 #include "library\commandline.h"
@@ -49,6 +48,9 @@ using namespace std;
 //
 unsigned char XY2Disp(unsigned char, unsigned char);
 void Disp2XY(unsigned char*, unsigned char*, unsigned char);
+unsigned char TranslateDisp2Scan(LRESULT x);
+unsigned char TranslateScan2Disp(int x);
+void buildTransDisp2ScanTable();
 
 int SelectFile(char*);
 void RefreshJoystickStatus(void);
@@ -68,12 +70,12 @@ LRESULT CALLBACK Paths(HWND, UINT, WPARAM, LPARAM);
 //
 //	global variables
 //
-static unsigned short int	Ramchoice[4] = { IDC_128K,IDC_512K,IDC_2M,IDC_8M };
-static unsigned int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD,IDC_LEFTTHIRES,IDC_LEFTCCMAX };
-static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD,IDC_RIGHTTHRES,IDC_RIGHTCCMAX };
-static unsigned short int	Cpuchoice[2] = { IDC_6809,IDC_6309 };
-static unsigned short int	Monchoice[2] = { IDC_COMPOSITE,IDC_RGB };
-static unsigned short int PaletteChoice[2] = { IDC_ORG_PALETTE,IDC_UPD_PALETTE };
+static unsigned short int	Ramchoice[4] = { IDC_128K, IDC_512K, IDC_2M, IDC_8M };
+static unsigned int	LeftJoystickEmulation[3] = { IDC_LEFTSTANDARD, IDC_LEFTTHIRES, IDC_LEFTCCMAX };
+static unsigned int	RightJoystickEmulation[3] = { IDC_RIGHTSTANDARD, IDC_RIGHTTHRES, IDC_RIGHTCCMAX };
+static unsigned short int	Cpuchoice[2] = { IDC_6809, IDC_6309 };
+static unsigned short int	Monchoice[2] = { IDC_COMPOSITE, IDC_RGB };
+static unsigned short int PaletteChoice[2] = { IDC_ORG_PALETTE, IDC_UPD_PALETTE };
 static HICON CpuIcons[2], MonIcons[2], JoystickIcons[4];
 static unsigned char temp = 0, temp2 = 0;
 static char IniFileName[] = "Vcc.ini";
@@ -123,39 +125,6 @@ unsigned char _TranslateScan2Disp[SCAN_TRANS_COUNT] = { 0,1,2,3,4,5,6,7,8,9,10,1
 #define TABS 8
 
 static HWND g_hWndConfig[TABS]; // Moved this outside the initialization function so that other functions could access the window handles when necessary.
-
-unsigned char TranslateDisp2Scan(LRESULT x)
-{
-  assert(x >= 0 && x < SCAN_TRANS_COUNT);
-
-  return _TranslateDisp2Scan[x];
-}
-
-unsigned char TranslateScan2Disp(int x)
-{
-  assert(x >= 0 && x < SCAN_TRANS_COUNT);
-
-  return _TranslateScan2Disp[x];
-}
-
-void buildTransDisp2ScanTable()
-{
-  for (int Index = 0; Index < SCAN_TRANS_COUNT; Index++)
-  {
-    for (int Index2 = SCAN_TRANS_COUNT - 1; Index2 >= 0; Index2--)
-    {
-      if (Index2 == _TranslateScan2Disp[Index])
-      {
-        _TranslateDisp2Scan[Index2] = (unsigned char)Index;
-      }
-    }
-  }
-
-  _TranslateDisp2Scan[0] = 0;
-
-  // Left and Right Shift
-  _TranslateDisp2Scan[51] = DIK_LSHIFT;
-}
 
 void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 {
@@ -371,6 +340,167 @@ char* BasicRomName(void)
   return(CurrentConfig.ExternalBasicImage);
 }
 
+void GetIniFilePath(char* path)
+{
+  strcpy(path, IniFilePath);
+}
+
+void SetIniFilePath(char* path)
+{
+  //  Path must be to an existing ini file
+  strcpy(IniFilePath, path);
+}
+
+char* AppDirectory()
+{
+  // This only works after LoadConfig has been called
+  return AppDataPath;
+}
+
+void UpdateConfig(void)
+{
+  SetPaletteType();
+  SetResize(CurrentConfig.Resize);
+  SetAspect(CurrentConfig.Aspect);
+  SetScanLines(CurrentConfig.ScanLines);
+  SetFrameSkip(CurrentConfig.FrameSkip);
+  SetAutoStart(CurrentConfig.AutoStart);
+  SetSpeedThrottle(CurrentConfig.SpeedThrottle);
+  SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
+  SetRamSize(CurrentConfig.RamSize);
+  SetCpuType(CurrentConfig.CpuType);
+  SetMonitorType(CurrentConfig.MonitorType);
+  SetCartAutoStart(CurrentConfig.CartAutoStart);
+
+  if (CurrentConfig.RebootNow) {
+    DoReboot();
+  }
+
+  CurrentConfig.RebootNow = 0;
+}
+
+/**
+ * Increase the overclock speed, as seen after a POKE 65497,0.
+ * Valid values are [2,100].
+ */
+void IncreaseOverclockSpeed()
+{
+  if (TempConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock)
+  {
+    return;
+  }
+
+  TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer + 1);
+
+  // Send updates to the dialog if it's open.
+  if (EmuState.ConfigDialog != NULL)
+  {
+    HWND hDlg = g_hWndConfig[1];
+    SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+    sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+    SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+  }
+
+  CurrentConfig = TempConfig;
+  EmuState.ResetPending = 4; // Without this, changing the config does nothing.
+}
+
+/**
+ * Decrease the overclock speed, as seen after a POKE 65497,0.
+ *
+ * Setting this value to 0 will make the emulator pause.  Hence the minimum of 2.
+ */
+void DecreaseOverclockSpeed()
+{
+  if (TempConfig.CPUMultiplyer == 2)
+  {
+    return;
+  }
+
+  TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer - 1);
+
+  // Send updates to the dialog if it's open.
+  if (EmuState.ConfigDialog != NULL)
+  {
+    HWND hDlg = g_hWndConfig[1];
+    SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
+    sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
+    SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+  }
+
+  CurrentConfig = TempConfig;
+  EmuState.ResetPending = 4;
+}
+
+void UpdateSoundBar(unsigned short left, unsigned short right)
+{
+  if (hDlgBar == NULL) {
+    return;
+  }
+
+  SendDlgItemMessage(hDlgBar, IDC_PROGRESSLEFT, PBM_SETPOS, left >> 8, 0);
+  SendDlgItemMessage(hDlgBar, IDC_PROGRESSRIGHT, PBM_SETPOS, right >> 8, 0);
+}
+
+void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode)
+{
+  if (hDlgTape == NULL) {
+    return;
+  }
+
+  TapeCounter = counter;
+  Tmode = tapeMode;
+  sprintf(OutBuffer, "%i", TapeCounter);
+  SendDlgItemMessage(hDlgTape, IDC_TCOUNT, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
+  SendDlgItemMessage(hDlgTape, IDC_MODE, WM_SETTEXT, strlen(Tmodes[Tmode]), (LPARAM)(LPCSTR)Tmodes[Tmode]);
+  GetTapeName(TapeFileName);
+  FilePathStripPath(TapeFileName);
+  SendDlgItemMessage(hDlgTape, IDC_TAPEFILE, WM_SETTEXT, strlen(TapeFileName), (LPARAM)(LPCSTR)TapeFileName);
+
+  switch (Tmode)
+  {
+  case REC:
+    SendDlgItemMessage(hDlgTape, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0xAF, 0, 0));
+    break;
+
+  case PLAY:
+    SendDlgItemMessage(hDlgTape, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0, 0xAF, 0));
+    break;
+
+  default:
+    SendDlgItemMessage(hDlgTape, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0, 0, 0));
+    break;
+  }
+}
+
+int GetKeyboardLayout() {
+  return(CurrentConfig.KeyMap);
+}
+
+int GetPaletteType() {
+  return(CurrentConfig.PaletteType);
+}
+
+int GetRememberSize() {
+  return((int)CurrentConfig.RememberSize);
+}
+
+void SetWindowSize(POINT p) {
+  int width = p.x + 16;
+  int height = p.y + 81;
+  HWND handle = GetActiveWindow();
+  ::SetWindowPos(handle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+}
+
+POINT GetIniWindowSize() {
+  POINT out;
+
+  out.x = CurrentConfig.WindowSizeX;
+  out.y = CurrentConfig.WindowSizeY;
+
+  return(out);
+}
+
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   static char TabTitles[TABS][10] = { "Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger" };
@@ -434,10 +564,10 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
       hDlgBar = NULL;
       hDlgTape = NULL;
       EmuState.ResetPending = 4;
-      if ((CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType))
+      if ((CurrentConfig.RamSize != TempConfig.RamSize) || (CurrentConfig.CpuType != TempConfig.CpuType))
         EmuState.ResetPending = 2;
 
-      if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
+      if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) || (CurrentConfig.AudioRate != TempConfig.AudioRate))
         SoundInit(EmuState.WindowHandle, SoundCards[TempConfig.SndOutDev].Guid, TempConfig.AudioRate);
 
       CurrentConfig = TempConfig;
@@ -464,9 +594,9 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDAPPLY:
       EmuState.ResetPending = 4;
 
-      if ((CurrentConfig.RamSize != TempConfig.RamSize) | (CurrentConfig.CpuType != TempConfig.CpuType))
+      if ((CurrentConfig.RamSize != TempConfig.RamSize) || (CurrentConfig.CpuType != TempConfig.CpuType))
         EmuState.ResetPending = 2;
-      if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) | (CurrentConfig.AudioRate != TempConfig.AudioRate))
+      if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) || (CurrentConfig.AudioRate != TempConfig.AudioRate))
         SoundInit(EmuState.WindowHandle, SoundCards[TempConfig.SndOutDev].Guid, TempConfig.AudioRate);
 
       CurrentConfig = TempConfig;
@@ -498,97 +628,6 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
   }
 
   return FALSE;
-}
-
-void GetIniFilePath(char* path)
-{
-  strcpy(path, IniFilePath);
-}
-
-void SetIniFilePath(char* path)
-{
-  //  Path must be to an existing ini file
-  strcpy(IniFilePath, path);
-}
-
-char* AppDirectory()
-{
-  // This only works after LoadConfig has been called
-  return AppDataPath;
-}
-
-void UpdateConfig(void)
-{
-  SetPaletteType();
-  SetResize(CurrentConfig.Resize);
-  SetAspect(CurrentConfig.Aspect);
-  SetScanLines(CurrentConfig.ScanLines);
-  SetFrameSkip(CurrentConfig.FrameSkip);
-  SetAutoStart(CurrentConfig.AutoStart);
-  SetSpeedThrottle(CurrentConfig.SpeedThrottle);
-  SetCPUMultiplyer(CurrentConfig.CPUMultiplyer);
-  SetRamSize(CurrentConfig.RamSize);
-  SetCpuType(CurrentConfig.CpuType);
-  SetMonitorType(CurrentConfig.MonitorType);
-  SetCartAutoStart(CurrentConfig.CartAutoStart);
-
-  if (CurrentConfig.RebootNow)
-    DoReboot();
-
-  CurrentConfig.RebootNow = 0;
-}
-
-/**
- * Increase the overclock speed, as seen after a POKE 65497,0.
- * Valid values are [2,100].
- */
-void IncreaseOverclockSpeed()
-{
-  if (TempConfig.CPUMultiplyer >= CurrentConfig.MaxOverclock)
-  {
-    return;
-  }
-
-  TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer + 1);
-
-  // Send updates to the dialog if it's open.
-  if (EmuState.ConfigDialog != NULL)
-  {
-    HWND hDlg = g_hWndConfig[1];
-    SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
-    sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
-    SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
-  }
-
-  CurrentConfig = TempConfig;
-  EmuState.ResetPending = 4; // Without this, changing the config does nothing.
-}
-
-/**
- * Decrease the overclock speed, as seen after a POKE 65497,0.
- *
- * Setting this value to 0 will make the emulator pause.  Hence the minimum of 2.
- */
-void DecreaseOverclockSpeed()
-{
-  if (TempConfig.CPUMultiplyer == 2)
-  {
-    return;
-  }
-
-  TempConfig.CPUMultiplyer = (unsigned char)(TempConfig.CPUMultiplyer - 1);
-
-  // Send updates to the dialog if it's open.
-  if (EmuState.ConfigDialog != NULL)
-  {
-    HWND hDlg = g_hWndConfig[1];
-    SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
-    sprintf(OutBuffer, "%2.3f Mhz", (float)TempConfig.CPUMultiplyer * 0.894);
-    SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
-  }
-
-  CurrentConfig = TempConfig;
-  EmuState.ResetPending = 4;
 }
 
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1110,124 +1149,6 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
   return(0);
 }
 
-unsigned char XY2Disp(unsigned char row, unsigned char column)
-{
-  switch (row)
-  {
-  case 0:
-    return(0);
-
-  case 1:
-    return(1 + column);
-
-  case 2:
-    return(9 + column);
-
-  case 4:
-    return(17 + column);
-
-  case 8:
-    return (25 + column);
-
-  case 16:
-    return(33 + column);
-
-  case 32:
-    return (41 + column);
-
-  case 64:
-    return (49 + column);
-
-  default:
-    return (0);
-  }
-}
-
-void Disp2XY(unsigned char* column, unsigned char* row, unsigned char display)
-{
-  unsigned char temp = 0;
-
-  if (display == 0)
-  {
-    column = 0;
-    row = 0;
-    return;
-  }
-
-  display -= 1;
-  temp = display & 56;
-  temp = temp >> 3;
-  *row = 1 << temp;
-  *column = display & 7;
-}
-
-void RefreshJoystickStatus(void)
-{
-  unsigned char Index = 0;
-  bool Temp = false;
-
-  NumberofJoysticks = EnumerateJoysticks();
-
-  for (Index = 0;Index < NumberofJoysticks;Index++)
-    Temp = InitJoyStick(Index);
-
-  if (Right.DiDevice > (NumberofJoysticks - 1))
-    Right.DiDevice = 0;
-
-  if (Left.DiDevice > (NumberofJoysticks - 1))
-    Left.DiDevice = 0;
-
-  SetStickNumbers(Left.DiDevice, Right.DiDevice);
-
-  if (NumberofJoysticks == 0)	//Use Mouse input if no Joysticks present
-  {
-    if (Left.UseMouse == 3)
-      Left.UseMouse = 1;
-
-    if (Right.UseMouse == 3)
-      Right.UseMouse = 1;
-  }
-}
-
-void UpdateSoundBar(unsigned short left, unsigned short right)
-{
-  if (hDlgBar == NULL)
-    return;
-
-  SendDlgItemMessage(hDlgBar, IDC_PROGRESSLEFT, PBM_SETPOS, left >> 8, 0);
-  SendDlgItemMessage(hDlgBar, IDC_PROGRESSRIGHT, PBM_SETPOS, right >> 8, 0);
-}
-
-void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode)
-{
-  if (hDlgTape == NULL)
-    return;
-
-  TapeCounter = counter;
-  Tmode = tapeMode;
-  sprintf(OutBuffer, "%i", TapeCounter);
-  SendDlgItemMessage(hDlgTape, IDC_TCOUNT, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
-  SendDlgItemMessage(hDlgTape, IDC_MODE, WM_SETTEXT, strlen(Tmodes[Tmode]), (LPARAM)(LPCSTR)Tmodes[Tmode]);
-  GetTapeName(TapeFileName);
-  FilePathStripPath(TapeFileName);
-  SendDlgItemMessage(hDlgTape, IDC_TAPEFILE, WM_SETTEXT, strlen(TapeFileName), (LPARAM)(LPCSTR)TapeFileName);
-
-  switch (Tmode)
-  {
-  case REC:
-    SendDlgItemMessage(hDlgTape, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0xAF, 0, 0));
-    break;
-
-  case PLAY:
-    SendDlgItemMessage(hDlgTape, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0, 0xAF, 0));
-    break;
-
-  default:
-    SendDlgItemMessage(hDlgTape, IDC_MODE, EM_SETBKGNDCOLOR, 0, (LPARAM)RGB(0, 0, 0));
-    break;
-  }
-}
-
 LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   switch (message)
@@ -1324,30 +1245,114 @@ int SelectFile(char* filename)
   return(1);
 }
 
-void SetWindowSize(POINT p) {
-  int width = p.x + 16;
-  int height = p.y + 81;
-  HWND handle = GetActiveWindow();
-  ::SetWindowPos(handle, 0, 0, 0, width, height, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+unsigned char XY2Disp(unsigned char row, unsigned char column)
+{
+  switch (row)
+  {
+  case 0:
+    return(0);
+
+  case 1:
+    return(1 + column);
+
+  case 2:
+    return(9 + column);
+
+  case 4:
+    return(17 + column);
+
+  case 8:
+    return (25 + column);
+
+  case 16:
+    return(33 + column);
+
+  case 32:
+    return (41 + column);
+
+  case 64:
+    return (49 + column);
+
+  default:
+    return (0);
+  }
 }
 
-int GetKeyboardLayout() {
-  return(CurrentConfig.KeyMap);
+void Disp2XY(unsigned char* column, unsigned char* row, unsigned char display)
+{
+  unsigned char temp = 0;
+
+  if (display == 0)
+  {
+    column = 0;
+    row = 0;
+    return;
+  }
+
+  display -= 1;
+  temp = display & 56;
+  temp = temp >> 3;
+  *row = 1 << temp;
+  *column = display & 7;
 }
 
-int GetPaletteType() {
-  return(CurrentConfig.PaletteType);
+void RefreshJoystickStatus(void)
+{
+  unsigned char Index = 0;
+  bool Temp = false;
+
+  NumberofJoysticks = EnumerateJoysticks();
+
+  for (Index = 0;Index < NumberofJoysticks;Index++)
+    Temp = InitJoyStick(Index);
+
+  if (Right.DiDevice > (NumberofJoysticks - 1))
+    Right.DiDevice = 0;
+
+  if (Left.DiDevice > (NumberofJoysticks - 1))
+    Left.DiDevice = 0;
+
+  SetStickNumbers(Left.DiDevice, Right.DiDevice);
+
+  if (NumberofJoysticks == 0)	//Use Mouse input if no Joysticks present
+  {
+    if (Left.UseMouse == 3)
+      Left.UseMouse = 1;
+
+    if (Right.UseMouse == 3)
+      Right.UseMouse = 1;
+  }
 }
 
-int GetRememberSize() {
-  return((int)CurrentConfig.RememberSize);
+unsigned char TranslateDisp2Scan(LRESULT x)
+{
+  assert(x >= 0 && x < SCAN_TRANS_COUNT);
+
+  return _TranslateDisp2Scan[x];
 }
 
-POINT GetIniWindowSize() {
-  POINT out;
+unsigned char TranslateScan2Disp(int x)
+{
+  assert(x >= 0 && x < SCAN_TRANS_COUNT);
 
-  out.x = CurrentConfig.WindowSizeX;
-  out.y = CurrentConfig.WindowSizeY;
+  return _TranslateScan2Disp[x];
+}
 
-  return(out);
+void buildTransDisp2ScanTable()
+{
+  for (int Index = 0; Index < SCAN_TRANS_COUNT; Index++)
+  {
+    for (int Index2 = SCAN_TRANS_COUNT - 1; Index2 >= 0; Index2--)
+    {
+      if (Index2 == _TranslateScan2Disp[Index])
+      {
+        _TranslateDisp2Scan[Index2] = (unsigned char)Index;
+      }
+    }
+  }
+
+  _TranslateDisp2Scan[0] = 0;
+
+  // Left and Right Shift
+  _TranslateDisp2Scan[51] = DIK_LSHIFT;
 }

@@ -16,22 +16,11 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <windows.h>
 #include <string>
-#include <iostream>
-#include <math.h>
 
-#include "windows.h"
-#include "defines.h"
 #include "tcc1014graphics.h"
-#include "tcc1014registers.h"
-#include "mc6821.h"
-#include "pakinterface.h"
-#include "audio.h"
-#include "coco3.h"
-#include "throttle.h"
-#include "Vcc.h"
 #include "cassette.h"
-#include "DirectDrawInterface.h"
 #include "keyboard.h"
 #include "config.h"
 #include "tcc1014mmu.h"

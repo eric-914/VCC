@@ -19,7 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <stdio.h>
 
-#include "defines.h"
+#include "cpudef.h"
 #include "pakinterface.h"
 #include "tcc1014mmu.h"
 

@@ -35,7 +35,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <dinput.h>
 #include <assert.h>
 
-#include "defines.h"
 #include "keyboard.h"
 #include "mc6821.h"
 #include "tcc1014registers.h"

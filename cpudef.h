@@ -26,7 +26,5 @@ extern void (*CPUAssertInterupt)(unsigned char, unsigned char);
 extern void (*CPUDeAssertInterupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
 
-static char RateList[4][7] = { "Mute", "11025", "22050", "44100" };
-static unsigned short iRateList[4] = { 0, 11025, 22050, 44100 };
 
 #endif
