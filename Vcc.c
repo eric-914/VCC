@@ -40,6 +40,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "keyboard.h"
 #include "coco3.h"
+#include "clipboard.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "config.h"

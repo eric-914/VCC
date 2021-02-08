@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClCompile Include="Audio.c" />
     <ClCompile Include="Cassette.cpp" />
+    <ClCompile Include="clipboard.cpp" />
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
+    <ClInclude Include="clipboard.h" />
     <ClInclude Include="coco3.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="defines.h" />

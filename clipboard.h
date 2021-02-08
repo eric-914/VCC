@@ -1,5 +1,5 @@
-#ifndef __COCO3_H__
-#define __COCO3_H__
+#ifndef __CLIPBOARD_H__
+#define __CLIPBOARD_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,21 +18,16 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "library/systemstate.h"
+#include <string>
 
-void SetClockSpeed(unsigned short cycles);
-void SetLinesperScreen(unsigned char lines);
-void SetHorzInteruptState(unsigned char);
-void SetVertInteruptState(unsigned char);
-unsigned char SetSndOutMode(unsigned char);
-float RenderFrame(SystemState*);
+void PasteBASICWithNew();
+void PasteBASIC();
+void PasteText();
+void CopyText();
 
-void SetTimerInteruptState(unsigned char);
-void SetTimerClockRate(unsigned char);
-void SetInteruptTimer(unsigned short);
-void MiscReset(void);
-
-void FlipArtifacts();
-unsigned short SetAudioRate(unsigned short);
+int GetCurrentKeyMap();
+bool ClipboardEmpty();
+void PopClipboard();
+char PeekClipboard();
 
 #endif

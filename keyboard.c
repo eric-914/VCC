@@ -257,7 +257,7 @@ void _vccKeyboardUpdateRolloverTable()
 */
 void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e keyState)
 {
-  XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n", key, key, key, scanCode, scanCode);
+  XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n", key == 0 ? '0' : key, key == 0 ? '0' : key, key == 0 ? '0' : key, scanCode, scanCode);
   //If requested, abort pasting operation.
   if (scanCode == 0x01 || scanCode == 0x43 || scanCode == 0x3F) { pasting = false; OutputDebugString("ABORT PASTING!!!\n"); }
 
@@ -442,7 +442,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
     break;
   }
 
-  XTRACE("Building run-time key table for layout # : %d - %s\n", keyBoardLayout, k_keyboardLayoutNames[keyBoardLayout]);
+  //XTRACE("Building run-time key table for layout # : %d - %s\n", keyBoardLayout, k_keyboardLayoutNames[keyBoardLayout]);
 
   // copy the selected keyboard layout to the run-time table
   memset(KeyTransTable, 0, sizeof(KeyTransTable));
@@ -511,17 +511,17 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
       break;
     }
 
-    XTRACE("Key: %3d - 0x%02X (%3d) 0x%02X (%3d) - %2d %2d  %2d %2d\n",
-      Index1,
-      KeyTransTable[Index1].ScanCode1,
-      KeyTransTable[Index1].ScanCode1,
-      KeyTransTable[Index1].ScanCode2,
-      KeyTransTable[Index1].ScanCode2,
-      KeyTransTable[Index1].Row1,
-      KeyTransTable[Index1].Col1,
-      KeyTransTable[Index1].Row2,
-      KeyTransTable[Index1].Col2
-    );
+    //XTRACE("Key: %3d - 0x%02X (%3d) 0x%02X (%3d) - %2d %2d  %2d %2d\n",
+    //  Index1,
+    //  KeyTransTable[Index1].ScanCode1,
+    //  KeyTransTable[Index1].ScanCode1,
+    //  KeyTransTable[Index1].ScanCode2,
+    //  KeyTransTable[Index1].ScanCode2,
+    //  KeyTransTable[Index1].Row1,
+    //  KeyTransTable[Index1].Col1,
+    //  KeyTransTable[Index1].Row2,
+    //  KeyTransTable[Index1].Col2
+    //);
   }
 #endif
 }
