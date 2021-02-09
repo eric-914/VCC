@@ -145,7 +145,9 @@ void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 
   strcat(AppDataPath, "\\VCC");
 
-  if (_mkdir(AppDataPath) != 0) { OutputDebugString("Unable to create VCC config folder."); }
+  if (_mkdir(AppDataPath) != 0) {
+    OutputDebugString("Unable to create VCC config folder.");
+  }
 
   if (*cmdArg.IniFile) {
     GetFullPathNameA(cmdArg.IniFile, MAX_PATH, IniFilePath, 0);
@@ -251,33 +253,33 @@ unsigned char ReadIniFile(void)
   POINT p;
 
   //Loads the config structure from the hard disk
-  CurrentConfig.CPUMultiplyer = GetPrivateProfileInt("CPU", "DoubleSpeedClock", 2, IniFilePath);
-  CurrentConfig.FrameSkip = GetPrivateProfileInt("CPU", "FrameSkip", 1, IniFilePath);
-  CurrentConfig.SpeedThrottle = GetPrivateProfileInt("CPU", "Throttle", 1, IniFilePath);
-  CurrentConfig.CpuType = GetPrivateProfileInt("CPU", "CpuType", 0, IniFilePath);
-  CurrentConfig.MaxOverclock = GetPrivateProfileInt("CPU", "MaxOverClock", 227, IniFilePath);
+  CurrentConfig.CPUMultiplyer = GetProfileByte("CPU", "DoubleSpeedClock", 2);
+  CurrentConfig.FrameSkip = GetProfileByte("CPU", "FrameSkip", 1);
+  CurrentConfig.SpeedThrottle = GetProfileByte("CPU", "Throttle", 1);
+  CurrentConfig.CpuType = GetProfileByte("CPU", "CpuType", 0);
+  CurrentConfig.MaxOverclock = GetProfileShort("CPU", "MaxOverClock", 227);
 
-  CurrentConfig.AudioRate = GetPrivateProfileInt("Audio", "Rate", 3, IniFilePath);
+  CurrentConfig.AudioRate = GetProfileShort("Audio", "Rate", 3);
   GetPrivateProfileString("Audio", "SndCard", "", CurrentConfig.SoundCardName, 63, IniFilePath);
 
-  CurrentConfig.MonitorType = GetPrivateProfileInt("Video", "MonitorType", 1, IniFilePath);
-  CurrentConfig.PaletteType = GetPrivateProfileInt("Video", "PaletteType", 1, IniFilePath);
-  CurrentConfig.ScanLines = GetPrivateProfileInt("Video", "ScanLines", 0, IniFilePath);
+  CurrentConfig.MonitorType = GetProfileByte("Video", "MonitorType", 1);
+  CurrentConfig.PaletteType = GetProfileByte("Video", "PaletteType", 1);
+  CurrentConfig.ScanLines = GetProfileByte("Video", "ScanLines", 0);
 
-  CurrentConfig.Resize = GetPrivateProfileInt("Video", "AllowResize", 0, IniFilePath);
-  CurrentConfig.Aspect = GetPrivateProfileInt("Video", "ForceAspect", 0, IniFilePath);
-  CurrentConfig.RememberSize = GetPrivateProfileInt("Video", "RememberSize", 0, IniFilePath);
-  CurrentConfig.WindowSizeX = GetPrivateProfileInt("Video", "WindowSizeX", 640, IniFilePath);
-  CurrentConfig.WindowSizeY = GetPrivateProfileInt("Video", "WindowSizeY", 480, IniFilePath);
-  CurrentConfig.AutoStart = GetPrivateProfileInt("Misc", "AutoStart", 1, IniFilePath);
-  CurrentConfig.CartAutoStart = GetPrivateProfileInt("Misc", "CartAutoStart", 1, IniFilePath);
+  CurrentConfig.Resize = GetProfileByte("Video", "AllowResize", 0);
+  CurrentConfig.Aspect = GetProfileByte("Video", "ForceAspect", 0);
+  CurrentConfig.RememberSize = GetProfileShort("Video", "RememberSize", 0);
+  CurrentConfig.WindowSizeX = GetProfileShort("Video", "WindowSizeX", 640);
+  CurrentConfig.WindowSizeY = GetProfileShort("Video", "WindowSizeY", 480);
+  CurrentConfig.AutoStart = GetProfileByte("Misc", "AutoStart", 1);
+  CurrentConfig.CartAutoStart = GetProfileByte("Misc", "CartAutoStart", 1);
 
-  CurrentConfig.RamSize = GetPrivateProfileInt("Memory", "RamSize", 1, IniFilePath);
-  GetPrivateProfileString("Memory", "ExternalBasicImage", "", CurrentConfig.ExternalBasicImage, MAX_PATH, IniFilePath);
+  CurrentConfig.RamSize = GetProfileByte("Memory", "RamSize", 1);
+  GetProfileText("Memory", "ExternalBasicImage", "", CurrentConfig.ExternalBasicImage);
 
-  GetPrivateProfileString("Module", "OnBoot", "", CurrentConfig.ModulePath, MAX_PATH, IniFilePath);
+  GetProfileText("Module", "OnBoot", "", CurrentConfig.ModulePath);
 
-  CurrentConfig.KeyMap = GetPrivateProfileInt("Misc", "KeyMapIndex", 0, IniFilePath);
+  CurrentConfig.KeyMap = GetProfileByte("Misc", "KeyMapIndex", 0);
 
   if (CurrentConfig.KeyMap > 3) {
     CurrentConfig.KeyMap = 0;	//Default to DECB Mapping
@@ -288,28 +290,28 @@ unsigned char ReadIniFile(void)
   FileCheckPath(CurrentConfig.ModulePath);
   FileCheckPath(CurrentConfig.ExternalBasicImage);
 
-  Left.UseMouse = GetPrivateProfileInt("LeftJoyStick", "UseMouse", 1, IniFilePath);
-  Left.Left = GetPrivateProfileInt("LeftJoyStick", "Left", 75, IniFilePath);
-  Left.Right = GetPrivateProfileInt("LeftJoyStick", "Right", 77, IniFilePath);
-  Left.Up = GetPrivateProfileInt("LeftJoyStick", "Up", 72, IniFilePath);
-  Left.Down = GetPrivateProfileInt("LeftJoyStick", "Down", 80, IniFilePath);
-  Left.Fire1 = GetPrivateProfileInt("LeftJoyStick", "Fire1", 59, IniFilePath);
-  Left.Fire2 = GetPrivateProfileInt("LeftJoyStick", "Fire2", 60, IniFilePath);
-  Left.DiDevice = GetPrivateProfileInt("LeftJoyStick", "DiDevice", 0, IniFilePath);
-  Left.HiRes = GetPrivateProfileInt("LeftJoyStick", "HiResDevice", 0, IniFilePath);
-  Right.UseMouse = GetPrivateProfileInt("RightJoyStick", "UseMouse", 1, IniFilePath);
-  Right.Left = GetPrivateProfileInt("RightJoyStick", "Left", 75, IniFilePath);
-  Right.Right = GetPrivateProfileInt("RightJoyStick", "Right", 77, IniFilePath);
-  Right.Up = GetPrivateProfileInt("RightJoyStick", "Up", 72, IniFilePath);
-  Right.Down = GetPrivateProfileInt("RightJoyStick", "Down", 80, IniFilePath);
-  Right.Fire1 = GetPrivateProfileInt("RightJoyStick", "Fire1", 59, IniFilePath);
-  Right.Fire2 = GetPrivateProfileInt("RightJoyStick", "Fire2", 60, IniFilePath);
-  Right.DiDevice = GetPrivateProfileInt("RightJoyStick", "DiDevice", 0, IniFilePath);
-  Right.HiRes = GetPrivateProfileInt("RightJoyStick", "HiResDevice", 0, IniFilePath);
+  Left.UseMouse = GetProfileByte("LeftJoyStick", "UseMouse", 1);
+  Left.Left = GetProfileByte("LeftJoyStick", "Left", 75);
+  Left.Right = GetProfileByte("LeftJoyStick", "Right", 77);
+  Left.Up = GetProfileByte("LeftJoyStick", "Up", 72);
+  Left.Down = GetProfileByte("LeftJoyStick", "Down", 80);
+  Left.Fire1 = GetProfileByte("LeftJoyStick", "Fire1", 59);
+  Left.Fire2 = GetProfileByte("LeftJoyStick", "Fire2", 60);
+  Left.DiDevice = GetProfileByte("LeftJoyStick", "DiDevice", 0);
+  Left.HiRes = GetProfileByte("LeftJoyStick", "HiResDevice", 0);
+  Right.UseMouse = GetProfileByte("RightJoyStick", "UseMouse", 1);
+  Right.Left = GetProfileByte("RightJoyStick", "Left", 75);
+  Right.Right = GetProfileByte("RightJoyStick", "Right", 77);
+  Right.Up = GetProfileByte("RightJoyStick", "Up", 72);
+  Right.Down = GetProfileByte("RightJoyStick", "Down", 80);
+  Right.Fire1 = GetProfileByte("RightJoyStick", "Fire1", 59);
+  Right.Fire2 = GetProfileByte("RightJoyStick", "Fire2", 60);
+  Right.DiDevice = GetProfileByte("RightJoyStick", "DiDevice", 0);
+  Right.HiRes = GetProfileByte("RightJoyStick", "HiResDevice", 0);
 
-  GetPrivateProfileString("DefaultPaths", "CassPath", "", CurrentConfig.CassPath, MAX_PATH, IniFilePath);
-  GetPrivateProfileString("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath, MAX_PATH, IniFilePath);
-  GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath, MAX_PATH, IniFilePath);
+  GetProfileText("DefaultPaths", "CassPath", "", CurrentConfig.CassPath);
+  GetProfileText("DefaultPaths", "FloppyPath", "", CurrentConfig.FloppyPath);
+  GetProfileText("DefaultPaths", "COCO3ROMPath", "", CurrentConfig.COCO3ROMPath);
 
   for (Index = 0; Index < NumberOfSoundCards; Index++) {
     if (!strcmp(SoundCards[Index].CardName, CurrentConfig.SoundCardName)) {
@@ -501,6 +503,22 @@ POINT GetIniWindowSize() {
   return(out);
 }
 
+void GetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpDefault, LPSTR lpReturnedString) {
+  GetPrivateProfileString(lpAppName, lpKeyName, lpDefault, lpReturnedString, MAX_PATH, IniFilePath);
+}
+
+void SetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString) {
+  WritePrivateProfileString(lpAppName, lpKeyName, lpString, IniFilePath);
+}
+
+unsigned short GetProfileShort(LPCSTR lpAppName, LPCSTR lpKeyName, int nDefault) {
+  return GetPrivateProfileInt(lpAppName, lpKeyName, nDefault, IniFilePath);
+}
+
+unsigned char GetProfileByte(LPCSTR lpAppName, LPCSTR lpKeyName, int nDefault) {
+  return GetPrivateProfileInt(lpAppName, lpKeyName, nDefault, IniFilePath);
+}
+
 LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   static char TabTitles[TABS][10] = { "Audio","CPU","Display","Keyboard","Joysticks","Misc","Tape","BitBanger" };
@@ -594,10 +612,13 @@ LRESULT CALLBACK Config(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDAPPLY:
       EmuState.ResetPending = 4;
 
-      if ((CurrentConfig.RamSize != TempConfig.RamSize) || (CurrentConfig.CpuType != TempConfig.CpuType))
+      if ((CurrentConfig.RamSize != TempConfig.RamSize) || (CurrentConfig.CpuType != TempConfig.CpuType)) {
         EmuState.ResetPending = 2;
-      if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) || (CurrentConfig.AudioRate != TempConfig.AudioRate))
+      }
+
+      if ((CurrentConfig.SndOutDev != TempConfig.SndOutDev) || (CurrentConfig.AudioRate != TempConfig.AudioRate)) {
         SoundInit(EmuState.WindowHandle, SoundCards[TempConfig.SndOutDev].Guid, TempConfig.AudioRate);
+      }
 
       CurrentConfig = TempConfig;
 
@@ -640,11 +661,13 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
     SendDlgItemMessage(hDlg, IDC_CLOCKDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
     SendDlgItemMessage(hDlg, IDC_CLOCKSPEED, TBM_SETPOS, TRUE, TempConfig.CPUMultiplyer);
 
-    for (temp = 0; temp <= 3; temp++)
+    for (temp = 0; temp <= 3; temp++) {
       SendDlgItemMessage(hDlg, Ramchoice[temp], BM_SETCHECK, (temp == TempConfig.RamSize), 0);
+    }
 
-    for (temp = 0; temp <= 1; temp++)
+    for (temp = 0; temp <= 1; temp++) {
       SendDlgItemMessage(hDlg, Cpuchoice[temp], BM_SETCHECK, (temp == TempConfig.CpuType), 0);
+    }
 
     SendDlgItemMessage(hDlg, IDC_CPUICON, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)CpuIcons[TempConfig.CpuType]);
     break;
@@ -662,7 +685,7 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
     case IDC_512K:
     case IDC_2M:
     case IDC_8M:
-      for (temp = 0; temp <= 3; temp++)
+      for (temp = 0; temp <= 3; temp++) {
         if (LOWORD(wParam) == Ramchoice[temp])
         {
           for (temp2 = 0;temp2 <= 3;temp2++)
@@ -671,19 +694,25 @@ LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
           SendDlgItemMessage(hDlg, Ramchoice[temp], BM_SETCHECK, 1, 0);
           TempConfig.RamSize = temp;
         }
+      }
+
       break;
 
     case IDC_6809:
     case IDC_6309:
-      for (temp = 0; temp <= 1; temp++)
+      for (temp = 0; temp <= 1; temp++) {
         if (LOWORD(wParam) == Cpuchoice[temp])
         {
-          for (temp2 = 0; temp2 <= 1; temp2++)
+          for (temp2 = 0; temp2 <= 1; temp2++) {
             SendDlgItemMessage(hDlg, Cpuchoice[temp2], BM_SETCHECK, 0, 0);
+          }
+
           SendDlgItemMessage(hDlg, Cpuchoice[temp], BM_SETCHECK, 1, 0);
           TempConfig.CpuType = temp;
           SendDlgItemMessage(hDlg, IDC_CPUICON, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)CpuIcons[TempConfig.CpuType]);
         }
+      }
+
       break;
     }
 
@@ -801,15 +830,18 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     for (Index = 0;Index < NumberOfSoundCards;Index++)
       SendDlgItemMessage(hDlg, IDC_SOUNDCARD, CB_ADDSTRING, (WPARAM)0, (LPARAM)SoundCards[Index].CardName);
 
-    for (Index = 0;Index < 4;Index++)
-      SendDlgItemMessage(hDlg, IDC_RATE, CB_ADDSTRING, (WPARAM)0, (LPARAM)RateList[Index]);
+    for (Index = 0;Index < 4;Index++) {
+      SendDlgItemMessage(hDlg, IDC_RATE, CB_ADDSTRING, (WPARAM)0, (LPARAM)GetRateList(Index));
+    }
 
     SendDlgItemMessage(hDlg, IDC_RATE, CB_SETCURSEL, (WPARAM)TempConfig.AudioRate, (LPARAM)0);
     TempConfig.SndOutDev = 0;
 
-    for (Index = 0;Index < NumberOfSoundCards;Index++)
-      if (!strcmp(SoundCards[Index].CardName, TempConfig.SoundCardName))
+    for (Index = 0;Index < NumberOfSoundCards;Index++) {
+      if (!strcmp(SoundCards[Index].CardName, TempConfig.SoundCardName)) {
         TempConfig.SndOutDev = Index;
+      }
+    }
 
     SendDlgItemMessage(hDlg, IDC_SOUNDCARD, CB_SETCURSEL, (WPARAM)TempConfig.SndOutDev, (LPARAM)0);
 
@@ -819,6 +851,7 @@ LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     TempConfig.SndOutDev = (unsigned char)SendDlgItemMessage(hDlg, IDC_SOUNDCARD, CB_GETCURSEL, 0, 0);
     TempConfig.AudioRate = (unsigned char)SendDlgItemMessage(hDlg, IDC_RATE, CB_GETCURSEL, 0, 0);
     strcpy(TempConfig.SoundCardName, SoundCards[TempConfig.SndOutDev].CardName);
+
     break;
   }
 
@@ -842,8 +875,9 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     sprintf(OutBuffer, "%i", TempConfig.FrameSkip);
     SendDlgItemMessage(hDlg, IDC_FRAMEDISPLAY, WM_SETTEXT, strlen(OutBuffer), (LPARAM)(LPCSTR)OutBuffer);
 
-    for (temp = 0; temp <= 1; temp++)
+    for (temp = 0; temp <= 1; temp++) {
       SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, (temp == TempConfig.MonitorType), 0);
+    }
 
     if (TempConfig.MonitorType == 1) { //If RGB monitor is chosen, gray out palette choice
       isRGB = TRUE;
@@ -851,13 +885,13 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
       SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETSTATE, 1, 0);
       SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETDONTCLICK, 1, 0);
       SendDlgItemMessage(hDlg, IDC_UPD_PALETTE, BM_SETDONTCLICK, 1, 0);
-
     }
 
     SendDlgItemMessage(hDlg, IDC_MONTYPE, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)MonIcons[TempConfig.MonitorType]);
 
-    for (temp = 0; temp <= 1; temp++)
+    for (temp = 0; temp <= 1; temp++) {
       SendDlgItemMessage(hDlg, PaletteChoice[temp], BM_SETCHECK, (temp == TempConfig.PaletteType), 0);
+    }
 
     break;
 
@@ -884,7 +918,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 
     case IDC_COMPOSITE:
       isRGB = FALSE;
-      for (temp = 0; temp <= 1; temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
+      for (temp = 0; temp <= 1; temp++) { //This finds the current Monitor choice, then sets both buttons in the nested loop.
         if (LOWORD(wParam) == Monchoice[temp])
         {
           for (temp2 = 0; temp2 <= 1; temp2++)
@@ -893,6 +927,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
           SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
           TempConfig.MonitorType = temp;
         }
+      }
 
       SendDlgItemMessage(hDlg, IDC_MONTYPE, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)MonIcons[TempConfig.MonitorType]);
       SendDlgItemMessage(hDlg, IDC_ORG_PALETTE, BM_SETSTATE, 0, 0);
@@ -902,7 +937,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     case IDC_RGB:
       isRGB = TRUE;
 
-      for (temp = 0; temp <= 1; temp++) //This finds the current Monitor choice, then sets both buttons in the nested loop.
+      for (temp = 0; temp <= 1; temp++) { //This finds the current Monitor choice, then sets both buttons in the nested loop.
         if (LOWORD(wParam) == Monchoice[temp])
         {
           for (temp2 = 0; temp2 <= 1; temp2++)
@@ -911,6 +946,7 @@ LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
           SendDlgItemMessage(hDlg, Monchoice[temp], BM_SETCHECK, 1, 0);
           TempConfig.MonitorType = temp;
         }
+      }
 
       SendDlgItemMessage(hDlg, IDC_MONTYPE, STM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)MonIcons[TempConfig.MonitorType]);
       //If RGB is chosen, disable palette buttons.
@@ -1073,24 +1109,24 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
       }
     }
 
-    for (temp = 0; temp <= 3; temp++)
-    {
+    for (temp = 0; temp <= 3; temp++) {
       if (LOWORD(wParam) == RightRadios[temp])
       {
-        for (temp2 = 0; temp2 <= 3; temp2++)
+        for (temp2 = 0; temp2 <= 3; temp2++) {
           SendDlgItemMessage(hDlg, RightRadios[temp2], BM_SETCHECK, 0, 0);
+        }
 
         SendDlgItemMessage(hDlg, RightRadios[temp], BM_SETCHECK, 1, 0);
         TempRight.UseMouse = temp;
       }
     }
 
-    for (temp = 0; temp <= 2; temp++)
-    {
+    for (temp = 0; temp <= 2; temp++) {
       if (LOWORD(wParam) == LeftJoystickEmulation[temp])
       {
-        for (temp2 = 0; temp2 <= 2; temp2++)
+        for (temp2 = 0; temp2 <= 2; temp2++) {
           SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
+        }
 
         SendDlgItemMessage(hDlg, LeftJoystickEmulation[temp], BM_SETCHECK, 1, 0);
         TempLeft.HiRes = temp;
@@ -1101,8 +1137,9 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     {
       if (LOWORD(wParam) == RightJoystickEmulation[temp])
       {
-        for (temp2 = 0; temp2 <= 2; temp2++)
+        for (temp2 = 0; temp2 <= 2; temp2++) {
           SendDlgItemMessage(hDlg, RightJoystickEmulation[temp2], BM_SETCHECK, 0, 0);
+        }
 
         SendDlgItemMessage(hDlg, RightJoystickEmulation[temp], BM_SETCHECK, 1, 0);
         TempRight.HiRes = temp;
@@ -1154,8 +1191,9 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
   switch (message)
   {
   case WM_INITDIALOG:
-    if (!strlen(SerialCaptureFile))
+    if (!strlen(SerialCaptureFile)) {
       strcpy(SerialCaptureFile, "No Capture File");
+    }
 
     SendDlgItemMessage(hDlg, IDC_SERIALFILE, WM_SETTEXT, strlen(SerialCaptureFile), (LPARAM)(LPCSTR)SerialCaptureFile);
     SendDlgItemMessage(hDlg, IDC_LF, BM_SETCHECK, TextMode, 0);
@@ -1188,8 +1226,7 @@ LRESULT CALLBACK BitBanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
     case IDC_PRINTMON:
       PrtMon = (char)SendDlgItemMessage(hDlg, IDC_PRINTMON, BM_GETCHECK, 0, 0);
       SetMonState(PrtMon);
-
-    }	//End switch wParam
+    }
 
     break;
   }
@@ -1207,7 +1244,7 @@ int SelectFile(char* filename)
   char Dummy[MAX_PATH] = "";
   char TempFileName[MAX_PATH] = "";
   char CapFilePath[MAX_PATH];
-  GetPrivateProfileString("DefaultPaths", "CapFilePath", "", CapFilePath, MAX_PATH, IniFilePath);
+  GetProfileText("DefaultPaths", "CapFilePath", "", CapFilePath);
 
   memset(&ofn, 0, sizeof(ofn));
   ofn.lStructSize = sizeof(OPENFILENAME);
@@ -1298,13 +1335,13 @@ void Disp2XY(unsigned char* column, unsigned char* row, unsigned char display)
 
 void RefreshJoystickStatus(void)
 {
-  unsigned char Index = 0;
-  bool Temp = false;
+  bool temp = false;
 
   NumberofJoysticks = EnumerateJoysticks();
 
-  for (Index = 0;Index < NumberofJoysticks;Index++)
-    Temp = InitJoyStick(Index);
+  for (unsigned char index = 0; index < NumberofJoysticks; index++) {
+    temp = InitJoyStick(index);
+  }
 
   if (Right.DiDevice > (NumberofJoysticks - 1))
     Right.DiDevice = 0;
@@ -1340,12 +1377,9 @@ unsigned char TranslateScan2Disp(int x)
 
 void buildTransDisp2ScanTable()
 {
-  for (int Index = 0; Index < SCAN_TRANS_COUNT; Index++)
-  {
-    for (int Index2 = SCAN_TRANS_COUNT - 1; Index2 >= 0; Index2--)
-    {
-      if (Index2 == _TranslateScan2Disp[Index])
-      {
+  for (int Index = 0; Index < SCAN_TRANS_COUNT; Index++) {
+    for (int Index2 = SCAN_TRANS_COUNT - 1; Index2 >= 0; Index2--) {
+      if (Index2 == _TranslateScan2Disp[Index]) {
         _TranslateDisp2Scan[Index2] = (unsigned char)Index;
       }
     }

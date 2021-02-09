@@ -20,8 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 
 #include "resource.h"
-#include "coco3.h"
-#include "config.h"
+#include "coco3.h" //SetSndOutMode(0);
+#include "config.h" //UpdateTapeCounter(TapeOffset, TapeMode); //GetProfileText("DefaultPaths", "CassPath", "", CassPath);
 #include "cassette.h"
 
 #include "library/defines.h"
@@ -283,15 +283,14 @@ unsigned int LoadTape(void)
   using namespace std;
   HANDLE hr = NULL;
   OPENFILENAME ofn;
-  char IniFilePath[MAX_PATH];
+  GetProfileText("DefaultPaths", "CassPath", "", CassPath);
 
-  GetIniFilePath(IniFilePath);
-  GetPrivateProfileString("DefaultPaths", "CassPath", "", CassPath, MAX_PATH, IniFilePath);
   static unsigned char DialogOpen = 0;
   unsigned int RetVal = 0;
 
-  if (DialogOpen == 1)	//Only allow 1 dialog open 
+  if (DialogOpen == 1) {	//Only allow 1 dialog open 
     return(0);
+  }
 
   DialogOpen = 1;
   memset(&ofn, 0, sizeof(ofn));
@@ -313,8 +312,9 @@ unsigned int LoadTape(void)
 
   if (RetVal)
   {
-    if (MountTape(TapeFileName) == 0)
+    if (MountTape(TapeFileName) == 0) {
       MessageBox(NULL, "Can't open file", "Error", 0);
+    }
   }
 
   DialogOpen = 0;
@@ -324,7 +324,9 @@ unsigned int LoadTape(void)
   tmp = tmp.substr(0, idx);
   strcpy(CassPath, tmp.c_str());
 
-  if (CassPath != "") { WritePrivateProfileString("DefaultPaths", "CassPath", CassPath, IniFilePath); }
+  if (CassPath != "") { 
+    WriteProfileString("DefaultPaths", "CassPath", CassPath);
+  }
 
   return(RetVal);
 }

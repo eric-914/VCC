@@ -26,7 +26,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "library\fileoperations.h"
 
 static unsigned char FileType = 0;
-static unsigned short FileLenth = 0;
+static unsigned short FileLength = 0;
 static  short StartAddress = 0;
 static unsigned short XferAddress = 0;
 static unsigned char* MemImage = NULL;
@@ -42,14 +42,16 @@ unsigned char QuickLoad(char* binFileName)
 
   hr = CreateFile(binFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-  if (hr == INVALID_HANDLE_VALUE)
+  if (hr == INVALID_HANDLE_VALUE) {
     return(1);				//File Not Found
+  }
 
   CloseHandle(hr);
   BinImage = fopen(binFileName, "rb");
   
-  if (BinImage == NULL)
+  if (BinImage == NULL) {
     return(2);				//Can't Open File
+  }
 
   MemImage = (unsigned char*)malloc(65535);
   
@@ -62,50 +64,55 @@ unsigned char QuickLoad(char* binFileName)
   strcpy(Extension, FilePathFindExtension(binFileName));
   _strlwr(Extension);
 
-  if ((strcmp(Extension, ".rom") == 0) | (strcmp(Extension, ".ccc") == 0) | (strcmp(Extension, "*.pak") == 0))
+  if ((strcmp(Extension, ".rom") == 0) || (strcmp(Extension, ".ccc") == 0) || (strcmp(Extension, "*.pak") == 0))
   {
     InsertModule(binFileName);
+
     return(0);
   }
+
   if (strcmp(Extension, ".bin") == 0)
   {
     while (true)
     {
       temp = fread(MemImage, sizeof(char), 5, BinImage);
       FileType = MemImage[0];
-      FileLenth = (MemImage[1] << 8) + MemImage[2];
+      FileLength = (MemImage[1] << 8) + MemImage[2];
       StartAddress = (MemImage[3] << 8) + MemImage[4];
 
       switch (FileType)
       {
       case 0:
-        temp = fread(&MemImage[0], sizeof(char), FileLenth, BinImage);
+        temp = fread(&MemImage[0], sizeof(char), FileLength, BinImage);
         
-        for (MemIndex = 0;MemIndex < FileLenth;MemIndex++) //Kluge!!!
+        for (MemIndex = 0; MemIndex < FileLength; MemIndex++) { //Kluge!!!
           MemWrite8(MemImage[MemIndex], StartAddress++);
+        }
+
         break;
 
       case 255:
         XferAddress = StartAddress;
 
-        if ((XferAddress == 0) | (XferAddress > 32767) | (FileLenth != 0))
+        if ((XferAddress == 0) || (XferAddress > 32767) || (FileLength != 0))
         {
           MessageBox(NULL, ".Bin file is corrupt or invalid Transfer Address", "Error", 0);
+
           return(3);
         }
 
         fclose(BinImage);
         free(MemImage);
         CPUForcePC(XferAddress);
+
         return(0);
-        break;
 
       default:
         MessageBox(NULL, ".Bin file is corrupt or invalid", "Error", 0);
         fclose(BinImage);
         free(MemImage);
+
         return(3);
-        break;
       }
     }
   }

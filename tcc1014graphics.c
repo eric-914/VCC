@@ -77,6 +77,9 @@ static unsigned char MasterMode = 0;
 static unsigned char ColorInvert = 1;
 static unsigned char BlinkState = 1;
 
+static unsigned char Lpf[4] = { 192, 199, 225, 225 }; // #2 is really undefined but I gotta put something here.
+static unsigned char VcenterTable[4] = { 29, 23, 12, 12 };
+
 void UpdateScreen8(SystemState* systemState)
 {
   register unsigned int YStride = 0;
@@ -10107,4 +10110,12 @@ int GetGraphicsMode() {
 void FlipArtifacts() {
   if (ColorInvert == 0) { ColorInvert = 1; }
   else { ColorInvert = 0; }
+}
+
+unsigned char GetLpf(unsigned char index) {
+  return Lpf[index];
+}
+
+unsigned char GetVcenterTable(unsigned char index) {
+  return VcenterTable[index];
 }

@@ -31,7 +31,6 @@ unsigned short GetSoundStatus(void);
 
 int GetSoundCardList(SndCardList*);
 
-static char RateList[4][7] = { "Mute", "11025", "22050", "44100" };
-static unsigned short iRateList[4] = { 0, 11025, 22050, 44100 };
+const char* GetRateList(unsigned char index);
 
 #endif

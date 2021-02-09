@@ -167,10 +167,7 @@ void CopyRom(void)
 {
   char ExecPath[MAX_PATH];
   char COCO3ROMPath[MAX_PATH];
-  char IniFilePath[MAX_PATH];
-
-  GetIniFilePath(IniFilePath);
-  GetPrivateProfileString("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath, MAX_PATH, IniFilePath);
+  GetProfileText("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath);
   unsigned short temp = 0;
   
   strcat(COCO3ROMPath, "\\coco3.rom");
@@ -202,11 +199,13 @@ int load_int_rom(TCHAR filename[MAX_PATH])
   FILE* rom_handle;
   rom_handle = fopen(filename, "rb");
 
-  if (rom_handle == NULL)
+  if (rom_handle == NULL) {
     return(0);
+  }
 
-  while ((feof(rom_handle) == 0) & (index < 0x8000))
+  while ((feof(rom_handle) == 0) && (index < 0x8000)) {
     InternalRomBuffer[index++] = fgetc(rom_handle);
+  }
 
   fclose(rom_handle);
 

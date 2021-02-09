@@ -105,32 +105,38 @@ int load_ext_rom(char filename[MAX_PATH]);
 
 void PakTimer(void)
 {
-  if (HeartBeat != NULL)
+  if (HeartBeat != NULL) {
     HeartBeat();
+  }
 }
 
 void ResetBus(void)
 {
   BankedCartOffset = 0;
 
-  if (ModuleReset != NULL)
+  if (ModuleReset != NULL) {
     ModuleReset();
+  }
 }
 
 void GetModuleStatus(SystemState* systemState)
 {
-  if (ModuleStatus != NULL)
+  if (ModuleStatus != NULL) {
     ModuleStatus(systemState->StatusLine);
-  else
+  }
+  else {
     sprintf(systemState->StatusLine, "");
+  }
 }
 
 unsigned char PackPortRead(unsigned char port)
 {
-  if (PakPortRead != NULL)
+  if (PakPortRead != NULL) {
     return(PakPortRead(port));
-  else
+  }
+  else {
     return(NULL);
+  }
 }
 
 void PackPortWrite(unsigned char port, unsigned char data)
@@ -148,11 +154,13 @@ void PackPortWrite(unsigned char port, unsigned char data)
 
 unsigned char PackMem8Read(unsigned short address)
 {
-  if (PakMemRead8 != NULL)
+  if (PakMemRead8 != NULL) {
     return(PakMemRead8(address & 32767));
+  }
 
-  if (ExternalRomBuffer != NULL)
+  if (ExternalRomBuffer != NULL) {
     return(ExternalRomBuffer[(address & 32767) + BankedCartOffset]);
+  }
 
   return(0);
 }
@@ -163,8 +171,9 @@ void PackMem8Write(unsigned char port, unsigned char data)
 
 unsigned short PackAudioSample(void)
 {
-  if (ModuleAudioSample != NULL)
+  if (ModuleAudioSample != NULL) {
     return(ModuleAudioSample());
+  }
 
   return(NULL);
 }
@@ -235,8 +244,9 @@ int InsertModule(char* modulePath)
     UnloadDll();
     hinstLib = LoadLibrary(modulePath);
 
-    if (hinstLib == NULL)
+    if (hinstLib == NULL) {
       return(NOMODULE);
+    }
 
     SetCart(0);
     GetModuleName = (GETNAME)GetProcAddress(hinstLib, "ModuleName");
@@ -264,11 +274,13 @@ int InsertModule(char* modulePath)
 
     BankedCartOffset = 0;
 
-    if (DmaMemPointer != NULL)
+    if (DmaMemPointer != NULL) {
       DmaMemPointer(MemRead8, MemWrite8);
+    }
 
-    if (SetInteruptCallPointer != NULL)
+    if (SetInteruptCallPointer != NULL) {
       SetInteruptCallPointer(CPUAssertInterupt);
+    }
 
     GetModuleName(Modname, CatNumber, DynamicMenuCallback);  //Instantiate the menus from HERE!
     sprintf(Temp, "Configure %s", Modname);
@@ -431,8 +443,9 @@ void UnloadDll(void)
   ModuleAudioSample = NULL;
   ModuleReset = NULL;
   
-  if (hinstLib != NULL)
+  if (hinstLib != NULL) {
     FreeLibrary(hinstLib);
+  }
 
   hinstLib = NULL;
   DynamicMenuCallback("", 0, 0); //Refresh Menus
@@ -446,8 +459,9 @@ void GetCurrentModule(char* DefaultModule)
 
 void UpdateBusPointer(void)
 {
-  if (SetInteruptCallPointer != NULL)
+  if (SetInteruptCallPointer != NULL) {
     SetInteruptCallPointer(CPUAssertInterupt);
+  }
 }
 
 void UnloadPack(void)
@@ -475,16 +489,18 @@ int FileID(char* filename)
   char Temp[3] = "";
   DummyHandle = fopen(filename, "rb");
   
-  if (DummyHandle == NULL)
+  if (DummyHandle == NULL) {
     return(0);	//File Doesn't exist
+  }
 
   Temp[0] = fgetc(DummyHandle);
   Temp[1] = fgetc(DummyHandle);
   Temp[2] = 0;
   fclose(DummyHandle);
   
-  if (strcmp(Temp, "MZ") == 0)
+  if (strcmp(Temp, "MZ") == 0) {
     return(1);	//DLL File
+  }
 
   return(2);		//Rom Image 
 }
@@ -502,8 +518,10 @@ void DynamicMenuActivated(unsigned char menuItem)
     break;
 
   default:
-    if (ConfigModule != NULL)
+    if (ConfigModule != NULL) {
       ConfigModule(menuItem);
+    }
+
     break;
   }
 }
@@ -545,10 +563,12 @@ void RefreshDynamicMenu(void)
   static HWND hOld;
   int SubMenuIndex = 0;
 
-  if ((hMenu == NULL) | (EmuState.WindowHandle != hOld))
+  if ((hMenu == NULL) || (EmuState.WindowHandle != hOld)) {
     hMenu = GetMenu(EmuState.WindowHandle);
-  else
+  }
+  else {
     DeleteMenu(hMenu, 3, MF_BYPOSITION);
+  }
 
   hOld = EmuState.WindowHandle;
   hSubMenu[SubMenuIndex] = CreatePopupMenu();
@@ -565,8 +585,9 @@ void RefreshDynamicMenu(void)
 
   for (tempIndex = 0; tempIndex < MenuIndex; tempIndex++)
   {
-    if (strlen(MenuItem[tempIndex].MenuName) == 0)
+    if (strlen(MenuItem[tempIndex].MenuName) == 0) {
       MenuItem[tempIndex].Type = STANDALONE;
+    }
 
     //Create Menu item in title bar if no exist already
     switch (MenuItem[tempIndex].Type)

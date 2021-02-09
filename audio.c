@@ -56,6 +56,9 @@ static unsigned char AudioPause = 0;
 static SndCardList* Cards = NULL;
 BOOL CALLBACK DSEnumCallback(LPGUID, LPCSTR, LPCSTR, LPVOID);
 
+static char RateList[4][7] = { "Mute", "11025", "22050", "44100" };
+static unsigned short iRateList[4] = { 0, 11025, 22050, 44100 };
+
 int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
 {
   rate = (rate & 3);
@@ -315,4 +318,8 @@ unsigned char PauseAudio(unsigned char pause)
   }
 
   return(AudioPause);
+}
+
+const char* GetRateList(unsigned char index) {
+  return RateList[index];
 }

@@ -25,7 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 
 unsigned char port_read(unsigned short addr)
 {
-  unsigned char port = 0, temp = 0;
+  unsigned char port = 0, value = 0;
 
   port = (addr & 0xFF);
 
@@ -35,14 +35,14 @@ unsigned char port_read(unsigned short addr)
   case 1:
   case 2:
   case 3:
-    temp = pia0_read(port);	//MC6821 P.I.A  Keyboard access $FF00-$FF03
+    value = pia0_read(port);	//MC6821 P.I.A  Keyboard access $FF00-$FF03
     break;
 
   case 0x20:
   case 0x21:
   case 0x22:
   case 0x23:
-    temp = pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
+    value = pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
     break;
 
   case 0xC0:
@@ -77,7 +77,7 @@ unsigned char port_read(unsigned short addr)
   case 0xDD:
   case 0xDE:
   case 0xDF:
-    temp = sam_read(port);	//MC6883 S.A.M. address range $FFC0-$FFDF
+    value = sam_read(port);	//MC6883 S.A.M. address range $FFC0-$FFDF
     break;
 
   case 0xF0:
@@ -96,7 +96,7 @@ unsigned char port_read(unsigned short addr)
   case 0xFD:
   case 0xFE:
   case 0xFF:
-    temp = sam_read(port);	// SAM controls IRQ Vectors at $FFF0 - $FFFF	
+    value = sam_read(port);	// SAM controls IRQ Vectors at $FFF0 - $FFFF	
     break;
 
   case 0x90:					//TCC1014 G.I.M.E.
@@ -147,20 +147,19 @@ unsigned char port_read(unsigned short addr)
   case 0xBD:
   case 0xBE:
   case 0xBF:
-    temp = GimeRead(port);
+    value = GimeRead(port);
     break;
 
   default:
-    temp = PackPortRead(port);
+    value = PackPortRead(port);
   }
 
-  return(temp);
+  return(value);
 }
 
 void port_write(unsigned char data, unsigned short addr)
 {
-  unsigned char port = 0;
-  port = (addr & 0xFF);
+  unsigned char port = (addr & 0xFF);
 
   switch (port)
   {

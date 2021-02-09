@@ -21,7 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/systemstate.h"
 
 BOOL InitInstance(HINSTANCE, int);
-//BOOL InitDrawSurface(bool);
 void UnlockScreen(SystemState*);
 unsigned char LockScreen(SystemState*);
 void SetStatusBarText(char*, SystemState*);

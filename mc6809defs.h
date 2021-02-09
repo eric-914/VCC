@@ -27,28 +27,28 @@ This file is part of VCC (Virtual Color Computer).
 #define C 0
 
 // MC6809 Vector table
-#define VSWI3	0xFFF2
-#define VSWI2	0xFFF4
-#define VFIRQ	0xFFF6
-#define VIRQ	0xFFF8
-#define VSWI	0xFFFA
-#define VNMI	0xFFFC
+#define VSWI3	  0xFFF2
+#define VSWI2	  0xFFF4
+#define VFIRQ	  0xFFF6
+#define VIRQ	  0xFFF8
+#define VSWI	  0xFFFA
+#define VNMI	  0xFFFC
 #define VRESET	0xFFFE
 
 //Opcode Defs
 //Last Char (D) Direct (I) Inherent (R) Relative (M) Immediate (X) Indexed (E) extened
-#define NEG_D	0x00
-#define COM_D	0x03
-#define LSR_D	0x04
-#define ROR_D	0x06
-#define ASR_D	0x07
-#define ASL_D	0x08
-#define ROL_D	0x09
-#define DEC_D	0x0A
-#define INC_D	0x0C
-#define TST_D	0x0D
-#define JMP_D	0x0E
-#define CLR_D	0x0F
+#define NEG_D	  0x00
+#define COM_D	  0x03
+#define LSR_D	  0x04
+#define ROR_D	  0x06
+#define ASR_D	  0x07
+#define ASL_D	  0x08
+#define ROL_D	  0x09
+#define DEC_D	  0x0A
+#define INC_D	  0x0C
+#define TST_D	  0x0D
+#define JMP_D	  0x0E
+#define CLR_D	  0x0F
 
 #define Page2	  0x10
 #define	Page3	  0x11
@@ -63,22 +63,22 @@ This file is part of VCC (Virtual Color Computer).
 #define EXG_M	  0x1E		
 #define TFR_M	  0x1F
 
-#define BRA_R	0x20
-#define BRN_R	0x21
-#define BHI_R	0x22
-#define BLS_R	0x23
-#define BHS_R	0x24
-#define BLO_R	0x25
-#define BNE_R	0x26
-#define BEQ_R	0x27
-#define BVC_R	0x28
-#define BVS_R	0x29
-#define BPL_R	0x2A
-#define BMI_R	0x2B
-#define BGE_R	0x2C
-#define BLT_R	0x2D
-#define BGT_R	0x2E
-#define BLE_R	0x2F
+#define BRA_R	  0x20
+#define BRN_R	  0x21
+#define BHI_R	  0x22
+#define BLS_R	  0x23
+#define BHS_R	  0x24
+#define BLO_R	  0x25
+#define BNE_R	  0x26
+#define BEQ_R	  0x27
+#define BVC_R	  0x28
+#define BVS_R	  0x29
+#define BPL_R	  0x2A
+#define BMI_R	  0x2B
+#define BGE_R	  0x2C
+#define BLT_R	  0x2D
+#define BGT_R	  0x2E
+#define BLE_R	  0x2F
 
 #define LEAX_X	0x30
 #define LEAY_X	0x31
@@ -120,31 +120,31 @@ This file is part of VCC (Virtual Color Computer).
 #define TSTB_I	0x5D
 #define CLRB_I	0x5F
 
-#define NEG_X	0x60
-#define COM_X	0x63
-#define LSR_X	0x64
-#define ROR_X	0x66
-#define ASR_X	0x67
-#define ASL_X	0x68
-#define ROL_X	0x69
-#define DEC_X	0x6A
-#define INC_X	0x6C
-#define TST_X	0x6D
-#define	JMP_X	0x6E
-#define CLR_X	0x6F
+#define NEG_X	  0x60
+#define COM_X	  0x63
+#define LSR_X	  0x64
+#define ROR_X	  0x66
+#define ASR_X	  0x67
+#define ASL_X	  0x68
+#define ROL_X	  0x69
+#define DEC_X	  0x6A
+#define INC_X	  0x6C
+#define TST_X	  0x6D
+#define	JMP_X	  0x6E
+#define CLR_X	  0x6F
 
-#define NEG_E	0x70
-#define COM_E	0x73
-#define LSR_E	0x74
-#define ROR_E	0x76
-#define ASR_E	0x77
-#define ASL_E	0x78
-#define ROL_E	0x79
-#define DEC_E	0x7A
-#define INC_E	0x7C
-#define TST_E	0x7D
-#define	JMP_E	0x7E
-#define CLR_E	0x7F
+#define NEG_E	  0x70
+#define COM_E	  0x73
+#define LSR_E	  0x74
+#define ROR_E	  0x76
+#define ASR_E	  0x77
+#define ASL_E	  0x78
+#define ROL_E	  0x79
+#define DEC_E	  0x7A
+#define INC_E	  0x7C
+#define TST_E	  0x7D
+#define	JMP_E	  0x7E
+#define CLR_E	  0x7F
 
 #define SUBA_M	0x80
 #define CMPA_M	0x81

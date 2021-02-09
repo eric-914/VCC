@@ -61,8 +61,9 @@ int GetGraphicsMode();
 
 unsigned char SetScanLines(unsigned char);
 void SetBlinkState(unsigned char);
-static unsigned char Lpf[4] = { 192,199,225,225 }; // 2 is really undefined but I gotta put something here.
-static unsigned char VcenterTable[4] = { 29,23,12,12 };
+
+unsigned char GetLpf(unsigned char index);
+unsigned char GetVcenterTable(unsigned char index);
 
 #define MRGB	1
 #define MCMP	0
