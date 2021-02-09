@@ -23,6 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "Vcc.h"
+#include "gime.h"
 
 #include "library/defines.h"
 
@@ -33,7 +34,7 @@ static unsigned char* rom;
 static unsigned char GimeRegisters[256];
 static unsigned short VerticalOffsetRegister = 0;
 static unsigned char EnhancedFIRQFlag = 0, EnhancedIRQFlag = 0;
-static int InteruptTimer = 0;
+static int InterruptTimer = 0;
 
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
@@ -45,18 +46,6 @@ unsigned char GetInit0(unsigned char port);
 static unsigned char IRQStearing[8] = { 0,0,0,0,0,0,0,0 };
 static unsigned char FIRQStearing[8] = { 0,0,0,0,0,0,0,0 };
 static unsigned char LastIrq = 0, LastFirq = 0, temp = 0;
-
-static unsigned char KeyboardInteruptEnabled = 0;
-
-unsigned char GimeGetKeyboardInteruptState()
-{
-  return KeyboardInteruptEnabled;
-}
-
-void GimeSetKeyboardInteruptState(unsigned char state)
-{
-  KeyboardInteruptEnabled = !!state;
-}
 
 void GimeWrite(unsigned char port, unsigned char data)
 {
@@ -214,120 +203,120 @@ unsigned char GetInit0(unsigned char port)
 void SetGimeIRQStearing(unsigned char data) //92
 {
   if ((GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2))
-    GimeSetKeyboardInteruptState(1);
+    GimeSetKeyboardInterruptState(1);
   else
-    GimeSetKeyboardInteruptState(0);
+    GimeSetKeyboardInterruptState(0);
 
   if ((GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8))
-    SetVertInteruptState(1);
+    SetVertInterruptState(1);
   else
-    SetVertInteruptState(0);
+    SetVertInterruptState(0);
 
   if ((GimeRegisters[0x92] & 16) | (GimeRegisters[0x93] & 16))
-    SetHorzInteruptState(1);
+    SetHorzInterruptState(1);
   else
-    SetHorzInteruptState(0);
+    SetHorzInterruptState(0);
 
   if ((GimeRegisters[0x92] & 32) | (GimeRegisters[0x93] & 32))
-    SetTimerInteruptState(1);
+    SetTimerInterruptState(1);
   else
-    SetTimerInteruptState(0);
+    SetTimerInterruptState(0);
 }
 
 void SetGimeFIRQStearing(unsigned char data) //93
 {
   if ((GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2))
-    GimeSetKeyboardInteruptState(1);
+    GimeSetKeyboardInterruptState(1);
   else
-    GimeSetKeyboardInteruptState(0);
+    GimeSetKeyboardInterruptState(0);
 
   if ((GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8))
-    SetVertInteruptState(1);
+    SetVertInterruptState(1);
   else
-    SetVertInteruptState(0);
+    SetVertInterruptState(0);
 
   if ((GimeRegisters[0x92] & 16) | (GimeRegisters[0x93] & 16))
-    SetHorzInteruptState(1);
+    SetHorzInterruptState(1);
   else
-    SetHorzInteruptState(0);
+    SetHorzInterruptState(0);
   // Moon Patrol Demo Using Timer for FIRQ Side Scroll 
   if ((GimeRegisters[0x92] & 32) | (GimeRegisters[0x93] & 32))
-    SetTimerInteruptState(1);
+    SetTimerInterruptState(1);
   else
-    SetTimerInteruptState(0);
+    SetTimerInterruptState(0);
 }
 
 void SetTimerMSB(unsigned char data) //94
 {
   unsigned short Temp;
   Temp = ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 4095;
-  SetInteruptTimer(Temp);
+  SetInterruptTimer(Temp);
 }
 
 void SetTimerLSB(unsigned char data) //95
 {
   unsigned short Temp;
   Temp = ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 4095;
-  SetInteruptTimer(Temp);
+  SetInterruptTimer(Temp);
 }
 
-void GimeAssertKeyboardInterupt(void)
+void GimeAssertKeyboardInterrupt(void)
 {
   if (((GimeRegisters[0x93] & 2) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterupt(FIRQ, 0);
+    CPUAssertInterrupt(FIRQ, 0);
     LastFirq = LastFirq | 2;
   }
   else
     if (((GimeRegisters[0x92] & 2) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterupt(IRQ, 0);
+      CPUAssertInterrupt(IRQ, 0);
       LastIrq = LastIrq | 2;
     }
 }
 
-void GimeAssertVertInterupt(void)
+void GimeAssertVertInterrupt(void)
 {
   if (((GimeRegisters[0x93] & 8) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterupt(FIRQ, 0); //FIRQ
+    CPUAssertInterrupt(FIRQ, 0); //FIRQ
     LastFirq = LastFirq | 8;
   }
   else
     if (((GimeRegisters[0x92] & 8) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterupt(IRQ, 0); //IRQ moon patrol demo using this
+      CPUAssertInterrupt(IRQ, 0); //IRQ moon patrol demo using this
       LastIrq = LastIrq | 8;
     }
   return;
 }
 
-void GimeAssertHorzInterupt(void)
+void GimeAssertHorzInterrupt(void)
 {
   if (((GimeRegisters[0x93] & 16) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterupt(FIRQ, 0);
+    CPUAssertInterrupt(FIRQ, 0);
     LastFirq = LastFirq | 16;
   }
   else
     if (((GimeRegisters[0x92] & 16) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterupt(IRQ, 0);
+      CPUAssertInterrupt(IRQ, 0);
       LastIrq = LastIrq | 16;
     }
 }
 
-void GimeAssertTimerInterupt(void)
+void GimeAssertTimerInterrupt(void)
 {
   if (((GimeRegisters[0x93] & 32) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterupt(FIRQ, 0);
+    CPUAssertInterrupt(FIRQ, 0);
     LastFirq = LastFirq | 32;
   }
   else
     if (((GimeRegisters[0x92] & 32) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterupt(IRQ, 0);
+      CPUAssertInterrupt(IRQ, 0);
       LastIrq = LastIrq | 32;
     }
 }

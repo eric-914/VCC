@@ -121,14 +121,14 @@ static signed char stemp8;
 static unsigned int  temp32;
 static int stemp32;
 static unsigned char temp8;
-static unsigned char PendingInterupts = 0;
+static unsigned char PendingInterrupts = 0;
 static unsigned char IRQWaiter = 0;
 static unsigned char Source = 0, Dest = 0;
 static unsigned char postbyte = 0;
 static short unsigned postword = 0;
 static signed char* spostbyte = (signed char*)&postbyte;
 static signed short* spostword = (signed short*)&postword;
-static char InInterupt = 0;
+static char InInterrupt = 0;
 static int gCycleFor;
 
 static unsigned char NatEmuCycles65 = 6;
@@ -4454,7 +4454,7 @@ void Rti_I(void)
 { //3B
   setcc(MemRead8(S_REG++));
   CycleCounter += 6;
-  InInterupt = 0;
+  InInterrupt = 0;
   
   if (cc[E])
   {
@@ -7238,15 +7238,15 @@ int HD6309Exec(int CycleFor)
 
   while (CycleCounter < CycleFor) {
 
-    if (PendingInterupts)
+    if (PendingInterrupts)
     {
-      if (PendingInterupts & 4)
+      if (PendingInterrupts & 4)
         cpu_nmi();
 
-      if (PendingInterupts & 2)
+      if (PendingInterrupts & 2)
         cpu_firq();
 
-      if (PendingInterupts & 1)
+      if (PendingInterrupts & 1)
       {
         if (IRQWaiter == 0)	// This is needed to fix a subtle timming problem
           cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
@@ -7278,7 +7278,7 @@ void cpu_firq(void)
 {
   if (!cc[F])
   {
-    InInterupt = 1; //Flag to indicate FIRQ has been asserted
+    InInterrupt = 1; //Flag to indicate FIRQ has been asserted
     switch (md[FIRQMODE])
     {
     case 0:
@@ -7319,12 +7319,12 @@ void cpu_firq(void)
     }
   }
 
-  PendingInterupts = PendingInterupts & 253;
+  PendingInterrupts = PendingInterrupts & 253;
 }
 
 void cpu_irq(void)
 {
-  if (InInterupt == 1) //If FIRQ is running postpone the IRQ
+  if (InInterrupt == 1) //If FIRQ is running postpone the IRQ
     return;
 
   if ((!cc[I]))
@@ -7353,7 +7353,7 @@ void cpu_irq(void)
     cc[I] = 1;
   }
 
-  PendingInterupts = PendingInterupts & 254;
+  PendingInterrupts = PendingInterrupts & 254;
 }
 
 void cpu_nmi(void)
@@ -7381,7 +7381,7 @@ void cpu_nmi(void)
   cc[I] = 1;
   cc[F] = 1;
   PC_REG = MemRead16(VNMI);
-  PendingInterupts = PendingInterupts & 251;
+  PendingInterrupts = PendingInterrupts & 251;
 }
 
 static unsigned short CalculateEA(unsigned char postbyte)
@@ -7686,17 +7686,17 @@ unsigned char getmd(void)
   return(binmd);
 }
 
-void HD6309AssertInterupt(unsigned char Interupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
+void HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
 {
   SyncWaiting = 0;
-  PendingInterupts = PendingInterupts | (1 << (Interupt - 1));
+  PendingInterrupts = PendingInterrupts | (1 << (interrupt - 1));
   IRQWaiter = waiter;
 }
 
-void HD6309DeAssertInterupt(unsigned char Interupt)// 4 nmi 2 firq 1 irq
+void HD6309DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
 {
-  PendingInterupts = PendingInterupts & ~(1 << (Interupt - 1));
-  InInterupt = 0;
+  PendingInterrupts = PendingInterrupts & ~(1 << (interrupt - 1));
+  InInterrupt = 0;
 }
 
 void InvalidInsHandler(void)
@@ -7755,7 +7755,7 @@ unsigned char GetSorceReg(unsigned char Tmp)
 void HD6309ForcePC(unsigned short NewPC)
 {
   PC_REG = NewPC;
-  PendingInterupts = 0;
+  PendingInterrupts = 0;
   SyncWaiting = 0;
 }
 

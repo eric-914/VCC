@@ -62,7 +62,7 @@ static unsigned short (*ModuleAudioSampleCalls[MAXPAX])(void) = { NULL,NULL,NULL
 static void (*ModuleResetCalls[MAXPAX]) (void) = { NULL,NULL,NULL,NULL };
 
 //Set callbacks for the DLL to call
-static void (*SetInteruptCallPointerCalls[MAXPAX]) (ASSERTINTERUPT) = { NULL,NULL,NULL,NULL };
+static void (*SetInterruptCallPointerCalls[MAXPAX]) (ASSERTINTERRUPT) = { NULL,NULL,NULL,NULL };
 static void (*DmaMemPointerCalls[MAXPAX]) (MEMREAD8, MEMWRITE8) = { NULL,NULL,NULL,NULL };
 
 static char MenuName0[64][512], MenuName1[64][512], MenuName2[64][512], MenuName3[64][512];
@@ -221,16 +221,16 @@ extern "C"
   }
 }
 
-// This captures the Function transfer point for the CPU assert interupt 
+// This captures the Function transfer point for the CPU assert interrupt 
 extern "C"
 {
-  __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT dummy)
+  __declspec(dllexport) void AssertInterrupt(ASSERTINTERRUPT dummy)
   {
     AssertInt = dummy;
     for (temp = 0; temp < 4; temp++)
     {
-      if (SetInteruptCallPointerCalls[temp] != NULL)
-        SetInteruptCallPointerCalls[temp](AssertInt);
+      if (SetInterruptCallPointerCalls[temp] != NULL)
+        SetInterruptCallPointerCalls[temp](AssertInt);
     }
   }
 }
@@ -396,7 +396,7 @@ extern "C"
   }
 }
 
-void CPUAssertInterupt(unsigned char interrupt, unsigned char latencey)
+void CPUAssertInterrupt(unsigned char interrupt, unsigned char latencey)
 {
   AssertInt(interrupt, latencey);
 }
@@ -558,7 +558,7 @@ unsigned char MountModule(unsigned char slot, char* moduleName)
     ConfigModuleCalls[slot] = (CONFIGIT)GetProcAddress(hinstLib[slot], "ModuleConfig");
     PakPortWriteCalls[slot] = (PACKPORTWRITE)GetProcAddress(hinstLib[slot], "PackPortWrite");
     PakPortReadCalls[slot] = (PACKPORTREAD)GetProcAddress(hinstLib[slot], "PackPortRead");
-    SetInteruptCallPointerCalls[slot] = (SETINTERUPTCALLPOINTER)GetProcAddress(hinstLib[slot], "AssertInterupt");
+    SetInterruptCallPointerCalls[slot] = (SETINTERRUPTCALLPOINTER)GetProcAddress(hinstLib[slot], "AssertInterrupt");
 
     DmaMemPointerCalls[slot] = (DMAMEMPOINTERS)GetProcAddress(hinstLib[slot], "MemPointers");
     SetCartCalls[slot] = (SETCARTPOINTER)GetProcAddress(hinstLib[slot], "SetCart"); //HERE
@@ -584,8 +584,8 @@ unsigned char MountModule(unsigned char slot, char* moduleName)
     strcat(SlotLabel[slot], "  ");
     strcat(SlotLabel[slot], CatNumber[slot]);
 
-    if (SetInteruptCallPointerCalls[slot] != NULL)
-      SetInteruptCallPointerCalls[slot](AssertInt);
+    if (SetInterruptCallPointerCalls[slot] != NULL)
+      SetInterruptCallPointerCalls[slot](AssertInt);
 
     if (DmaMemPointerCalls[slot] != NULL)
       DmaMemPointerCalls[slot](MemRead8, MemWrite8);
@@ -612,7 +612,7 @@ void UnloadModule(unsigned char slot)
   ConfigModuleCalls[slot] = NULL;
   PakPortWriteCalls[slot] = NULL;
   PakPortReadCalls[slot] = NULL;
-  SetInteruptCallPointerCalls[slot] = NULL;
+  SetInterruptCallPointerCalls[slot] = NULL;
   DmaMemPointerCalls[slot] = NULL;
   HeartBeatCalls[slot] = NULL;
   PakMemWrite8Calls[slot] = NULL;
@@ -733,8 +733,8 @@ void ReadModuleParms(unsigned char slot, char* moduleText)
   if (PakPortReadCalls[slot] != NULL)
     strcat(moduleText, "Is IO readable\r\n");
 
-  if (SetInteruptCallPointerCalls[slot] != NULL)
-    strcat(moduleText, "Generates Interupts\r\n");
+  if (SetInterruptCallPointerCalls[slot] != NULL)
+    strcat(moduleText, "Generates Interrupts\r\n");
 
   if (DmaMemPointerCalls[slot] != NULL)
     strcat(moduleText, "Generates DMA Requests\r\n");

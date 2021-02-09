@@ -1,6 +1,7 @@
-#ifndef __MC6809_H__
-#define __MC6809_H__
+#ifndef __KEYBOARDINTERRUPT_H__
+#define __KEYBOARDINTERRUPT_H__
 
+/*****************************************************************************/
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,12 +19,10 @@ This file is part of VCC (Virtual Color Computer).
     You should have received a copy of the GNU General Public License
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
+/*****************************************************************************/
 
-void MC6809Init(void);
-int  MC6809Exec(int);
-void MC6809Reset(void);
-void MC6809AssertInterrupt(unsigned char, unsigned char);
-void MC6809DeAssertInterrupt(unsigned char);// 4 nmi 2 firq 1 irq
-void MC6809ForcePC(unsigned short);
+unsigned char GimeGetKeyboardInterruptState();
+void GimeSetKeyboardInterruptState(unsigned char state);
 
 #endif
+

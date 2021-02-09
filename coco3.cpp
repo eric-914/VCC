@@ -41,8 +41,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/defines.h"
 #include "library/systemstate.h"
 
-static double SoundInterupt = 0;
-static double PicosToSoundSample = SoundInterupt;
+static double SoundInterrupt = 0;
+static double PicosToSoundSample = SoundInterrupt;
 static double CyclesPerSecord = (COLORBURST / 4) * (TARGETFRAMERATE / FRAMESPERSECORD);
 static double LinesPerSecond = (double)TARGETFRAMERATE * (double)LINESPERFIELD;
 static double PicosPerLine = PICOSECOND / LinesPerSecond;
@@ -52,10 +52,10 @@ static double CyclesThisLine = 0;
 static unsigned int StateSwitch = 0;
 unsigned short SoundRate = 0;
 
-static unsigned char HorzInteruptEnabled = 0, VertInteruptEnabled = 0;
+static unsigned char HorzInterruptEnabled = 0, VertInterruptEnabled = 0;
 static unsigned char TopBoarder = 0, BottomBoarder = 0;
 static unsigned char LinesperScreen;
-static unsigned char TimerInteruptEnabled = 0;
+static unsigned char TimerInterruptEnabled = 0;
 static int MasterTimer = 0;
 static unsigned short TimerClockRate = 0;
 static int TimerCycleCount = 0;
@@ -65,7 +65,7 @@ static unsigned char BlinkPhase = 1;
 static unsigned int AudioBuffer[16384];
 static unsigned char CassBuffer[8192];
 static unsigned short AudioIndex = 0;
-double PicosToInterupt = 0;
+double PicosToInterrupt = 0;
 static int IntEnable = 0;
 static int SndEnable = 1;
 static int OverClock = 1;
@@ -128,8 +128,8 @@ float RenderFrame(SystemState* systemState)
 
   irq_fs(1);  //End of active display FS goes High to Low
 
-  if (VertInteruptEnabled) {
-    GimeAssertVertInterupt();
+  if (VertInterruptEnabled) {
+    GimeAssertVertInterrupt();
   }
 
   for (systemState->LineCounter = 0; systemState->LineCounter < (BottomBoarder); systemState->LineCounter++)	// Bottom boarder
@@ -176,14 +176,14 @@ void SetClockSpeed(unsigned short cycles)
   OverClock = cycles;
 }
 
-void SetHorzInteruptState(unsigned char state)
+void SetHorzInterruptState(unsigned char state)
 {
-  HorzInteruptEnabled = !!state;
+  HorzInterruptEnabled = !!state;
 }
 
-void SetVertInteruptState(unsigned char state)
+void SetVertInterruptState(unsigned char state)
 {
-  VertInteruptEnabled = !!state;
+  VertInterruptEnabled = !!state;
 }
 
 void SetLinesperScreen(unsigned char lines)
@@ -196,8 +196,8 @@ void SetLinesperScreen(unsigned char lines)
 
 _inline int CPUCycle(void)
 {
-  if (HorzInteruptEnabled) {
-    GimeAssertHorzInterupt();
+  if (HorzInterruptEnabled) {
+    GimeAssertHorzInterrupt();
   }
 
   irq_hs(ANY);
@@ -208,7 +208,7 @@ _inline int CPUCycle(void)
   {
     StateSwitch = 0;
 
-    if ((PicosToInterupt <= PicosThisLine) && IntEnable) {	//Does this iteration need to Timer Interupt
+    if ((PicosToInterrupt <= PicosThisLine) && IntEnable) {	//Does this iteration need to Timer Interrupt
       StateSwitch = 1;
     }
 
@@ -218,7 +218,7 @@ _inline int CPUCycle(void)
 
     switch (StateSwitch)
     {
-    case 0:		//No interupts this line
+    case 0:		//No interrupts this line
       CyclesThisLine = CycleDrift + (PicosThisLine * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine >= 1) {	//Avoid un-needed CPU engine calls
@@ -228,14 +228,14 @@ _inline int CPUCycle(void)
         CycleDrift = CyclesThisLine;
       }
 
-      PicosToInterupt -= PicosThisLine;
+      PicosToInterrupt -= PicosThisLine;
       PicosToSoundSample -= PicosThisLine;
       PicosThisLine = 0;
       break;
 
-    case 1:		//Only Interupting
-      PicosThisLine -= PicosToInterupt;
-      CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+    case 1:		//Only Interrupting
+      PicosThisLine -= PicosToInterrupt;
+      CyclesThisLine = CycleDrift + (PicosToInterrupt * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine >= 1) {
         CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
@@ -244,9 +244,9 @@ _inline int CPUCycle(void)
         CycleDrift = CyclesThisLine;
       }
 
-      GimeAssertTimerInterupt();
-      PicosToSoundSample -= PicosToInterupt;
-      PicosToInterupt = MasterTickCounter;
+      GimeAssertTimerInterrupt();
+      PicosToSoundSample -= PicosToInterrupt;
+      PicosToInterrupt = MasterTickCounter;
       break;
 
     case 2:		//Only Sampling
@@ -261,12 +261,12 @@ _inline int CPUCycle(void)
       }
 
       AudioEvent();
-      PicosToInterupt -= PicosToSoundSample;
-      PicosToSoundSample = SoundInterupt;
+      PicosToInterrupt -= PicosToSoundSample;
+      PicosToSoundSample = SoundInterrupt;
       break;
 
-    case 3:		//Interupting and Sampling
-      if (PicosToSoundSample < PicosToInterupt)
+    case 3:		//Interrupting and Sampling
+      if (PicosToSoundSample < PicosToInterrupt)
       {
         PicosThisLine -= PicosToSoundSample;
         CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
@@ -279,11 +279,11 @@ _inline int CPUCycle(void)
         }
 
         AudioEvent();
-        PicosToInterupt -= PicosToSoundSample;
-        PicosToSoundSample = SoundInterupt;
-        PicosThisLine -= PicosToInterupt;
+        PicosToInterrupt -= PicosToSoundSample;
+        PicosToSoundSample = SoundInterrupt;
+        PicosThisLine -= PicosToInterrupt;
 
-        CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+        CyclesThisLine = CycleDrift + (PicosToInterrupt * CyclesPerLine * OverClock / PicosPerLine);
 
         if (CyclesThisLine >= 1) {
           CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
@@ -292,16 +292,16 @@ _inline int CPUCycle(void)
           CycleDrift = CyclesThisLine;
         }
 
-        GimeAssertTimerInterupt();
-        PicosToSoundSample -= PicosToInterupt;
-        PicosToInterupt = MasterTickCounter;
+        GimeAssertTimerInterrupt();
+        PicosToSoundSample -= PicosToInterrupt;
+        PicosToInterrupt = MasterTickCounter;
         break;
       }
 
-      if (PicosToSoundSample > PicosToInterupt)
+      if (PicosToSoundSample > PicosToInterrupt)
       {
-        PicosThisLine -= PicosToInterupt;
-        CyclesThisLine = CycleDrift + (PicosToInterupt * CyclesPerLine * OverClock / PicosPerLine);
+        PicosThisLine -= PicosToInterrupt;
+        CyclesThisLine = CycleDrift + (PicosToInterrupt * CyclesPerLine * OverClock / PicosPerLine);
 
         if (CyclesThisLine >= 1) {
           CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
@@ -310,9 +310,9 @@ _inline int CPUCycle(void)
           CycleDrift = CyclesThisLine;
         }
 
-        GimeAssertTimerInterupt();
-        PicosToSoundSample -= PicosToInterupt;
-        PicosToInterupt = MasterTickCounter;
+        GimeAssertTimerInterrupt();
+        PicosToSoundSample -= PicosToInterrupt;
+        PicosToInterrupt = MasterTickCounter;
         PicosThisLine -= PicosToSoundSample;
         CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
 
@@ -324,13 +324,13 @@ _inline int CPUCycle(void)
         }
 
         AudioEvent();
-        PicosToInterupt -= PicosToSoundSample;
-        PicosToSoundSample = SoundInterupt;
+        PicosToInterrupt -= PicosToSoundSample;
+        PicosToSoundSample = SoundInterrupt;
         break;
       }
 
       //They are the same (rare)
-      PicosThisLine -= PicosToInterupt;
+      PicosThisLine -= PicosToInterrupt;
       CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine > 1) {
@@ -340,10 +340,10 @@ _inline int CPUCycle(void)
         CycleDrift = CyclesThisLine;
       }
 
-      GimeAssertTimerInterupt();
+      GimeAssertTimerInterrupt();
       AudioEvent();
-      PicosToInterupt = MasterTickCounter;
-      PicosToSoundSample = SoundInterupt;
+      PicosToInterrupt = MasterTickCounter;
+      PicosToSoundSample = SoundInterrupt;
     }
   }
 
@@ -418,12 +418,12 @@ _inline int CPUCycle(void)
   return(0);
 }
 
-void SetTimerInteruptState(unsigned char state)
+void SetTimerInterruptState(unsigned char state)
 {
-  TimerInteruptEnabled = state;
+  TimerInterruptEnabled = state;
 }
 
-void SetInteruptTimer(unsigned short timer)
+void SetInterruptTimer(unsigned short timer)
 {
   UnxlatedTickCounter = (timer & 0xFFF);
   SetMasterTickCounter();
@@ -449,7 +449,7 @@ void SetMasterTickCounter(void)
   if (MasterTickCounter != OldMaster)
   {
     OldMaster = MasterTickCounter;
-    PicosToInterupt = MasterTickCounter;
+    PicosToInterrupt = MasterTickCounter;
   }
 
   if (MasterTickCounter != 0) {
@@ -462,17 +462,17 @@ void SetMasterTickCounter(void)
 
 void MiscReset(void)
 {
-  HorzInteruptEnabled = 0;
-  VertInteruptEnabled = 0;
-  TimerInteruptEnabled = 0;
+  HorzInterruptEnabled = 0;
+  VertInterruptEnabled = 0;
+  TimerInterruptEnabled = 0;
   MasterTimer = 0;
   TimerClockRate = 0;
   MasterTickCounter = 0;
   UnxlatedTickCounter = 0;
   OldMaster = 0;
 
-  SoundInterupt = 0;
-  PicosToSoundSample = SoundInterupt;
+  SoundInterrupt = 0;
+  PicosToSoundSample = SoundInterrupt;
   CycleDrift = 0;
   CyclesThisLine = 0;
   PicosThisLine = 0;
@@ -484,7 +484,7 @@ void MiscReset(void)
 unsigned short SetAudioRate(unsigned short rate)
 {
   SndEnable = 1;
-  SoundInterupt = 0;
+  SoundInterrupt = 0;
   CycleDrift = 0;
   AudioIndex = 0;
 
@@ -497,8 +497,8 @@ unsigned short SetAudioRate(unsigned short rate)
   }
   else
   {
-    SoundInterupt = PICOSECOND / rate;
-    PicosToSoundSample = SoundInterupt;
+    SoundInterrupt = PICOSECOND / rate;
+    PicosToSoundSample = SoundInterrupt;
   }
 
   SoundRate = rate;

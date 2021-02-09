@@ -1,5 +1,5 @@
-#ifndef __DEFINES_H__
-#define __DEFINES_H__
+#ifndef __CPUDEF_H__
+#define __CPUDEF_H__
 
 /*
 Copyright 2015 by Joseph Forgione
@@ -22,8 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 extern void (*CPUInit)(void);
 extern int  (*CPUExec)(int);
 extern void (*CPUReset)(void);
-extern void (*CPUAssertInterupt)(unsigned char, unsigned char);
-extern void (*CPUDeAssertInterupt)(unsigned char);
+extern void (*CPUAssertInterrupt)(unsigned char, unsigned char);
+extern void (*CPUDeAssertInterrupt)(unsigned char);
 extern void (*CPUForcePC)(unsigned short);
 
 

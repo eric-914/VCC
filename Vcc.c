@@ -78,8 +78,8 @@ unsigned __stdcall CartLoad(void*);
 void (*CPUInit)(void) = NULL;
 int  (*CPUExec)(int) = NULL;
 void (*CPUReset)(void) = NULL;
-void (*CPUAssertInterupt)(unsigned char, unsigned char) = NULL;
-void (*CPUDeAssertInterupt)(unsigned char) = NULL;
+void (*CPUAssertInterrupt)(unsigned char, unsigned char) = NULL;
+void (*CPUDeAssertInterrupt)(unsigned char) = NULL;
 void (*CPUForcePC)(unsigned short) = NULL;
 
 void FullScreenToggle(void);
@@ -582,8 +582,8 @@ void DoHardReset(SystemState* const systemState)
     CPUInit = HD6309Init;
     CPUExec = HD6309Exec;
     CPUReset = HD6309Reset;
-    CPUAssertInterupt = HD6309AssertInterupt;
-    CPUDeAssertInterupt = HD6309DeAssertInterupt;
+    CPUAssertInterrupt = HD6309AssertInterrupt;
+    CPUDeAssertInterrupt = HD6309DeAssertInterrupt;
     CPUForcePC = HD6309ForcePC;
   }
   else
@@ -591,12 +591,12 @@ void DoHardReset(SystemState* const systemState)
     CPUInit = MC6809Init;
     CPUExec = MC6809Exec;
     CPUReset = MC6809Reset;
-    CPUAssertInterupt = MC6809AssertInterupt;
-    CPUDeAssertInterupt = MC6809DeAssertInterupt;
+    CPUAssertInterrupt = MC6809AssertInterrupt;
+    CPUDeAssertInterrupt = MC6809DeAssertInterrupt;
     CPUForcePC = MC6809ForcePC;
   }
   PiaReset();
-  mc6883_reset();	//Captures interal rom pointer for CPU Interupt Vectors
+  mc6883_reset();	//Captures interal rom pointer for CPU Interrupt Vectors
   CPUInit();
   CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
   GimeReset();

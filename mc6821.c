@@ -233,7 +233,7 @@ void irq_hs(int phase)	//63.5 uS
     rega[1] = (rega[1] | 128);
 
     if (rega[1] & 1)
-      CPUAssertInterupt(IRQ, 1);
+      CPUAssertInterrupt(IRQ, 1);
 
     break;
 
@@ -244,7 +244,7 @@ void irq_hs(int phase)	//63.5 uS
     rega[1] = (rega[1] | 128);
 
     if (rega[1] & 1)
-      CPUAssertInterupt(IRQ, 1);
+      CPUAssertInterrupt(IRQ, 1);
 
     break;
 
@@ -252,7 +252,7 @@ void irq_hs(int phase)	//63.5 uS
     rega[1] = (rega[1] | 128);
 
     if (rega[1] & 1)
-      CPUAssertInterupt(IRQ, 1);
+      CPUAssertInterrupt(IRQ, 1);
 
     break;
   }
@@ -270,7 +270,7 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
       rega[3] = (rega[3] | 128);
 
     if (rega[3] & 1)
-      CPUAssertInterupt(IRQ, 1);
+      CPUAssertInterrupt(IRQ, 1);
 
     return;
     break;
@@ -282,7 +282,7 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
       rega[3] = (rega[3] | 128);
 
       if (rega[3] & 1)
-        CPUAssertInterupt(IRQ, 1);
+        CPUAssertInterrupt(IRQ, 1);
     }
 
     return;
@@ -295,9 +295,9 @@ void AssertCart(void)
   regb[3] = (regb[3] | 128);
 
   if (regb[3] & 1)
-    CPUAssertInterupt(FIRQ, 0);
+    CPUAssertInterrupt(FIRQ, 0);
   else
-    CPUDeAssertInterupt(FIRQ); //Kludge but working
+    CPUDeAssertInterrupt(FIRQ); //Kludge but working
 }
 
 void PiaReset()

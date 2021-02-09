@@ -20,11 +20,10 @@ This file is part of VCC (Virtual Color Computer).
 
 void GimeWrite(unsigned char, unsigned char);
 unsigned char GimeRead(unsigned char);
-void GimeAssertKeyboardInterupt(void);
-unsigned char GimeGetKeyboardInteruptState();
-void GimeAssertHorzInterupt(void);
-void GimeAssertVertInterupt(void);
-void GimeAssertTimerInterupt(void);
+void GimeAssertKeyboardInterrupt(void);
+void GimeAssertHorzInterrupt(void);
+void GimeAssertVertInterrupt(void);
+void GimeAssertTimerInterrupt(void);
 unsigned char sam_read(unsigned char);
 void sam_write(unsigned char, unsigned char);
 void mc6883_reset();

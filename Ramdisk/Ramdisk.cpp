@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char, unsigned short);
-typedef void (*ASSERTINTERUPT) (unsigned char, unsigned char);
+typedef void (*ASSERTINTERRUPT) (unsigned char, unsigned char);
 typedef void (*DMAMEMPOINTERS) (MEMREAD8, MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)(char*, int, int);
 static void (*AssertInt)(unsigned char, unsigned char) = NULL;

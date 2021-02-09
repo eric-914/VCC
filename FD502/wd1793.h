@@ -107,7 +107,7 @@ struct SectorInfo
 #define WRITESECTOR		10
 #define	WRITESECTORM	11
 #define	READADDRESS		12
-#define	FORCEINTERUPT	13
+#define	FORCEINTERRUPT	13
 #define	READTRACK		  14
 #define WRITETRACK		15
 

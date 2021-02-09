@@ -58,21 +58,21 @@ typedef void (*CONFIGIT)(unsigned char);
 typedef void (*HEARTBEAT) (void);
 typedef unsigned char (*PACKPORTREAD)(unsigned char);
 typedef void (*PACKPORTWRITE)(unsigned char, unsigned char);
-typedef void (*ASSERTINTERUPT) (unsigned char, unsigned char);
+typedef void (*ASSERTINTERRUPT) (unsigned char, unsigned char);
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*SETCART)(unsigned char);
 typedef void (*MEMWRITE8)(unsigned char, unsigned short);
 typedef void (*MODULESTATUS)(char*);
 typedef void (*DMAMEMPOINTERS) (MEMREAD8, MEMWRITE8);
 typedef void (*SETCARTPOINTER)(SETCART);
-typedef void (*SETINTERUPTCALLPOINTER) (ASSERTINTERUPT);
+typedef void (*SETINTERRUPTCALLPOINTER) (ASSERTINTERRUPT);
 typedef unsigned short (*MODULEAUDIOSAMPLE)(void);
 typedef void (*MODULERESET)(void);
 typedef void (*SETINIPATH)(char*);
 
 static void (*GetModuleName)(char*, char*, DYNAMICMENUCALLBACK) = NULL;
 static void (*ConfigModule)(unsigned char) = NULL;
-static void (*SetInteruptCallPointer) (ASSERTINTERUPT) = NULL;
+static void (*SetInterruptCallPointer) (ASSERTINTERRUPT) = NULL;
 static void (*DmaMemPointer) (MEMREAD8, MEMWRITE8) = NULL;
 static void (*HeartBeat)(void) = NULL;
 static void (*PakPortWrite)(unsigned char, unsigned char) = NULL;
@@ -253,7 +253,7 @@ int InsertModule(char* modulePath)
     ConfigModule = (CONFIGIT)GetProcAddress(hinstLib, "ModuleConfig");
     PakPortWrite = (PACKPORTWRITE)GetProcAddress(hinstLib, "PackPortWrite");
     PakPortRead = (PACKPORTREAD)GetProcAddress(hinstLib, "PackPortRead");
-    SetInteruptCallPointer = (SETINTERUPTCALLPOINTER)GetProcAddress(hinstLib, "AssertInterupt");
+    SetInterruptCallPointer = (SETINTERRUPTCALLPOINTER)GetProcAddress(hinstLib, "AssertInterrupt");
     DmaMemPointer = (DMAMEMPOINTERS)GetProcAddress(hinstLib, "MemPointers");
     HeartBeat = (HEARTBEAT)GetProcAddress(hinstLib, "HeartBeat");
     PakMemWrite8 = (MEMWRITE8)GetProcAddress(hinstLib, "PakMemWrite8");
@@ -278,8 +278,8 @@ int InsertModule(char* modulePath)
       DmaMemPointer(MemRead8, MemWrite8);
     }
 
-    if (SetInteruptCallPointer != NULL) {
-      SetInteruptCallPointer(CPUAssertInterupt);
+    if (SetInterruptCallPointer != NULL) {
+      SetInterruptCallPointer(CPUAssertInterrupt);
     }
 
     GetModuleName(Modname, CatNumber, DynamicMenuCallback);  //Instantiate the menus from HERE!
@@ -307,10 +307,10 @@ int InsertModule(char* modulePath)
       strcat(String, "Is IO readable\n");
     }
 
-    if (SetInteruptCallPointer != NULL)
+    if (SetInterruptCallPointer != NULL)
     {
       ModualParms |= 8;
-      strcat(String, "Generates Interupts\n");
+      strcat(String, "Generates Interrupts\n");
     }
 
     if (DmaMemPointer != NULL)
@@ -434,7 +434,7 @@ void UnloadDll(void)
   ConfigModule = NULL;
   PakPortWrite = NULL;
   PakPortRead = NULL;
-  SetInteruptCallPointer = NULL;
+  SetInterruptCallPointer = NULL;
   DmaMemPointer = NULL;
   HeartBeat = NULL;
   PakMemWrite8 = NULL;
@@ -452,15 +452,15 @@ void UnloadDll(void)
   DynamicMenuCallback("", 1, 0);
 }
 
-void GetCurrentModule(char* DefaultModule)
+void GetCurrentModule(char* defaultModule)
 {
-  strcpy(DefaultModule, DllPath);
+  strcpy(defaultModule, DllPath);
 }
 
 void UpdateBusPointer(void)
 {
-  if (SetInteruptCallPointer != NULL) {
-    SetInteruptCallPointer(CPUAssertInterupt);
+  if (SetInterruptCallPointer != NULL) {
+    SetInterruptCallPointer(CPUAssertInterrupt);
   }
 }
 

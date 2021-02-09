@@ -41,7 +41,7 @@ extern DiskInfo Drive[5];
 
 typedef unsigned char (*MEMREAD8)(unsigned short);
 typedef void (*MEMWRITE8)(unsigned char, unsigned short);
-typedef void (*ASSERTINTERUPT) (unsigned char, unsigned char);
+typedef void (*ASSERTINTERRUPT) (unsigned char, unsigned char);
 typedef void (*DMAMEMPOINTERS) (MEMREAD8, MEMWRITE8);
 typedef void (*DYNAMICMENUCALLBACK)(char*, int, int);
 
@@ -169,10 +169,10 @@ extern "C"
   }
 }
 
-// This captures the Function transfer point for the CPU assert interupt 
+// This captures the Function transfer point for the CPU assert interrupt 
 extern "C"
 {
-  __declspec(dllexport) void AssertInterupt(ASSERTINTERUPT dummy)
+  __declspec(dllexport) void AssertInterrupt(ASSERTINTERRUPT dummy)
   {
     AssertInt = dummy;
   }
@@ -225,9 +225,9 @@ extern "C"
   }
 }
 
-void CPUAssertInterupt(unsigned char Interupt, unsigned char Latencey)
+void CPUAssertInterrupt(unsigned char interrupt, unsigned char latencey)
 {
-  AssertInt(Interupt, Latencey);
+  AssertInt(interrupt, latencey);
   return;
 }
 

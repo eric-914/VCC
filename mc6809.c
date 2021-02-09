@@ -57,14 +57,14 @@ static unsigned int SyncWaiting = 0;
 static unsigned int temp32;
 static unsigned short temp16;
 static unsigned char temp8;
-static unsigned char PendingInterupts = 0;
+static unsigned char PendingInterrupts = 0;
 static unsigned char IRQWaiter = 0;
 static unsigned char Source = 0, Dest = 0;
 static unsigned char postbyte = 0;
 static short unsigned postword = 0;
 static signed char* spostbyte = (signed char*)&postbyte;
 static signed short* spostword = (signed short*)&postword;
-static char InInterupt = 0;
+static char InInterrupt = 0;
 //END Global variables for CPU Emulation-------------------
 
 //Fuction Prototypes---------------------------------------
@@ -74,24 +74,30 @@ static unsigned char getcc(void);
 static void cpu_firq(void);
 static void cpu_irq(void);
 static void cpu_nmi(void);
-//END Fuction Prototypes-----------------------------------
+//END Function Prototypes-----------------------------------
 
 void MC6809Reset(void)
 {
   char index;
-  for (index = 0;index <= 5;index++)		//Set all register to 0 except V
+
+  for (index = 0; index <= 5; index++) {		//Set all register to 0 except V
     *xfreg16[index] = 0;
-  for (index = 0;index <= 7;index++)
+  }
+
+  for (index = 0; index <= 7; index++) {
     *ureg8[index] = 0;
-  for (index = 0;index <= 7;index++)
+  }
+
+  for (index = 0; index <= 7; index++) {
     cc[index] = 0;
+  }
+
   dp.Reg = 0;
   cc[I] = 1;
   cc[F] = 1;
   SyncWaiting = 0;
   pc.Reg = MemRead16(VRESET);	//PC gets its reset vector
   SetMapType(0);
-  return;
 }
 
 void MC6809Init(void)
@@ -126,15 +132,15 @@ int MC6809Exec(int CycleFor)
 
   while (CycleCounter < CycleFor) {
 
-    if (PendingInterupts)
+    if (PendingInterrupts)
     {
-      if (PendingInterupts & 4)
+      if (PendingInterrupts & 4)
         cpu_nmi();
 
-      if (PendingInterupts & 2)
+      if (PendingInterrupts & 2)
         cpu_firq();
 
-      if (PendingInterupts & 1)
+      if (PendingInterrupts & 1)
       {
         if (IRQWaiter == 0)	// This is needed to fix a subtle timming problem
           cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
@@ -1309,7 +1315,7 @@ int MC6809Exec(int CycleFor)
     case RTI_I: //3B
       setcc(MemRead8(s.Reg++));
       CycleCounter += 6;
-      InInterupt = 0;
+      InInterrupt = 0;
 
       if (cc[E])
       {
@@ -3027,7 +3033,7 @@ void cpu_firq(void)
 
   if (!cc[F])
   {
-    InInterupt = 1; //Flag to indicate FIRQ has been asserted
+    InInterrupt = 1; //Flag to indicate FIRQ has been asserted
     cc[E] = 0; // Turn E flag off
     MemWrite8(pc.B.lsb, --s.Reg);
     MemWrite8(pc.B.msb, --s.Reg);
@@ -3037,12 +3043,12 @@ void cpu_firq(void)
     pc.Reg = MemRead16(VFIRQ);
   }
 
-  PendingInterupts = PendingInterupts & 253;
+  PendingInterrupts = PendingInterrupts & 253;
 }
 
 void cpu_irq(void)
 {
-  if (InInterupt == 1) //If FIRQ is running postpone the IRQ
+  if (InInterrupt == 1) //If FIRQ is running postpone the IRQ
     return;
 
   if ((!cc[I]))
@@ -3064,7 +3070,7 @@ void cpu_irq(void)
     cc[I] = 1;
   }
 
-  PendingInterupts = PendingInterupts & 254;
+  PendingInterrupts = PendingInterrupts & 254;
 }
 
 void cpu_nmi(void)
@@ -3085,7 +3091,7 @@ void cpu_nmi(void)
   cc[I] = 1;
   cc[F] = 1;
   pc.Reg = MemRead16(VNMI);
-  PendingInterupts = PendingInterupts & 251;
+  PendingInterrupts = PendingInterrupts & 251;
 }
 
 void setcc(unsigned char bincc)
@@ -3109,23 +3115,23 @@ unsigned char getcc(void)
   return(bincc);
 }
 
-void MC6809AssertInterupt(unsigned char Interupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
+void MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
 {
   SyncWaiting = 0;
-  PendingInterupts = PendingInterupts | (1 << (Interupt - 1));
+  PendingInterrupts = PendingInterrupts | (1 << (interrupt - 1));
   IRQWaiter = waiter;
 }
 
-void MC6809DeAssertInterupt(unsigned char Interupt)// 4 nmi 2 firq 1 irq
+void MC6809DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
 {
-  PendingInterupts = PendingInterupts & ~(1 << (Interupt - 1));
-  InInterupt = 0;
+  PendingInterrupts = PendingInterrupts & ~(1 << (interrupt - 1));
+  InInterrupt = 0;
 }
 
 void MC6809ForcePC(unsigned short NewPC)
 {
   pc.Reg = NewPC;
-  PendingInterupts = 0;
+  PendingInterrupts = 0;
   SyncWaiting = 0;
   return;
 }

@@ -36,8 +36,9 @@ This file is part of VCC (Virtual Color Computer).
 #include <assert.h>
 
 #include "keyboard.h"
-#include "mc6821.h"
-#include "tcc1014registers.h"
+#include "gime.h"
+#include "tcc1014registers.h" //GimeAssertKeyboardInterrupt();
+#include "mc6821.h" //GetMuxState() //DACState()
 
 #include "library\keyboardlayout.h"
 #include "library\joystickinput.h"
@@ -163,9 +164,9 @@ unsigned char vccKeyboardGetScan(unsigned char column)
     static unsigned char IrqFlag = 0;
     if ((ret_val & 0x7F) != 0x7F)
     {
-      if ((IrqFlag == 0) & GimeGetKeyboardInteruptState())
+      if ((IrqFlag == 0) & GimeGetKeyboardInterruptState())
       {
-        GimeAssertKeyboardInterupt();
+        GimeAssertKeyboardInterrupt();
         IrqFlag = 1;
       }
     }
@@ -298,9 +299,9 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
 
     _vccKeyboardUpdateRolloverTable();
 
-    if (GimeGetKeyboardInteruptState())
+    if (GimeGetKeyboardInterruptState())
     {
-      GimeAssertKeyboardInterupt();
+      GimeAssertKeyboardInterrupt();
     }
 
     break;

@@ -84,7 +84,7 @@ static unsigned char Side = 0;
 static unsigned char CurrentCommand = IDLE, CurrentDisk = NONE, LastDisk = NONE;
 static unsigned char MotorOn = 0;
 static unsigned char KBLeds = 0;
-static unsigned char InteruptEnable = 0;
+static unsigned char InterruptEnable = 0;
 static unsigned char HaltEnable = 0;
 static unsigned char HeadLoad = 0;
 static unsigned char TrackVerify = 0;
@@ -208,7 +208,7 @@ void DecodeControlReg(unsigned char Tmp)
   MotorOn = 0;
   CurrentDisk = NONE;
   Side = 0;
-  InteruptEnable = 0;
+  InterruptEnable = 0;
   HaltEnable = 0;
 
   if (Tmp & CTRL_DRIVE0)
@@ -251,8 +251,8 @@ void DecodeControlReg(unsigned char Tmp)
 
   LastDisk = CurrentDisk;
 
-  if (Tmp & CTRL_DENSITY)	//Strange, Density and Interupt enable flag
-    InteruptEnable = 1;
+  if (Tmp & CTRL_DENSITY)	//Strange, Density and Interrupt enable flag
+    InterruptEnable = 1;
 
   if (Tmp & CTRL_HALT_FLAG)
     HaltEnable = 1;
@@ -935,7 +935,7 @@ void PingFdc(void)
     }
     break;
 
-  case FORCEINTERUPT:
+  case FORCEINTERRUPT:
     break;
 
   case READTRACK:
@@ -1043,14 +1043,14 @@ void DispatchCommand(unsigned char Tmp)
     IOWaiter = 0;
     break;
 
-  case FORCEINTERUPT:
+  case FORCEINTERRUPT:
     CurrentCommand = IDLE;
     TransferBufferSize = 0;
     StatusReg = READY;
     ExecTimeWaiter = 1;
 
     if ((Tmp & 15) != 0)
-      CPUAssertInterupt(NMI, 0);
+      CPUAssertInterrupt(NMI, 0);
     break;
 
   case READTRACK:
@@ -1408,8 +1408,8 @@ long GetSectorInfo(SectorInfo* Sector, unsigned char* TempBuffer)
 
 void CommandDone(void)
 {
-  if (InteruptEnable)
-    CPUAssertInterupt(NMI, 0);
+  if (InterruptEnable)
+    CPUAssertInterrupt(NMI, 0);
   TransferBufferSize = 0;
   CurrentCommand = IDLE;
 }
