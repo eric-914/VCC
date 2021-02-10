@@ -17,7 +17,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-static unsigned char KeyboardInterruptEnabled = 0;
+unsigned char KeyboardInterruptEnabled = 0;
 
 unsigned char GimeGetKeyboardInterruptState()
 {
