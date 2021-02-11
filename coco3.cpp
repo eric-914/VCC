@@ -39,6 +39,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "library/configdef.h"
 #include "library/defines.h"
+#include "library/graphicsstate.h"
 #include "library/systemstate.h"
 
 static double SoundInterrupt = 0;
@@ -91,8 +92,9 @@ float RenderFrame(SystemState* systemState)
   static unsigned short FrameCounter = 0;
 
   //********************************Start of frame Render*****************************************************
-  SetBlinkState(BlinkPhase);
-  irq_fs(0);				//FS low to High transition start of display Boink needs this
+  GetGraphicsState()->BlinkState = BlinkPhase;
+
+  irq_fs(0);				//FS low to High transition start of display Blink needs this
 
   for (systemState->LineCounter = 0; systemState->LineCounter < 13; systemState->LineCounter++) {		//Vertical Blanking 13 H lines
     CPUCycle();

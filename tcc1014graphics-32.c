@@ -16,19 +16,12 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <windows.h>
-
-#include "tcc1014graphics.h"
-#include "coco3.h"
 #include "cc2font.h"
 #include "cc3font.h"
-#include "config.h"
-#include "DirectDrawInterface.h"
 
-#include "library/graphicsstate.h"
 #include "library/defines.h"
-
-unsigned char CheckState(unsigned char attributes);
+#include "library/graphicsstate.h"
+#include "library/systemstate.h"
 
 void UpdateScreen32(SystemState* systemState)
 {

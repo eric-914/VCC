@@ -25,6 +25,7 @@ void SetLinesperScreen(unsigned char lines);
 void SetHorzInterruptState(unsigned char);
 void SetVertInterruptState(unsigned char);
 unsigned char SetSndOutMode(unsigned char);
+
 float RenderFrame(SystemState*);
 
 void SetTimerInterruptState(unsigned char);
@@ -32,7 +33,6 @@ void SetTimerClockRate(unsigned char);
 void SetInterruptTimer(unsigned short);
 void MiscReset(void);
 
-void FlipArtifacts();
 unsigned short SetAudioRate(unsigned short);
 
 #endif

@@ -71,4 +71,9 @@ typedef struct
 
 extern "C" __declspec(dllexport) GraphicsState* __cdecl GetGraphicsState();
 
+extern "C" __declspec(dllexport) unsigned char __cdecl CheckState(unsigned char attributes);
+extern "C" __declspec(dllexport) void __cdecl FlipArtifacts();
+extern "C" __declspec(dllexport) unsigned char __cdecl GetLpf(unsigned char index);
+extern "C" __declspec(dllexport) unsigned char __cdecl GetVcenterTable(unsigned char index);
+
 #endif

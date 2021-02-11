@@ -71,7 +71,7 @@ static const unsigned char  ColorTable32Bit[4] = { 0, 85, 170, 255 };
 static const unsigned char  Lpf[4] = { 192, 199, 225, 225 }; // #2 is really undefined but I gotta put something here.
 static const unsigned char  VcenterTable[4] = { 29, 23, 12, 12 };
 
-static const unsigned char  Afacts8[2][4]  = { 0,     0xA4,     0x89,     0xBF, 0,      137,      164,      191 };
+static const unsigned char  Afacts8[2][4] = { 0,     0xA4,     0x89,     0xBF, 0,      137,      164,      191 };
 static const unsigned short Afacts16[2][4] = { 0,   0xF800,   0x001F,   0xFFFF, 0,   0x001F,   0xF800,   0xFFFF };
 static const unsigned int   Afacts32[2][4] = { 0, 0xFF8D1F, 0x0667FF, 0xFFFFFF, 0, 0x0667FF, 0xFF8D1F, 0xFFFFFF };
 
@@ -82,6 +82,30 @@ static GraphicsState* instance = InitializeInstance(new GraphicsState());
 extern "C" {
   __declspec(dllexport) GraphicsState* __cdecl GetGraphicsState() {
     return instance;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl CheckState(unsigned char attributes) {
+    return (!instance->BlinkState) & !!(attributes & 128);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl FlipArtifacts() {
+    instance->ColorInvert = instance->ColorInvert == 0 ? 1 : 0;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl GetLpf(unsigned char index) {
+    return instance->Lpf[index];
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl GetVcenterTable(unsigned char index) {
+    return instance->VcenterTable[index];
   }
 }
 

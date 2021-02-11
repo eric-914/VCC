@@ -165,9 +165,7 @@ void SetBoarderChange(unsigned char data)
 
 void InvalidateBoarder(void)
 {
-  GraphicsState* gs = GetGraphicsState();
-
-  gs->BoarderChange = 5;
+  GetGraphicsState()->BoarderChange = 5;
 }
 
 void SetupDisplay(void)
@@ -530,9 +528,7 @@ unsigned char SetMonitorType(unsigned char type)
 }
 
 void SetPaletteType() {
-  GraphicsState* gs = GetGraphicsState();
-
-  int borderColor = gs->CC3BoarderColor;
+  int borderColor = GetGraphicsState()->CC3BoarderColor;
   SetGimeBoarderColor(0);
   MakeCMPpalette();
   SetGimeBoarderColor(borderColor);
@@ -547,58 +543,8 @@ unsigned char SetScanLines(unsigned char lines)
     EmuState.ScanLines = lines;
     Cls(0, &EmuState);
 
-    GraphicsState* gs = GetGraphicsState();
-    gs->BoarderChange = 3;
+    GetGraphicsState()->BoarderChange = 3;
   }
 
   return(0);
-}
-
-int GetBytesPerRow() {
-  GraphicsState* gs = GetGraphicsState();
-
-  return gs->BytesperRow;
-}
-
-unsigned int GetStartOfVidram() {
-  GraphicsState* gs = GetGraphicsState();
-
-  return gs->StartofVidram;
-}
-
-int GetGraphicsMode() {
-  GraphicsState* gs = GetGraphicsState();
-
-  return(gs->GraphicsMode);
-}
-
-void FlipArtifacts() {
-  GraphicsState* gs = GetGraphicsState();
-
-  gs->ColorInvert = gs->ColorInvert == 0 ? 1 : 0;
-}
-
-unsigned char GetLpf(unsigned char index) {
-  GraphicsState* gs = GetGraphicsState();
-
-  return gs->Lpf[index];
-}
-
-unsigned char GetVcenterTable(unsigned char index) {
-  GraphicsState* gs = GetGraphicsState();
-
-  return gs->VcenterTable[index];
-}
-
-void SetBlinkState(unsigned char blinkState)
-{
-  GraphicsState* gs = GetGraphicsState();
-
-  gs->BlinkState = blinkState;
-}
-
-unsigned char CheckState(unsigned char attributes) {
-  GraphicsState* gs = GetGraphicsState();
-
-  return (!gs->BlinkState) & !!(attributes & 128);
 }

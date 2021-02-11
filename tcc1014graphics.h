@@ -54,16 +54,8 @@ void GimeReset(void);
 void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char);
 void SetBoarderChange(unsigned char);
-int GetBytesPerRow(void);
-
-unsigned int GetStartOfVidram();
-int GetGraphicsMode();
 
 unsigned char SetScanLines(unsigned char);
-void SetBlinkState(unsigned char);
-
-unsigned char GetLpf(unsigned char index);
-unsigned char GetVcenterTable(unsigned char index);
 
 #define MRGB	1
 #define MCMP	0

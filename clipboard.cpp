@@ -27,6 +27,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "library/configdef.h"
 #include "library/defines.h"
+#include "library/graphicsstate.h"
 #include "library/systemstate.h"
 
 using namespace std;
@@ -46,7 +47,7 @@ void PasteText() {
   char letter;
   bool CSHIFT;
   bool LCNTRL;
-  int GraphicsMode = GetGraphicsMode();
+  int GraphicsMode = GetGraphicsState()->GraphicsMode;
 
   if (GraphicsMode != 0) {
     int tmp = MessageBox(0, "Warning: You are not in text mode. Continue Pasting?", "Clipboard", MB_YESNO);
@@ -266,14 +267,16 @@ bool SetClipboard(string sendout) {
 }
 
 void CopyText() {
+  GraphicsState* graphicsState = GetGraphicsState();
+
   int idx;
   int tmp;
   int lines;
   int offset;
   int lastchar;
-  int BytesPerRow = GetBytesPerRow();
-  int GraphicsMode = GetGraphicsMode();
-  unsigned int screenstart = GetStartOfVidram();
+  int BytesPerRow = graphicsState->BytesperRow;
+  int GraphicsMode = graphicsState->GraphicsMode;
+  unsigned int screenstart = graphicsState->StartofVidram;
 
   if (GraphicsMode != 0) {
     MessageBox(0, "ERROR: Graphics screen can not be copied.\nCopy can ONLY use a hardware text screen.", "Clipboard", 0);
