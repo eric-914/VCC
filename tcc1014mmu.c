@@ -25,6 +25,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 
 #include "library\fileoperations.h"
+#include "library\graphicsstate.h"
 
 static unsigned char* MemPages[1024];
 static unsigned short MemPageOffsets[1024];
@@ -61,13 +62,15 @@ unsigned char* MmuInit(unsigned char RamConfig)
   RamSize = MemConfig[RamConfig];
   CurrentRamConfig = RamConfig;
 
-  if (memory != NULL)
+  if (memory != NULL) {
     free(memory);
+  }
 
   memory = (unsigned char*)malloc(RamSize);
 
-  if (memory == NULL)
+  if (memory == NULL) {
     return(NULL);
+  }
 
   for (Index1 = 0;Index1 < RamSize;Index1++)
   {
@@ -77,16 +80,18 @@ unsigned char* MmuInit(unsigned char RamConfig)
       memory[Index1] = 0xFF;
   }
 
-  SetVidMask(VidMask[CurrentRamConfig]);
+  GetGraphicsState()->VidMask = VidMask[CurrentRamConfig];
 
-  if (InternalRomBuffer != NULL)
+  if (InternalRomBuffer != NULL) {
     free(InternalRomBuffer);
+  }
 
   InternalRomBuffer = NULL;
   InternalRomBuffer = (unsigned char*)malloc(0x8000);
 
-  if (InternalRomBuffer == NULL)
+  if (InternalRomBuffer == NULL) {
     return(NULL);
+  }
 
   memset(InternalRomBuffer, 0xFF, 0x8000);
   CopyRom();

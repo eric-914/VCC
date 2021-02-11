@@ -31,7 +31,6 @@ void SetGimeVmode(unsigned char);
 void SetGimeVres(unsigned char);
 void SetGimeHorzOffset(unsigned char);
 void SetGimeBoarderColor(unsigned char);
-void SetVidMask(unsigned int);
 void InvalidateBoarder();
 
 void GimeInit(void);
@@ -40,7 +39,8 @@ void SetVideoBank(unsigned char);
 unsigned char SetMonitorType(unsigned char);
 void SetBoarderChange(unsigned char);
 
-unsigned char SetScanLines(unsigned char);
+//unsigned char SetScanLines(unsigned char);
+unsigned char SetScanLines(SystemState* systemState, unsigned char lines);
 
 #define MRGB	1
 #define MCMP	0

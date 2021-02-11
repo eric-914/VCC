@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <richedit.h>
-#include <iostream>
 #include <direct.h>
 #include <assert.h>
 
@@ -361,10 +360,12 @@ char* AppDirectory()
 
 void UpdateConfig(void)
 {
+  extern SystemState EmuState;
+
   SetPaletteType();
   SetResize(CurrentConfig.Resize);
   SetAspect(CurrentConfig.Aspect);
-  SetScanLines(CurrentConfig.ScanLines);
+  SetScanLines(&EmuState, CurrentConfig.ScanLines);
   SetFrameSkip(CurrentConfig.FrameSkip);
   SetAutoStart(CurrentConfig.AutoStart);
   SetSpeedThrottle(CurrentConfig.SpeedThrottle);
