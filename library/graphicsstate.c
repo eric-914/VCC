@@ -71,101 +71,97 @@ static const unsigned char  ColorTable32Bit[4] = { 0, 85, 170, 255 };
 static const unsigned char  Lpf[4] = { 192, 199, 225, 225 }; // #2 is really undefined but I gotta put something here.
 static const unsigned char  VcenterTable[4] = { 29, 23, 12, 12 };
 
-static const unsigned char  Afacts8[2][4] = { 0,     0xA4,     0x89,     0xBF, 0,      137,      164,      191 };
+static const unsigned char  Afacts8[2][4]  = { 0,     0xA4,     0x89,     0xBF, 0,      137,      164,      191 };
 static const unsigned short Afacts16[2][4] = { 0,   0xF800,   0x001F,   0xFFFF, 0,   0x001F,   0xF800,   0xFFFF };
 static const unsigned int   Afacts32[2][4] = { 0, 0xFF8D1F, 0x0667FF, 0xFFFFFF, 0, 0x0667FF, 0xFF8D1F, 0xFFFFFF };
 
-GraphicsState InitializeInstance(GraphicsState graphicsState);
+GraphicsState* InitializeInstance(GraphicsState* graphicsState);
 
-static GraphicsState instance = { 0 };
+static GraphicsState* instance = InitializeInstance(new GraphicsState());
 
-GraphicsState* GetGraphicsState() {
-  if (!instance.Initialized) {
-    instance = InitializeInstance(instance);
+extern "C" {
+  __declspec(dllexport) GraphicsState* __cdecl GetGraphicsState() {
+    return instance;
   }
-
-  return &instance;
 }
 
-GraphicsState InitializeInstance(GraphicsState graphicsState) {
-  graphicsState.BlinkState = BlinkState;
-  graphicsState.BoarderChange = BoarderChange;
-  graphicsState.Bpp = Bpp;
-  graphicsState.BytesperRow = BytesperRow;
-  graphicsState.CC2Offset = CC2Offset;
-  graphicsState.CC2VDGMode = CC2VDGMode;
-  graphicsState.CC2VDGPiaMode = CC2VDGPiaMode;
-  graphicsState.CC3BoarderColor = CC3BoarderColor;
-  graphicsState.CC3Vmode = CC3Vmode;
-  graphicsState.CC3Vres = CC3Vres;
-  graphicsState.ColorInvert = ColorInvert;
-  graphicsState.CompatMode = CompatMode;
-  graphicsState.ExtendedText = ExtendedText;
-  graphicsState.GraphicsMode = GraphicsMode;
-  graphicsState.Hoffset = Hoffset;
-  graphicsState.HorzCenter = HorzCenter;
-  graphicsState.HorzOffsetReg = HorzOffsetReg;
-  graphicsState.InvertAll = InvertAll;
-  graphicsState.LinesperRow = LinesperRow;
-  graphicsState.LinesperScreen = LinesperScreen;
-  graphicsState.LowerCase = LowerCase;
-  graphicsState.MasterMode = MasterMode;
-  graphicsState.MonType = MonType;
-  graphicsState.PalleteIndex = PalleteIndex;
-  graphicsState.Stretch = Stretch;
-  graphicsState.TextBGColor = TextBGColor;
-  graphicsState.TextBGPallete = TextBGPallete;
-  graphicsState.TextFGColor = TextFGColor;
-  graphicsState.TextFGPallete = TextFGPallete;
-  graphicsState.VertCenter = VertCenter;
-  graphicsState.VresIndex = VresIndex;
+GraphicsState* InitializeInstance(GraphicsState* g) {
+  g->BlinkState = BlinkState;
+  g->BoarderChange = BoarderChange;
+  g->Bpp = Bpp;
+  g->BytesperRow = BytesperRow;
+  g->CC2Offset = CC2Offset;
+  g->CC2VDGMode = CC2VDGMode;
+  g->CC2VDGPiaMode = CC2VDGPiaMode;
+  g->CC3BoarderColor = CC3BoarderColor;
+  g->CC3Vmode = CC3Vmode;
+  g->CC3Vres = CC3Vres;
+  g->ColorInvert = ColorInvert;
+  g->CompatMode = CompatMode;
+  g->ExtendedText = ExtendedText;
+  g->GraphicsMode = GraphicsMode;
+  g->Hoffset = Hoffset;
+  g->HorzCenter = HorzCenter;
+  g->HorzOffsetReg = HorzOffsetReg;
+  g->InvertAll = InvertAll;
+  g->LinesperRow = LinesperRow;
+  g->LinesperScreen = LinesperScreen;
+  g->LowerCase = LowerCase;
+  g->MasterMode = MasterMode;
+  g->MonType = MonType;
+  g->PalleteIndex = PalleteIndex;
+  g->Stretch = Stretch;
+  g->TextBGColor = TextBGColor;
+  g->TextBGPallete = TextBGPallete;
+  g->TextFGColor = TextFGColor;
+  g->TextFGPallete = TextFGPallete;
+  g->VertCenter = VertCenter;
+  g->VresIndex = VresIndex;
 
-  graphicsState.PixelsperLine = PixelsperLine;
-  graphicsState.TagY = TagY;
-  graphicsState.VerticalOffsetRegister = VerticalOffsetRegister;
-  graphicsState.VPitch = VPitch;
+  g->PixelsperLine = PixelsperLine;
+  g->TagY = TagY;
+  g->VerticalOffsetRegister = VerticalOffsetRegister;
+  g->VPitch = VPitch;
 
-  graphicsState.DistoOffset = DistoOffset;
-  graphicsState.NewStartofVidram = NewStartofVidram;
-  graphicsState.StartofVidram = StartofVidram;
-  graphicsState.VidMask = VidMask;
+  g->DistoOffset = DistoOffset;
+  g->NewStartofVidram = NewStartofVidram;
+  g->StartofVidram = StartofVidram;
+  g->VidMask = VidMask;
 
-  graphicsState.BoarderColor8 = BoarderColor8;
-  graphicsState.BoarderColor16 = BoarderColor16;
-  graphicsState.BoarderColor32 = BoarderColor32;
+  g->BoarderColor8 = BoarderColor8;
+  g->BoarderColor16 = BoarderColor16;
+  g->BoarderColor32 = BoarderColor32;
 
   for (int i = 0; i < 4; i++) {
-    graphicsState.ColorTable16Bit[i] = ColorTable16Bit[i];
-    graphicsState.ColorTable32Bit[i] = ColorTable32Bit[i];
+    g->ColorTable16Bit[i] = ColorTable16Bit[i];
+    g->ColorTable32Bit[i] = ColorTable32Bit[i];
 
-    graphicsState.Lpf[i] = Lpf[i];
-    graphicsState.VcenterTable[i] = VcenterTable[i];
+    g->Lpf[i] = Lpf[i];
+    g->VcenterTable[i] = VcenterTable[i];
   }
 
   for (int i = 0; i < 16; i++) {
-    graphicsState.Pallete[i] = 0;
-    graphicsState.Pallete8Bit[i] = 0;
-    graphicsState.Pallete16Bit[i] = 0;
-    graphicsState.Pallete32Bit[i] = 0;
+    g->Pallete[i] = 0;
+    g->Pallete8Bit[i] = 0;
+    g->Pallete16Bit[i] = 0;
+    g->Pallete32Bit[i] = 0;
   }
 
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 4; j++) {
-      graphicsState.Afacts8[i][j] = Afacts8[i][j];
-      graphicsState.Afacts16[i][j] = Afacts16[i][j];
-      graphicsState.Afacts32[i][j] = Afacts32[i][j];
+      g->Afacts8[i][j] = Afacts8[i][j];
+      g->Afacts16[i][j] = Afacts16[i][j];
+      g->Afacts32[i][j] = Afacts32[i][j];
     }
   }
 
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 64; j++) {
-      graphicsState.PalleteLookup8[i][j] = 0;
-      graphicsState.PalleteLookup16[i][j] = 0;
-      graphicsState.PalleteLookup32[i][j] = 0;
+      g->PalleteLookup8[i][j] = 0;
+      g->PalleteLookup16[i][j] = 0;
+      g->PalleteLookup32[i][j] = 0;
     }
   }
 
-  graphicsState.Initialized = 1;
-
-  return graphicsState;
+  return g;
 }

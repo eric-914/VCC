@@ -178,6 +178,7 @@
     <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="commandline.c" />
     <ClCompile Include="fileoperations.c" />
+    <ClCompile Include="graphicsstate.c" />
     <ClCompile Include="joystickinput.c" />
     <ClCompile Include="keyboardlayout.c" />
     <ClCompile Include="library.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="commandline.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fileoperations.h" />
+    <ClInclude Include="graphicsstate.h" />
     <ClInclude Include="joystickinput.h" />
     <ClInclude Include="keyboarddef.h" />
     <ClInclude Include="keyboardlayout.h" />

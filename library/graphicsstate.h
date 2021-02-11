@@ -3,8 +3,6 @@
 
 typedef struct
 {
-  unsigned char Initialized;
-
   unsigned char BlinkState;
   unsigned char BoarderChange;
   unsigned char Bpp;
@@ -71,6 +69,6 @@ typedef struct
   unsigned char  VcenterTable[4];
 } GraphicsState;
 
-GraphicsState* GetGraphicsState();
+extern "C" __declspec(dllexport) GraphicsState* __cdecl GetGraphicsState();
 
 #endif

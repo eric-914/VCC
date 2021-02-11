@@ -24,8 +24,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3font.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
-#include "graphicsstate.h"
 
+#include "library/graphicsstate.h"
 #include "library/defines.h"
 
 unsigned char CheckState(unsigned char attributes);
