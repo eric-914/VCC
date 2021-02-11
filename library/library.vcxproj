@@ -183,10 +183,16 @@
     <ClCompile Include="keyboardlayout.c" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
+    <ClCompile Include="tcc1014graphics-16.c" />
+    <ClCompile Include="tcc1014graphics-24.c" />
+    <ClCompile Include="tcc1014graphics-32.c" />
+    <ClCompile Include="tcc1014graphics-8.c" />
     <ClCompile Include="xDebug.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audiodef.h" />
+    <ClInclude Include="cc2font.h" />
+    <ClInclude Include="cc3font.h" />
     <ClInclude Include="configdef.h" />
     <ClInclude Include="commandline.h" />
     <ClInclude Include="defines.h" />
@@ -199,6 +205,10 @@
     <ClInclude Include="logger.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="systemstate.h" />
+    <ClInclude Include="tcc1014graphics-16.h" />
+    <ClInclude Include="tcc1014graphics-24.h" />
+    <ClInclude Include="tcc1014graphics-32.h" />
+    <ClInclude Include="tcc1014graphics-8.h" />
     <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>

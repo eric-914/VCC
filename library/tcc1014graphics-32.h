@@ -1,5 +1,5 @@
-#ifndef __TCC1014GRAPHICS_H__
-#define __TCC1014GRAPHICS_H__
+#ifndef __TCC1014GRAPHICS_32_H__
+#define __TCC1014GRAPHICS_32_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,31 +18,12 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "library/systemstate.h"
+#include "systemstate.h"
 
-void SetGimeVdgOffset(unsigned char);
-void SetGimeVdgMode(unsigned char);
-void SetGimeVdgMode2(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl UpdateScreen32(SystemState*);
 
-void SetVerticalOffsetRegister(unsigned short);
-void SetCompatMode(unsigned char);
-void SetGimePallet(unsigned char, unsigned char);
-void SetGimeVmode(unsigned char);
-void SetGimeVres(unsigned char);
-void SetGimeHorzOffset(unsigned char);
-void SetGimeBoarderColor(unsigned char);
-void SetVidMask(unsigned int);
-void InvalidateBoarder();
+extern "C" __declspec(dllexport) void __cdecl DrawBottomBoarder32(SystemState*);
 
-void GimeInit(void);
-void GimeReset(void);
-void SetVideoBank(unsigned char);
-unsigned char SetMonitorType(unsigned char);
-void SetBoarderChange(unsigned char);
-
-unsigned char SetScanLines(unsigned char);
-
-#define MRGB	1
-#define MCMP	0
+extern "C" __declspec(dllexport) void __cdecl DrawTopBoarder32(SystemState*);
 
 #endif

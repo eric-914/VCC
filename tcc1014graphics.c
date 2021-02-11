@@ -20,8 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "tcc1014graphics.h"
 #include "coco3.h"
-#include "cc2font.h"
-#include "cc3font.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
 

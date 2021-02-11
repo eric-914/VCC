@@ -181,10 +181,6 @@
     <ClCompile Include="mc6821.c" />
     <ClCompile Include="pakinterface.c" />
     <ClCompile Include="quickload.c" />
-    <ClCompile Include="tcc1014graphics-16.c" />
-    <ClCompile Include="tcc1014graphics-24.c" />
-    <ClCompile Include="tcc1014graphics-32.c" />
-    <ClCompile Include="tcc1014graphics-8.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
     <ClCompile Include="tcc1014registers.c" />
@@ -197,8 +193,6 @@
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="Cassette.h" />
-    <ClInclude Include="cc2font.h" />
-    <ClInclude Include="cc3font.h" />
     <ClInclude Include="clipboard.h" />
     <ClInclude Include="coco3.h" />
     <ClInclude Include="config.h" />

@@ -1,3 +1,5 @@
+#ifndef __TCC1014GRAPHICS_24_H__
+#define __TCC1014GRAPHICS_24_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -16,16 +18,12 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "library/systemstate.h"
+#include "systemstate.h"
 
-void UpdateScreen24(SystemState* systemState)
-{
-}
+extern "C" __declspec(dllexport) void __cdecl UpdateScreen24(SystemState*);
 
-void DrawTopBoarder24(SystemState* systemState)
-{
-}
+extern "C" __declspec(dllexport) void __cdecl DrawBottomBoarder24(SystemState*);
 
-void DrawBottomBoarder24(SystemState* systemState)
-{
-}
+extern "C" __declspec(dllexport) void __cdecl DrawTopBoarder24(SystemState*);
+
+#endif

@@ -41,6 +41,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/defines.h"
 #include "library/graphicsstate.h"
 #include "library/systemstate.h"
+#include "library/tcc1014graphics-8.h"
+#include "library/tcc1014graphics-16.h"
+#include "library/tcc1014graphics-24.h"
+#include "library/tcc1014graphics-32.h"
 
 static double SoundInterrupt = 0;
 static double PicosToSoundSample = SoundInterrupt;
