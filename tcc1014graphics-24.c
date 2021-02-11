@@ -1,6 +1,3 @@
-#ifndef __CPUDEF_H__
-#define __CPUDEF_H__
-
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -19,11 +16,26 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-extern void (*CPUInit)(void);
-extern int  (*CPUExec)(int);
-extern void (*CPUReset)(void);
-extern void (*CPUAssertInterrupt)(unsigned char, unsigned char);
-extern void (*CPUDeAssertInterrupt)(unsigned char);
-extern void (*CPUForcePC)(unsigned short);
+#include <windows.h>
 
-#endif
+#include "tcc1014graphics.h"
+#include "coco3.h"
+#include "cc2font.h"
+#include "cc3font.h"
+#include "config.h"
+#include "DirectDrawInterface.h"
+#include "graphicsstate.h"
+
+#include "library/defines.h"
+
+void UpdateScreen24(SystemState* systemState)
+{
+}
+
+void DrawTopBoarder24(SystemState* systemState)
+{
+}
+
+void DrawBottomBoarder24(SystemState* systemState)
+{
+}
