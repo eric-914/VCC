@@ -69,7 +69,7 @@ typedef struct
   unsigned char  VcenterTable[4];
 } GraphicsState;
 
-extern "C" __declspec(dllexport) GraphicsState * __cdecl GetGraphicsState();
+extern "C" __declspec(dllexport) GraphicsState* __cdecl GetGraphicsState();
 
 extern "C" __declspec(dllexport) unsigned char __cdecl CheckState(unsigned char attributes);
 extern "C" __declspec(dllexport) void __cdecl FlipArtifacts();
@@ -78,5 +78,6 @@ extern "C" __declspec(dllexport) unsigned char __cdecl GetVcenterTable(unsigned 
 extern "C" __declspec(dllexport) void __cdecl ResetGraphicsState();
 extern "C" __declspec(dllexport) void MakeRGBPalette(void);
 extern "C" __declspec(dllexport) void __cdecl MakeCMPpalette(int paletteType);
+extern "C" __declspec(dllexport) void __cdecl SetGimePallet(unsigned char pallete, unsigned char color);
 
 #endif

@@ -293,6 +293,20 @@ extern "C" {
   }
 }
 
+extern "C" {
+  __declspec(dllexport) void __cdecl SetGimePallet(unsigned char pallete, unsigned char color)
+  {
+    GraphicsState* gs = GetGraphicsState();
+
+    // Convert the 6bit rgbrgb value to rrrrrggggggbbbbb for the Real video hardware.
+    //	unsigned char r,g,b;
+    gs->Pallete[pallete] = ((color & 63));
+    gs->Pallete8Bit[pallete] = gs->PalleteLookup8[gs->MonType][color & 63];
+    gs->Pallete16Bit[pallete] = gs->PalleteLookup16[gs->MonType][color & 63];
+    gs->Pallete32Bit[pallete] = gs->PalleteLookup32[gs->MonType][color & 63];
+  }
+}
+
 GraphicsState* InitializeInstance(GraphicsState* g) {
   g->BlinkState = BlinkState;
   g->BoarderChange = BoarderChange;

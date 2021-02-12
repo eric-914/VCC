@@ -36,13 +36,13 @@ This file is part of VCC (Virtual Color Computer).
 #include <assert.h>
 
 #include "keyboard.h"
-#include "gime.h"
 #include "tcc1014registers.h" //GimeAssertKeyboardInterrupt();
 #include "mc6821.h" //GetMuxState() //DACState()
 
-#include "library\keyboardlayout.h"
-#include "library\joystickinput.h"
-#include "library\xDebug.h"
+#include "library/keyboardlayout.h"
+#include "library/joystickinput.h"
+#include "library/joystickstate.h"
+#include "library/xDebug.h"
 
 /*
   Forward declarations
@@ -58,22 +58,6 @@ bool pasting = false;  //Are the keyboard functions in the middle of a paste ope
 //
 // Joystick
 //
-
-static unsigned short StickValue = 0;
-
-JoyStick Left;
-JoyStick Right;
-
-static unsigned short LeftStickX = 32;
-static unsigned short LeftStickY = 32;
-static unsigned short RightStickX = 32;
-static unsigned short RightStickY = 32;
-static unsigned char LeftButton1Status = 0;
-static unsigned char RightButton1Status = 0;
-static unsigned char LeftButton2Status = 0;
-static unsigned char RightButton2Status = 0;
-static unsigned char LeftStickNumber = 0;
-static unsigned char RightStickNumber = 0;
 
 //
 // keyboard
@@ -91,6 +75,18 @@ static unsigned char RolloverTable[8];	// CoCo 'keys' for emulator
 
 /** run-time key translation table - convert key up/down messages to 'rollover' codes */
 static keytranslationentry_t KeyTransTable[KBTABLE_ENTRY_COUNT];	// run-time keyboard layout table (key(s) to keys(s) translation)
+
+unsigned char KeyboardInterruptEnabled = 0;
+
+unsigned char GimeGetKeyboardInterruptState()
+{
+  return KeyboardInterruptEnabled;
+}
+
+void GimeSetKeyboardInterruptState(unsigned char state)
+{
+  KeyboardInterruptEnabled = !!state;
+}
 
 /*
   Get CoCo 'scan' code
@@ -120,38 +116,41 @@ unsigned char vccKeyboardGetScan(unsigned char column)
 
     mask = (mask << 1);
   }
+
   ret_val = 127 - ret_val;
 
-  //Collect CA2 and CB2 from the PIA (1of4 Multiplexer)
-  StickValue = get_pot_value(GetMuxState());
+  JoystickState* joystickState = GetJoystickState();
 
-  if (StickValue != 0)		//OS9 joyin routine needs this (koronis rift works now)
+  //Collect CA2 and CB2 from the PIA (1of4 Multiplexer)
+  joystickState->StickValue = get_pot_value(GetMuxState());
+
+  if (joystickState->StickValue != 0)		//OS9 joyin routine needs this (koronis rift works now)
   {
-    if (StickValue >= DACState())		// Set bit of stick >= DAC output $FF20 Bits 7-2
+    if (joystickState->StickValue >= DACState())		// Set bit of stick >= DAC output $FF20 Bits 7-2
     {
       ret_val |= 0x80;
     }
   }
 
-  if (LeftButton1Status == 1)
+  if (joystickState->LeftButton1Status == 1)
   {
     //Left Joystick Button 1 Down?
     ret_val = ret_val & 0xFD;
   }
 
-  if (RightButton1Status == 1)
+  if (joystickState->RightButton1Status == 1)
   {
     //Right Joystick Button 1 Down?
     ret_val = ret_val & 0xFE;
   }
 
-  if (LeftButton2Status == 1)
+  if (joystickState->LeftButton2Status == 1)
   {
     //Left Joystick Button 2 Down?
     ret_val = ret_val & 0xF7;
   }
 
-  if (RightButton2Status == 1)
+  if (joystickState->RightButton2Status == 1)
   {
     //Right Joystick Button 2 Down?
     ret_val = ret_val & 0xFB;
@@ -195,7 +194,7 @@ void _vccKeyboardUpdateRolloverTable()
   for (Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++)
   {
     // stop at last entry
-    if ((KeyTransTable[Index].ScanCode1 == 0) & (KeyTransTable[Index].ScanCode2 == 0))
+    if ((KeyTransTable[Index].ScanCode1 == 0) && (KeyTransTable[Index].ScanCode2 == 0))
     {
       break;
     }
@@ -281,6 +280,8 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
   }
 #endif
 
+  JoystickState* joystickState = GetJoystickState();
+
   switch (keyState)
   {
   default:
@@ -289,7 +290,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
 
     // Key Down
   case kEventKeyDown:
-    if ((Left.UseMouse == 0) | (Right.UseMouse == 0))
+    if ((joystickState->Left.UseMouse == 0) || (joystickState->Right.UseMouse == 0))
     {
       scanCode = SetMouseStatus(scanCode, 1);
     }
@@ -308,7 +309,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
 
     // Key Up
   case kEventKeyUp:
-    if ((Left.UseMouse == 0) | (Right.UseMouse == 0))
+    if ((joystickState->Left.UseMouse == 0) || (joystickState->Right.UseMouse == 0))
     {
       scanCode = SetMouseStatus(scanCode, 0);
     }
@@ -332,7 +333,6 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
   }
 }
 
-/*****************************************************************************/
 /**
   Key translation table compare function for sorting (with qsort)
 */
@@ -347,30 +347,30 @@ int keyTransCompare(const void* e1, const void* e2)
   {
     return 1;
   }
-  else
+  else {
     if (entry2->ScanCode1 == 0 && entry2->ScanCode2 == 0 && entry1->ScanCode1 != 0)
     {
       return -1;
     }
-    else
+    else {
       // push shift/alt/control by themselves to the end
       if (entry1->ScanCode2 == 0 && (entry1->ScanCode1 == DIK_LSHIFT || entry1->ScanCode1 == DIK_LMENU || entry1->ScanCode1 == DIK_LCONTROL))
       {
         result = 1;
       }
-      else
+      else {
         // push shift/alt/control by themselves to the end
         if (entry2->ScanCode2 == 0 && (entry2->ScanCode1 == DIK_LSHIFT || entry2->ScanCode1 == DIK_LMENU || entry2->ScanCode1 == DIK_LCONTROL))
         {
           result = -1;
         }
-        else
+        else {
           // move double key combos in front of single ones
           if (entry1->ScanCode2 == 0 && entry2->ScanCode2 != 0)
           {
             result = 1;
           }
-          else
+          else {
             // move double key combos in front of single ones
             if (entry2->ScanCode2 == 0 && entry1->ScanCode2 != 0)
             {
@@ -400,6 +400,11 @@ int keyTransCompare(const void* e1, const void* e2)
                 result = entry1->Col2 - entry2->Col2;
               }
             }
+          }
+        }
+      }
+    }
+  }
 
   return result;
 }
@@ -472,7 +477,7 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
     //
     // swaps ScanCode1 with ScanCode2 if ScanCode1 is zero
     //
-    if ((keyTransEntry.ScanCode1 == 0) & (keyTransEntry.ScanCode2 != 0))
+    if ((keyTransEntry.ScanCode1 == 0) && (keyTransEntry.ScanCode2 != 0))
     {
       keyTransEntry.ScanCode1 = keyTransEntry.ScanCode2;
       keyTransEntry.ScanCode2 = 0;
@@ -532,7 +537,6 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 
 void joystick(unsigned short x, unsigned short y)
 {
-
   if (x > 63) {
     x = 63;
   }
@@ -541,16 +545,18 @@ void joystick(unsigned short x, unsigned short y)
     y = 63;
   }
 
-  if (Left.UseMouse == 1)
+  JoystickState* joystickState = GetJoystickState();
+
+  if (joystickState->Left.UseMouse == 1)
   {
-    LeftStickX = x;
-    LeftStickY = y;
+    joystickState->LeftStickX = x;
+    joystickState->LeftStickY = y;
   }
 
-  if (Right.UseMouse == 1)
+  if (joystickState->Right.UseMouse == 1)
   {
-    RightStickX = x;
-    RightStickY = y;
+    joystickState->RightStickX = x;
+    joystickState->RightStickY = y;
   }
 
   return;
@@ -558,48 +564,52 @@ void joystick(unsigned short x, unsigned short y)
 
 void SetStickNumbers(unsigned char leftStickNumber, unsigned char rightStickNumber)
 {
-  LeftStickNumber = leftStickNumber;
-  RightStickNumber = rightStickNumber;
+  JoystickState* joystickState = GetJoystickState();
+
+  joystickState->LeftStickNumber = leftStickNumber;
+  joystickState->RightStickNumber = rightStickNumber;
 }
 
 unsigned short get_pot_value(unsigned char pot)
 {
   DIJOYSTATE2 Stick1;
 
-  if (Left.UseMouse == 3)
+  JoystickState* joystickState = GetJoystickState();
+
+  if (joystickState->Left.UseMouse == 3)
   {
-    JoyStickPoll(&Stick1, LeftStickNumber);
-    LeftStickX = (unsigned short)Stick1.lX >> 10;
-    LeftStickY = (unsigned short)Stick1.lY >> 10;
-    LeftButton1Status = Stick1.rgbButtons[0] >> 7;
-    LeftButton2Status = Stick1.rgbButtons[1] >> 7;
+    JoyStickPoll(&Stick1, joystickState->LeftStickNumber);
+    joystickState->LeftStickX = (unsigned short)Stick1.lX >> 10;
+    joystickState->LeftStickY = (unsigned short)Stick1.lY >> 10;
+    joystickState->LeftButton1Status = Stick1.rgbButtons[0] >> 7;
+    joystickState->LeftButton2Status = Stick1.rgbButtons[1] >> 7;
   }
 
-  if (Right.UseMouse == 3)
+  if (joystickState->Right.UseMouse == 3)
   {
-    JoyStickPoll(&Stick1, RightStickNumber);
-    RightStickX = (unsigned short)Stick1.lX >> 10;
-    RightStickY = (unsigned short)Stick1.lY >> 10;
-    RightButton1Status = Stick1.rgbButtons[0] >> 7;
-    RightButton2Status = Stick1.rgbButtons[1] >> 7;
+    JoyStickPoll(&Stick1, joystickState->RightStickNumber);
+    joystickState->RightStickX = (unsigned short)Stick1.lX >> 10;
+    joystickState->RightStickY = (unsigned short)Stick1.lY >> 10;
+    joystickState->RightButton1Status = Stick1.rgbButtons[0] >> 7;
+    joystickState->RightButton2Status = Stick1.rgbButtons[1] >> 7;
   }
 
   switch (pot)
   {
   case 0:
-    return(RightStickX);
+    return(joystickState->RightStickX);
     break;
 
   case 1:
-    return(RightStickY);
+    return(joystickState->RightStickY);
     break;
 
   case 2:
-    return(LeftStickX);
+    return(joystickState->LeftStickX);
     break;
 
   case 3:
-    return(LeftStickY);
+    return(joystickState->LeftStickY);
     break;
   }
 
@@ -610,163 +620,165 @@ char SetMouseStatus(char scanCode, unsigned char phase)
 {
   char ReturnValue = scanCode;
 
+  JoystickState* joystickState = GetJoystickState();
+
   switch (phase)
   {
   case 0:
-    if (Left.UseMouse == 0)
+    if (joystickState->Left.UseMouse == 0)
     {
-      if (scanCode == Left.Left)
+      if (scanCode == joystickState->Left.Left)
       {
-        LeftStickX = 32;
+        joystickState->LeftStickX = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Right)
+      if (scanCode == joystickState->Left.Right)
       {
-        LeftStickX = 32;
+        joystickState->LeftStickX = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Up)
+      if (scanCode == joystickState->Left.Up)
       {
-        LeftStickY = 32;
+        joystickState->LeftStickY = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Down)
+      if (scanCode == joystickState->Left.Down)
       {
-        LeftStickY = 32;
+        joystickState->LeftStickY = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Fire1)
+      if (scanCode == joystickState->Left.Fire1)
       {
-        LeftButton1Status = 0;
+        joystickState->LeftButton1Status = 0;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Fire2)
+      if (scanCode == joystickState->Left.Fire2)
       {
-        LeftButton2Status = 0;
+        joystickState->LeftButton2Status = 0;
         ReturnValue = 0;
       }
     }
 
-    if (Right.UseMouse == 0)
+    if (joystickState->Right.UseMouse == 0)
     {
-      if (scanCode == Right.Left)
+      if (scanCode == joystickState->Right.Left)
       {
-        RightStickX = 32;
+        joystickState->RightStickX = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Right)
+      if (scanCode == joystickState->Right.Right)
       {
-        RightStickX = 32;
+        joystickState->RightStickX = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Up)
+      if (scanCode == joystickState->Right.Up)
       {
-        RightStickY = 32;
+        joystickState->RightStickY = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Down)
+      if (scanCode == joystickState->Right.Down)
       {
-        RightStickY = 32;
+        joystickState->RightStickY = 32;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Fire1)
+      if (scanCode == joystickState->Right.Fire1)
       {
-        RightButton1Status = 0;
+        joystickState->RightButton1Status = 0;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Fire2)
+      if (scanCode == joystickState->Right.Fire2)
       {
-        RightButton2Status = 0;
+        joystickState->RightButton2Status = 0;
         ReturnValue = 0;
       }
     }
     break;
 
   case 1:
-    if (Left.UseMouse == 0)
+    if (joystickState->Left.UseMouse == 0)
     {
-      if (scanCode == Left.Left)
+      if (scanCode == joystickState->Left.Left)
       {
-        LeftStickX = 0;
+        joystickState->LeftStickX = 0;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Right)
+      if (scanCode == joystickState->Left.Right)
       {
-        LeftStickX = 63;
+        joystickState->LeftStickX = 63;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Up)
+      if (scanCode == joystickState->Left.Up)
       {
-        LeftStickY = 0;
+        joystickState->LeftStickY = 0;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Down)
+      if (scanCode == joystickState->Left.Down)
       {
-        LeftStickY = 63;
+        joystickState->LeftStickY = 63;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Fire1)
+      if (scanCode == joystickState->Left.Fire1)
       {
-        LeftButton1Status = 1;
+        joystickState->LeftButton1Status = 1;
         ReturnValue = 0;
       }
 
-      if (scanCode == Left.Fire2)
+      if (scanCode == joystickState->Left.Fire2)
       {
-        LeftButton2Status = 1;
+        joystickState->LeftButton2Status = 1;
         ReturnValue = 0;
       }
     }
 
-    if (Right.UseMouse == 0)
+    if (joystickState->Right.UseMouse == 0)
     {
-      if (scanCode == Right.Left)
+      if (scanCode == joystickState->Right.Left)
       {
         ReturnValue = 0;
-        RightStickX = 0;
+        joystickState->RightStickX = 0;
       }
 
-      if (scanCode == Right.Right)
+      if (scanCode == joystickState->Right.Right)
       {
-        RightStickX = 63;
-        ReturnValue = 0;
-      }
-
-      if (scanCode == Right.Up)
-      {
-        RightStickY = 0;
+        joystickState->RightStickX = 63;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Down)
+      if (scanCode == joystickState->Right.Up)
       {
-        RightStickY = 63;
+        joystickState->RightStickY = 0;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Fire1)
+      if (scanCode == joystickState->Right.Down)
       {
-        RightButton1Status = 1;
+        joystickState->RightStickY = 63;
         ReturnValue = 0;
       }
 
-      if (scanCode == Right.Fire2)
+      if (scanCode == joystickState->Right.Fire1)
       {
-        RightButton2Status = 1;
+        joystickState->RightButton1Status = 1;
+        ReturnValue = 0;
+      }
+
+      if (scanCode == joystickState->Right.Fire2)
+      {
+        joystickState->RightButton2Status = 1;
         ReturnValue = 0;
       }
     }
@@ -778,45 +790,47 @@ char SetMouseStatus(char scanCode, unsigned char phase)
 
 void SetButtonStatus(unsigned char side, unsigned char state) //Side=0 Left Button Side=1 Right Button State 1=Down
 {
-  unsigned char Btemp = (side << 1) | state;
+  unsigned char buttonStatus = (side << 1) | state;
 
-  if (Left.UseMouse == 1)
-    switch (Btemp)
+  JoystickState* joystickState = GetJoystickState();
+
+  if (joystickState->Left.UseMouse == 1)
+    switch (buttonStatus)
     {
     case 0:
-      LeftButton1Status = 0;
+      joystickState->LeftButton1Status = 0;
       break;
 
     case 1:
-      LeftButton1Status = 1;
+      joystickState->LeftButton1Status = 1;
       break;
 
     case 2:
-      LeftButton2Status = 0;
+      joystickState->LeftButton2Status = 0;
       break;
 
     case 3:
-      LeftButton2Status = 1;
+      joystickState->LeftButton2Status = 1;
       break;
     }
 
-  if (Right.UseMouse == 1)
-    switch (Btemp)
+  if (joystickState->Right.UseMouse == 1)
+    switch (buttonStatus)
     {
     case 0:
-      RightButton1Status = 0;
+      joystickState->RightButton1Status = 0;
       break;
 
     case 1:
-      RightButton1Status = 1;
+      joystickState->RightButton1Status = 1;
       break;
 
     case 2:
-      RightButton2Status = 0;
+      joystickState->RightButton2Status = 0;
       break;
 
     case 3:
-      RightButton2Status = 1;
+      joystickState->RightButton2Status = 1;
       break;
     }
 }

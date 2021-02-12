@@ -180,6 +180,7 @@
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="graphicsstate.c" />
     <ClCompile Include="joystickinput.c" />
+    <ClCompile Include="joystickstate.c" />
     <ClCompile Include="keyboardlayout.c" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
@@ -198,7 +199,9 @@
     <ClInclude Include="defines.h" />
     <ClInclude Include="fileoperations.h" />
     <ClInclude Include="graphicsstate.h" />
+    <ClInclude Include="joystickdef.h" />
     <ClInclude Include="joystickinput.h" />
+    <ClInclude Include="joystickstate.h" />
     <ClInclude Include="keyboarddef.h" />
     <ClInclude Include="keyboardlayout.h" />
     <ClInclude Include="library.h" />

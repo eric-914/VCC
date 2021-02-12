@@ -26,7 +26,6 @@ void SetGimeVdgMode2(unsigned char);
 
 void SetVerticalOffsetRegister(unsigned short);
 void SetCompatMode(unsigned char);
-void SetGimePallet(unsigned char, unsigned char);
 void SetGimeVmode(unsigned char);
 void SetGimeVres(unsigned char);
 void SetGimeHorzOffset(unsigned char);

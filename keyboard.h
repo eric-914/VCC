@@ -21,7 +21,8 @@ This file is part of VCC (Virtual Color Computer).
 */
 /*****************************************************************************/
 
-#include "library\keyboarddef.h"
+#include "library/keyboarddef.h"
+#include "library/joystickdef.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -33,8 +34,8 @@ extern "C"
   unsigned char	vccKeyboardGetScan(unsigned char);
 
   // globals referenced from config.c
-  extern JoyStick	Left;
-  extern JoyStick Right;
+  //extern JoyStick	Left;
+  //extern JoyStick Right;
 
   void joystick(unsigned short, unsigned short);
   unsigned short	get_pot_value(unsigned char pot);
@@ -45,7 +46,10 @@ extern "C"
 }
 #endif
 
-#endif // __KEYBOARD_H__
+unsigned char GimeGetKeyboardInterruptState();
+void GimeSetKeyboardInterruptState(unsigned char state);
 
 bool GetPaste();
 void SetPaste(bool);
+
+#endif // __KEYBOARD_H__

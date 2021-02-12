@@ -23,9 +23,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "Vcc.h"
-#include "gime.h"
+#include "keyboard.h"
 
 #include "library/defines.h"
+#include "library/graphicsstate.h"
 
 static unsigned char VDG_Mode = 0;
 static unsigned char Dis_Offset = 0;

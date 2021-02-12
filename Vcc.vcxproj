@@ -176,7 +176,6 @@
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
     <ClCompile Include="keyboard.c" />
-    <ClCompile Include="gime.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
     <ClCompile Include="pakinterface.c" />
@@ -202,7 +201,6 @@
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />
     <ClInclude Include="keyboard.h" />
-    <ClInclude Include="gime.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
