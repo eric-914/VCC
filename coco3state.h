@@ -20,10 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "library/systemstate.h"
 
-void AudioOut(void);
-void CassOut(void);
-void CassIn(void);
-
 typedef struct
 {
   double SoundInterrupt;
@@ -75,5 +71,20 @@ typedef struct
 } CoCoState;
 
 extern "C" __declspec(dllexport) CoCoState * __cdecl GetCoCoState();
+
+extern "C" __declspec(dllexport) unsigned short __cdecl SetAudioRate(unsigned short rate);
+
+extern "C" __declspec(dllexport) void __cdecl CocoReset(void);
+extern "C" __declspec(dllexport) void __cdecl SetClockSpeed(unsigned short cycles);
+extern "C" __declspec(dllexport) void __cdecl SetHorzInterruptState(unsigned char state);
+extern "C" __declspec(dllexport) void __cdecl SetVertInterruptState(unsigned char state);
+extern "C" __declspec(dllexport) void __cdecl SetMasterTickCounter(void);
+extern "C" __declspec(dllexport) void __cdecl SetTimerInterruptState(unsigned char state);
+extern "C" __declspec(dllexport) void __cdecl SetInterruptTimer(unsigned short timer);
+extern "C" __declspec(dllexport) void __cdecl SetTimerClockRate(unsigned char clockRate);
+
+extern "C" __declspec(dllexport) void __cdecl AudioOut(void);
+extern "C" __declspec(dllexport) void __cdecl CassOut(void);
+extern "C" __declspec(dllexport) void __cdecl CassIn(void);
 
 #endif

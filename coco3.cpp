@@ -36,6 +36,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "config.h"
 #include "tcc1014mmu.h"
+#include "sampledefs.h"
 
 #include "library/configdef.h"
 #include "library/cpudef.h"
@@ -141,35 +142,15 @@ float RenderFrame(SystemState* systemState)
   return(CalculateFPS());
 }
 
-void SetClockSpeed(unsigned short cycles)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->OverClock = cycles;
-}
-
-void SetHorzInterruptState(unsigned char state)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->HorzInterruptEnabled = !!state;
-}
-
-void SetVertInterruptState(unsigned char state)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->VertInterruptEnabled = !!state;
-}
-
 void SetLinesperScreen(unsigned char lines)
 {
   CoCoState* coco = GetCoCoState();
+  GraphicsState* graphicsState = GetGraphicsState();
 
   lines = (lines & 3);
 
-  coco->LinesperScreen = GetLpf(lines);
-  coco->TopBoarder = GetVcenterTable(lines);
+  coco->LinesperScreen = graphicsState->Lpf[lines];
+  coco->TopBoarder = graphicsState->VcenterTable[lines];  /* graphicsstate.c */
   coco->BottomBoarder = 243 - (coco->TopBoarder + coco->LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
 }
 
@@ -355,9 +336,9 @@ _inline int CPUCycle(void)
     if (coco->Throttle == 0) {
       coco->Throttle = SetSpeedThrottle(QUERY);
 
-      if (coco->Throttle == 0) { 
+      if (coco->Throttle == 0) {
         coco->Throttle = 2; // 2 = No throttle.
-      } 
+      }
     }
 
     SetSpeedThrottle(0);
@@ -386,11 +367,11 @@ _inline int CPUCycle(void)
         SetPaste(false);
 
         //Done pasting. Reset throttle to original state
-        if (coco->Throttle == 2) { 
-          SetSpeedThrottle(0); 
+        if (coco->Throttle == 2) {
+          SetSpeedThrottle(0);
         }
-        else { 
-          SetSpeedThrottle(1); 
+        else {
+          SetSpeedThrottle(1);
         }
 
         //...and reset the keymap to the original state
@@ -402,159 +383,38 @@ _inline int CPUCycle(void)
 
     coco->ClipCycle++;
 
-    if (coco->ClipCycle > coco->WaitCycle) { 
-      coco->ClipCycle = 1; 
+    if (coco->ClipCycle > coco->WaitCycle) {
+      coco->ClipCycle = 1;
     }
   }
 
   return(0);
-}
-
-void SetTimerInterruptState(unsigned char state)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->TimerInterruptEnabled = state;
-}
-
-void SetInterruptTimer(unsigned short timer)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->UnxlatedTickCounter = (timer & 0xFFF);
-
-  SetMasterTickCounter();
-}
-
-void SetTimerClockRate(unsigned char clockRate)	//1= 279.265nS (1/ColorBurst)
-{											                          //0= 63.695uS  (1/60*262)  1 scanline time
-  CoCoState* coco = GetCoCoState();
-
-  coco->TimerClockRate = !!clockRate;
-
-  SetMasterTickCounter();
-}
-
-void SetMasterTickCounter(void)
-{
-  double Rate[2] = { PICOSECOND / (TARGETFRAMERATE * LINESPERFIELD), PICOSECOND / COLORBURST };
-
-  CoCoState* coco = GetCoCoState();
-
-  if (coco->UnxlatedTickCounter == 0) {
-    coco->MasterTickCounter = 0;
-  }
-  else {
-    coco->MasterTickCounter = (coco->UnxlatedTickCounter + 2) * Rate[coco->TimerClockRate];
-  }
-
-  if (coco->MasterTickCounter != coco->OldMaster)
-  {
-    coco->OldMaster = coco->MasterTickCounter;
-    coco->PicosToInterrupt = coco->MasterTickCounter;
-  }
-
-  coco->IntEnable = coco->MasterTickCounter == 0 ? 0 : 1;
-}
-
-void MiscReset(void)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->HorzInterruptEnabled = 0;
-  coco->VertInterruptEnabled = 0;
-  coco->TimerInterruptEnabled = 0;
-  coco->MasterTimer = 0;
-  coco->TimerClockRate = 0;
-  coco->MasterTickCounter = 0;
-  coco->UnxlatedTickCounter = 0;
-  coco->OldMaster = 0;
-
-  coco->SoundInterrupt = 0;
-  coco->PicosToSoundSample = 0;
-  coco->CycleDrift = 0;
-  coco->CyclesThisLine = 0;
-  coco->PicosThisLine = 0;
-  coco->IntEnable = 0;
-  coco->AudioIndex = 0;
-
-  ResetAudio();
-}
-
-unsigned short SetAudioRate(unsigned short rate)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->SndEnable = 1;
-  coco->SoundInterrupt = 0;
-  coco->CycleDrift = 0;
-  coco->AudioIndex = 0;
-
-  if (rate != 0) {	//Force Mute or 44100Hz
-    rate = 44100;
-  }
-
-  if (rate == 0) {
-    coco->SndEnable = 0;
-  }
-  else
-  {
-    coco->SoundInterrupt = PICOSECOND / rate;
-    coco->PicosToSoundSample = coco->SoundInterrupt;
-  }
-
-  coco->SoundRate = rate;
-
-  return(0);
-}
-
-void AudioOut(void)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->AudioBuffer[coco->AudioIndex++] = GetDACSample();
-}
-
-void CassOut(void)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->CassBuffer[coco->AudioIndex++] = GetCasSample();
-}
-
-void CassIn(void)
-{
-  CoCoState* coco = GetCoCoState();
-
-  coco->AudioBuffer[coco->AudioIndex] = GetDACSample();
-
-  SetCassetteSample(coco->CassBuffer[coco->AudioIndex++]);
 }
 
 unsigned char SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
 {
   CoCoState* coco = GetCoCoState();
 
-  static unsigned char LastMode = 0;
-  static unsigned short PrimarySoundRate = coco->SoundRate;
+  static unsigned char lastMode = 0;
+  static unsigned short primarySoundRate = coco->SoundRate;
 
   switch (mode)
   {
   case 0:
-    if (LastMode == 1) {	//Send the last bits to be encoded
-      FlushCassetteBuffer(coco->CassBuffer, coco->AudioIndex);
+    if (lastMode == 1) {	//Send the last bits to be encoded
+      FlushCassetteBuffer(coco->CassBuffer, coco->AudioIndex); /* Cassette.cpp */
     }
 
     coco->AudioEvent = AudioOut;
 
-    SetAudioRate(PrimarySoundRate);
+    SetAudioRate(primarySoundRate);
 
     break;
 
   case 1:
     coco->AudioEvent = CassOut;
 
-    PrimarySoundRate = coco->SoundRate;
+    primarySoundRate = coco->SoundRate;
 
     SetAudioRate(TAPEAUDIORATE);
 
@@ -563,7 +423,7 @@ unsigned char SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2
   case 2:
     coco->AudioEvent = CassIn;
 
-    PrimarySoundRate = coco->SoundRate;
+    primarySoundRate = coco->SoundRate;
 
     SetAudioRate(TAPEAUDIORATE);
 
@@ -574,10 +434,10 @@ unsigned char SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2
     break;
   }
 
-  if (mode != LastMode)
+  if (mode != lastMode)
   {
     coco->AudioIndex = 0;	//Reset Buffer on true mode switch
-    LastMode = mode;
+    lastMode = mode;
   }
 
   coco->SoundOutputMode = mode;

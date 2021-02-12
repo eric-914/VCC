@@ -22,6 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
+#include "coco3state.h"
+#include "audio.h"
 
 #include "library/graphicsstate.h"
 #include "library/defines.h"
@@ -296,7 +298,9 @@ void GimeReset(void)
 
   MakeRGBPalette();
   MakeCMPpalette(GetPaletteType());
-  MiscReset();
+
+  CocoReset();
+  ResetAudio(); /* Audio.c */
 }
 
 void SetVideoBank(unsigned char data)

@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "config.h"
 #include "coco3.h"
+#include "coco3state.h"
 #include "audio.h"
 
 #include "library\defines.h"
@@ -63,8 +64,9 @@ int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
 {
   rate = (rate & 3);
 
-  if (rate != 0)	//Force 44100 or Mute
+  if (rate != 0) {	//Force 44100 or Mute
     rate = 3;
+  }
 
   CurrentRate = rate;
 
@@ -98,13 +100,15 @@ int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
   {
     hr = DirectSoundCreate(guid, &lpds, NULL);	// create a directsound object
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return(1);
+    }
 
     hr = lpds->SetCooperativeLevel(main_window_handle, DSSCL_NORMAL); // set cooperation level normal DSSCL_EXCLUSIVE
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return(1);
+    }
 
     // set up the format data structure
     memset(&pcmwf, 0, sizeof(WAVEFORMATEX));
@@ -125,26 +129,30 @@ int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
 
     hr = lpds->CreateSoundBuffer(&dsbd, &lpdsbuffer1, NULL);
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return(1);
+    }
 
     // Clear out sound buffers
     hr = lpdsbuffer1->Lock(0, SndBuffLenth, &SndPointer1, &SndLenth1, &SndPointer2, &SndLenth2, DSBLOCK_ENTIREBUFFER);
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return(1);
+    }
 
     memset(SndPointer1, 0, SndBuffLenth);
     hr = lpdsbuffer1->Unlock(SndPointer1, SndLenth1, SndPointer2, SndLenth2);
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return(1);
+    }
 
     lpdsbuffer1->SetCurrentPosition(0);
     hr = lpdsbuffer1->Play(0, 0, DSBPLAY_LOOPING);	// play the sound in looping mode
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return(1);
+    }
 
     InitPassed = 1;
     AudioPause = 0;
@@ -160,32 +168,40 @@ void FlushAudioBuffer(unsigned int* aBuffer, unsigned short length)
   unsigned short LeftAverage = 0, RightAverage = 0, Index = 0;
   unsigned char Flag = 0;
   unsigned char* Abuffer2 = (unsigned char*)aBuffer;
+
   LeftAverage = aBuffer[0] >> 16;
   RightAverage = aBuffer[0] & 0xFFFF;
+
   UpdateSoundBar(LeftAverage, RightAverage);
 
-  if ((!InitPassed) | (AudioPause))
+  if ((!InitPassed) || (AudioPause)) {
     return;
+  }
 
   if (GetFreeBlockCount() <= 0)	//this should only kick in when frame skipping or unthrottled
   {
     memcpy(AuxBuffer[AuxBufferPointer], Abuffer2, length);	//Saving buffer to aux stack
+
     AuxBufferPointer++;		//and chase your own tail
     AuxBufferPointer %= 5;	//At this point we are so far behind we may as well drop the buffer
+
     return;
   }
 
   hr = lpdsbuffer1->Lock(BuffOffset, length, &SndPointer1, &SndLenth1, &SndPointer2, &SndLenth2, 0);
 
-  if (hr != DS_OK)
+  if (hr != DS_OK) {
     return;
+  }
 
   memcpy(SndPointer1, Abuffer2, SndLenth1);	// copy first section of circular buffer
 
-  if (SndPointer2 != NULL)						// copy last section of circular buffer if wrapped
+  if (SndPointer2 != NULL) { // copy last section of circular buffer if wrapped
     memcpy(SndPointer2, Abuffer2 + SndLenth1, SndLenth2);
+  }
 
   hr = lpdsbuffer1->Unlock(SndPointer1, SndLenth1, SndPointer2, SndLenth2);// unlock the buffer
+
   BuffOffset = (BuffOffset + length) % SndBuffLenth;	//Where to write next
 }
 
@@ -194,44 +210,52 @@ int GetFreeBlockCount(void) //return 0 on full buffer
   unsigned long WriteCursor = 0, PlayCursor = 0;
   long RetVal = 0, MaxSize = 0;
 
-  if ((!InitPassed) | (AudioPause))
+  if ((!InitPassed) || (AudioPause)) {
     return(AUDIOBUFFERS);
+  }
 
   RetVal = lpdsbuffer1->GetCurrentPosition(&PlayCursor, &WriteCursor);
 
-  if (BuffOffset <= PlayCursor)
+  if (BuffOffset <= PlayCursor) {
     MaxSize = PlayCursor - BuffOffset;
-  else
+  }
+  else {
     MaxSize = SndBuffLenth - BuffOffset + PlayCursor;
+  }
 
   return(MaxSize / BlockSize);
 }
 
 void PurgeAuxBuffer(void)
 {
-  if ((!InitPassed) | (AudioPause))
+  if ((!InitPassed) || (AudioPause)) {
     return;
+  }
 
-  return; //TODO: Wait, what?
+  return; //TODO: Why?
 
   AuxBufferPointer--;			//Normally points to next free block Point to last used block
 
   if (AuxBufferPointer >= 0)	//zero is a valid data block
   {
-    while ((GetFreeBlockCount() <= 0));
+    while ((GetFreeBlockCount() <= 0)) {};
 
     hr = lpdsbuffer1->Lock(BuffOffset, BlockSize, &SndPointer1, &SndLenth1, &SndPointer2, &SndLenth2, 0);
 
-    if (hr != DS_OK)
+    if (hr != DS_OK) {
       return;
+    }
 
     memcpy(SndPointer1, AuxBuffer[AuxBufferPointer], SndLenth1);
 
-    if (SndPointer2 != NULL)
+    if (SndPointer2 != NULL) {
       memcpy(SndPointer2, (AuxBuffer[AuxBufferPointer] + (SndLenth1 >> 2)), SndLenth2);
+    }
 
     BuffOffset = (BuffOffset + BlockSize) % SndBuffLenth;
+
     hr = lpdsbuffer1->Unlock(SndPointer1, SndLenth1, SndPointer2, SndLenth2);
+
     AuxBufferPointer--;
   }
 
@@ -242,6 +266,7 @@ int GetSoundCardList(SndCardList* list)
 {
   CardCount = 0;
   Cards = list;
+
   DirectSoundEnumerate(DSEnumCallback, NULL);
 
   return(CardCount);
@@ -271,8 +296,9 @@ int SoundInInit(HWND main_window_handle, _GUID* guid)
 {
   hr = DirectSoundCaptureCreate(guid, &lpdsin, NULL);
 
-  if (hr != DS_OK)
+  if (hr != DS_OK) {
     return(1);
+  }
 
   dsbdin.dwSize = sizeof(DSCBUFFERDESC); // Size of the structure
   dsbdin.dwFlags = 0;
@@ -281,8 +307,9 @@ int SoundInInit(HWND main_window_handle, _GUID* guid)
   dsbdin.dwBufferBytes = SndBuffLenth;
   hr = lpdsin->CreateCaptureBuffer(&dsbdin, &lpdsbuffer2, NULL);
 
-  if (hr != DS_OK)
+  if (hr != DS_OK) {
     return(1);
+  }
 
   lpdsbuffer2->Start(hr);
 
@@ -297,9 +324,11 @@ unsigned short GetSoundStatus(void)
 void ResetAudio(void)
 {
   SetAudioRate(iRateList[CurrentRate]);
+
   //	SetAudioRate(44100);
-  if (InitPassed)
+  if (InitPassed) {
     lpdsbuffer1->SetCurrentPosition(0);
+  }
 
   BuffOffset = 0;
   AuxBufferPointer = 0;
@@ -311,10 +340,12 @@ unsigned char PauseAudio(unsigned char pause)
 
   if (InitPassed)
   {
-    if (AudioPause == 1)
+    if (AudioPause == 1) {
       hr = lpdsbuffer1->Stop();
-    else
+    }
+    else {
       hr = lpdsbuffer1->Play(0, 0, DSBPLAY_LOOPING);
+    }
   }
 
   return(AudioPause);

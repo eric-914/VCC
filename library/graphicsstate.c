@@ -101,18 +101,6 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl GetLpf(unsigned char index) {
-    return instance->Lpf[index];
-  }
-}
-
-extern "C" {
-  __declspec(dllexport) unsigned char __cdecl GetVcenterTable(unsigned char index) {
-    return instance->VcenterTable[index];
-  }
-}
-
-extern "C" {
   __declspec(dllexport) void __cdecl ResetGraphicsState() {
     instance->CC3Vmode = 0;
     instance->CC3Vres = 0;
@@ -242,7 +230,7 @@ extern "C" {
           contrast = 70;
           saturation = 92;
           brightness = -20;
-          brightness += ((index / 16) + (double)1) * contrast;
+          brightness += (((double)index / 16) + (double)1) * contrast;
           offset = (index % 16) - 1 + (index / 16) * 15;
           r = cos(w * (offset + 9.2)) * saturation + brightness;
           g = cos(w * (offset + 14.2)) * saturation + brightness;

@@ -1,5 +1,5 @@
-#ifndef __COCO3_H__
-#define __COCO3_H__
+#ifndef __SAMPLE_DEF_H__
+#define __SAMPLE_DEF_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,12 +18,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "library/systemstate.h"
-
-void SetLinesperScreen(unsigned char lines);
-
-unsigned char SetSndOutMode(unsigned char);
-
-float RenderFrame(SystemState*);
+unsigned int GetDACSample(void);
+unsigned char GetCasSample(void);
+void SetCassetteSample(unsigned char);
 
 #endif

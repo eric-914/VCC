@@ -20,6 +20,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
+#include "sampledefs.h"
+
 unsigned char pia0_read(unsigned char port);
 void pia0_write(unsigned char data, unsigned char port);
 unsigned char pia1_read(unsigned char port);
@@ -29,7 +31,6 @@ void ClosePrintFile(void);
 void SetSerialParams(unsigned char);
 void SetMonState(BOOL);
 unsigned char VDG_Mode(void);
-void kb_tap(unsigned int, unsigned int, unsigned int);
 void irq_hs(int);
 void irq_fs(int);
 void AssertCart(void);
@@ -38,9 +39,6 @@ unsigned char SetCartAutoStart(unsigned char);
 void PiaReset();
 unsigned char GetMuxState(void);
 unsigned char DACState(void);
-unsigned int GetDACSample(void);
-unsigned char GetCasSample(void);
-void SetCassetteSample(unsigned char);
 int OpenPrintFile(char*);
 
 #define FALLING 0
