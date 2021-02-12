@@ -19,37 +19,34 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <stdio.h>
 
-#include "pakinterface.h"
-#include "tcc1014mmu.h"
+#include "pakinterface.h" //InsertModule
+#include "tcc1014mmu.h" //MemWrite8
 
 #include "library/cpudef.h"
 #include "library/fileoperations.h"
 
-static unsigned char FileType = 0;
-static unsigned short FileLength = 0;
-static  short StartAddress = 0;
 static unsigned short XferAddress = 0;
-static unsigned char* MemImage = NULL;
-FILE* BinImage = NULL;
-HANDLE hr;
-static unsigned char Flag = 1;
-static size_t temp = 255;
-static char Extension[MAX_PATH] = "";
 
 unsigned char QuickLoad(char* binFileName)
 {
-  unsigned int MemIndex = 0;
+  FILE* binImage = NULL;
+  unsigned int memIndex = 0;
+  unsigned char fileType = 0;
+  unsigned short fileLength = 0;
+  short startAddress = 0;
+  char Extension[MAX_PATH] = "";
+  unsigned char* MemImage = NULL;
 
-  hr = CreateFile(binFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE hr = CreateFile(binFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
   if (hr == INVALID_HANDLE_VALUE) {
     return(1);				//File Not Found
   }
 
   CloseHandle(hr);
-  BinImage = fopen(binFileName, "rb");
+  binImage = fopen(binFileName, "rb");
   
-  if (BinImage == NULL) {
+  if (binImage == NULL) {
     return(2);				//Can't Open File
   }
 
@@ -75,33 +72,33 @@ unsigned char QuickLoad(char* binFileName)
   {
     while (true)
     {
-      temp = fread(MemImage, sizeof(char), 5, BinImage);
-      FileType = MemImage[0];
-      FileLength = (MemImage[1] << 8) + MemImage[2];
-      StartAddress = (MemImage[3] << 8) + MemImage[4];
+      fread(MemImage, sizeof(char), 5, binImage);
+      fileType = MemImage[0];
+      fileLength = (MemImage[1] << 8) + MemImage[2];
+      startAddress = (MemImage[3] << 8) + MemImage[4];
 
-      switch (FileType)
+      switch (fileType)
       {
       case 0:
-        temp = fread(&MemImage[0], sizeof(char), FileLength, BinImage);
+        fread(&MemImage[0], sizeof(char), fileLength, binImage);
         
-        for (MemIndex = 0; MemIndex < FileLength; MemIndex++) { //Kluge!!!
-          MemWrite8(MemImage[MemIndex], StartAddress++);
+        for (memIndex = 0; memIndex < fileLength; memIndex++) { //Kluge!!!
+          MemWrite8(MemImage[memIndex], startAddress++);
         }
 
         break;
 
       case 255:
-        XferAddress = StartAddress;
+        XferAddress = startAddress;
 
-        if ((XferAddress == 0) || (XferAddress > 32767) || (FileLength != 0))
+        if ((XferAddress == 0) || (XferAddress > 32767) || (fileLength != 0))
         {
           MessageBox(NULL, ".Bin file is corrupt or invalid Transfer Address", "Error", 0);
 
           return(3);
         }
 
-        fclose(BinImage);
+        fclose(binImage);
         free(MemImage);
         GetCPU()->CPUForcePC(XferAddress);
 
@@ -109,7 +106,7 @@ unsigned char QuickLoad(char* binFileName)
 
       default:
         MessageBox(NULL, ".Bin file is corrupt or invalid", "Error", 0);
-        fclose(BinImage);
+        fclose(binImage);
         free(MemImage);
 
         return(3);

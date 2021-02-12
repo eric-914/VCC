@@ -204,18 +204,22 @@ unsigned int MemRead32(unsigned short);
 void HD6309Reset(void)
 {
   char index;
-  
-  for (index = 0;index <= 6;index++)		//Set all register to 0 except V
+
+  for (index = 0; index <= 6; index++) {		//Set all register to 0 except V
     *xfreg16[index] = 0;
-  
-  for (index = 0;index <= 7;index++)
+  }
+
+  for (index = 0; index <= 7; index++) {
     *ureg8[index] = 0;
-  
-  for (index = 0;index <= 7;index++)
+  }
+
+  for (index = 0; index <= 7; index++) {
     cc[index] = 0;
-  
-  for (index = 0;index <= 7;index++)
+  }
+
+  for (index = 0; index <= 7; index++) {
     md[index] = 0;
+  }
 
   mdbits = getmd();
   dp.Reg = 0;
@@ -487,8 +491,7 @@ void Clr_D(void)
 
 void LBeq_R(void)
 { //1027
-  if (cc[Z])
-  {
+  if (cc[Z]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -505,8 +508,7 @@ void LBrn_R(void)
 
 void LBhi_R(void)
 { //1022
-  if (!(cc[C] | cc[Z]))
-  {
+  if (!(cc[C] | cc[Z])) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -518,8 +520,7 @@ void LBhi_R(void)
 
 void LBls_R(void)
 { //1023
-  if (cc[C] | cc[Z])
-  {
+  if (cc[C] | cc[Z]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -531,8 +532,7 @@ void LBls_R(void)
 
 void LBhs_R(void)
 { //1024
-  if (!cc[C])
-  {
+  if (!cc[C]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -544,8 +544,7 @@ void LBhs_R(void)
 
 void LBcs_R(void)
 { //1025
-  if (cc[C])
-  {
+  if (cc[C]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -557,8 +556,7 @@ void LBcs_R(void)
 
 void LBne_R(void)
 { //1026
-  if (!cc[Z])
-  {
+  if (!cc[Z]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -570,8 +568,7 @@ void LBne_R(void)
 
 void LBvc_R(void)
 { //1028
-  if (!cc[V])
-  {
+  if (!cc[V]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -583,8 +580,7 @@ void LBvc_R(void)
 
 void LBvs_R(void)
 { //1029
-  if (cc[V])
-  {
+  if (cc[V]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -596,8 +592,7 @@ void LBvs_R(void)
 
 void LBpl_R(void)
 { //102A
-  if (!cc[N])
-  {
+  if (!cc[N]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -609,8 +604,7 @@ void LBpl_R(void)
 
 void LBmi_R(void)
 { //102B
-  if (cc[N])
-  {
+  if (cc[N]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -622,8 +616,7 @@ void LBmi_R(void)
 
 void LBge_R(void)
 { //102C
-  if (!(cc[N] ^ cc[V]))
-  {
+  if (!(cc[N] ^ cc[V])) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -635,8 +628,7 @@ void LBge_R(void)
 
 void LBlt_R(void)
 { //102D
-  if (cc[V] ^ cc[N])
-  {
+  if (cc[V] ^ cc[N]) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -648,8 +640,7 @@ void LBlt_R(void)
 
 void LBgt_R(void)
 { //102E
-  if (!(cc[Z] | (cc[N] ^ cc[V])))
-  {
+  if (!(cc[Z] | (cc[N] ^ cc[V]))) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -661,8 +652,7 @@ void LBgt_R(void)
 
 void LBle_R(void)
 {	//102F
-  if (cc[Z] | (cc[N] ^ cc[V]))
-  {
+  if (cc[Z] | (cc[N] ^ cc[V])) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
     CycleCounter += 1;
@@ -680,20 +670,25 @@ void Addr(void)
   Source = temp8 >> 4;
   Dest = temp8 & 15;
 
-  if (Dest > 7) // 8 bit dest
-  {
+  if (Dest > 7) { // 8 bit dest
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
-    if (Source > 7) // 8 bit source
-    {
+    if (Source > 7) { // 8 bit source
       Source &= 7;
-      if (Source == 2)
+
+      if (Source == 2) {
         source8 = getcc();
-      else
+      }
+      else {
         source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -702,12 +697,14 @@ void Addr(void)
     }
 
     temp16 = source8 + dest8;
+
     switch (Dest)
     {
     case 2: 				setcc((unsigned char)temp16); break;
     case 4: case 5: break; // never assign to zero reg
     default: 				*ureg8[Dest] = (unsigned char)temp16; break;
     }
+
     cc[C] = (temp16 & 0x100) >> 8;
     cc[V] = OVERFLOW8(cc[C], source8, dest8, temp16);
     cc[N] = NTEST8(*ureg8[Dest]);
@@ -724,6 +721,7 @@ void Addr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
       case 0: case 1: source16 = D_REG; break; // A & B Reg
@@ -757,15 +755,22 @@ void Adcr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
-    if (Source > 7) // 8 bit source
-    {
+    if (Source > 7) { // 8 bit source
       Source &= 7;
 
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -774,19 +779,19 @@ void Adcr(void)
     }
 
     temp16 = source8 + dest8 + cc[C];
-    
+
     switch (Dest)
     {
-    case 2: 				
-      setcc((unsigned char)temp16); 
+    case 2:
+      setcc((unsigned char)temp16);
       break;
 
-    case 4: 
-    case 5: 
+    case 4:
+    case 5:
       break; // never assign to zero reg
 
-    default: 				
-      *ureg8[Dest] = (unsigned char)temp16; 
+    default:
+      *ureg8[Dest] = (unsigned char)temp16;
       break;
     }
 
@@ -809,27 +814,27 @@ void Adcr(void)
 
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -856,18 +861,24 @@ void Subr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
-    if (Source > 7) // 8 bit source
-    {
+    if (Source > 7) { // 8 bit source
       Source &= 7;
 
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
-    else // 16 bit source - demote to 8 bit
-    {
+    else { // 16 bit source - demote to 8 bit
       Source &= 7;
       source8 = (unsigned char)*xfreg16[Source];
     }
@@ -876,16 +887,16 @@ void Subr(void)
 
     switch (Dest)
     {
-    case 2: 				
-      setcc((unsigned char)temp16); 
+    case 2:
+      setcc((unsigned char)temp16);
       break;
 
-    case 4: 
-    case 5: 
+    case 4:
+    case 5:
       break; // never assign to zero reg
 
-    default: 				
-      *ureg8[Dest] = (unsigned char)temp16; 
+    default:
+      *ureg8[Dest] = (unsigned char)temp16;
       break;
     }
 
@@ -908,27 +919,27 @@ void Subr(void)
 
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -956,15 +967,23 @@ void Sbcr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
 
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -976,16 +995,16 @@ void Sbcr(void)
 
     switch (Dest)
     {
-    case 2: 				
-      setcc((unsigned char)temp16); 
+    case 2:
+      setcc((unsigned char)temp16);
       break;
 
-    case 4: 
-    case 5: 
+    case 4:
+    case 5:
       break; // never assign to zero reg
 
-    default: 				
-      *ureg8[Dest] = (unsigned char)temp16; 
+    default:
+      *ureg8[Dest] = (unsigned char)temp16;
       break;
     }
 
@@ -1008,27 +1027,27 @@ void Sbcr(void)
 
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -1056,15 +1075,23 @@ void Andr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
 
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -1076,16 +1103,16 @@ void Andr(void)
 
     switch (Dest)
     {
-    case 2: 				
-      setcc((unsigned char)temp8); 
+    case 2:
+      setcc((unsigned char)temp8);
       break;
 
-    case 4: 
-    case 5: 
+    case 4:
+    case 5:
       break; // never assign to zero reg
 
-    default: 				
-      *ureg8[Dest] = (unsigned char)temp8; 
+    default:
+      *ureg8[Dest] = (unsigned char)temp8;
       break;
     }
 
@@ -1105,27 +1132,27 @@ void Andr(void)
       Source &= 7;
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -1151,15 +1178,23 @@ void Orr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
 
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -1171,16 +1206,16 @@ void Orr(void)
 
     switch (Dest)
     {
-    case 2: 				
-      setcc((unsigned char)temp8); 
+    case 2:
+      setcc((unsigned char)temp8);
       break;
 
-    case 4: 
-    case 5: 
+    case 4:
+    case 5:
       break; // never assign to zero reg
 
-    default: 				
-      *ureg8[Dest] = (unsigned char)temp8; 
+    default:
+      *ureg8[Dest] = (unsigned char)temp8;
       break;
     }
 
@@ -1201,27 +1236,27 @@ void Orr(void)
 
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -1248,14 +1283,23 @@ void Eorr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -1267,16 +1311,16 @@ void Eorr(void)
 
     switch (Dest)
     {
-    case 2: 				
-      setcc((unsigned char)temp8); 
+    case 2:
+      setcc((unsigned char)temp8);
       break;
 
-    case 4: 
-    case 5: 
+    case 4:
+    case 5:
       break; // never assign to zero reg
 
-    default: 				
-      *ureg8[Dest] = (unsigned char)temp8; 
+    default:
+      *ureg8[Dest] = (unsigned char)temp8;
       break;
     }
 
@@ -1297,27 +1341,27 @@ void Eorr(void)
 
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -1344,14 +1388,23 @@ void Cmpr(void)
   {
     Dest &= 7;
 
-    if (Dest == 2) dest8 = getcc();
-    else dest8 = *ureg8[Dest];
+    if (Dest == 2) {
+      dest8 = getcc();
+    }
+    else {
+      dest8 = *ureg8[Dest];
+    }
 
     if (Source > 7) // 8 bit source
     {
       Source &= 7;
-      if (Source == 2) source8 = getcc();
-      else source8 = *ureg8[Source];
+
+      if (Source == 2) {
+        source8 = getcc();
+      }
+      else {
+        source8 = *ureg8[Source];
+      }
     }
     else // 16 bit source - demote to 8 bit
     {
@@ -1377,29 +1430,30 @@ void Cmpr(void)
     else // 8 bit source - promote to 16 bit
     {
       Source &= 7;
+
       switch (Source)
       {
-      case 0: 
-      case 1: 
-        source16 = D_REG; 
+      case 0:
+      case 1:
+        source16 = D_REG;
         break; // A & B Reg
 
-      case 2:	        
-        source16 = (unsigned short)getcc(); 
+      case 2:
+        source16 = (unsigned short)getcc();
         break; // CC
 
-      case 3:	        
-        source16 = (unsigned short)dp.Reg; 
+      case 3:
+        source16 = (unsigned short)dp.Reg;
         break; // DP
 
-      case 4: 
-      case 5: 
-        source16 = 0; 
+      case 4:
+      case 5:
+        source16 = 0;
         break; // Zero Reg
 
-      case 6: 
-      case 7: 
-        source16 = W_REG; 
+      case 6:
+      case 7:
+        source16 = W_REG;
         break; // E & F Reg
       }
     }
@@ -2797,10 +2851,10 @@ void Bitmd_M(void)
   postbyte = MemRead8(PC_REG++) & 0xC0;
   temp8 = getmd() & postbyte;
   cc[Z] = ZTEST(temp8);
-  
+
   if (temp8 & 0x80) md[7] = 0;
   if (temp8 & 0x40) md[6] = 0;
-  
+
   CycleCounter += 4;
 }
 
@@ -2823,7 +2877,7 @@ void Swi3_I(void)
   MemWrite8(x.B.lsb, --S_REG);
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
-  
+
   if (md[NATIVE6309])
   {
     MemWrite8((F_REG), --S_REG);
@@ -3413,7 +3467,7 @@ void Divq_X(void)
 
   D_REG = (unsigned short)((signed int)temp32 % (signed short int)postword);
   W_REG = stemp32;
-  
+
   if ((stemp16 > 32767) || (stemp16 < -32768))
   {
     cc[V] = 1;
@@ -3425,7 +3479,7 @@ void Divq_X(void)
     cc[N] = NTEST16(W_REG);
     cc[V] = 0;
   }
-  
+
   cc[C] = B_REG & 1;
   CycleCounter += NatEmuCycles3635;
 }
@@ -4053,7 +4107,7 @@ void Bhi_R(void)
 { //22
   if (!(cc[C] | cc[Z]))
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4062,7 +4116,7 @@ void Bls_R(void)
 { //23
   if (cc[C] | cc[Z])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4071,7 +4125,7 @@ void Bhs_R(void)
 { //24
   if (!cc[C])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4080,7 +4134,7 @@ void Blo_R(void)
 { //25
   if (cc[C])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4089,7 +4143,7 @@ void Bne_R(void)
 { //26
   if (!cc[Z])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4098,7 +4152,7 @@ void Beq_R(void)
 { //27
   if (cc[Z])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4107,7 +4161,7 @@ void Bvc_R(void)
 { //28
   if (!cc[V])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4116,7 +4170,7 @@ void Bvs_R(void)
 { //29
   if (cc[V])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4125,7 +4179,7 @@ void Bpl_R(void)
 { //2A
   if (!cc[N])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4134,7 +4188,7 @@ void Bmi_R(void)
 { //2B
   if (cc[N])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4143,7 +4197,7 @@ void Bge_R(void)
 { //2C
   if (!(cc[N] ^ cc[V]))
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4152,7 +4206,7 @@ void Blt_R(void)
 { //2D
   if (cc[V] ^ cc[N])
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4161,7 +4215,7 @@ void Bgt_R(void)
 { //2E
   if (!(cc[Z] | (cc[N] ^ cc[V])))
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4170,7 +4224,7 @@ void Ble_R(void)
 { //2F
   if (cc[Z] | (cc[N] ^ cc[V]))
     PC_REG += (signed char)MemRead8(PC_REG);
-  
+
   PC_REG++;
   CycleCounter += 3;
 }
@@ -4204,53 +4258,53 @@ void Leau_X(void)
 void Pshs_M(void)
 { //34
   postbyte = MemRead8(PC_REG++);
-  
+
   if (postbyte & 0x80)
   {
     MemWrite8(pc.B.lsb, --S_REG);
     MemWrite8(pc.B.msb, --S_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x40)
   {
     MemWrite8(u.B.lsb, --S_REG);
     MemWrite8(u.B.msb, --S_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x20)
   {
     MemWrite8(y.B.lsb, --S_REG);
     MemWrite8(y.B.msb, --S_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x10)
   {
     MemWrite8(x.B.lsb, --S_REG);
     MemWrite8(x.B.msb, --S_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x08)
   {
     MemWrite8(dp.B.msb, --S_REG);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x04)
   {
     MemWrite8(B_REG, --S_REG);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x02)
   {
     MemWrite8(A_REG, --S_REG);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x01)
   {
     MemWrite8(getcc(), --S_REG);
@@ -4263,177 +4317,177 @@ void Pshs_M(void)
 void Puls_M(void)
 { //35
   postbyte = MemRead8(PC_REG++);
-  
+
   if (postbyte & 0x01)
   {
     setcc(MemRead8(S_REG++));
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x02)
   {
     A_REG = MemRead8(S_REG++);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x04)
   {
     B_REG = MemRead8(S_REG++);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x08)
   {
     dp.B.msb = MemRead8(S_REG++);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x10)
   {
     x.B.msb = MemRead8(S_REG++);
     x.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x20)
   {
     y.B.msb = MemRead8(S_REG++);
     y.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x40)
   {
     u.B.msb = MemRead8(S_REG++);
     u.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x80)
   {
     pc.B.msb = MemRead8(S_REG++);
     pc.B.lsb = MemRead8(S_REG++);
     CycleCounter += 2;
   }
-  
+
   CycleCounter += NatEmuCycles54;
 }
 
 void Pshu_M(void)
 { //36
   postbyte = MemRead8(PC_REG++);
-  
+
   if (postbyte & 0x80)
   {
     MemWrite8(pc.B.lsb, --U_REG);
     MemWrite8(pc.B.msb, --U_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x40)
   {
     MemWrite8(s.B.lsb, --U_REG);
     MemWrite8(s.B.msb, --U_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x20)
   {
     MemWrite8(y.B.lsb, --U_REG);
     MemWrite8(y.B.msb, --U_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x10)
   {
     MemWrite8(x.B.lsb, --U_REG);
     MemWrite8(x.B.msb, --U_REG);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x08)
   {
     MemWrite8(dp.B.msb, --U_REG);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x04)
   {
     MemWrite8(B_REG, --U_REG);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x02)
   {
     MemWrite8(A_REG, --U_REG);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x01)
   {
     MemWrite8(getcc(), --U_REG);
     CycleCounter += 1;
   }
-  
+
   CycleCounter += NatEmuCycles54;
 }
 
 void Pulu_M(void)
 { //37
   postbyte = MemRead8(PC_REG++);
-  
+
   if (postbyte & 0x01)
   {
     setcc(MemRead8(U_REG++));
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x02)
   {
     A_REG = MemRead8(U_REG++);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x04)
   {
     B_REG = MemRead8(U_REG++);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x08)
   {
     dp.B.msb = MemRead8(U_REG++);
     CycleCounter += 1;
   }
-  
+
   if (postbyte & 0x10)
   {
     x.B.msb = MemRead8(U_REG++);
     x.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x20)
   {
     y.B.msb = MemRead8(U_REG++);
     y.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x40)
   {
     s.B.msb = MemRead8(U_REG++);
     s.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
-  
+
   if (postbyte & 0x80)
   {
     pc.B.msb = MemRead8(U_REG++);
     pc.B.lsb = MemRead8(U_REG++);
     CycleCounter += 2;
   }
-  
+
   CycleCounter += NatEmuCycles54;
 }
 
@@ -4455,7 +4509,7 @@ void Rti_I(void)
   setcc(MemRead8(S_REG++));
   CycleCounter += 6;
   InInterrupt = 0;
-  
+
   if (cc[E])
   {
     A_REG = MemRead8(S_REG++);
@@ -7654,11 +7708,11 @@ void setcc(unsigned char bincc)
 unsigned char getcc(void)
 {
   unsigned char bincc = 0, bit = 0;
-  
+
   for (bit = 0;bit <= 7;bit++)
     if (cc[bit])
       bincc = bincc | (1 << bit);
-  
+
   return(bincc);
 }
 
