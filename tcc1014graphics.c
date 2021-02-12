@@ -256,7 +256,9 @@ void SetupDisplay(void)
 
   //gs->ColorInvert = (gs->CC3Vmode & 32) >> 5;
   gs->LinesperScreen = gs->Lpf[gs->VresIndex];
+
   SetLinesperScreen(gs->VresIndex);
+
   gs->VertCenter = gs->VcenterTable[gs->VresIndex] - 4; //4 unrendered top lines
   gs->PixelsperLine = gs->BytesperRow * CCPixelsperByte[gs->Bpp];
 

@@ -171,6 +171,7 @@
     <ClCompile Include="Cassette.cpp" />
     <ClCompile Include="clipboard.cpp" />
     <ClCompile Include="coco3.cpp" />
+    <ClCompile Include="cocostate.cpp" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="hd6309.c" />
@@ -194,6 +195,7 @@
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="clipboard.h" />
     <ClInclude Include="coco3.h" />
+    <ClInclude Include="coco3state.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="hd6309.h" />
