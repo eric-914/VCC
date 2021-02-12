@@ -19,11 +19,16 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-extern void (*CPUInit)(void);
-extern int  (*CPUExec)(int);
-extern void (*CPUReset)(void);
-extern void (*CPUAssertInterrupt)(unsigned char, unsigned char);
-extern void (*CPUDeAssertInterrupt)(unsigned char);
-extern void (*CPUForcePC)(unsigned short);
+typedef struct
+{
+  void (*CPUInit)(void);
+  int  (*CPUExec)(int);
+  void (*CPUReset)(void);
+  void (*CPUAssertInterrupt)(unsigned char, unsigned char);
+  void (*CPUDeAssertInterrupt)(unsigned char);
+  void (*CPUForcePC)(unsigned short);
+} CPU;
+
+extern "C" __declspec(dllexport) CPU* __cdecl GetCPU();
 
 #endif

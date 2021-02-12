@@ -49,6 +49,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "DirectDrawInterface.h"
 
 #include "library/commandline.h"
+#include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/fileoperations.h"
 #include "library/graphicsstate.h"
@@ -75,13 +76,6 @@ void LoadIniFile(void);
 void SaveConfig(void);
 unsigned __stdcall EmuLoop(void*);
 unsigned __stdcall CartLoad(void*);
-
-void (*CPUInit)(void) = NULL;
-int  (*CPUExec)(int) = NULL;
-void (*CPUReset)(void) = NULL;
-void (*CPUAssertInterrupt)(unsigned char, unsigned char) = NULL;
-void (*CPUDeAssertInterrupt)(unsigned char) = NULL;
-void (*CPUForcePC)(unsigned short) = NULL;
 
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
@@ -204,7 +198,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   static unsigned char OEMscan = 0;
   static char ascii = 0;
   static RECT ClientSize;
-  static unsigned long Width, Height;
+  static unsigned long Width = 0, Height = 0;
 
   kb_char = (unsigned char)wParam;
 
@@ -578,31 +572,38 @@ void DoHardReset(SystemState* const systemState)
     exit(0);
   }
 
+  CPU* cpu = GetCPU();
+
   if (systemState->CpuType == 1)
   {
-    CPUInit = HD6309Init;
-    CPUExec = HD6309Exec;
-    CPUReset = HD6309Reset;
-    CPUAssertInterrupt = HD6309AssertInterrupt;
-    CPUDeAssertInterrupt = HD6309DeAssertInterrupt;
-    CPUForcePC = HD6309ForcePC;
+    cpu->CPUInit = HD6309Init;
+    cpu->CPUExec = HD6309Exec;
+    cpu->CPUReset = HD6309Reset;
+    cpu->CPUAssertInterrupt = HD6309AssertInterrupt;
+    cpu->CPUDeAssertInterrupt = HD6309DeAssertInterrupt;
+    cpu->CPUForcePC = HD6309ForcePC;
   }
   else
   {
-    CPUInit = MC6809Init;
-    CPUExec = MC6809Exec;
-    CPUReset = MC6809Reset;
-    CPUAssertInterrupt = MC6809AssertInterrupt;
-    CPUDeAssertInterrupt = MC6809DeAssertInterrupt;
-    CPUForcePC = MC6809ForcePC;
+    cpu->CPUInit = MC6809Init;
+    cpu->CPUExec = MC6809Exec;
+    cpu->CPUReset = MC6809Reset;
+    cpu->CPUAssertInterrupt = MC6809AssertInterrupt;
+    cpu->CPUDeAssertInterrupt = MC6809DeAssertInterrupt;
+    cpu->CPUForcePC = MC6809ForcePC;
   }
+
   PiaReset();
   mc6883_reset();	//Captures interal rom pointer for CPU Interrupt Vectors
-  CPUInit();
-  CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
+
+  cpu->CPUInit();
+  cpu->CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
+
   GimeReset();
   UpdateBusPointer();
+
   EmuState.TurboSpeedFlag = 1;
+
   ResetBus();
   SetClockSpeed(1);
 }
@@ -611,11 +612,14 @@ void SoftReset(void)
 {
   mc6883_reset();
   PiaReset();
-  CPUReset();
+
+  GetCPU()->CPUReset();
+
   GimeReset();
   MmuReset();
   CopyRom();
   ResetBus();
+
   EmuState.TurboSpeedFlag = 1;
 }
 
@@ -642,24 +646,27 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 unsigned char SetRamSize(unsigned char size)
 {
-  if (size != QUERY)
+  if (size != QUERY) {
     EmuState.RamSize = size;
+  }
 
   return(EmuState.RamSize);
 }
 
 unsigned char SetSpeedThrottle(unsigned char throttle)
 {
-  if (throttle != QUERY)
+  if (throttle != QUERY) {
     Throttle = throttle;
+  }
 
   return(Throttle);
 }
 
 unsigned char SetFrameSkip(unsigned char skip)
 {
-  if (skip != QUERY)
+  if (skip != QUERY) {
     EmuState.FrameSkip = skip;
+  }
 
   return(EmuState.FrameSkip);
 }
@@ -678,6 +685,7 @@ unsigned char SetCpuType(unsigned char cpuType)
     strcpy(CpuName, "HD6309");
     break;
   }
+
   return(EmuState.CpuType);
 }
 
@@ -688,8 +696,9 @@ void DoReboot(void)
 
 unsigned char SetAutoStart(unsigned char autostart)
 {
-  if (autostart != QUERY)
+  if (autostart != QUERY) {
     AutoStart = autostart;
+  }
 
   return(AutoStart);
 }
@@ -749,12 +758,14 @@ void SaveConfig(void) {
   ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
 
   if (GetOpenFileName(&ofn)) {
-    if (ofn.nFileExtension == 0) strcat(newini, ".ini");  //Add extension if none
+    if (ofn.nFileExtension == 0) {
+      strcat(newini, ".ini");  //Add extension if none
+    }
 
-    WriteIniFile();                                       // Flush current config
+    WriteIniFile(); // Flush current config
 
     if (_stricmp(curini, newini) != 0) {
-      if (!CopyFile(curini, newini, false)) {           // Copy it to new file
+      if (!CopyFile(curini, newini, false)) { // Copy it to new file
         MessageBox(0, "Copy config failed", "error", 0);
       }
     }
@@ -764,8 +775,8 @@ void SaveConfig(void) {
 unsigned __stdcall EmuLoop(void* dummy)
 {
   HANDLE hEvent = (HANDLE)dummy;
-  static float FPS;
-  static unsigned int FrameCounter = 0;
+  static float fps;
+  static unsigned int frameCounter = 0;
   CalibrateThrottle();
   Sleep(30);
   SetEvent(hEvent);
@@ -776,13 +787,14 @@ unsigned __stdcall EmuLoop(void* dummy)
     {
       FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
 
-      while (FlagEmuStop == TH_WAITING)
+      while (FlagEmuStop == TH_WAITING) {
         Sleep(1);
+      }
     }
 
-    FPS = 0;
+    fps = 0;
 
-    if ((Qflag == 255) & (FrameCounter == 30))
+    if ((Qflag == 255) && (frameCounter == 30))
     {
       Qflag = 0;
       QuickLoad(QuickLoadFile);
@@ -790,9 +802,9 @@ unsigned __stdcall EmuLoop(void* dummy)
 
     StartRender();
 
-    for (uint8_t Frames = 1; Frames <= EmuState.FrameSkip; Frames++)
+    for (uint8_t frames = 1; frames <= EmuState.FrameSkip; frames++)
     {
-      FrameCounter++;
+      frameCounter++;
 
       if (EmuState.ResetPending != 0) {
         switch (EmuState.ResetPending)
@@ -824,23 +836,24 @@ unsigned __stdcall EmuLoop(void* dummy)
       }
 
       if (EmuState.EmulationRunning == 1) {
-        FPS += RenderFrame(&EmuState);
+        fps += RenderFrame(&EmuState);
       }
       else {
-        FPS += Static(&EmuState);
+        fps += Static(&EmuState);
       }
     }
 
     EndRender(EmuState.FrameSkip);
-    FPS /= EmuState.FrameSkip;
+    fps /= EmuState.FrameSkip;
     GetModuleStatus(&EmuState);
 
     char ttbuff[256];
-    snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", EmuState.FrameSkip, FPS, CpuName, EmuState.CPUCurrentSpeed, EmuState.StatusLine);
+    snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", EmuState.FrameSkip, fps, CpuName, EmuState.CPUCurrentSpeed, EmuState.StatusLine);
     SetStatusBarText(ttbuff, &EmuState);
 
-    if (Throttle)	//Do nothing untill the frame is over returning unused time to OS
+    if (Throttle)	{ //Do nothing untill the frame is over returning unused time to OS
       FrameWait();
+    }
   }
 
   return(NULL);
@@ -850,10 +863,12 @@ void LoadPack(void)
 {
   unsigned threadID;
 
-  if (DialogOpen)
+  if (DialogOpen) {
     return;
+  }
 
   DialogOpen = true;
+
   _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
 }
 

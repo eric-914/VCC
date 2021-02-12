@@ -18,15 +18,15 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
-#include "cpudef.h"
 #include "tcc1014mmu.h"
 #include "pakinterface.h"
 #include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
 
-#include "library\defines.h"
-#include "library\fileoperations.h"
+#include "library/cpudef.h"
+#include "library/defines.h"
+#include "library/fileoperations.h"
 
 #define HASCONFIG		1
 #define HASIOWRITE		2
@@ -279,7 +279,7 @@ int InsertModule(char* modulePath)
     }
 
     if (SetInterruptCallPointer != NULL) {
-      SetInterruptCallPointer(CPUAssertInterrupt);
+      SetInterruptCallPointer(GetCPU()->CPUAssertInterrupt);
     }
 
     GetModuleName(Modname, CatNumber, DynamicMenuCallback);  //Instantiate the menus from HERE!
@@ -460,7 +460,7 @@ void GetCurrentModule(char* defaultModule)
 void UpdateBusPointer(void)
 {
   if (SetInterruptCallPointer != NULL) {
-    SetInterruptCallPointer(CPUAssertInterrupt);
+    SetInterruptCallPointer(GetCPU()->CPUAssertInterrupt);
   }
 }
 
@@ -557,10 +557,10 @@ void DynamicMenuCallback(char* menuName, int menuId, int type)
 
 void RefreshDynamicMenu(void)
 {
-  MENUITEMINFO	Mii;
+  MENUITEMINFO Mii;
   char MenuTitle[32] = "Cartridge";
   unsigned char tempIndex = 0, Index = 0;
-  static HWND hOld;
+  static HWND hOld = 0;
   int SubMenuIndex = 0;
 
   if ((hMenu == NULL) || (EmuState.WindowHandle != hOld)) {

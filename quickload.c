@@ -19,11 +19,11 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <stdio.h>
 
-#include "cpudef.h"
 #include "pakinterface.h"
 #include "tcc1014mmu.h"
 
-#include "library\fileoperations.h"
+#include "library/cpudef.h"
+#include "library/fileoperations.h"
 
 static unsigned char FileType = 0;
 static unsigned short FileLength = 0;
@@ -103,7 +103,7 @@ unsigned char QuickLoad(char* binFileName)
 
         fclose(BinImage);
         free(MemImage);
-        CPUForcePC(XferAddress);
+        GetCPU()->CPUForcePC(XferAddress);
 
         return(0);
 

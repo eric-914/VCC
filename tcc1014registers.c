@@ -18,13 +18,13 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
-#include "cpudef.h"
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
 #include "coco3.h"
 #include "Vcc.h"
 #include "keyboard.h"
 
+#include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/graphicsstate.h"
 
@@ -263,30 +263,34 @@ void SetTimerLSB(unsigned char data) //95
 
 void GimeAssertKeyboardInterrupt(void)
 {
+  CPU* cpu = GetCPU();
+
   if (((GimeRegisters[0x93] & 2) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterrupt(FIRQ, 0);
+    cpu->CPUAssertInterrupt(FIRQ, 0);
     LastFirq = LastFirq | 2;
   }
   else
     if (((GimeRegisters[0x92] & 2) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterrupt(IRQ, 0);
+      cpu->CPUAssertInterrupt(IRQ, 0);
       LastIrq = LastIrq | 2;
     }
 }
 
 void GimeAssertVertInterrupt(void)
 {
+  CPU* cpu = GetCPU();
+
   if (((GimeRegisters[0x93] & 8) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterrupt(FIRQ, 0); //FIRQ
+    cpu->CPUAssertInterrupt(FIRQ, 0); //FIRQ
     LastFirq = LastFirq | 8;
   }
   else
     if (((GimeRegisters[0x92] & 8) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterrupt(IRQ, 0); //IRQ moon patrol demo using this
+      cpu->CPUAssertInterrupt(IRQ, 0); //IRQ moon patrol demo using this
       LastIrq = LastIrq | 8;
     }
   return;
@@ -294,38 +298,43 @@ void GimeAssertVertInterrupt(void)
 
 void GimeAssertHorzInterrupt(void)
 {
+  CPU* cpu = GetCPU();
+
   if (((GimeRegisters[0x93] & 16) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterrupt(FIRQ, 0);
+    cpu->CPUAssertInterrupt(FIRQ, 0);
     LastFirq = LastFirq | 16;
   }
   else
     if (((GimeRegisters[0x92] & 16) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterrupt(IRQ, 0);
+      cpu->CPUAssertInterrupt(IRQ, 0);
       LastIrq = LastIrq | 16;
     }
 }
 
 void GimeAssertTimerInterrupt(void)
 {
+  CPU* cpu = GetCPU();
+
   if (((GimeRegisters[0x93] & 32) != 0) & (EnhancedFIRQFlag == 1))
   {
-    CPUAssertInterrupt(FIRQ, 0);
+    cpu->CPUAssertInterrupt(FIRQ, 0);
     LastFirq = LastFirq | 32;
   }
   else
     if (((GimeRegisters[0x92] & 32) != 0) & (EnhancedIRQFlag == 1))
     {
-      CPUAssertInterrupt(IRQ, 0);
+      cpu->CPUAssertInterrupt(IRQ, 0);
       LastIrq = LastIrq | 32;
     }
 }
 
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
-  if ((port >= 0xF0) & (port <= 0xFF)) //IRQ vectors from rom
+  if ((port >= 0xF0) & (port <= 0xFF)) { //IRQ vectors from rom
     return(rom[0x3F00 + port]);
+  }
 
   return(0);
 }
@@ -342,8 +351,9 @@ void sam_write(unsigned char data, unsigned char port)
     mask = 1 << reg;
     Dis_Offset = Dis_Offset & (0xFF - mask); //Shut the bit off
 
-    if (port & 1)
+    if (port & 1) {
       Dis_Offset = Dis_Offset | mask;
+    }
 
     SetGimeVdgOffset(Dis_Offset);
   }
@@ -355,19 +365,20 @@ void sam_write(unsigned char data, unsigned char port)
     mask = 1 << reg;
     VDG_Mode = VDG_Mode & (0xFF - mask);
 
-    if (port & 1)
+    if (port & 1) {
       VDG_Mode = VDG_Mode | mask;
+    }
 
     SetGimeVdgMode(VDG_Mode);
   }
 
-  if ((port == 0xDE) | (port == 0xDF))
+  if ((port == 0xDE) || (port == 0xDF))
     SetMapType(port & 1);
 
-  if ((port == 0xD7) | (port == 0xD9))
+  if ((port == 0xD7) || (port == 0xD9))
     SetCPUMultiplyerFlag(1);
 
-  if ((port == 0xD6) | (port == 0xD8))
+  if ((port == 0xD6) || (port == 0xD8))
     SetCPUMultiplyerFlag(0);
 }
 

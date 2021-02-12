@@ -195,7 +195,6 @@
     <ClInclude Include="clipboard.h" />
     <ClInclude Include="coco3.h" />
     <ClInclude Include="config.h" />
-    <ClInclude Include="cpudef.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />

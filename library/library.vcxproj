@@ -177,6 +177,7 @@
   <ItemGroup>
     <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="commandline.c" />
+    <ClCompile Include="cpudef.c" />
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="graphicsstate.c" />
     <ClCompile Include="joystickinput.c" />
@@ -196,6 +197,7 @@
     <ClInclude Include="cc3font.h" />
     <ClInclude Include="configdef.h" />
     <ClInclude Include="commandline.h" />
+    <ClInclude Include="cpudef.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fileoperations.h" />
     <ClInclude Include="graphicsstate.h" />

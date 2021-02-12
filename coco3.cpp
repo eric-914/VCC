@@ -21,7 +21,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <math.h>
 
 #include "windows.h"
-#include "cpudef.h"
 #include "tcc1014graphics.h"
 #include "tcc1014registers.h"
 #include "mc6821.h"
@@ -38,6 +37,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 
 #include "library/configdef.h"
+#include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/graphicsstate.h"
 #include "library/systemstate.h"
@@ -202,6 +202,8 @@ void SetLinesperScreen(unsigned char lines)
 
 _inline int CPUCycle(void)
 {
+  CPU* cpu = GetCPU();
+
   if (HorzInterruptEnabled) {
     GimeAssertHorzInterrupt();
   }
@@ -228,7 +230,7 @@ _inline int CPUCycle(void)
       CyclesThisLine = CycleDrift + (PicosThisLine * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine >= 1) {	//Avoid un-needed CPU engine calls
-        CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+        CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       }
       else {
         CycleDrift = CyclesThisLine;
@@ -244,7 +246,7 @@ _inline int CPUCycle(void)
       CyclesThisLine = CycleDrift + (PicosToInterrupt * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine >= 1) {
-        CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+        CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       }
       else {
         CycleDrift = CyclesThisLine;
@@ -260,7 +262,7 @@ _inline int CPUCycle(void)
       CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine >= 1) {
-        CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+        CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       }
       else {
         CycleDrift = CyclesThisLine;
@@ -278,7 +280,7 @@ _inline int CPUCycle(void)
         CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
 
         if (CyclesThisLine >= 1) {
-          CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+          CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         }
         else {
           CycleDrift = CyclesThisLine;
@@ -292,7 +294,7 @@ _inline int CPUCycle(void)
         CyclesThisLine = CycleDrift + (PicosToInterrupt * CyclesPerLine * OverClock / PicosPerLine);
 
         if (CyclesThisLine >= 1) {
-          CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+          CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         }
         else {
           CycleDrift = CyclesThisLine;
@@ -310,7 +312,7 @@ _inline int CPUCycle(void)
         CyclesThisLine = CycleDrift + (PicosToInterrupt * CyclesPerLine * OverClock / PicosPerLine);
 
         if (CyclesThisLine >= 1) {
-          CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+          CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         }
         else {
           CycleDrift = CyclesThisLine;
@@ -323,7 +325,7 @@ _inline int CPUCycle(void)
         CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
 
         if (CyclesThisLine >= 1) {
-          CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+          CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
         }
         else {
           CycleDrift = CyclesThisLine;
@@ -340,7 +342,7 @@ _inline int CPUCycle(void)
       CyclesThisLine = CycleDrift + (PicosToSoundSample * CyclesPerLine * OverClock / PicosPerLine);
 
       if (CyclesThisLine > 1) {
-        CycleDrift = CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
+        CycleDrift = cpu->CPUExec((int)floor(CyclesThisLine)) + (CyclesThisLine - floor(CyclesThisLine));
       }
       else {
         CycleDrift = CyclesThisLine;

@@ -19,13 +19,13 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <cstdint>
 
-#include "cpudef.h"
 #include "mc6821.h"
 #include "keyboard.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
 #include "cassette.h"
 
+#include "library/cpudef.h"
 #include "library/defines.h"
 
 static unsigned char rega[4] = { 0,0,0,0 };
@@ -91,7 +91,7 @@ unsigned char pia1_read(unsigned char port)
 {
   static unsigned int Flag = 0, Flag2 = 0;
   unsigned char dda, ddb;
-  
+
   port -= 0x20;
   dda = (regb[1] & 4);
   ddb = (regb[3] & 4);
@@ -144,7 +144,7 @@ void pia0_write(unsigned char data, unsigned char port)
     else
       rega_dd[port] = data;
     return;
-  
+
   case 2:
     if (ddb)
       rega[port] = data;
@@ -224,6 +224,8 @@ unsigned char VDG_Mode(void)
 
 void irq_hs(int phase)	//63.5 uS
 {
+  CPU* cpu = GetCPU();
+
   switch (phase)
   {
   case FALLING:	//HS went High to low
@@ -232,8 +234,9 @@ void irq_hs(int phase)	//63.5 uS
 
     rega[1] = (rega[1] | 128);
 
-    if (rega[1] & 1)
-      CPUAssertInterrupt(IRQ, 1);
+    if (rega[1] & 1) {
+      cpu->CPUAssertInterrupt(IRQ, 1);
+    }
 
     break;
 
@@ -243,16 +246,18 @@ void irq_hs(int phase)	//63.5 uS
 
     rega[1] = (rega[1] | 128);
 
-    if (rega[1] & 1)
-      CPUAssertInterrupt(IRQ, 1);
+    if (rega[1] & 1) {
+      cpu->CPUAssertInterrupt(IRQ, 1);
+    }
 
     break;
 
   case ANY:
     rega[1] = (rega[1] | 128);
 
-    if (rega[1] & 1)
-      CPUAssertInterrupt(IRQ, 1);
+    if (rega[1] & 1) {
+      cpu->CPUAssertInterrupt(IRQ, 1);
+    }
 
     break;
   }
@@ -260,8 +265,11 @@ void irq_hs(int phase)	//63.5 uS
 
 void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
 {
-  if ((CartInserted == 1) & (CartAutoStart == 1))
+  if ((CartInserted == 1) & (CartAutoStart == 1)) {
     AssertCart();
+  }
+
+  CPU* cpu = GetCPU();
 
   switch (phase)
   {
@@ -269,8 +277,9 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
     if ((rega[3] & 2) == 0) //IRQ on High to low transition
       rega[3] = (rega[3] | 128);
 
-    if (rega[3] & 1)
-      CPUAssertInterrupt(IRQ, 1);
+    if (rega[3] & 1) {
+      cpu->CPUAssertInterrupt(IRQ, 1);
+    }
 
     return;
     break;
@@ -281,8 +290,9 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
     {
       rega[3] = (rega[3] | 128);
 
-      if (rega[3] & 1)
-        CPUAssertInterrupt(IRQ, 1);
+      if (rega[3] & 1) {
+        cpu->CPUAssertInterrupt(IRQ, 1);
+      }
     }
 
     return;
@@ -294,10 +304,14 @@ void AssertCart(void)
 {
   regb[3] = (regb[3] | 128);
 
-  if (regb[3] & 1)
-    CPUAssertInterrupt(FIRQ, 0);
-  else
-    CPUDeAssertInterrupt(FIRQ); //Kludge but working
+  CPU* cpu = GetCPU();
+
+  if (regb[3] & 1) {
+    cpu->CPUAssertInterrupt(FIRQ, 0);
+  }
+  else {
+    cpu->CPUDeAssertInterrupt(FIRQ); //Kludge but working
+  }
 }
 
 void PiaReset()
@@ -339,11 +353,12 @@ unsigned int GetDACSample(void)
   SampleRight = (PakSample & 0xFF) + Asample + Ssample; //9 Bits each
   SampleLeft = SampleLeft << 6;	//Conver to 16 bit values
   SampleRight = SampleRight << 6;	//For Max volume
-  
+
   if (SampleLeft == LastLeft)	//Simulate a slow high pass filter
   {
-    if (OutLeft)
+    if (OutLeft) {
       OutLeft--;
+    }
   }
   else
   {
@@ -353,8 +368,9 @@ unsigned int GetDACSample(void)
 
   if (SampleRight == LastRight)
   {
-    if (OutRight)
+    if (OutRight) {
       OutRight--;
+    }
   }
   else
   {
@@ -369,8 +385,9 @@ unsigned int GetDACSample(void)
 
 unsigned char SetCartAutoStart(unsigned char Tmp)
 {
-  if (Tmp != QUERY)
+  if (Tmp != QUERY) {
     CartAutoStart = Tmp;
+  }
 
   return(CartAutoStart);
 }
@@ -383,9 +400,10 @@ unsigned char GetCasSample(void)
 void SetCassetteSample(unsigned char Sample)
 {
   regb[0] = regb[0] & 0xFE;
-  
-  if (Sample > 0x7F)
+
+  if (Sample > 0x7F) {
     regb[0] = regb[0] | 1;
+  }
 }
 
 void CaptureBit(unsigned char Sample)
@@ -394,11 +412,13 @@ void CaptureBit(unsigned char Sample)
   static unsigned char BitMask = 1, StartWait = 1;
   static char Byte = 0;
 
-  if (hPrintFile == INVALID_HANDLE_VALUE)
+  if (hPrintFile == INVALID_HANDLE_VALUE) {
     return;
+  }
 
-  if (StartWait & Sample)	//Waiting for start bit
+  if (StartWait & Sample)	{ //Waiting for start bit
     return;
+  }
 
   if (StartWait)
   {
@@ -406,8 +426,9 @@ void CaptureBit(unsigned char Sample)
     return;
   }
 
-  if (Sample)
+  if (Sample) {
     Byte |= BitMask;
+  }
 
   BitMask = BitMask << 1;
 
@@ -417,8 +438,9 @@ void CaptureBit(unsigned char Sample)
     StartWait = 1;
     WriteFile(hPrintFile, &Byte, 1, &BytesMoved, NULL);
 
-    if (MonState)
+    if (MonState) {
       WritePrintMon(&Byte);
+    }
 
     if ((Byte == 0x0D) & AddLF)
     {
@@ -434,8 +456,9 @@ int OpenPrintFile(char* FileName)
 {
   hPrintFile = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 
-  if (hPrintFile == INVALID_HANDLE_VALUE)
+  if (hPrintFile == INVALID_HANDLE_VALUE) {
     return(0);
+  }
 
   return(1);
 }
