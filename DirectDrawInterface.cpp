@@ -72,10 +72,11 @@ bool CreateDDWindow(SystemState* systemState)
 {
   HRESULT hr;
   DDSURFACEDESC ddsd;				// A structure to describe the surfaces we want
-  RECT rStatBar;
-  RECT rc;
+  RECT rStatBar = RECT();
+  RECT rc = RECT();
   unsigned char ColorValues[4] = { 0,85,170,255 };
   PALETTEENTRY pal[256];
+
   memset(&ddsd, 0, sizeof(ddsd));	// Clear all members of the structure to 0
   ddsd.dwSize = sizeof(ddsd);		  // The first parameter of the structure must contain the size of the structure
   rc.top = 0;
@@ -129,7 +130,7 @@ bool CreateDDWindow(SystemState* systemState)
   case 0: //Windowed Mode
     // Calculates the required size of the window rectangle, based on the desired client-rectangle size
     // The window rectangle can then be passed to the CreateWindow function to create a window whose client area is the desired size.
-    ::AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, TRUE);
+    AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, TRUE);
 
     // We create the Main window 
     systemState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
@@ -315,8 +316,8 @@ void DisplayFlip(SystemState* systemState)	// Double buffering flip
   static HRESULT hr;
   static RECT    rcSrc;  // source blit rectangle
   static RECT    rcDest; // destination blit rectangle
-  static RECT	Temp;
-  static POINT   p;
+  static RECT	   Temp;
+  static POINT   p = POINT();
 
   if (systemState->FullScreen) {	// if we're windowed do the blit, else just Flip
     hr = g_pDDS->Flip(NULL, DDFLIP_NOVSYNC | DDFLIP_DONOTWAIT); //DDFLIP_WAIT
@@ -376,15 +377,15 @@ void DisplayFlip(SystemState* systemState)	// Double buffering flip
         float dstX = (clientWidth - dstWidth) / 2;
         float dstY = (clientHeight - dstHeight) / 2;
 
-        static POINT pDstLeftTop;
+        static POINT pDstLeftTop = POINT();
         pDstLeftTop.x = (long)dstX; pDstLeftTop.y = (long)dstY;
-        ::ClientToScreen(systemState->WindowHandle, &pDstLeftTop);
+        ClientToScreen(systemState->WindowHandle, &pDstLeftTop);
 
-        static POINT pDstRightBottom;
+        static POINT pDstRightBottom = POINT();
         pDstRightBottom.x = (long)(dstX + dstWidth); pDstRightBottom.y = (long)(dstY + dstHeight);
-        ::ClientToScreen(systemState->WindowHandle, &pDstRightBottom);
+        ClientToScreen(systemState->WindowHandle, &pDstRightBottom);
 
-        ::SetRect(&rcDest, pDstLeftTop.x, pDstLeftTop.y, pDstRightBottom.x, pDstRightBottom.y);
+        SetRect(&rcDest, pDstLeftTop.x, pDstLeftTop.y, pDstRightBottom.x, pDstRightBottom.y);
       }
     }
     else
@@ -597,12 +598,12 @@ float Static(SystemState* systemState)
 {
   unsigned short x = 0;
   static unsigned short y = 0;
-  unsigned char Temp = 0;
-  static unsigned short TextX = 0, TextY = 0;
-  static unsigned char Counter, Counter1 = 32;
-  static char Phase = 1;
-  static char Message[] = " Signal Missing! Press F9";
-  static unsigned char GreyScales[4] = { 128,135,184,191 };
+  unsigned char temp = 0;
+  static unsigned short textX = 0, textY = 0;
+  static unsigned char counter = 0, counter1 = 32;
+  static char phase = 1;
+  static char message[] = " Signal Missing! Press F9";
+  static unsigned char greyScales[4] = { 128, 135, 184, 191 };
   HDC hdc;
 
   LockScreen(systemState);
@@ -616,9 +617,9 @@ float Static(SystemState* systemState)
   case 0:
     for (y = 0;y < 480;y += 2) {
       for (x = 0;x < 160; x++) {
-        Temp = rand() & 3;
-        systemState->PTRsurface32[x + (y * systemState->SurfacePitch >> 2)] = GreyScales[Temp] | (GreyScales[Temp] << 8) | (GreyScales[Temp] << 16) | (GreyScales[Temp] << 24);
-        systemState->PTRsurface32[x + ((y + 1) * systemState->SurfacePitch >> 2)] = GreyScales[Temp] | (GreyScales[Temp] << 8) | (GreyScales[Temp] << 16) | (GreyScales[Temp] << 24);
+        temp = rand() & 3;
+        systemState->PTRsurface32[x + (y * systemState->SurfacePitch >> 2)] = greyScales[temp] | (greyScales[temp] << 8) | (greyScales[temp] << 16) | (greyScales[temp] << 24);
+        systemState->PTRsurface32[x + ((y + 1) * systemState->SurfacePitch >> 2)] = greyScales[temp] | (greyScales[temp] << 8) | (greyScales[temp] << 16) | (greyScales[temp] << 24);
       }
     }
     break;
@@ -626,9 +627,9 @@ float Static(SystemState* systemState)
   case 1:
     for (y = 0;y < 480;y += 2) {
       for (x = 0;x < 320; x++) {
-        Temp = rand() & 31;
-        systemState->PTRsurface32[x + (y * systemState->SurfacePitch >> 1)] = Temp | (Temp << 6) | (Temp << 11) | (Temp << 16) | (Temp << 22) | (Temp << 27);
-        systemState->PTRsurface32[x + ((y + 1) * systemState->SurfacePitch >> 1)] = Temp | (Temp << 6) | (Temp << 11) | (Temp << 16) | (Temp << 22) | (Temp << 27);
+        temp = rand() & 31;
+        systemState->PTRsurface32[x + (y * systemState->SurfacePitch >> 1)] = temp | (temp << 6) | (temp << 11) | (temp << 16) | (temp << 22) | (temp << 27);
+        systemState->PTRsurface32[x + ((y + 1) * systemState->SurfacePitch >> 1)] = temp | (temp << 6) | (temp << 11) | (temp << 16) | (temp << 22) | (temp << 27);
       }
     }
     break;
@@ -636,9 +637,9 @@ float Static(SystemState* systemState)
   case 2:
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++) {
-        systemState->PTRsurface8[(x * 3) + (y * systemState->SurfacePitch)] = Temp;
-        systemState->PTRsurface8[(x * 3) + 1 + (y * systemState->SurfacePitch)] = Temp << 8;
-        systemState->PTRsurface8[(x * 3) + 2 + (y * systemState->SurfacePitch)] = Temp << 16;
+        systemState->PTRsurface8[(x * 3) + (y * systemState->SurfacePitch)] = temp;
+        systemState->PTRsurface8[(x * 3) + 1 + (y * systemState->SurfacePitch)] = temp << 8;
+        systemState->PTRsurface8[(x * 3) + 2 + (y * systemState->SurfacePitch)] = temp << 16;
       }
     }
     break;
@@ -646,8 +647,8 @@ float Static(SystemState* systemState)
   case 3:
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++) {
-        Temp = rand() & 255;
-        systemState->PTRsurface32[x + (y * systemState->SurfacePitch)] = Temp | (Temp << 8) | (Temp << 16);
+        temp = rand() & 255;
+        systemState->PTRsurface32[x + (y * systemState->SurfacePitch)] = temp | (temp << 8) | (temp << 16);
       }
     }
     break;
@@ -658,21 +659,21 @@ float Static(SystemState* systemState)
 
   g_pDDSBack->GetDC(&hdc);
   SetBkColor(hdc, 0);
-  SetTextColor(hdc, RGB(Counter1 << 2, Counter1 << 2, Counter1 << 2));
-  TextOut(hdc, TextX, TextY, Message, (int)strlen(Message));
-  Counter++;
-  Counter1 += Phase;
+  SetTextColor(hdc, RGB(counter1 << 2, counter1 << 2, counter1 << 2));
+  TextOut(hdc, textX, textY, message, (int)strlen(message));
+  counter++;
+  counter1 += phase;
 
-  if ((Counter1 == 60) | (Counter1 == 20)) {
-    Phase = -Phase;
+  if ((counter1 == 60) || (counter1 == 20)) {
+    phase = -phase;
   }
 
-  Counter %= 60; //about 1 seconds
+  counter %= 60; //about 1 seconds
 
-  if (!Counter)
+  if (!counter)
   {
-    TextX = rand() % 580;
-    TextY = rand() % 470;
+    textX = rand() % 580;
+    textY = rand() % 470;
   }
 
   g_pDDSBack->ReleaseDC(hdc);

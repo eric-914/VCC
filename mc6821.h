@@ -41,8 +41,4 @@ unsigned char GetMuxState(void);
 unsigned char DACState(void);
 int OpenPrintFile(char*);
 
-#define FALLING 0
-#define RISING	1
-#define ANY		  2
-
 #endif

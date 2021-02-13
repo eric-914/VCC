@@ -3,8 +3,8 @@
 
 //--CASSETTE--//
 
-extern unsigned char SetSndOutMode(unsigned char);
-extern void SyncFileBuffer(void);
+#include "SetSndOutMode.h"
+#include "SyncFileBuffer.h"
 
 void Motor(unsigned char state)
 {

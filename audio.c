@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <stdio.h>
 
 #include "config.h"
-#include "coco3.h"
 #include "audio.h"
 
 #include "SetAudioRate.h"

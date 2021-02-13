@@ -3,7 +3,7 @@
 
 //--CASSETTE--//
 
-extern void CloseTapeFile();
+#include "CloseTapeFile.h"
 
 int MountTape(char* filename)	//Return 1 on sucess 0 on fail
 {

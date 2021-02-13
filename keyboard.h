@@ -31,11 +31,8 @@ extern "C"
 
   void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
   void vccKeyboardHandleKey(unsigned char, unsigned char, keyevent_e keyState);
-  unsigned char	vccKeyboardGetScan(unsigned char);
 
-  // globals referenced from config.c
-  //extern JoyStick	Left;
-  //extern JoyStick Right;
+  unsigned char	vccKeyboardGetScan(unsigned char);
 
   void joystick(unsigned short, unsigned short);
   unsigned short	get_pot_value(unsigned char pot);

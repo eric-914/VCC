@@ -3,9 +3,10 @@
 
 //--CASSETTE--//
 
-extern unsigned int LoadTape(void);
-extern void Motor(unsigned char state);
-extern void CloseTapeFile(void);
+#include "LoadTape.h"
+#include "Motor.h"
+#include "CloseTapeFile.h"
+
 extern void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
 
 void SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog

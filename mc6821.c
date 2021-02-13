@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <cstdint>
 
+#include "mc6821def.h"
 #include "mc6821.h"
 #include "keyboard.h"
 #include "tcc1014graphics.h"

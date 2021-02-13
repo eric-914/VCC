@@ -39,7 +39,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6809.h"
 #include "mc6821.h"
 #include "keyboard.h"
-#include "coco3.h"
 #include "clipboard.h"
 #include "pakinterface.h"
 #include "audio.h"
@@ -48,6 +47,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "DirectDrawInterface.h"
 #include "SetClockSpeed.h"
+#include "RenderFrame.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"

@@ -20,7 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
-#include "coco3.h"
 #include "Vcc.h"
 #include "keyboard.h"
 #include "SetHorzInterruptState.h"

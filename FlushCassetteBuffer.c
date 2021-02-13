@@ -3,7 +3,8 @@
 
 //--CASSETTE--//
 
-extern void WavtoCas(unsigned char* waveBuffer, unsigned int length);
+#include "WavtoCas.h"
+
 extern void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
 
 void FlushCassetteBuffer(unsigned char* buffer, unsigned int length)

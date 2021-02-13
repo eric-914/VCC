@@ -2,7 +2,7 @@
 
 //--CASSETTE--//
 
-extern void SyncFileBuffer(void);
+#include "SyncFileBuffer.h"
 
 void CloseTapeFile(void)
 {
