@@ -18,21 +18,14 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define STOP	0
-#define PLAY	1
-#define REC		2
-#define EJECT	3
-#define CAS	1
-#define WAV 0
-#define WRITEBUFFERSIZE	0x1FFFF
-
 unsigned int GetTapeCounter(void);
 unsigned int LoadTape(void);
-void SetTapeCounter(unsigned int);
-void SetTapeMode(unsigned char);
-void Motor(unsigned char);
-void LoadCassetteBuffer(unsigned char*);
+
 void FlushCassetteBuffer(unsigned char*, unsigned int);
 void GetTapeName(char*);
+void LoadCassetteBuffer(unsigned char*);
+void Motor(unsigned char);
+void SetTapeCounter(unsigned int);
+void SetTapeMode(unsigned char);
 
 #endif

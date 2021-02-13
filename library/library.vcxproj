@@ -193,6 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audiodef.h" />
+    <ClInclude Include="cassettedef.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
     <ClInclude Include="configdef.h" />

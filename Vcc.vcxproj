@@ -168,7 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
-    <ClCompile Include="Cassette.cpp" />
+    <ClCompile Include="cassette.cpp" />
     <ClCompile Include="clipboard.cpp" />
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="cocostate.cpp" />
@@ -192,7 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
-    <ClInclude Include="Cassette.h" />
+    <ClInclude Include="cassette.h" />
     <ClInclude Include="clipboard.h" />
     <ClInclude Include="coco3.h" />
     <ClInclude Include="coco3state.h" />

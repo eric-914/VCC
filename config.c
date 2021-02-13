@@ -35,6 +35,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cassette.h"
 #include "shlobj.h"
 
+#include "library/cassettedef.h"
 #include "library/commandline.h"
 #include "library/configdef.h"
 #include "library/fileoperations.h"
