@@ -22,8 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "coco3.h"
 #include "config.h"
 #include "DirectDrawInterface.h"
-#include "coco3state.h"
 #include "audio.h"
+#include "CocoReset.h"
 
 #include "library/graphicsstate.h"
 #include "library/defines.h"

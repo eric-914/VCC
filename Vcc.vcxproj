@@ -168,10 +168,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
+    <ClCompile Include="AudioOut.c" />
+    <ClCompile Include="CassIn.c" />
+    <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
     <ClCompile Include="clipboard.cpp" />
     <ClCompile Include="CloseTapeFile.c" />
     <ClCompile Include="coco3.cpp" />
+    <ClCompile Include="CocoReset.c" />
     <ClCompile Include="cocostate.cpp" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
@@ -189,8 +193,16 @@
     <ClCompile Include="MountTape.c" />
     <ClCompile Include="pakinterface.c" />
     <ClCompile Include="quickload.c" />
+    <ClCompile Include="SetAudioRate.c" />
+    <ClCompile Include="SetClockSpeed.c" />
+    <ClCompile Include="SetHorzInterruptState.c" />
+    <ClCompile Include="SetInterruptTimer.c" />
+    <ClCompile Include="SetMasterTickCounter.c" />
     <ClCompile Include="SetTapeCounter.c" />
     <ClCompile Include="SetTapeMode.c" />
+    <ClCompile Include="SetTimerClockRate.c" />
+    <ClCompile Include="SetTimerInterruptState.c" />
+    <ClCompile Include="SetVertInterruptState.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
@@ -204,11 +216,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
+    <ClInclude Include="AudioOut.h" />
+    <ClInclude Include="CassIn.h" />
+    <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
     <ClInclude Include="clipboard.h" />
     <ClInclude Include="CloseTapeFile.h" />
     <ClInclude Include="coco3.h" />
-    <ClInclude Include="coco3state.h" />
+    <ClInclude Include="cocostate.h" />
+    <ClInclude Include="CocoReset.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="FlushCassetteBuffer.h" />
@@ -229,8 +245,16 @@
     <ClInclude Include="quickload.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sampledefs.h" />
+    <ClInclude Include="SetAudioRate.h" />
+    <ClInclude Include="SetClockSpeed.h" />
+    <ClInclude Include="SetHorzInterruptState.h" />
+    <ClInclude Include="SetInterruptTimer.h" />
+    <ClInclude Include="SetMasterTickCounter.h" />
     <ClInclude Include="SetTapeCounter.h" />
     <ClInclude Include="SetTapeMode.h" />
+    <ClInclude Include="SetTimerClockRate.h" />
+    <ClInclude Include="SetTimerInterruptState.h" />
+    <ClInclude Include="SetVertInterruptState.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="tcc1014graphics.h" />
     <ClInclude Include="tcc1014mmu.h" />

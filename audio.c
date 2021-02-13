@@ -21,8 +21,9 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "config.h"
 #include "coco3.h"
-#include "coco3state.h"
 #include "audio.h"
+
+#include "SetAudioRate.h"
 
 #include "library\defines.h"
 
