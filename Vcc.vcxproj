@@ -168,54 +168,76 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.c" />
-    <ClCompile Include="cassette.c" />
-    <ClCompile Include="cassettestate.c" />
+    <ClCompile Include="CastoWav.c" />
     <ClCompile Include="clipboard.cpp" />
+    <ClCompile Include="CloseTapeFile.c" />
     <ClCompile Include="coco3.cpp" />
     <ClCompile Include="cocostate.cpp" />
     <ClCompile Include="config.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="FlushCassetteBuffer.c" />
+    <ClCompile Include="GetTapeCounter.c" />
+    <ClCompile Include="GetTapeName.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="iobus.c" />
     <ClCompile Include="keyboard.c" />
+    <ClCompile Include="LoadCassetteBuffer.c" />
+    <ClCompile Include="LoadTape.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
+    <ClCompile Include="Motor.c" />
+    <ClCompile Include="MountTape.c" />
     <ClCompile Include="pakinterface.c" />
     <ClCompile Include="quickload.c" />
+    <ClCompile Include="SetTapeCounter.c" />
+    <ClCompile Include="SetTapeMode.c" />
+    <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
     <ClCompile Include="tcc1014registers.c" />
     <ClCompile Include="throttle.c" />
     <ClCompile Include="Vcc.c" />
+    <ClCompile Include="WavtoCas.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
-    <ClInclude Include="cassette.h" />
-    <ClInclude Include="cassettestate.h" />
+    <ClInclude Include="CastoWav.h" />
     <ClInclude Include="clipboard.h" />
+    <ClInclude Include="CloseTapeFile.h" />
     <ClInclude Include="coco3.h" />
     <ClInclude Include="coco3state.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="DirectDrawInterface.h" />
+    <ClInclude Include="FlushCassetteBuffer.h" />
+    <ClInclude Include="GetTapeCounter.h" />
+    <ClInclude Include="GetTapeName.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="iobus.h" />
     <ClInclude Include="keyboard.h" />
+    <ClInclude Include="LoadCassetteBuffer.h" />
+    <ClInclude Include="LoadTape.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
+    <ClInclude Include="Motor.h" />
+    <ClInclude Include="MountTape.h" />
     <ClInclude Include="pakinterface.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sampledefs.h" />
+    <ClInclude Include="SetTapeCounter.h" />
+    <ClInclude Include="SetTapeMode.h" />
+    <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="tcc1014graphics.h" />
     <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
     <ClInclude Include="Vcc.h" />
+    <ClInclude Include="WavtoCas.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\binfile.ico" />

@@ -176,6 +176,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\fileops\fileops.c" />
+    <ClCompile Include="cassettestate.c" />
     <ClCompile Include="commandline.c" />
     <ClCompile Include="cpudef.c" />
     <ClCompile Include="fileoperations.c" />
@@ -194,6 +195,7 @@
   <ItemGroup>
     <ClInclude Include="audiodef.h" />
     <ClInclude Include="cassettedef.h" />
+    <ClInclude Include="cassettestate.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
     <ClInclude Include="configdef.h" />

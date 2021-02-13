@@ -1,5 +1,5 @@
-#ifndef __CASSETTE_H__
-#define __CASSETTE_H__
+#ifndef __CASSETTE_STATE_H__
+#define __CASSETTE_STATE_H__
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -18,14 +18,39 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-unsigned int GetTapeCounter(void);
-unsigned int LoadTape(void);
+#include <windows.h>
 
-void FlushCassetteBuffer(unsigned char*, unsigned int);
-void GetTapeName(char*);
-void LoadCassetteBuffer(unsigned char*);
-void Motor(unsigned char);
-void SetTapeCounter(unsigned int);
-void SetTapeMode(unsigned char);
+typedef struct
+{
+  HANDLE TapeHandle;
+
+  char CassPath[MAX_PATH];
+  char FileType;
+  char TapeFileName[MAX_PATH];
+
+  int LastTrans;
+
+  unsigned char Byte;
+  unsigned char LastSample;
+  unsigned char Mask;
+  unsigned char MotorState;
+  unsigned char One[21];
+  unsigned char Quiet;
+  unsigned char TapeMode;
+  unsigned char TempBuffer[8192];
+  unsigned char WriteProtect;
+  unsigned char Zero[40];
+
+  unsigned char* CasBuffer;
+
+  unsigned int TempIndex;
+
+  unsigned long BytesMoved;
+  unsigned long TapeOffset;
+  unsigned long TotalSize;
+
+} CassetteState;
+
+extern "C" __declspec(dllexport) CassetteState * __cdecl GetCassetteState();
 
 #endif

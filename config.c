@@ -22,6 +22,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <richedit.h>
 #include <direct.h>
 #include <assert.h>
+#include <ShlObj.h>
 
 #include "resource.h"
 #include "config.h"
@@ -32,8 +33,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "vcc.h"
 #include "DirectDrawInterface.h"
 #include "keyboard.h"
-#include "cassette.h"
-#include "shlobj.h"
+#include "GetTapeCounter.h"
+#include "SetTapeCounter.h"
+#include "SetTapeMode.h"
+#include "LoadTape.h"
+#include "GetTapeName.h"
 
 #include "library/cassettedef.h"
 #include "library/commandline.h"

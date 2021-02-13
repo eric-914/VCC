@@ -23,7 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "keyboard.h"
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
-#include "cassette.h"
+#include "motor.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"

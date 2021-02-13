@@ -18,9 +18,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
+#include "cassettedef.h"
 #include "cassettestate.h"
-
-#include "library/cassettedef.h"
 
 const char FileType = 0;
 
