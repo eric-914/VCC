@@ -22,8 +22,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "DirectDrawInterface.h"
 #include "audio.h"
+
 #include "CocoReset.h"
 #include "SetLinesperScreen.h"
+#include "ConfigAccessors.h"
 
 #include "library/graphicsstate.h"
 #include "library/defines.h"

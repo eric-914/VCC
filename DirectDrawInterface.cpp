@@ -30,6 +30,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "throttle.h"
 #include "config.h"
 
+#include "ConfigAccessors.h"
+
 #include "library/defines.h"
 
 //Global Variables for Direct Draw functions

@@ -20,41 +20,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <iostream>
 
-#include "library/commandline.h"
-#include "library/systemstate.h"
-
-using namespace std;
-
 LRESULT CALLBACK Config(HWND, UINT, WPARAM, LPARAM);
-
-void LoadConfig(SystemState*, CmdLineArguments cmdArg);
-
-char* AppDirectory();
-char* BasicRomName(void);
-
-void GetIniFilePath(char*);
-void SetIniFilePath(char*);
-
-int GetKeyboardLayout();
-int GetPaletteType();
-int GetRememberSize();
-
-POINT GetIniWindowSize();
-void SetWindowSize(POINT);
-
-unsigned char WriteIniFile(void);
-unsigned char ReadIniFile(void);
-
-void UpdateConfig(void);
-void UpdateSoundBar(unsigned short, unsigned short);
-void UpdateTapeCounter(unsigned int, unsigned char);
-
-void DecreaseOverclockSpeed();
-void IncreaseOverclockSpeed();
-
-void GetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpDefault, LPSTR lpReturnedString);
-void SetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString);
-unsigned short GetProfileShort(LPCSTR lpAppName, LPCSTR lpKeyName, int nDefault);
-unsigned char GetProfileByte(LPCSTR lpAppName, LPCSTR lpKeyName, int nDefault);
 
 #endif

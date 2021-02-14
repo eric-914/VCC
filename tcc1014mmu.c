@@ -24,6 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014graphics.h"
 #include "pakinterface.h"
 
+#include "ConfigAccessors.h"
+#include "ProfileAccessors.h"
+
 #include "library\fileoperations.h"
 #include "library\graphicsstate.h"
 
@@ -57,27 +60,25 @@ int load_int_rom(TCHAR filename[MAX_PATH]);
 *****************************************************************************************/
 unsigned char* MmuInit(unsigned char RamConfig)
 {
-  unsigned int RamSize = 0;
-  unsigned int Index1 = 0;
-  RamSize = MemConfig[RamConfig];
+  unsigned int ramSize = 0;
+  unsigned int index = 0;
+
+  ramSize = MemConfig[RamConfig];
   CurrentRamConfig = RamConfig;
 
   if (memory != NULL) {
     free(memory);
   }
 
-  memory = (unsigned char*)malloc(RamSize);
+  memory = (unsigned char*)malloc(ramSize);
 
   if (memory == NULL) {
     return(NULL);
   }
 
-  for (Index1 = 0;Index1 < RamSize;Index1++)
+  for (index = 0;index < ramSize;index++)
   {
-    if (Index1 & 1)
-      memory[Index1] = 0;
-    else
-      memory[Index1] = 0xFF;
+    memory[index] = index & 1 ? 0 : 0xFF;
   }
 
   GetGraphicsState()->VidMask = VidMask[CurrentRamConfig];

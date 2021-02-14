@@ -55,7 +55,7 @@ const unsigned char BottomBoarder = 0;
 const unsigned char TimerInterruptEnabled = 0;
 const unsigned char BlinkPhase = 1;
 
-CoCoState* InitializeInstance(CoCoState* j);
+CoCoState* InitializeInstance(CoCoState* coco);
 
 static CoCoState* instance = InitializeInstance(new CoCoState());
 

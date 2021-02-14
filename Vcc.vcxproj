@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="Audio.c" />
     <ClCompile Include="AudioOut.c" />
+    <ClCompile Include="BuildTransDisp2ScanTable.c" />
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
@@ -177,23 +178,33 @@
     <ClCompile Include="CocoReset.c" />
     <ClCompile Include="cocostate.cpp" />
     <ClCompile Include="config.c" />
+    <ClCompile Include="ConfigAccessors.c" />
+    <ClCompile Include="configstate.c" />
     <ClCompile Include="CPUCycle.c" />
+    <ClCompile Include="DecreaseOverclockSpeed.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="FlushCassetteBuffer.c" />
+    <ClCompile Include="GetKeyName.c" />
     <ClCompile Include="GetTapeCounter.c" />
     <ClCompile Include="GetTapeName.c" />
     <ClCompile Include="hd6309.c" />
+    <ClCompile Include="IncreaseOverclockSpeed.c" />
     <ClCompile Include="iobus.c" />
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="LoadCassetteBuffer.c" />
+    <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadTape.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
     <ClCompile Include="Motor.c" />
     <ClCompile Include="MountTape.c" />
     <ClCompile Include="pakinterface.c" />
+    <ClCompile Include="ProfileAccessors.c" />
     <ClCompile Include="quickload.c" />
+    <ClCompile Include="ReadIniFile.c" />
+    <ClCompile Include="RefreshJoystickStatus.c" />
     <ClCompile Include="RenderFrame.c" />
+    <ClCompile Include="SelectFile.c" />
     <ClCompile Include="SetAudioRate.c" />
     <ClCompile Include="SetClockSpeed.c" />
     <ClCompile Include="SetHorzInterruptState.c" />
@@ -206,13 +217,20 @@
     <ClCompile Include="SetTimerClockRate.c" />
     <ClCompile Include="SetTimerInterruptState.c" />
     <ClCompile Include="SetVertInterruptState.c" />
+    <ClCompile Include="SetWindowSize.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
     <ClCompile Include="tcc1014registers.c" />
     <ClCompile Include="throttle.c" />
+    <ClCompile Include="TranslateDisp2Scan.c" />
+    <ClCompile Include="TranslateScan2Disp.c" />
+    <ClCompile Include="UpdateConfig.c" />
+    <ClCompile Include="UpdateSoundBar.c" />
+    <ClCompile Include="UpdateTapeCounter.c" />
     <ClCompile Include="Vcc.c" />
     <ClCompile Include="WavtoCas.c" />
+    <ClCompile Include="WriteIniFile.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.md" />
@@ -220,6 +238,7 @@
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="AudioOut.h" />
+    <ClInclude Include="BuildTransDisp2ScanTable.h" />
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
@@ -228,16 +247,23 @@
     <ClInclude Include="cocostate.h" />
     <ClInclude Include="CocoReset.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="ConfigAccessors.h" />
+    <ClInclude Include="configdef.h" />
+    <ClInclude Include="configstate.h" />
     <ClInclude Include="CPUCycle.h" />
+    <ClInclude Include="DecreaseOverclockSpeed.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="FlushCassetteBuffer.h" />
+    <ClInclude Include="GetKeyName.h" />
     <ClInclude Include="GetTapeCounter.h" />
     <ClInclude Include="GetTapeName.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
+    <ClInclude Include="IncreaseOverclockSpeed.h" />
     <ClInclude Include="iobus.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="LoadCassetteBuffer.h" />
+    <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadTape.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
@@ -246,10 +272,14 @@
     <ClInclude Include="Motor.h" />
     <ClInclude Include="MountTape.h" />
     <ClInclude Include="pakinterface.h" />
+    <ClInclude Include="ProfileAccessors.h" />
     <ClInclude Include="quickload.h" />
+    <ClInclude Include="ReadIniFile.h" />
+    <ClInclude Include="RefreshJoystickStatus.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sampledefs.h" />
+    <ClInclude Include="SelectFile.h" />
     <ClInclude Include="SetAudioRate.h" />
     <ClInclude Include="SetClockSpeed.h" />
     <ClInclude Include="SetHorzInterruptState.h" />
@@ -262,13 +292,20 @@
     <ClInclude Include="SetTimerClockRate.h" />
     <ClInclude Include="SetTimerInterruptState.h" />
     <ClInclude Include="SetVertInterruptState.h" />
+    <ClInclude Include="SetWindowSize.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="tcc1014graphics.h" />
     <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttle.h" />
+    <ClInclude Include="TranslateDisp2Scan.h" />
+    <ClInclude Include="TranslateScan2Disp.h" />
+    <ClInclude Include="UpdateConfig.h" />
+    <ClInclude Include="UpdateSoundBar.h" />
+    <ClInclude Include="UpdateTapeCounter.h" />
     <ClInclude Include="Vcc.h" />
     <ClInclude Include="WavtoCas.h" />
+    <ClInclude Include="WriteIniFile.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\binfile.ico" />

@@ -198,7 +198,7 @@
     <ClInclude Include="cassettestate.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
-    <ClInclude Include="configdef.h" />
+    <ClInclude Include="STRConfig.h" />
     <ClInclude Include="commandline.h" />
     <ClInclude Include="cpudef.h" />
     <ClInclude Include="defines.h" />

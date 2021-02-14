@@ -24,6 +24,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "Vcc.h"
 #include "mc6821.h"
 
+#include "ConfigAccessors.h"
+
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/fileoperations.h"
@@ -200,7 +202,7 @@ int LoadCart(void)
 
   if (GetOpenFileName(&ofn))
     if (!InsertModule(szFileName)) {
-      string tmp = ofn.lpstrFile;
+      std::string tmp = ofn.lpstrFile;
       size_t idx;
       idx = tmp.find_last_of("\\");
       tmp = tmp.substr(0, idx);

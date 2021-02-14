@@ -24,7 +24,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "config.h"
 #include "tcc1014mmu.h"
 
-#include "library/configdef.h"
+#include "ConfigAccessors.h"
+
+#include "library/STRConfig.h"
 #include "library/defines.h"
 #include "library/graphicsstate.h"
 #include "library/systemstate.h"

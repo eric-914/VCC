@@ -19,13 +19,11 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <stdio.h>
 
-#include "pakinterface.h" //InsertModule
-#include "tcc1014mmu.h" //MemWrite8
-
 #include "library/cpudef.h"
 #include "library/fileoperations.h"
 
-static unsigned short XferAddress = 0;
+extern int InsertModule(char*);
+extern void MemWrite8(unsigned char, unsigned short);
 
 unsigned char QuickLoad(char* binFileName)
 {
@@ -34,8 +32,9 @@ unsigned char QuickLoad(char* binFileName)
   unsigned char fileType = 0;
   unsigned short fileLength = 0;
   short startAddress = 0;
-  char Extension[MAX_PATH] = "";
-  unsigned char* MemImage = NULL;
+  char extension[MAX_PATH] = "";
+  unsigned char* memImage = NULL;
+  unsigned short xferAddress = 0;
 
   HANDLE hr = CreateFile(binFileName, NULL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -50,48 +49,48 @@ unsigned char QuickLoad(char* binFileName)
     return(2);				//Can't Open File
   }
 
-  MemImage = (unsigned char*)malloc(65535);
+  memImage = (unsigned char*)malloc(65535);
   
-  if (MemImage == NULL)
+  if (memImage == NULL)
   {
     MessageBox(NULL, "Can't alocate ram", "Error", 0);
     return(3);				//Not enough memory
   }
 
-  strcpy(Extension, FilePathFindExtension(binFileName));
-  _strlwr(Extension);
+  strcpy(extension, FilePathFindExtension(binFileName));
+  _strlwr(extension);
 
-  if ((strcmp(Extension, ".rom") == 0) || (strcmp(Extension, ".ccc") == 0) || (strcmp(Extension, "*.pak") == 0))
+  if ((strcmp(extension, ".rom") == 0) || (strcmp(extension, ".ccc") == 0) || (strcmp(extension, "*.pak") == 0))
   {
     InsertModule(binFileName);
 
     return(0);
   }
 
-  if (strcmp(Extension, ".bin") == 0)
+  if (strcmp(extension, ".bin") == 0)
   {
     while (true)
     {
-      fread(MemImage, sizeof(char), 5, binImage);
-      fileType = MemImage[0];
-      fileLength = (MemImage[1] << 8) + MemImage[2];
-      startAddress = (MemImage[3] << 8) + MemImage[4];
+      fread(memImage, sizeof(char), 5, binImage);
+      fileType = memImage[0];
+      fileLength = (memImage[1] << 8) + memImage[2];
+      startAddress = (memImage[3] << 8) + memImage[4];
 
       switch (fileType)
       {
       case 0:
-        fread(&MemImage[0], sizeof(char), fileLength, binImage);
+        fread(&memImage[0], sizeof(char), fileLength, binImage);
         
         for (memIndex = 0; memIndex < fileLength; memIndex++) { //Kluge!!!
-          MemWrite8(MemImage[memIndex], startAddress++);
+          MemWrite8(memImage[memIndex], startAddress++);
         }
 
         break;
 
       case 255:
-        XferAddress = startAddress;
+        xferAddress = startAddress;
 
-        if ((XferAddress == 0) || (XferAddress > 32767) || (fileLength != 0))
+        if ((xferAddress == 0) || (xferAddress > 32767) || (fileLength != 0))
         {
           MessageBox(NULL, ".Bin file is corrupt or invalid Transfer Address", "Error", 0);
 
@@ -99,15 +98,15 @@ unsigned char QuickLoad(char* binFileName)
         }
 
         fclose(binImage);
-        free(MemImage);
-        GetCPU()->CPUForcePC(XferAddress);
+        free(memImage);
+        GetCPU()->CPUForcePC(xferAddress);
 
         return(0);
 
       default:
         MessageBox(NULL, ".Bin file is corrupt or invalid", "Error", 0);
         fclose(binImage);
-        free(MemImage);
+        free(memImage);
 
         return(3);
       }
@@ -117,7 +116,3 @@ unsigned char QuickLoad(char* binFileName)
   return(255); //Invalid File type
 }
 
-unsigned short GetXferAddr(void)
-{
-  return(XferAddress);
-}

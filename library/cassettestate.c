@@ -72,11 +72,11 @@ CassetteState* InitializeInstance(CassetteState* c) {
 
   strcpy(c->TapeFileName, "");
 
-  for (int i = 0; i<sizeof(One); i++) {
+  for (int i = 0; i < sizeof(One); i++) {
     c->One[i] = One[i];
   }
 
-  for (int i = 0; i<sizeof(Zero); i++) {
+  for (int i = 0; i < sizeof(Zero); i++) {
     c->Zero[i] = Zero[i];
   }
 

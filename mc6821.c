@@ -384,10 +384,10 @@ unsigned int GetDACSample(void)
   return(RetVal);
 }
 
-unsigned char SetCartAutoStart(unsigned char Tmp)
+unsigned char SetCartAutoStart(unsigned char autostart)
 {
-  if (Tmp != QUERY) {
-    CartAutoStart = Tmp;
+  if (autostart != QUERY) {
+    CartAutoStart = autostart;
   }
 
   return(CartAutoStart);

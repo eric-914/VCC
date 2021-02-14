@@ -23,6 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "audio.h"
 
 #include "SetAudioRate.h"
+#include "UpdateSoundBar.h"
 
 #include "library\defines.h"
 

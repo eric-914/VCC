@@ -48,6 +48,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "DirectDrawInterface.h"
 #include "SetClockSpeed.h"
 #include "RenderFrame.h"
+#include "LoadConfig.h"
+#include "WriteIniFile.h"
+#include "ReadIniFile.h"
+#include "IncreaseOverclockSpeed.h"
+#include "DecreaseOverclockSpeed.h"
+#include "ConfigAccessors.h"
+#include "UpdateConfig.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"
@@ -379,11 +386,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (OEMscan)
     {
     case DIK_F3:
-      DecreaseOverclockSpeed();
+      DecreaseOverclockSpeed(&EmuState);
       break;
 
     case DIK_F4:
-      IncreaseOverclockSpeed();
+      IncreaseOverclockSpeed(&EmuState);
       break;
 
     case DIK_F5:
@@ -729,7 +736,7 @@ void LoadIniFile(void)
     WriteIniFile();               // Flush current profile
     SetIniFilePath(szFileName);   // Set new ini file path
     ReadIniFile();                // Load it
-    UpdateConfig();
+    UpdateConfig(&EmuState);
     EmuState.ResetPending = 2;
   }
 }
@@ -815,7 +822,7 @@ unsigned __stdcall EmuLoop(void* dummy)
           break;
 
         case 2:	//Hard Reset
-          UpdateConfig();
+          UpdateConfig(&EmuState);
           DoCls(&EmuState);
           DoHardReset(&EmuState);
           break;
@@ -825,7 +832,7 @@ unsigned __stdcall EmuLoop(void* dummy)
           break;
 
         case 4:
-          UpdateConfig();
+          UpdateConfig(&EmuState);
           DoCls(&EmuState);
           break;
 
