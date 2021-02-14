@@ -17,10 +17,10 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include <windows.h>
+#include <iostream>
 
 #include "tcc1014mmu.h"
 #include "pakinterface.h"
-#include "config.h"
 #include "Vcc.h"
 #include "mc6821.h"
 

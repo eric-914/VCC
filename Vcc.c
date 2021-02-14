@@ -42,7 +42,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "clipboard.h"
 #include "pakinterface.h"
 #include "audio.h"
-#include "config.h"
 #include "quickload.h"
 #include "throttle.h"
 #include "DirectDrawInterface.h"
@@ -55,6 +54,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "DecreaseOverclockSpeed.h"
 #include "ConfigAccessors.h"
 #include "UpdateConfig.h"
+#include "MainConfig.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"
@@ -264,7 +264,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           EmuState.WindowInstance, //NULL,
           (LPCTSTR)IDD_TCONFIG,
           EmuState.WindowHandle,
-          (DLGPROC)Config
+          (DLGPROC)MainConfig
         );
         // open modeless
         ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL);

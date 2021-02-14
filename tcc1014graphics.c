@@ -19,7 +19,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 
 #include "tcc1014graphics.h"
-#include "config.h"
 #include "DirectDrawInterface.h"
 #include "audio.h"
 
