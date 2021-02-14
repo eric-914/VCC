@@ -258,7 +258,11 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
 {
   XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n", key == 0 ? '0' : key, key == 0 ? '0' : key, key == 0 ? '0' : key, scanCode, scanCode);
   //If requested, abort pasting operation.
-  if (scanCode == 0x01 || scanCode == 0x43 || scanCode == 0x3F) { pasting = false; OutputDebugString("ABORT PASTING!!!\n"); }
+  if (scanCode == 0x01 || scanCode == 0x43 || scanCode == 0x3F) { 
+    pasting = false; 
+
+    OutputDebugString("ABORT PASTING!!!\n"); 
+  }
 
   // check for shift key
   // Left and right shift generate different scan codes

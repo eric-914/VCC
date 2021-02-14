@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <string>
 
 #include "configstate.h"
 #include "resource.h"

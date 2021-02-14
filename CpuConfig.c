@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <string>
 #include <ShlObj.h>
 
 #include "configstate.h"

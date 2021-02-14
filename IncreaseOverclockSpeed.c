@@ -1,3 +1,4 @@
+#include <string>
 #include <ShlObj.h>
 
 #include "configstate.h"

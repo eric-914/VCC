@@ -3,6 +3,11 @@
 #include "cocostate.h"
 #include "mc6821def.h"
 
+#include "PopClipboard.h"
+#include "PeekClipboard.h"
+#include "ClipboardEmpty.h"
+#include "GetCurrentKeyMap.h"
+
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/keyboarddef.h"
@@ -11,10 +16,6 @@ extern void GimeAssertHorzInterrupt(void);
 extern void PakTimer(void);
 extern void irq_hs(int);
 extern void GimeAssertTimerInterrupt(void);
-extern bool ClipboardEmpty();
-extern void PopClipboard();
-extern char PeekClipboard();
-extern int GetCurrentKeyMap();
 extern void SetPaste(bool);
 extern unsigned char SetSpeedThrottle(unsigned char);
 

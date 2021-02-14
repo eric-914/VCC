@@ -1,3 +1,7 @@
+using namespace std;
+
+#include <string>
+
 #include "configstate.h"
 
 #include "library/systemstate.h"
@@ -36,7 +40,7 @@ int SelectFile(SystemState* systemState, char* filename)
       MessageBox(0, "Can't Open File", "Can't open the file specified.", 0);
     }
 
-    std::string tmp = ofn.lpstrFile;
+    string tmp = ofn.lpstrFile;
     size_t idx = tmp.find_last_of("\\");
 
     tmp = tmp.substr(0, idx);

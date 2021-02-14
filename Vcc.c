@@ -29,6 +29,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 #include <process.h>
+#include <string>
 
 #include "resource.h"
 #include "Vcc.h"
@@ -39,7 +40,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6809.h"
 #include "mc6821.h"
 #include "keyboard.h"
-#include "clipboard.h"
 #include "pakinterface.h"
 #include "audio.h"
 #include "quickload.h"
@@ -58,6 +58,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "StartRender.h"
 #include "EndRender.h"
 #include "FrameWait.h"
+#include "PasteText.h"
+#include "CopyText.h"
+#include "PasteBASIC.h"
+#include "PasteBASICWithNew.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"

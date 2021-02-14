@@ -2,7 +2,7 @@
 
 #define __CONFIGDEF_H__
 
-#include<iostream>
+#include <windows.h>
 
 typedef struct {
   unsigned char	CPUMultiplyer;
