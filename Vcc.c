@@ -43,7 +43,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "pakinterface.h"
 #include "audio.h"
 #include "quickload.h"
-#include "throttle.h"
 #include "DirectDrawInterface.h"
 #include "SetClockSpeed.h"
 #include "RenderFrame.h"
@@ -55,6 +54,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "ConfigAccessors.h"
 #include "UpdateConfig.h"
 #include "MainConfig.h"
+#include "CalibrateThrottle.h"
+#include "StartRender.h"
+#include "EndRender.h"
+#include "FrameWait.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"

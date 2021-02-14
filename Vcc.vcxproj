@@ -172,6 +172,8 @@
     <ClCompile Include="AudioOut.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
+    <ClCompile Include="CalculateFPS.c" />
+    <ClCompile Include="CalibrateThrottle.c" />
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
@@ -186,7 +188,9 @@
     <ClCompile Include="DecreaseOverclockSpeed.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="DisplayConfig.c" />
+    <ClCompile Include="EndRender.c" />
     <ClCompile Include="FlushCassetteBuffer.c" />
+    <ClCompile Include="FrameWait.c" />
     <ClCompile Include="GetKeyName.c" />
     <ClCompile Include="GetTapeCounter.c" />
     <ClCompile Include="GetTapeName.c" />
@@ -225,12 +229,13 @@
     <ClCompile Include="SetTimerInterruptState.c" />
     <ClCompile Include="SetVertInterruptState.c" />
     <ClCompile Include="SetWindowSize.c" />
+    <ClCompile Include="StartRender.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="TapeConfig.c" />
     <ClCompile Include="tcc1014graphics.c" />
     <ClCompile Include="tcc1014mmu.c" />
     <ClCompile Include="tcc1014registers.c" />
-    <ClCompile Include="throttle.c" />
+    <ClCompile Include="throttlestate.c" />
     <ClCompile Include="TranslateDisp2Scan.c" />
     <ClCompile Include="TranslateScan2Disp.c" />
     <ClCompile Include="UpdateConfig.c" />
@@ -249,6 +254,8 @@
     <ClInclude Include="AudioOut.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
+    <ClInclude Include="CalculateFPS.h" />
+    <ClInclude Include="CalibrateThrottle.h" />
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
@@ -264,7 +271,9 @@
     <ClInclude Include="DecreaseOverclockSpeed.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="DisplayConfig.h" />
+    <ClInclude Include="EndRender.h" />
     <ClInclude Include="FlushCassetteBuffer.h" />
+    <ClInclude Include="FrameWait.h" />
     <ClInclude Include="GetKeyName.h" />
     <ClInclude Include="GetTapeCounter.h" />
     <ClInclude Include="GetTapeName.h" />
@@ -308,12 +317,13 @@
     <ClInclude Include="SetTimerInterruptState.h" />
     <ClInclude Include="SetVertInterruptState.h" />
     <ClInclude Include="SetWindowSize.h" />
+    <ClInclude Include="StartRender.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="TapeConfig.h" />
     <ClInclude Include="tcc1014graphics.h" />
     <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
-    <ClInclude Include="throttle.h" />
+    <ClInclude Include="throttlestate.h" />
     <ClInclude Include="TranslateDisp2Scan.h" />
     <ClInclude Include="TranslateScan2Disp.h" />
     <ClInclude Include="UpdateConfig.h" />

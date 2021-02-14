@@ -27,9 +27,9 @@ This file is part of VCC (Virtual Color Computer).
 #include "ddraw.h"
 #include "DirectDrawInterface.h"
 #include "resource.h"
-#include "throttle.h"
 
 #include "ConfigAccessors.h"
+#include "CalculateFPS.h"
 
 #include "library/defines.h"
 

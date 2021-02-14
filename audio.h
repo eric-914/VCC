@@ -18,6 +18,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <windows.h>
+
 #include "library\audiodef.h"
 
 int SoundInit(HWND, _GUID*, unsigned short);
