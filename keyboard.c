@@ -28,13 +28,14 @@ This file is part of VCC (Virtual Color Computer).
 */
 /*****************************************************************************/
 
-#define DIRECTINPUT_VERSION 0x0800
+#include "library/keyboarddef.h"
 
 // this must be before defines.h as it contains Windows types and not Windows.h include
 #include <windows.h>
 #include <dinput.h>
 #include <assert.h>
 
+#include "keyboardstate.h"
 #include "keyboard.h"
 #include "tcc1014registers.h" //GimeAssertKeyboardInterrupt();
 #include "mc6821.h" //GetMuxState() //DACState()
@@ -44,48 +45,21 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/joystickstate.h"
 #include "library/xDebug.h"
 
-/*
-  Forward declarations
-*/
 
 char SetMouseStatus(char, unsigned char);
-bool pasting = false;  //Are the keyboard functions in the middle of a paste operation?
-
-/*
-  Global variables
-*/
-
-//
-// Joystick
-//
-
-//
-// keyboard
-//
-
-#define KBTABLE_ENTRY_COUNT 100	///< key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
-#define KEY_DOWN	1
-#define KEY_UP		0
-
-/** track all keyboard scan codes state (up/down) */
-static int ScanTable[256];
-
-/** run-time 'rollover' table to pass to the MC6821 when a key is pressed */
-static unsigned char RolloverTable[8];	// CoCo 'keys' for emulator
-
-/** run-time key translation table - convert key up/down messages to 'rollover' codes */
-static keytranslationentry_t KeyTransTable[KBTABLE_ENTRY_COUNT];	// run-time keyboard layout table (key(s) to keys(s) translation)
-
-unsigned char KeyboardInterruptEnabled = 0;
 
 unsigned char GimeGetKeyboardInterruptState()
 {
-  return KeyboardInterruptEnabled;
+  KeyboardState* keyboardState = GetKeyBoardState();
+
+  return keyboardState->KeyboardInterruptEnabled;
 }
 
 void GimeSetKeyboardInterruptState(unsigned char state)
 {
-  KeyboardInterruptEnabled = !!state;
+  KeyboardState* keyboardState = GetKeyBoardState();
+
+  keyboardState->KeyboardInterruptEnabled = !!state;
 }
 
 /*
@@ -98,20 +72,18 @@ void GimeSetKeyboardInterruptState(unsigned char state)
 unsigned char vccKeyboardGetScan(unsigned char column)
 {
   unsigned char temp;
-  unsigned char x;
-  unsigned char mask;
-  unsigned char ret_val;
+  unsigned char mask = 1;
+  unsigned char ret_val = 0;
 
-  ret_val = 0;
+  KeyboardState* keyboardState = GetKeyBoardState();
 
   temp = ~column; //Get column
-  mask = 1;
 
-  for (x = 0; x < 8; x++)
+  for (unsigned char x = 0; x < 8; x++)
   {
     if ((temp & mask)) // Found an active column scan
     {
-      ret_val |= RolloverTable[x];
+      ret_val |= keyboardState->RolloverTable[x];
     }
 
     mask = (mask << 1);
@@ -181,62 +153,67 @@ unsigned char vccKeyboardGetScan(unsigned char column)
 
 void _vccKeyboardUpdateRolloverTable()
 {
-  int				Index;
-  unsigned char	LockOut = 0;
+  unsigned char	lockOut = 0;
+
+  KeyboardState* keyboardState = GetKeyBoardState();
 
   // clear the rollover table
-  for (Index = 0; Index < 8; Index++)
+  for (int index = 0; index < 8; index++)
   {
-    RolloverTable[Index] = 0;
+    keyboardState->RolloverTable[index] = 0;
   }
 
   // set rollover table based on ScanTable key status
-  for (Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++)
+  for (int index = 0; index < KBTABLE_ENTRY_COUNT; index++)
   {
     // stop at last entry
-    if ((KeyTransTable[Index].ScanCode1 == 0) && (KeyTransTable[Index].ScanCode2 == 0))
+    if ((keyboardState->KeyTransTable[index].ScanCode1 == 0) && (keyboardState->KeyTransTable[index].ScanCode2 == 0))
     {
       break;
     }
 
-    if (LockOut != KeyTransTable[Index].ScanCode1)
+    if (lockOut != keyboardState->KeyTransTable[index].ScanCode1)
     {
       // Single input key 
-      if ((KeyTransTable[Index].ScanCode1 != 0) && (KeyTransTable[Index].ScanCode2 == 0))
+      if ((keyboardState->KeyTransTable[index].ScanCode1 != 0) && (keyboardState->KeyTransTable[index].ScanCode2 == 0))
       {
         // check if key pressed
-        if (ScanTable[KeyTransTable[Index].ScanCode1] == KEY_DOWN)
+        if (keyboardState->ScanTable[keyboardState->KeyTransTable[index].ScanCode1] == KEY_DOWN)
         {
-          int col;
+          int col = keyboardState->KeyTransTable[index].Col1;
 
-          col = KeyTransTable[Index].Col1;
           assert(col >= 0 && col < 8);
-          RolloverTable[col] |= KeyTransTable[Index].Row1;
 
-          col = KeyTransTable[Index].Col2;
+          keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row1;
+
+          col = keyboardState->KeyTransTable[index].Col2;
+
           assert(col >= 0 && col < 8);
-          RolloverTable[col] |= KeyTransTable[Index].Row2;
+
+          keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row2;
         }
       }
 
       // Double Input Key
-      if ((KeyTransTable[Index].ScanCode1 != 0) && (KeyTransTable[Index].ScanCode2 != 0))
+      if ((keyboardState->KeyTransTable[index].ScanCode1 != 0) && (keyboardState->KeyTransTable[index].ScanCode2 != 0))
       {
         // check if both keys pressed
-        if ((ScanTable[KeyTransTable[Index].ScanCode1] == KEY_DOWN) && (ScanTable[KeyTransTable[Index].ScanCode2] == KEY_DOWN))
+        if ((keyboardState->ScanTable[keyboardState->KeyTransTable[index].ScanCode1] == KEY_DOWN) && (keyboardState->ScanTable[keyboardState->KeyTransTable[index].ScanCode2] == KEY_DOWN))
         {
-          int col;
+          int col = keyboardState->KeyTransTable[index].Col1;
 
-          col = KeyTransTable[Index].Col1;
           assert(col >= 0 && col < 8);
-          RolloverTable[col] |= KeyTransTable[Index].Row1;
 
-          col = KeyTransTable[Index].Col2;
+          keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row1;
+
+          col = keyboardState->KeyTransTable[index].Col2;
+
           assert(col >= 0 && col < 8);
-          RolloverTable[col] |= KeyTransTable[Index].Row2;
+
+          keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row2;
 
           // always SHIFT
-          LockOut = KeyTransTable[Index].ScanCode1;
+          lockOut = keyboardState->KeyTransTable[index].ScanCode1;
 
           break;
         }
@@ -257,9 +234,12 @@ void _vccKeyboardUpdateRolloverTable()
 void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e keyState)
 {
   XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n", key == 0 ? '0' : key, key == 0 ? '0' : key, key == 0 ? '0' : key, scanCode, scanCode);
+
+  KeyboardState* keyboardState = GetKeyBoardState();
+
   //If requested, abort pasting operation.
   if (scanCode == 0x01 || scanCode == 0x43 || scanCode == 0x3F) { 
-    pasting = false; 
+    keyboardState->Pasting = false; 
 
     OutputDebugString("ABORT PASTING!!!\n"); 
   }
@@ -300,7 +280,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
     }
 
     // track key is down
-    ScanTable[scanCode] = KEY_DOWN;
+    keyboardState->ScanTable[scanCode] = KEY_DOWN;
 
     _vccKeyboardUpdateRolloverTable();
 
@@ -319,7 +299,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
     }
 
     // reset key (released)
-    ScanTable[scanCode] = KEY_UP;
+    keyboardState->ScanTable[scanCode] = KEY_UP;
 
     // TODO: verify this is accurate emulation
     // Clean out rollover table on shift release
@@ -327,7 +307,7 @@ void vccKeyboardHandleKey(unsigned char key, unsigned char scanCode, keyevent_e 
     {
       for (int Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++)
       {
-        ScanTable[Index] = KEY_UP;
+        keyboardState->ScanTable[Index] = KEY_UP;
       }
     }
 
@@ -345,6 +325,8 @@ int keyTransCompare(const void* e1, const void* e2)
   keytranslationentry_t* entry1 = (keytranslationentry_t*)e1;
   keytranslationentry_t* entry2 = (keytranslationentry_t*)e2;
   int result = 0;
+
+  KeyboardState* keyboardState = GetKeyBoardState();
 
   // empty listing push to end
   if (entry1->ScanCode1 == 0 && entry1->ScanCode2 == 0 && entry2->ScanCode1 != 0)
@@ -421,10 +403,12 @@ int keyTransCompare(const void* e1, const void* e2)
 */
 void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 {
-  int Index1 = 0;
-  int Index2 = 0;
+  int index1 = 0;
+  int index2 = 0;
   keytranslationentry_t* keyLayoutTable = NULL;
   keytranslationentry_t	keyTransEntry;
+
+  KeyboardState* keyboardState = GetKeyBoardState();
 
   assert(keyBoardLayout >= 0 && keyBoardLayout < kKBLayoutCount);
 
@@ -454,12 +438,12 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
   //XTRACE("Building run-time key table for layout # : %d - %s\n", keyBoardLayout, k_keyboardLayoutNames[keyBoardLayout]);
 
   // copy the selected keyboard layout to the run-time table
-  memset(KeyTransTable, 0, sizeof(KeyTransTable));
-  Index2 = 0;
+  memset(keyboardState->KeyTransTable, 0, sizeof(keyboardState->KeyTransTable));
+  index2 = 0;
 
-  for (Index1 = 0; ; Index1++)
+  for (index1 = 0; ; index1++)
   {
-    memcpy(&keyTransEntry, &keyLayoutTable[Index1], sizeof(keytranslationentry_t));
+    memcpy(&keyTransEntry, &keyLayoutTable[index1], sizeof(keytranslationentry_t));
 
     //
     // Change entries to what the code expects
@@ -493,9 +477,9 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
       break;
     }
 
-    memcpy(&KeyTransTable[Index2++], &keyTransEntry, sizeof(keytranslationentry_t));
+    memcpy(&(keyboardState->KeyTransTable[index2++]), &keyTransEntry, sizeof(keytranslationentry_t));
 
-    assert(Index2 <= KBTABLE_ENTRY_COUNT && "keyboard layout table is longer than we can handle");
+    assert(index2 <= KBTABLE_ENTRY_COUNT && "keyboard layout table is longer than we can handle");
   }
 
   //
@@ -505,16 +489,16 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
   // time a key is pressed, we want them to be in the correct 
   // order.
   //
-  qsort(KeyTransTable, KBTABLE_ENTRY_COUNT, sizeof(keytranslationentry_t), keyTransCompare);
+  qsort(keyboardState->KeyTransTable, KBTABLE_ENTRY_COUNT, sizeof(keytranslationentry_t), keyTransCompare);
 
 #ifdef _DEBUG
   //
   // Debug dump the table
   //
-  for (Index1 = 0; Index1 < KBTABLE_ENTRY_COUNT; Index1++)
+  for (index1 = 0; index1 < KBTABLE_ENTRY_COUNT; index1++)
   {
     // check for null entry
-    if (KeyTransTable[Index1].ScanCode1 == 0 && KeyTransTable[Index1].ScanCode2 == 0)
+    if (keyboardState->KeyTransTable[index1].ScanCode1 == 0 && keyboardState->KeyTransTable[index1].ScanCode2 == 0)
     {
       // done
       break;
@@ -541,6 +525,8 @@ void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout)
 
 void joystick(unsigned short x, unsigned short y)
 {
+  KeyboardState* keyboardState = GetKeyBoardState();
+
   if (x > 63) {
     x = 63;
   }
@@ -578,6 +564,7 @@ unsigned short get_pot_value(unsigned char pot)
 {
   DIJOYSTATE2 Stick1;
 
+  KeyboardState* keyboardState = GetKeyBoardState();
   JoystickState* joystickState = GetJoystickState();
 
   if (joystickState->Left.UseMouse == 3)
@@ -622,8 +609,9 @@ unsigned short get_pot_value(unsigned char pot)
 
 char SetMouseStatus(char scanCode, unsigned char phase)
 {
-  char ReturnValue = scanCode;
+  char retValue = scanCode;
 
+  KeyboardState* keyboardState = GetKeyBoardState();
   JoystickState* joystickState = GetJoystickState();
 
   switch (phase)
@@ -634,37 +622,37 @@ char SetMouseStatus(char scanCode, unsigned char phase)
       if (scanCode == joystickState->Left.Left)
       {
         joystickState->LeftStickX = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Right)
       {
         joystickState->LeftStickX = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Up)
       {
         joystickState->LeftStickY = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Down)
       {
         joystickState->LeftStickY = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Fire1)
       {
         joystickState->LeftButton1Status = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Fire2)
       {
         joystickState->LeftButton2Status = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
     }
 
@@ -673,37 +661,37 @@ char SetMouseStatus(char scanCode, unsigned char phase)
       if (scanCode == joystickState->Right.Left)
       {
         joystickState->RightStickX = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Right)
       {
         joystickState->RightStickX = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Up)
       {
         joystickState->RightStickY = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Down)
       {
         joystickState->RightStickY = 32;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Fire1)
       {
         joystickState->RightButton1Status = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Fire2)
       {
         joystickState->RightButton2Status = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
     }
     break;
@@ -714,37 +702,37 @@ char SetMouseStatus(char scanCode, unsigned char phase)
       if (scanCode == joystickState->Left.Left)
       {
         joystickState->LeftStickX = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Right)
       {
         joystickState->LeftStickX = 63;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Up)
       {
         joystickState->LeftStickY = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Down)
       {
         joystickState->LeftStickY = 63;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Fire1)
       {
         joystickState->LeftButton1Status = 1;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Left.Fire2)
       {
         joystickState->LeftButton2Status = 1;
-        ReturnValue = 0;
+        retValue = 0;
       }
     }
 
@@ -752,50 +740,51 @@ char SetMouseStatus(char scanCode, unsigned char phase)
     {
       if (scanCode == joystickState->Right.Left)
       {
-        ReturnValue = 0;
+        retValue = 0;
         joystickState->RightStickX = 0;
       }
 
       if (scanCode == joystickState->Right.Right)
       {
         joystickState->RightStickX = 63;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Up)
       {
         joystickState->RightStickY = 0;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Down)
       {
         joystickState->RightStickY = 63;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Fire1)
       {
         joystickState->RightButton1Status = 1;
-        ReturnValue = 0;
+        retValue = 0;
       }
 
       if (scanCode == joystickState->Right.Fire2)
       {
         joystickState->RightButton2Status = 1;
-        ReturnValue = 0;
+        retValue = 0;
       }
     }
     break;
   }
 
-  return(ReturnValue);
+  return(retValue);
 }
 
 void SetButtonStatus(unsigned char side, unsigned char state) //Side=0 Left Button Side=1 Right Button State 1=Down
 {
   unsigned char buttonStatus = (side << 1) | state;
 
+  KeyboardState* keyboardState = GetKeyBoardState();
   JoystickState* joystickState = GetJoystickState();
 
   if (joystickState->Left.UseMouse == 1)
@@ -840,9 +829,13 @@ void SetButtonStatus(unsigned char side, unsigned char state) //Side=0 Left Butt
 }
 
 bool GetPaste() {
-  return pasting;
+  KeyboardState* keyboardState = GetKeyBoardState();
+
+  return keyboardState->Pasting;
 }
 
 void SetPaste(bool flag) {
-  pasting = flag;
+  KeyboardState* keyboardState = GetKeyBoardState();
+
+  keyboardState->Pasting = flag;
 }

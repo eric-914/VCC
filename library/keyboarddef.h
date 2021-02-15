@@ -1,6 +1,12 @@
 #ifndef __KEYBOARDDEF_H__
 #define __KEYBOARDDEF_H__
 
+#define DIRECTINPUT_VERSION 0x0800
+
+#define KBTABLE_ENTRY_COUNT 100	///< key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
+#define KEY_DOWN	1
+#define KEY_UP		0
+
 typedef enum keyevent_e
 {
   kEventKeyUp = 0,

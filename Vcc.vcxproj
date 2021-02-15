@@ -211,6 +211,7 @@
     <ClCompile Include="InsertModule.c" />
     <ClCompile Include="JoyStickConfig.c" />
     <ClCompile Include="keyboard.c" />
+    <ClCompile Include="keyboardstate.c" />
     <ClCompile Include="LoadCart.c" />
     <ClCompile Include="LoadCassetteBuffer.c" />
     <ClCompile Include="LoadConfig.c" />
@@ -325,6 +326,7 @@
     <ClInclude Include="InsertModule.h" />
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="keyboard.h" />
+    <ClInclude Include="keyboardstate.h" />
     <ClInclude Include="LoadCart.h" />
     <ClInclude Include="LoadCassetteBuffer.h" />
     <ClInclude Include="LoadConfig.h" />
