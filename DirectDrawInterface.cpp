@@ -41,6 +41,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
   DirectDrawState* ddState = GetDirectDrawState();
 
+  ddState->hInstance = hInstance;
   ddState->CmdShow = nCmdShow;
 
   AfxInitRichEdit();
@@ -98,11 +99,11 @@ bool CreateDDWindow(SystemState* systemState)
   ddState->Wcex.cbWndExtra = 0;
   ddState->Wcex.hInstance = ddState->hInstance;
   ddState->Wcex.hIcon = LoadIcon(ddState->hInstance, (LPCTSTR)IDI_COCO3);
+  ddState->Wcex.hIconSm = LoadIcon(ddState->hInstance, (LPCTSTR)IDI_COCO3); //LoadIcon(ddState->Wcex.hInstance, (LPCTSTR)IDI_COCO3);
   ddState->Wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
   ddState->Wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
   ddState->Wcex.lpszMenuName = (LPCSTR)IDR_MENU;
   ddState->Wcex.lpszClassName = ddState->AppNameText;
-  ddState->Wcex.hIconSm = LoadIcon(ddState->Wcex.hInstance, (LPCTSTR)IDI_COCO3);
 
   if (systemState->FullScreen)
   {
