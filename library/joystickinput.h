@@ -18,7 +18,9 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "di.version.h"
 #include <dinput.h>
+
 #define MAXSTICKS 10
 #define STRLEN 64
 

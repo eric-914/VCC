@@ -8,10 +8,9 @@
 
 #include "SetWindowSize.h"
 #include "ProfileAccessors.h"
+#include "vccKeyboardBuildRuntimeTable.h"
+#include "InsertModule.h"
 
-extern int InsertModule(SystemState* systemState, char* modulePath);
-
-extern "C" void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
 extern "C" __declspec(dllexport) int __cdecl FileCheckPath(char* path);
 
 unsigned char ReadIniFile(SystemState* systemState)

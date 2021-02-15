@@ -209,9 +209,11 @@
     <ClCompile Include="IncreaseOverclockSpeed.c" />
     <ClCompile Include="InputConfig.c" />
     <ClCompile Include="InsertModule.c" />
+    <ClCompile Include="JoystickAccessors.c" />
     <ClCompile Include="JoyStickConfig.c" />
-    <ClCompile Include="keyboard.c" />
+    <ClCompile Include="KeyboardAccessors.c" />
     <ClCompile Include="keyboardstate.c" />
+    <ClCompile Include="KeyTransCompare.c" />
     <ClCompile Include="LoadCart.c" />
     <ClCompile Include="LoadCassetteBuffer.c" />
     <ClCompile Include="LoadConfig.c" />
@@ -272,6 +274,10 @@
     <ClCompile Include="UpdateSoundBar.c" />
     <ClCompile Include="UpdateTapeCounter.c" />
     <ClCompile Include="Vcc.c" />
+    <ClCompile Include="vccKeyboardBuildRuntimeTable.c" />
+    <ClCompile Include="vccKeyboardGetScan.c" />
+    <ClCompile Include="vccKeyboardHandleKey.c" />
+    <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
     <ClCompile Include="WavtoCas.c" />
     <ClCompile Include="WriteIniFile.c" />
   </ItemGroup>
@@ -324,9 +330,11 @@
     <ClInclude Include="IncreaseOverclockSpeed.h" />
     <ClInclude Include="InputConfig.h" />
     <ClInclude Include="InsertModule.h" />
+    <ClInclude Include="JoystickAccessors.h" />
     <ClInclude Include="JoyStickConfig.h" />
-    <ClInclude Include="keyboard.h" />
+    <ClInclude Include="KeyboardAccessors.h" />
     <ClInclude Include="keyboardstate.h" />
+    <ClInclude Include="KeyTransCompare.h" />
     <ClInclude Include="LoadCart.h" />
     <ClInclude Include="LoadCassetteBuffer.h" />
     <ClInclude Include="LoadConfig.h" />
@@ -392,6 +400,10 @@
     <ClInclude Include="UpdateSoundBar.h" />
     <ClInclude Include="UpdateTapeCounter.h" />
     <ClInclude Include="Vcc.h" />
+    <ClInclude Include="vccKeyboardBuildRuntimeTable.h" />
+    <ClInclude Include="vccKeyboardGetScan.h" />
+    <ClInclude Include="vccKeyboardHandleKey.h" />
+    <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
     <ClInclude Include="WavtoCas.h" />
     <ClInclude Include="WriteIniFile.h" />
   </ItemGroup>

@@ -3,13 +3,11 @@
 #include "clipboardstate.h"
 #include "ConfigAccessors.h"
 #include "GetClipboardText.h"
+#include "vccKeyboardBuildRuntimeTable.h"
+#include "KeyboardAccessors.h"
 
 #include "library/keyboarddef.h"
 #include "library/graphicsstate.h"
-
-extern void SetPaste(bool);
-
-extern "C" void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
 
 void PasteText() {
   string cliptxt, clipparse, lines, out, debugout, tmp;

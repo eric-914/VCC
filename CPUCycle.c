@@ -7,20 +7,19 @@
 #include "PeekClipboard.h"
 #include "ClipboardEmpty.h"
 #include "GetCurrentKeyMap.h"
+#include "vccKeyboardBuildRuntimeTable.h"
+#include "KeyboardAccessors.h"
+#include "PakInterfaceAccessors.h"
+#include "vccKeyboardHandleKey.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/keyboarddef.h"
 
 extern void GimeAssertHorzInterrupt(void);
-extern void PakTimer(void);
 extern void irq_hs(int);
 extern void GimeAssertTimerInterrupt(void);
-extern void SetPaste(bool);
 extern unsigned char SetSpeedThrottle(unsigned char);
-
-extern "C" void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
-extern "C" void vccKeyboardHandleKey(unsigned char, unsigned char, keyevent_e keyState);
 
 /* _inline */ int CPUCycle(void)
 {

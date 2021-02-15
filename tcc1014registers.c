@@ -21,12 +21,12 @@ This file is part of VCC (Virtual Color Computer).
 #include "tcc1014mmu.h"
 #include "tcc1014graphics.h"
 #include "Vcc.h"
-#include "keyboard.h"
 #include "SetHorzInterruptState.h"
 #include "SetTimerInterruptState.h"
 #include "SetInterruptTimer.h"
 #include "SetVertInterruptState.h"
 #include "SetTimerClockRate.h"
+#include "KeyboardAccessors.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"

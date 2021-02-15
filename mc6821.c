@@ -21,11 +21,11 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "mc6821def.h"
 #include "mc6821.h"
-#include "keyboard.h"
 #include "tcc1014graphics.h"
 #include "motor.h"
 
 #include "PakInterfaceAccessors.h"
+#include "vccKeyboardGetScan.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"

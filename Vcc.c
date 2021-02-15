@@ -16,7 +16,8 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define DIRECTINPUT_VERSION 0x0800
+#include "library/di.version.h"
+
 #define _WIN32_WINNT 0x0500
 
 #ifndef ABOVE_NORMAL_PRIORITY_CLASS 
@@ -39,7 +40,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "hd6309.h"
 #include "mc6809.h"
 #include "mc6821.h"
-#include "keyboard.h"
 #include "pakinterfacedef.h"
 #include "quickload.h"
 #include "DirectDrawInterface.h"
@@ -69,6 +69,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "RefreshDynamicMenu.h"
 #include "DynamicMenuActivated.h"
 #include "DynamicMenuCallback.h"
+#include "JoystickAccessors.h"
+#include "vccKeyboardHandleKey.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"
@@ -486,7 +488,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       GetClientRect(EmuState.WindowHandle, &ClientSize);
       x /= ((ClientSize.right - ClientSize.left) >> 6);
       y /= (((ClientSize.bottom - ClientSize.top) - 20) >> 6);
-      joystick(x, y);
+      SetJoystick(x, y);
     }
 
     return(0);
