@@ -1,10 +1,10 @@
 #include "throttlestate.h"
 
-#include "library/defines.h"
+#include "PurgeAuxBuffer.h"
+#include "GetFreeBlockCount.h"
+#include "AudioAccessors.h"
 
-extern unsigned short GetSoundStatus(void);
-extern void PurgeAuxBuffer(void);
-extern int GetFreeBlockCount(void);
+#include "library/defines.h"
 
 void FrameWait(void)
 {

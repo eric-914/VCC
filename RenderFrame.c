@@ -2,6 +2,7 @@
 
 #include "FlushCassetteBuffer.h"
 #include "LoadCassetteBuffer.h"
+#include "FlushAudioBuffer.h"
 
 #include "library/graphicsstate.h"
 
@@ -12,7 +13,6 @@ extern unsigned char LockScreen(SystemState* systemState);
 extern void UnlockScreen(SystemState* USState);
 extern void GimeAssertVertInterrupt(void);
 extern void SetBoarderChange(unsigned char);
-extern void FlushAudioBuffer(unsigned int*, unsigned short);
 extern float CalculateFPS(void);
 
 float RenderFrame(SystemState* systemState)

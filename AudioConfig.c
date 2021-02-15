@@ -4,7 +4,7 @@
 #include "configstate.h"
 #include "resource.h"
 
-extern const char* GetRateList(unsigned char index);
+#include "AudioAccessors.h"
 
 LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

@@ -16,12 +16,11 @@
 #include "MiscConfig.h"
 #include "TapeConfig.h"
 #include "UpdateConfig.h"
+#include "SoundInit.h"
 
 #include "library/keyboarddef.h"
 #include "library/joystickstate.h"
 #include "library/systemstate.h"
-
-extern int SoundInit(HWND, _GUID*, unsigned short);
 
 extern "C" void SetStickNumbers(unsigned char, unsigned char);
 extern "C" void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);

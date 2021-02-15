@@ -167,9 +167,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Audio.c" />
+    <ClCompile Include="AudioAccessors.c" />
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="AudioOut.c" />
+    <ClCompile Include="AudioState.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
     <ClCompile Include="CalculateFPS.c" />
@@ -190,12 +191,16 @@
     <ClCompile Include="DecreaseOverclockSpeed.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
     <ClCompile Include="DisplayConfig.c" />
+    <ClCompile Include="DSEnumCallback.c" />
     <ClCompile Include="EndRender.c" />
+    <ClCompile Include="FlushAudioBuffer.c" />
     <ClCompile Include="FlushCassetteBuffer.c" />
     <ClCompile Include="FrameWait.c" />
     <ClCompile Include="GetClipboardText.c" />
     <ClCompile Include="GetCurrentKeyMap.c" />
+    <ClCompile Include="GetFreeBlockCount.c" />
     <ClCompile Include="GetKeyName.c" />
+    <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="GetTapeCounter.c" />
     <ClCompile Include="GetTapeName.c" />
     <ClCompile Include="hd6309.c" />
@@ -220,10 +225,12 @@
     <ClCompile Include="PeekClipboard.c" />
     <ClCompile Include="PopClipboard.c" />
     <ClCompile Include="ProfileAccessors.c" />
+    <ClCompile Include="PurgeAuxBuffer.c" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="ReadIniFile.c" />
     <ClCompile Include="RefreshJoystickStatus.c" />
     <ClCompile Include="RenderFrame.c" />
+    <ClCompile Include="ResetAudio.c" />
     <ClCompile Include="SelectFile.c" />
     <ClCompile Include="SetAudioRate.c" />
     <ClCompile Include="SetClipboard.c" />
@@ -239,6 +246,7 @@
     <ClCompile Include="SetTimerInterruptState.c" />
     <ClCompile Include="SetVertInterruptState.c" />
     <ClCompile Include="SetWindowSize.c" />
+    <ClCompile Include="SoundInit.c" />
     <ClCompile Include="StartRender.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="TapeConfig.c" />
@@ -259,9 +267,11 @@
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="audio.h" />
+    <ClInclude Include="AudioAccessors.h" />
     <ClInclude Include="AudioConfig.h" />
+    <ClInclude Include="audiodef.h" />
     <ClInclude Include="AudioOut.h" />
+    <ClInclude Include="AudioState.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
     <ClInclude Include="CalculateFPS.h" />
@@ -283,12 +293,16 @@
     <ClInclude Include="DecreaseOverclockSpeed.h" />
     <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="DisplayConfig.h" />
+    <ClInclude Include="DSEnumCallback.h" />
     <ClInclude Include="EndRender.h" />
+    <ClInclude Include="FlushAudioBuffer.h" />
     <ClInclude Include="FlushCassetteBuffer.h" />
     <ClInclude Include="FrameWait.h" />
     <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="GetCurrentKeyMap.h" />
+    <ClInclude Include="GetFreeBlockCount.h" />
     <ClInclude Include="GetKeyName.h" />
+    <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="GetTapeCounter.h" />
     <ClInclude Include="GetTapeName.h" />
     <ClInclude Include="hd6309.h" />
@@ -316,10 +330,12 @@
     <ClInclude Include="PeekClipboard.h" />
     <ClInclude Include="PopClipboard.h" />
     <ClInclude Include="ProfileAccessors.h" />
+    <ClInclude Include="PurgeAuxBuffer.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="ReadIniFile.h" />
     <ClInclude Include="RefreshJoystickStatus.h" />
     <ClInclude Include="RenderFrame.h" />
+    <ClInclude Include="ResetAudio.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sampledefs.h" />
     <ClInclude Include="SelectFile.h" />
@@ -337,6 +353,7 @@
     <ClInclude Include="SetTimerInterruptState.h" />
     <ClInclude Include="SetVertInterruptState.h" />
     <ClInclude Include="SetWindowSize.h" />
+    <ClInclude Include="SoundInit.h" />
     <ClInclude Include="StartRender.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="TapeConfig.h" />

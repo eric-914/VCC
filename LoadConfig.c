@@ -10,12 +10,11 @@
 #include "WriteIniFile.h"
 #include "RefreshJoystickStatus.h"
 #include "UpdateConfig.h"
+#include "SoundInit.h"
+#include "GetSoundCardList.h"
 
 #include "library/commandline.h"
 #include "library/systemstate.h"
-
-extern int GetSoundCardList(SndCardList* list);
-extern int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate);
 
 extern "C" __declspec(dllexport) BOOL __cdecl FilePathRemoveFileSpec(char* path);
 
