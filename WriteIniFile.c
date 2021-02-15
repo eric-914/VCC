@@ -1,9 +1,10 @@
 #include "configstate.h"
 
+#include "PakInterfaceAccessors.h"
+
 #include "library/joystickstate.h"
 
 extern POINT GetCurWindowSize();
-extern void GetCurrentModule(char* defaultModule);
 
 extern "C" __declspec(dllexport) void __cdecl FileValidatePath(char* path);
 extern "C" __declspec(dllexport) DWORD __cdecl FileWritePrivateProfileInt(LPCTSTR sectionName, LPCTSTR keyName, int keyValue, LPCTSTR iniFileName);
