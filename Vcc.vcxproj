@@ -190,6 +190,7 @@
     <ClCompile Include="CPUCycle.c" />
     <ClCompile Include="DecreaseOverclockSpeed.c" />
     <ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="DisplayConfig.c" />
     <ClCompile Include="DSEnumCallback.c" />
     <ClCompile Include="DynamicMenuActivated.c" />
@@ -309,7 +310,9 @@
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CPUCycle.h" />
     <ClInclude Include="DecreaseOverclockSpeed.h" />
+    <ClInclude Include="directdrawdef.h" />
     <ClInclude Include="DirectDrawInterface.h" />
+    <ClInclude Include="directdrawstate.h" />
     <ClInclude Include="DisplayConfig.h" />
     <ClInclude Include="DSEnumCallback.h" />
     <ClInclude Include="DynamicMenuActivated.h" />

@@ -16,8 +16,7 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define NO_WARN_MBCS_MFC_DEPRECATION
-#define _WIN32_WINNT 0x05010000 // I want to support XP
+#include "directdrawdef.h"
 
 #include <afxwin.h>
 #include <commctrl.h>	// Windows common controls
@@ -25,6 +24,8 @@ This file is part of VCC (Virtual Color Computer).
 #include <string>
 
 #include "ddraw.h"
+#include "directdrawstate.h"
+
 #include "DirectDrawInterface.h"
 #include "resource.h"
 
@@ -33,38 +34,19 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "library/defines.h"
 
-//Global Variables for Direct Draw functions
-LPDIRECTDRAW        g_pDD = NULL;       // The DirectDraw object
-LPDIRECTDRAWCLIPPER g_pClipper = NULL;  // Clipper for primary surface
-LPDIRECTDRAWSURFACE g_pDDS = NULL;      // Primary surface
-LPDIRECTDRAWSURFACE g_pDDSBack = NULL;  // Back surface
-
-static IDirectDrawPalette* ddpal;		//Needed for 8bit Palette mode
-static HWND hwndStatusBar = NULL;
-static RECT WindowDefaultSize;
-static unsigned int StatusBarHeight = 0;
-static TCHAR szTitle[MAX_LOADSTRING];			  // The title bar text
-static TCHAR szWindowClass[MAX_LOADSTRING];	// The title bar text
-static HINSTANCE g_hInstance;
-static int g_nCmdShow;
-static WNDCLASSEX wcex;
-static unsigned char InfoBand = 1;
-static unsigned char Resizeable = 1;
-static unsigned char ForceAspect = 1;
-static char StatusText[255] = "";
-static unsigned int Color = 0;
-static POINT RememberWinSize;
-
 //Function Prototypes for this module
 extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); //Callback for the main window
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-  g_hInstance = hInstance;
-  g_nCmdShow = nCmdShow;
+  DirectDrawState* ddState = GetDirectDrawState();
+
+  ddState->CmdShow = nCmdShow;
+
   AfxInitRichEdit();
-  LoadString(g_hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-  LoadString(g_hInstance, IDS_APP_TITLE, szWindowClass, MAX_LOADSTRING);
+
+  LoadString(hInstance, IDS_APP_TITLE, ddState->TitleBarText, MAX_LOADSTRING);
+  LoadString(hInstance, IDS_APP_TITLE, ddState->AppNameText, MAX_LOADSTRING);
 
   return TRUE;
 }
@@ -75,16 +57,21 @@ bool CreateDDWindow(SystemState* systemState)
   DDSURFACEDESC ddsd;				// A structure to describe the surfaces we want
   RECT rStatBar = RECT();
   RECT rc = RECT();
-  unsigned char ColorValues[4] = { 0,85,170,255 };
   PALETTEENTRY pal[256];
+  IDirectDrawPalette* ddPalette;		  //Needed for 8bit Palette mode
+  unsigned char ColorValues[4] = { 0,85,170,255 };
+
+  DirectDrawState* ddState = GetDirectDrawState();
 
   memset(&ddsd, 0, sizeof(ddsd));	// Clear all members of the structure to 0
+
   ddsd.dwSize = sizeof(ddsd);		  // The first parameter of the structure must contain the size of the structure
   rc.top = 0;
   rc.left = 0;
 
   if (GetRememberSize()) {
     POINT pp = GetIniWindowSize();
+
     rc.right = pp.x;
     rc.bottom = pp.y;
   }
@@ -95,34 +82,35 @@ bool CreateDDWindow(SystemState* systemState)
 
   if (systemState->WindowHandle != NULL) //If its go a value it must be a mode switch
   {
-    if (g_pDD != NULL) {
-      g_pDD->Release();	//Destroy the current Window
+    if (ddState->DD != NULL) {
+      ddState->DD->Release();	//Destroy the current Window
     }
 
     DestroyWindow(systemState->WindowHandle);
-    UnregisterClass(wcex.lpszClassName, wcex.hInstance);
+
+    UnregisterClass(ddState->Wcex.lpszClassName, ddState->Wcex.hInstance);
   }
 
-  wcex.cbSize = sizeof(WNDCLASSEX);	//And Rebuilt it from scratch
-  wcex.style = CS_HREDRAW | CS_VREDRAW;
-  wcex.lpfnWndProc = (WNDPROC)WndProc;
-  wcex.cbClsExtra = 0;
-  wcex.cbWndExtra = 0;
-  wcex.hInstance = g_hInstance;
-  wcex.hIcon = LoadIcon(g_hInstance, (LPCTSTR)IDI_COCO3);
-  wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-  wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-  wcex.lpszMenuName = (LPCSTR)IDR_MENU;
-  wcex.lpszClassName = szWindowClass;
-  wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_COCO3);
+  ddState->Wcex.cbSize = sizeof(WNDCLASSEX);	//And Rebuilt it from scratch
+  ddState->Wcex.style = CS_HREDRAW | CS_VREDRAW;
+  ddState->Wcex.lpfnWndProc = (WNDPROC)WndProc;
+  ddState->Wcex.cbClsExtra = 0;
+  ddState->Wcex.cbWndExtra = 0;
+  ddState->Wcex.hInstance = ddState->hInstance;
+  ddState->Wcex.hIcon = LoadIcon(ddState->hInstance, (LPCTSTR)IDI_COCO3);
+  ddState->Wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+  ddState->Wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+  ddState->Wcex.lpszMenuName = (LPCSTR)IDR_MENU;
+  ddState->Wcex.lpszClassName = ddState->AppNameText;
+  ddState->Wcex.hIconSm = LoadIcon(ddState->Wcex.hInstance, (LPCTSTR)IDI_COCO3);
 
   if (systemState->FullScreen)
   {
-    wcex.lpszMenuName = NULL;	//Fullscreen has no Menu Bar and no Mouse pointer
-    wcex.hCursor = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_NONE));
+    ddState->Wcex.lpszMenuName = NULL;	//Fullscreen has no Menu Bar and no Mouse pointer
+    ddState->Wcex.hCursor = LoadCursor(ddState->hInstance, MAKEINTRESOURCE(IDC_NONE));
   }
 
-  if (!RegisterClassEx(&wcex)) {
+  if (!RegisterClassEx(&(ddState->Wcex))) {
     return FALSE;
   }
 
@@ -134,47 +122,50 @@ bool CreateDDWindow(SystemState* systemState)
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, TRUE);
 
     // We create the Main window 
-    systemState->WindowHandle = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
+    systemState->WindowHandle = CreateWindow(ddState->AppNameText, ddState->TitleBarText, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
       rc.right - rc.left, rc.bottom - rc.top,
-      NULL, NULL, g_hInstance, NULL);
+      NULL, NULL, ddState->hInstance, NULL);
 
     if (!systemState->WindowHandle) {	// Can't create window
       return FALSE;
     }
 
     // Create the Status Bar Window at the bottom
-    hwndStatusBar = ::CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM, "Ready", systemState->WindowHandle, 2);
+    ddState->hWndStatusBar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | CCS_BOTTOM, "Ready", systemState->WindowHandle, 2);
 
-    if (!hwndStatusBar) { // Can't create Status bar
+    if (!ddState->hWndStatusBar) { // Can't create Status bar
       return FALSE;
     }
 
     // Retrieves the dimensions of the bounding rectangle of the specified window
     // The dimensions are given in screen coordinates that are relative to the upper-left corner of the screen.
-    ::GetWindowRect(hwndStatusBar, &rStatBar); // Get the size of the Status bar
-    StatusBarHeight = rStatBar.bottom - rStatBar.top; // Calculate its height
+    GetWindowRect(ddState->hWndStatusBar, &rStatBar); // Get the size of the Status bar
+
+    ddState->StatusBarHeight = rStatBar.bottom - rStatBar.top; // Calculate its height
 
     // Get the size of main window and add height of status bar then resize Main
     // re-using rStatBar RECT even though it's the main window
-    ::GetWindowRect(systemState->WindowHandle, &rStatBar);
-    ::MoveWindow(systemState->WindowHandle, rStatBar.left, rStatBar.top, // using MoveWindow to resize 
-      rStatBar.right - rStatBar.left, (rStatBar.bottom + StatusBarHeight) - rStatBar.top,
+    GetWindowRect(systemState->WindowHandle, &rStatBar);
+    MoveWindow(systemState->WindowHandle, rStatBar.left, rStatBar.top, // using MoveWindow to resize 
+      rStatBar.right - rStatBar.left, (rStatBar.bottom + ddState->StatusBarHeight) - rStatBar.top,
       1);
-    ::SendMessage(hwndStatusBar, WM_SIZE, 0, 0); // Redraw Status bar in new position
 
-    ::GetWindowRect(systemState->WindowHandle, &WindowDefaultSize);	// And save the Final size of the Window 
-    ::ShowWindow(systemState->WindowHandle, g_nCmdShow);
-    ::UpdateWindow(systemState->WindowHandle);
+    SendMessage(ddState->hWndStatusBar, WM_SIZE, 0, 0); // Redraw Status bar in new position
+
+    GetWindowRect(systemState->WindowHandle, &(ddState->WindowDefaultSize));	// And save the Final size of the Window 
+    ShowWindow(systemState->WindowHandle, ddState->CmdShow);
+    UpdateWindow(systemState->WindowHandle);
 
     // Create an instance of a DirectDraw object
-    hr = ::DirectDrawCreate(NULL, &g_pDD, NULL);
-    if (hr) {
+    hr = DirectDrawCreate(NULL, &(ddState->DD), NULL);
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
     // Initialize the DirectDraw object
-    hr = g_pDD->SetCooperativeLevel(systemState->WindowHandle, DDSCL_NORMAL);	// Set DDSCL_NORMAL to use windowed mode
-    if (hr) {
+    hr = ddState->DD->SetCooperativeLevel(systemState->WindowHandle, DDSCL_NORMAL);	// Set DDSCL_NORMAL to use windowed mode
+    if (FAILED(hr)) {
       return FALSE;
     }
 
@@ -182,9 +173,9 @@ bool CreateDDWindow(SystemState* systemState)
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
     // Create our Primary Surface
-    hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
+    hr = ddState->DD->CreateSurface(&ddsd, &(ddState->DDSurface), NULL);
 
-    if (hr) {
+    if (FAILED(hr)) {
       return FALSE;
     }
 
@@ -192,43 +183,52 @@ bool CreateDDWindow(SystemState* systemState)
     ddsd.dwWidth = systemState->WindowSize.x;								// Make our off-screen surface 
     ddsd.dwHeight = systemState->WindowSize.y;
     ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;				// Try to create back buffer in video RAM
-    hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
+    hr = ddState->DD->CreateSurface(&ddsd, &(ddState->DDBackSurface), NULL);
 
-    if (hr)													// If not enough Video Ram 			
-    {
+    if (FAILED(hr)) {													// If not enough Video Ram 			
       ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;			// Try to create back buffer in System RAM
-      hr = g_pDD->CreateSurface(&ddsd, &g_pDDSBack, NULL);
-      if (hr)	return FALSE;								//Giving Up
+      hr = ddState->DD->CreateSurface(&ddsd, &(ddState->DDBackSurface), NULL);
+
+      if (FAILED(hr)) {
+        return FALSE;								//Giving Up
+      }
+
       MessageBox(0, "Creating Back Buffer in System Ram!\nThis will be slower", "Performance Warning", 0);
     }
 
-    hr = g_pDD->GetDisplayMode(&ddsd);
-    if (hr) {
+    hr = ddState->DD->GetDisplayMode(&ddsd);
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pDD->CreateClipper(0, &g_pClipper, NULL);		// Create the clipper using the DirectDraw object
-    if (hr) {
+    hr = ddState->DD->CreateClipper(0, &(ddState->DDClipper), NULL);		// Create the clipper using the DirectDraw object
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pClipper->SetHWnd(0, systemState->WindowHandle);	// Assign your window's HWND to the clipper
-    if (hr) {
+    hr = ddState->DDClipper->SetHWnd(0, systemState->WindowHandle);	// Assign your window's HWND to the clipper
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pDDS->SetClipper(g_pClipper);					      // Attach the clipper to the primary surface
-    if (hr) {
+    hr = ddState->DDSurface->SetClipper(ddState->DDClipper);					      // Attach the clipper to the primary surface
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pDDSBack->Lock(NULL, &ddsd, DDLOCK_WAIT, NULL);
-    if (hr) {
+    hr = ddState->DDBackSurface->Lock(NULL, &ddsd, DDLOCK_WAIT, NULL);
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pDDSBack->Unlock(NULL);						// Unlock surface
-    if (hr) {
+    hr = ddState->DDBackSurface->Unlock(NULL);						// Unlock surface
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
@@ -237,45 +237,52 @@ bool CreateDDWindow(SystemState* systemState)
   case 1:	//Full Screen Mode
     ddsd.lPitch = 0;
     ddsd.ddpfPixelFormat.dwRGBBitCount = 0;
-    systemState->WindowHandle = CreateWindow(szWindowClass, NULL, WS_POPUP | WS_VISIBLE, 0, 0, systemState->WindowSize.x, systemState->WindowSize.y, NULL, NULL, g_hInstance, NULL);
+
+    systemState->WindowHandle = CreateWindow(ddState->AppNameText, NULL, WS_POPUP | WS_VISIBLE, 0, 0, systemState->WindowSize.x, systemState->WindowSize.y, NULL, NULL, ddState->hInstance, NULL);
 
     if (!systemState->WindowHandle) {
       return FALSE;
     }
 
-    GetWindowRect(systemState->WindowHandle, &WindowDefaultSize);
-    ShowWindow(systemState->WindowHandle, g_nCmdShow);
+    GetWindowRect(systemState->WindowHandle, &(ddState->WindowDefaultSize));
+    ShowWindow(systemState->WindowHandle, ddState->CmdShow);
     UpdateWindow(systemState->WindowHandle);
 
-    hr = DirectDrawCreate(NULL, &g_pDD, NULL);		// Initialize DirectDraw
-    if (hr) {
+    hr = DirectDrawCreate(NULL, &(ddState->DD), NULL);		// Initialize DirectDraw
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pDD->SetCooperativeLevel(systemState->WindowHandle, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES);
-    if (hr) {
+    hr = ddState->DD->SetCooperativeLevel(systemState->WindowHandle, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES);
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
-    hr = g_pDD->SetDisplayMode(systemState->WindowSize.x, systemState->WindowSize.y, 32);	// Set 640x480x32 Bit full-screen mode
-    if (hr) {
+    hr = ddState->DD->SetDisplayMode(systemState->WindowSize.x, systemState->WindowSize.y, 32);	// Set 640x480x32 Bit full-screen mode
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
     ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
     ddsd.dwBackBufferCount = 1;
-    hr = g_pDD->CreateSurface(&ddsd, &g_pDDS, NULL);
 
-    if (hr) {
+    hr = ddState->DD->CreateSurface(&ddsd, &(ddState->DDSurface), NULL);
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
     ddsd.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
-    g_pDDS->GetAttachedSurface(&ddsd.ddsCaps, &g_pDDSBack);
-    hr = g_pDD->GetDisplayMode(&ddsd);
 
-    if (hr) {
+    ddState->DDSurface->GetAttachedSurface(&ddsd.ddsCaps, &(ddState->DDBackSurface));
+
+    hr = ddState->DD->GetDisplayMode(&ddsd);
+
+    if (FAILED(hr)) {
       return FALSE;
     }
 
@@ -287,8 +294,9 @@ bool CreateDDWindow(SystemState* systemState)
       pal[i + 128].peFlags = PC_RESERVED | PC_NOCOLLAPSE;
     }
 
-    g_pDD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, pal, &ddpal, NULL);
-    g_pDDS->SetPalette(ddpal); // Set pallete for Primary surface
+    ddState->DD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, pal, &ddPalette, NULL);
+    ddState->DDSurface->SetPalette(ddPalette); // Set pallete for Primary surface
+
     break;
   }
 
@@ -298,15 +306,17 @@ bool CreateDDWindow(SystemState* systemState)
 // Checks if the memory associated with surfaces is lost and restores if necessary.
 void CheckSurfaces()
 {
-  if (g_pDDS) {	// Check the primary surface
-    if (g_pDDS->IsLost() == DDERR_SURFACELOST) {
-      g_pDDS->Restore();
+  DirectDrawState* ddState = GetDirectDrawState();
+
+  if (ddState->DDSurface) {	// Check the primary surface
+    if (ddState->DDSurface->IsLost() == DDERR_SURFACELOST) {
+      ddState->DDSurface->Restore();
     }
   }
 
-  if (g_pDDSBack) {	// Check the back buffer
-    if (g_pDDSBack->IsLost() == DDERR_SURFACELOST) {
-      g_pDDSBack->Restore();
+  if (ddState->DDBackSurface) {	// Check the back buffer
+    if (ddState->DDBackSurface->IsLost() == DDERR_SURFACELOST) {
+      ddState->DDBackSurface->Restore();
     }
   }
 }
@@ -314,14 +324,17 @@ void CheckSurfaces()
 void DisplayFlip(SystemState* systemState)	// Double buffering flip
 {
   using namespace std;
+
   static HRESULT hr;
   static RECT    rcSrc;  // source blit rectangle
   static RECT    rcDest; // destination blit rectangle
-  static RECT	   Temp;
+  static RECT	   rect;
   static POINT   p = POINT();
 
+  DirectDrawState* ddState = GetDirectDrawState();
+
   if (systemState->FullScreen) {	// if we're windowed do the blit, else just Flip
-    hr = g_pDDS->Flip(NULL, DDFLIP_NOVSYNC | DDFLIP_DONOTWAIT); //DDFLIP_WAIT
+    hr = ddState->DDSurface->Flip(NULL, DDFLIP_NOVSYNC | DDFLIP_DONOTWAIT); //DDFLIP_WAIT
   }
   else
   {
@@ -330,23 +343,23 @@ void DisplayFlip(SystemState* systemState)	// Double buffering flip
     // The ClientToScreen function converts the client-area coordinates of a specified point to screen coordinates.
     // in other word the client rectangle of the main windows 0, 0 (upper-left corner) 
     // in a screen x,y coords which is put back into p  
-    ::ClientToScreen(systemState->WindowHandle, &p);  // find out where on the primary surface our window lives
+    ClientToScreen(systemState->WindowHandle, &p);  // find out where on the primary surface our window lives
 
     // get the actual client rectangle, which is always 0,0 - w,h
-    ::GetClientRect(systemState->WindowHandle, &rcDest);
+    GetClientRect(systemState->WindowHandle, &rcDest);
 
     // The OffsetRect function moves the specified rectangle by the specified offsets
     // add the delta screen point we got above, which gives us the client rect in screen coordinates.
-    ::OffsetRect(&rcDest, p.x, p.y);
+    OffsetRect(&rcDest, p.x, p.y);
 
     // our destination rectangle is going to be 
-    ::SetRect(&rcSrc, 0, 0, systemState->WindowSize.x, systemState->WindowSize.y);
+    SetRect(&rcSrc, 0, 0, systemState->WindowSize.x, systemState->WindowSize.y);
 
-    if (Resizeable)
+    if (ddState->Resizeable)
     {
-      rcDest.bottom -= StatusBarHeight;
+      rcDest.bottom -= ddState->StatusBarHeight;
 
-      if (ForceAspect) // Adjust the Aspect Ratio if window is resized
+      if (ddState->ForceAspect) // Adjust the Aspect Ratio if window is resized
       {
         float srcWidth = (float)systemState->WindowSize.x;
         float srcHeight = (float)systemState->WindowSize.y;
@@ -355,8 +368,10 @@ void DisplayFlip(SystemState* systemState)	// Double buffering flip
         // change this to use the existing rcDest and the calc, w = right-left & h = bottom-top, 
         //                         because rcDest has already been converted to screen cords, right?   
         static RECT rcClient;
-        ::GetClientRect(systemState->WindowHandle, &rcClient);  // x,y is always 0,0 so right, bottom is w,h
-        rcClient.bottom -= StatusBarHeight;
+
+        GetClientRect(systemState->WindowHandle, &rcClient);  // x,y is always 0,0 so right, bottom is w,h
+
+        rcClient.bottom -= ddState->StatusBarHeight;
 
         float clientWidth = (float)rcClient.right;
         float clientHeight = (float)rcClient.bottom;
@@ -379,11 +394,15 @@ void DisplayFlip(SystemState* systemState)	// Double buffering flip
         float dstY = (clientHeight - dstHeight) / 2;
 
         static POINT pDstLeftTop = POINT();
+
         pDstLeftTop.x = (long)dstX; pDstLeftTop.y = (long)dstY;
+
         ClientToScreen(systemState->WindowHandle, &pDstLeftTop);
 
         static POINT pDstRightBottom = POINT();
+
         pDstRightBottom.x = (long)(dstX + dstWidth); pDstRightBottom.y = (long)(dstY + dstHeight);
+
         ClientToScreen(systemState->WindowHandle, &pDstRightBottom);
 
         SetRect(&rcDest, pDstLeftTop.x, pDstLeftTop.y, pDstRightBottom.x, pDstRightBottom.y);
@@ -394,37 +413,45 @@ void DisplayFlip(SystemState* systemState)	// Double buffering flip
       // this does not seem ideal, it lets you begin to resize and immediately resizes it back ... causing a lot of flicker.
       rcDest.right = rcDest.left + systemState->WindowSize.x;
       rcDest.bottom = rcDest.top + systemState->WindowSize.y;
-      ::GetWindowRect(systemState->WindowHandle, &Temp);
-      ::MoveWindow(systemState->WindowHandle, Temp.left, Temp.top, WindowDefaultSize.right - WindowDefaultSize.left, WindowDefaultSize.bottom - WindowDefaultSize.top, 1);
+
+      GetWindowRect(systemState->WindowHandle, &rect);
+      MoveWindow(systemState->WindowHandle, rect.left, rect.top, ddState->WindowDefaultSize.right - ddState->WindowDefaultSize.left, ddState->WindowDefaultSize.bottom - ddState->WindowDefaultSize.top, 1);
     }
 
-    if (g_pDDSBack == NULL) {
+    if (ddState->DDBackSurface == NULL) {
       MessageBox(0, "Odd", "Error", 0); // yes, odd error indeed!! (??) especially since we go ahead and use it below!
     }
 
-    hr = g_pDDS->Blt(&rcDest, g_pDDSBack, &rcSrc, DDBLT_WAIT, NULL); // DDBLT_WAIT
+    hr = ddState->DDSurface->Blt(&rcDest, ddState->DDBackSurface, &rcSrc, DDBLT_WAIT, NULL); // DDBLT_WAIT
   }
 
   static RECT CurScreen;
-  ::GetClientRect(systemState->WindowHandle, &CurScreen);
+
+  GetClientRect(systemState->WindowHandle, &CurScreen);
+
   int clientWidth = (int)CurScreen.right;
   int clientHeight = (int)CurScreen.bottom;
-  RememberWinSize.x = clientWidth; // Used for saving new window size to the ini file.
-  RememberWinSize.y = clientHeight - StatusBarHeight;
+
+  ddState->RememberWinSize.x = clientWidth; // Used for saving new window size to the ini file.
+  ddState->RememberWinSize.y = clientHeight - ddState->StatusBarHeight;
 }
 
 unsigned char LockScreen(SystemState* systemState)
 {
-
   HRESULT	hr;
   DDSURFACEDESC ddsd;				      // A structure to describe the surfaces we want
+
+  DirectDrawState* ddState = GetDirectDrawState();
+
   memset(&ddsd, 0, sizeof(ddsd));	// Clear all members of the structure to 0
   ddsd.dwSize = sizeof(ddsd);		  // The first parameter of the structure must contain the size of the structure
+
   CheckSurfaces();
 
   // Lock entire surface, wait if it is busy, return surface memory pointer
-  hr = g_pDDSBack->Lock(NULL, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, NULL);
-  if (hr)
+  hr = ddState->DDBackSurface->Lock(NULL, &ddsd, DDLOCK_WAIT | DDLOCK_SURFACEMEMORYPTR, NULL);
+
+  if (FAILED(hr))
   {
     return(1);
   }
@@ -444,7 +471,9 @@ unsigned char LockScreen(SystemState* systemState)
 
   case 24:
     MessageBox(0, "24 Bit color is currnetly unsupported", "Ok", 0);
+
     exit(0);
+
     systemState->SurfacePitch = ddsd.lPitch;
     systemState->BitDepth = 2;
     break;
@@ -457,7 +486,6 @@ unsigned char LockScreen(SystemState* systemState)
   default:
     MessageBox(0, "Unsupported Color Depth!", "Error", 0);
     return 1;
-    break;
   }
 
   if (ddsd.lpSurface == NULL) {
@@ -474,62 +502,71 @@ unsigned char LockScreen(SystemState* systemState)
 void UnlockScreen(SystemState* USState)
 {
   static HRESULT hr;
-  static size_t Index = 0;
+  static size_t index = 0;
   static HDC hdc;
 
-  if (USState->FullScreen & InfoBand) //Put StatusText for full screen here
+  DirectDrawState* ddState = GetDirectDrawState();
+
+  if (USState->FullScreen & ddState->InfoBand) //Put StatusText for full screen here
   {
-    g_pDDSBack->GetDC(&hdc);
+    ddState->DDBackSurface->GetDC(&hdc);
     SetBkColor(hdc, RGB(0, 0, 0));
     SetTextColor(hdc, RGB(255, 255, 255));
-    Index = strlen(StatusText);
 
-    for (;Index < 132;Index++) {
-      StatusText[Index] = 32;
+    for (index = strlen(ddState->StatusText); index < 132; index++) {
+      ddState->StatusText[index] = 32;
     }
 
-    StatusText[Index] = 0;
-    TextOut(hdc, 0, 0, StatusText, 132);
-    g_pDDSBack->ReleaseDC(hdc);
+    ddState->StatusText[index] = 0;
+
+    TextOut(hdc, 0, 0, ddState->StatusText, 132);
+
+    ddState->DDBackSurface->ReleaseDC(hdc);
   }
 
-  hr = g_pDDSBack->Unlock(NULL);
+  hr = ddState->DDBackSurface->Unlock(NULL);
 
   DisplayFlip(USState);
 }
 
 void SetStatusBarText(char* textBuffer, SystemState* systemState)
 {
+  DirectDrawState* ddState = GetDirectDrawState();
+
   if (!systemState->FullScreen)
   {
-    SendMessage(hwndStatusBar, WM_SETTEXT, strlen(textBuffer), (LPARAM)(LPCSTR)textBuffer);
-    SendMessage(hwndStatusBar, WM_SIZE, 0, 0);
+    SendMessage(ddState->hWndStatusBar, WM_SETTEXT, strlen(textBuffer), (LPARAM)(LPCSTR)textBuffer);
+    SendMessage(ddState->hWndStatusBar, WM_SIZE, 0, 0);
   }
   else {
-    strcpy(StatusText, textBuffer);
+    strcpy(ddState->StatusText, textBuffer);
   }
 }
 
 void Cls(unsigned int ClsColor, SystemState* CLState)
 {
+  DirectDrawState* ddState = GetDirectDrawState();
+
   CLState->ResetPending = 3; //Tell Main loop to hold Emu
-  Color = ClsColor;
+  ddState->Color = ClsColor;
 }
 
-void DoCls(SystemState* CLStatus)
+void DoCls(SystemState* systemState)
 {
   unsigned short x = 0, y = 0;
 
-  if (LockScreen(CLStatus)) {
+  DirectDrawState* ddState = GetDirectDrawState();
+
+  if (LockScreen(systemState)) {
     return;
   }
 
-  switch (CLStatus->BitDepth)
+  switch (systemState->BitDepth)
   {
   case 0:
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++) {
-        CLStatus->PTRsurface8[x + (y * CLStatus->SurfacePitch)] = Color | 128;
+        systemState->PTRsurface8[x + (y * systemState->SurfacePitch)] = ddState->Color | 128;
       }
     }
     break;
@@ -537,7 +574,7 @@ void DoCls(SystemState* CLStatus)
   case 1:
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++) {
-        CLStatus->PTRsurface16[x + (y * CLStatus->SurfacePitch)] = Color;
+        systemState->PTRsurface16[x + (y * systemState->SurfacePitch)] = ddState->Color;
       }
     }
     break;
@@ -546,9 +583,9 @@ void DoCls(SystemState* CLStatus)
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++)
       {
-        CLStatus->PTRsurface8[(x * 3) + (y * CLStatus->SurfacePitch)] = (Color & 0xFF0000) >> 16;
-        CLStatus->PTRsurface8[(x * 3) + 1 + (y * CLStatus->SurfacePitch)] = (Color & 0x00FF00) >> 8;
-        CLStatus->PTRsurface8[(x * 3) + 2 + (y * CLStatus->SurfacePitch)] = (Color & 0xFF);
+        systemState->PTRsurface8[(x * 3) + (y * systemState->SurfacePitch)] = (ddState->Color & 0xFF0000) >> 16;
+        systemState->PTRsurface8[(x * 3) + 1 + (y * systemState->SurfacePitch)] = (ddState->Color & 0x00FF00) >> 8;
+        systemState->PTRsurface8[(x * 3) + 2 + (y * systemState->SurfacePitch)] = (ddState->Color & 0xFF);
       }
     }
     break;
@@ -556,7 +593,7 @@ void DoCls(SystemState* CLStatus)
   case 3:
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++) {
-        CLStatus->PTRsurface32[x + (y * CLStatus->SurfacePitch)] = Color;
+        systemState->PTRsurface32[x + (y * systemState->SurfacePitch)] = ddState->Color;
       }
     }
     break;
@@ -565,34 +602,40 @@ void DoCls(SystemState* CLStatus)
     return;
   }
 
-  UnlockScreen(CLStatus);
+  UnlockScreen(systemState);
 }
 
 unsigned char SetInfoBand(unsigned char infoBand)
 {
+  DirectDrawState* ddState = GetDirectDrawState();
+
   if (infoBand != QUERY) {
-    InfoBand = infoBand;
+    ddState->InfoBand = infoBand;
   }
 
-  return(InfoBand);
+  return(ddState->InfoBand);
 }
 
 unsigned char SetResize(unsigned char resizeable)
 {
+  DirectDrawState* ddState = GetDirectDrawState();
+
   if (resizeable != QUERY) {
-    Resizeable = resizeable;
+    ddState->Resizeable = resizeable;
   }
 
-  return(Resizeable);
+  return(ddState->Resizeable);
 }
 
 unsigned char SetAspect(unsigned char forceAspect)
 {
+  DirectDrawState* ddState = GetDirectDrawState();
+
   if (forceAspect != QUERY) {
-    ForceAspect = forceAspect;
+    ddState->ForceAspect = forceAspect;
   }
 
-  return(ForceAspect);
+  return(ddState->ForceAspect);
 }
 
 float Static(SystemState* systemState)
@@ -607,6 +650,8 @@ float Static(SystemState* systemState)
   static unsigned char greyScales[4] = { 128, 135, 184, 191 };
   HDC hdc;
 
+  DirectDrawState* ddState = GetDirectDrawState();
+
   LockScreen(systemState);
 
   if (systemState->PTRsurface32 == NULL) {
@@ -619,6 +664,7 @@ float Static(SystemState* systemState)
     for (y = 0;y < 480;y += 2) {
       for (x = 0;x < 160; x++) {
         temp = rand() & 3;
+
         systemState->PTRsurface32[x + (y * systemState->SurfacePitch >> 2)] = greyScales[temp] | (greyScales[temp] << 8) | (greyScales[temp] << 16) | (greyScales[temp] << 24);
         systemState->PTRsurface32[x + ((y + 1) * systemState->SurfacePitch >> 2)] = greyScales[temp] | (greyScales[temp] << 8) | (greyScales[temp] << 16) | (greyScales[temp] << 24);
       }
@@ -629,6 +675,7 @@ float Static(SystemState* systemState)
     for (y = 0;y < 480;y += 2) {
       for (x = 0;x < 320; x++) {
         temp = rand() & 31;
+
         systemState->PTRsurface32[x + (y * systemState->SurfacePitch >> 1)] = temp | (temp << 6) | (temp << 11) | (temp << 16) | (temp << 22) | (temp << 27);
         systemState->PTRsurface32[x + ((y + 1) * systemState->SurfacePitch >> 1)] = temp | (temp << 6) | (temp << 11) | (temp << 16) | (temp << 22) | (temp << 27);
       }
@@ -649,6 +696,7 @@ float Static(SystemState* systemState)
     for (y = 0;y < 480; y++) {
       for (x = 0;x < 640; x++) {
         temp = rand() & 255;
+
         systemState->PTRsurface32[x + (y * systemState->SurfacePitch)] = temp | (temp << 8) | (temp << 16);
       }
     }
@@ -658,10 +706,13 @@ float Static(SystemState* systemState)
     return(0);
   }
 
-  g_pDDSBack->GetDC(&hdc);
+  ddState->DDBackSurface->GetDC(&hdc);
+
   SetBkColor(hdc, 0);
   SetTextColor(hdc, RGB(counter1 << 2, counter1 << 2, counter1 << 2));
+
   TextOut(hdc, textX, textY, message, (int)strlen(message));
+
   counter++;
   counter1 += phase;
 
@@ -677,12 +728,15 @@ float Static(SystemState* systemState)
     textY = rand() % 470;
   }
 
-  g_pDDSBack->ReleaseDC(hdc);
+  ddState->DDBackSurface->ReleaseDC(hdc);
+
   UnlockScreen(systemState);
 
   return(CalculateFPS());
 }
 
 POINT GetCurWindowSize() {
-  return (RememberWinSize);
+  DirectDrawState* ddState = GetDirectDrawState();
+
+  return (ddState->RememberWinSize);
 }
