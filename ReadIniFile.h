@@ -1,3 +1,5 @@
 #pragma once
 
-unsigned char ReadIniFile(void);
+#include "library/systemstate.h"
+
+unsigned char ReadIniFile(SystemState* systemState);

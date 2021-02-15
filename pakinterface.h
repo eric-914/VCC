@@ -26,24 +26,16 @@ void PackPortWrite(unsigned char, unsigned char);
 unsigned char PackMem8Read(unsigned short);
 void PackMem8Write(unsigned char, unsigned char);
 void GetModuleStatus(SystemState*);
-int LoadCart(void);
+int LoadCart(SystemState*);
 unsigned short PackAudioSample(void);
 void ResetBus(void);
 void GetCurrentModule(char*);
-int InsertModule(char*);
+int InsertModule(SystemState* systemState, char* modulePath);
 void UpdateBusPointer(void);
-void UnloadDll(void);
-void UnloadPack(void);
-void DynamicMenuActivated(unsigned char);
-void RefreshDynamicMenu(void);
-
-#define ID_SDYNAMENU 5000	//Defines the start and end IDs for the dynamic menus
-#define ID_EDYNAMENU 5100
-#define NOMODULE	1
-#define NOTVCC	2
-
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
+void UnloadDll(SystemState* systemState);
+void UnloadPack(SystemState* systemState);
+void DynamicMenuActivated(SystemState* systemState, unsigned char menuItem);
+void RefreshDynamicMenu(SystemState* systemState);
+void DynamicMenuCallback(SystemState*, char*, int, int);
 
 #endif

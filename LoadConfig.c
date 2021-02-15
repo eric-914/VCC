@@ -57,7 +57,7 @@ void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 
   configState->NumberOfSoundCards = GetSoundCardList(configState->SoundCards);
 
-  ReadIniFile();
+  ReadIniFile(systemState);
 
   configState->CurrentConfig.RebootNow = 0;
 

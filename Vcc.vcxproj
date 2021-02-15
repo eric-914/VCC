@@ -218,6 +218,7 @@
     <ClCompile Include="Motor.c" />
     <ClCompile Include="MountTape.c" />
     <ClCompile Include="pakinterface.c" />
+    <ClCompile Include="pakinterfacestate.c" />
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
@@ -323,7 +324,9 @@
     <ClInclude Include="MiscConfig.h" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="MountTape.h" />
+    <ClInclude Include="pakinterfacedef.h" />
     <ClInclude Include="pakinterface.h" />
+    <ClInclude Include="pakinterfacestate.h" />
     <ClInclude Include="PasteBASIC.h" />
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />

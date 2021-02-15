@@ -21,11 +21,12 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "library/cpudef.h"
 #include "library/fileoperations.h"
+#include "library/systemstate.h"
 
-extern int InsertModule(char*);
+extern int InsertModule(SystemState* systemState, char* modulePath);
 extern void MemWrite8(unsigned char, unsigned short);
 
-unsigned char QuickLoad(char* binFileName)
+unsigned char QuickLoad(SystemState* systemState, char* binFileName)
 {
   FILE* binImage = NULL;
   unsigned int memIndex = 0;
@@ -62,7 +63,7 @@ unsigned char QuickLoad(char* binFileName)
 
   if ((strcmp(extension, ".rom") == 0) || (strcmp(extension, ".ccc") == 0) || (strcmp(extension, "*.pak") == 0))
   {
-    InsertModule(binFileName);
+    InsertModule(systemState, binFileName);
 
     return(0);
   }

@@ -40,6 +40,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6809.h"
 #include "mc6821.h"
 #include "keyboard.h"
+#include "pakinterfacedef.h"
 #include "pakinterface.h"
 #include "quickload.h"
 #include "DirectDrawInterface.h"
@@ -147,11 +148,14 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
   }
 
   Cls(0, &EmuState);
-  DynamicMenuCallback("", 0, 0);
-  DynamicMenuCallback("", 1, 0);
+  DynamicMenuCallback(&EmuState, "", 0, 0);
+  DynamicMenuCallback(&EmuState, "", 1, 0);
   LoadConfig(&EmuState, CmdArg);			//Loads the default config file Vcc.ini from the exec directory
+
   EmuState.ResetPending = 2;
+
   SetClockSpeed(1);	//Default clock speed .89 MHZ	
+
   BinaryRunning = true;
   EmuState.EmulationRunning = AutoStart;
 
@@ -196,7 +200,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
   CloseHandle(hEvent);
   CloseHandle(hEMUThread);
   timeEndPeriod(1);
-  UnloadDll();
+  UnloadDll(&EmuState);
   SoundDeInit();
   WriteIniFile(); //Save Any changes to ini File
 
@@ -240,7 +244,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     // Added for Dynamic menu system
     if ((wmId >= ID_SDYNAMENU) & (wmId <= ID_EDYNAMENU))
     {
-      DynamicMenuActivated(wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+      DynamicMenuActivated(&EmuState, wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
       break;
     }
 
@@ -742,7 +746,7 @@ void LoadIniFile(void)
   if (GetOpenFileName(&ofn)) {
     WriteIniFile();               // Flush current profile
     SetIniFilePath(szFileName);   // Set new ini file path
-    ReadIniFile();                // Load it
+    ReadIniFile(&EmuState);                // Load it
     UpdateConfig(&EmuState);
     EmuState.ResetPending = 2;
   }
@@ -812,7 +816,7 @@ unsigned __stdcall EmuLoop(void* dummy)
     if ((Qflag == 255) && (frameCounter == 30))
     {
       Qflag = 0;
-      QuickLoad(QuickLoadFile);
+      QuickLoad(&EmuState, QuickLoadFile);
     }
 
     StartRender();
@@ -889,7 +893,8 @@ void LoadPack(void)
 
 unsigned __stdcall CartLoad(void* dummy)
 {
-  LoadCart();
+  LoadCart(&EmuState);
+
   EmuState.EmulationRunning = TRUE;
   DialogOpen = false;
 
@@ -907,7 +912,7 @@ void FullScreenToggle(void)
   }
 
   InvalidateBoarder();
-  RefreshDynamicMenu();
+  RefreshDynamicMenu(&EmuState);
   EmuState.ConfigDialog = NULL;
   PauseAudio(false);
 }

@@ -4,16 +4,17 @@
 
 #include "library/joystickstate.h"
 #include "library/keyboarddef.h"
+#include "library/systemstate.h"
 
 #include "SetWindowSize.h"
 #include "ProfileAccessors.h"
 
-extern int InsertModule(char* modulePath);
+extern int InsertModule(SystemState* systemState, char* modulePath);
 
 extern "C" void vccKeyboardBuildRuntimeTable(keyboardlayout_e keyBoardLayout);
 extern "C" __declspec(dllexport) int __cdecl FileCheckPath(char* path);
 
-unsigned char ReadIniFile(void)
+unsigned char ReadIniFile(SystemState* systemState)
 {
   HANDLE hr = NULL;
   POINT p = POINT();
@@ -94,7 +95,7 @@ unsigned char ReadIniFile(void)
 
   configState->TempConfig = configState->CurrentConfig;
 
-  InsertModule(configState->CurrentConfig.ModulePath);	// Should this be here?
+  InsertModule(systemState, configState->CurrentConfig.ModulePath);	// Should this be here?
 
   configState->CurrentConfig.Resize = 1; //Checkbox removed. Remove this from the ini? 
 

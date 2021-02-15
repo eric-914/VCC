@@ -88,7 +88,7 @@ static void (*SetCartCalls[MAXPAX])(SETCART) = { NULL,NULL,NULL,NULL };
 static void (*SetIniPathCalls[MAXPAX]) (char*) = { NULL,NULL,NULL,NULL };
 static void (*DynamicMenuCallback)(char*, int, int) = NULL;
 
-static HINSTANCE hinstLib[4] = { NULL,NULL,NULL,NULL };
+static HINSTANCE hInstLib[4] = { NULL,NULL,NULL,NULL };
 static unsigned char ChipSelectSlot = 3, SpareSelectSlot = 3, SwitchSlot = 3, SlotRegister = 255;
 
 //Function Prototypes for this module
@@ -549,27 +549,27 @@ unsigned char MountModule(unsigned char slot, char* moduleName)
   case 1:	//DLL File
     UnloadModule(slot);
     strcpy(ModulePaths[slot], ModuleName);
-    hinstLib[slot] = LoadLibrary(ModuleName);
+    hInstLib[slot] = LoadLibrary(ModuleName);
 
-    if (hinstLib[slot] == NULL)
+    if (hInstLib[slot] == NULL)
       return(0);	//Error Can't open File
 
-    GetModuleNameCalls[slot] = (GETNAME)GetProcAddress(hinstLib[slot], "ModuleName");
-    ConfigModuleCalls[slot] = (CONFIGIT)GetProcAddress(hinstLib[slot], "ModuleConfig");
-    PakPortWriteCalls[slot] = (PACKPORTWRITE)GetProcAddress(hinstLib[slot], "PackPortWrite");
-    PakPortReadCalls[slot] = (PACKPORTREAD)GetProcAddress(hinstLib[slot], "PackPortRead");
-    SetInterruptCallPointerCalls[slot] = (SETINTERRUPTCALLPOINTER)GetProcAddress(hinstLib[slot], "AssertInterrupt");
+    GetModuleNameCalls[slot] = (GETNAME)GetProcAddress(hInstLib[slot], "ModuleName");
+    ConfigModuleCalls[slot] = (CONFIGIT)GetProcAddress(hInstLib[slot], "ModuleConfig");
+    PakPortWriteCalls[slot] = (PACKPORTWRITE)GetProcAddress(hInstLib[slot], "PackPortWrite");
+    PakPortReadCalls[slot] = (PACKPORTREAD)GetProcAddress(hInstLib[slot], "PackPortRead");
+    SetInterruptCallPointerCalls[slot] = (SETINTERRUPTCALLPOINTER)GetProcAddress(hInstLib[slot], "AssertInterrupt");
 
-    DmaMemPointerCalls[slot] = (DMAMEMPOINTERS)GetProcAddress(hinstLib[slot], "MemPointers");
-    SetCartCalls[slot] = (SETCARTPOINTER)GetProcAddress(hinstLib[slot], "SetCart"); //HERE
+    DmaMemPointerCalls[slot] = (DMAMEMPOINTERS)GetProcAddress(hInstLib[slot], "MemPointers");
+    SetCartCalls[slot] = (SETCARTPOINTER)GetProcAddress(hInstLib[slot], "SetCart"); //HERE
 
-    HeartBeatCalls[slot] = (HEARTBEAT)GetProcAddress(hinstLib[slot], "HeartBeat");
-    PakMemWrite8Calls[slot] = (MEMWRITE8)GetProcAddress(hinstLib[slot], "PakMemWrite8");
-    PakMemRead8Calls[slot] = (MEMREAD8)GetProcAddress(hinstLib[slot], "PakMemRead8");
-    ModuleStatusCalls[slot] = (MODULESTATUS)GetProcAddress(hinstLib[slot], "ModuleStatus");
-    ModuleAudioSampleCalls[slot] = (MODULEAUDIOSAMPLE)GetProcAddress(hinstLib[slot], "ModuleAudioSample");
-    ModuleResetCalls[slot] = (MODULERESET)GetProcAddress(hinstLib[slot], "ModuleReset");
-    SetIniPathCalls[slot] = (SETINIPATH)GetProcAddress(hinstLib[slot], "SetIniPath");
+    HeartBeatCalls[slot] = (HEARTBEAT)GetProcAddress(hInstLib[slot], "HeartBeat");
+    PakMemWrite8Calls[slot] = (MEMWRITE8)GetProcAddress(hInstLib[slot], "PakMemWrite8");
+    PakMemRead8Calls[slot] = (MEMREAD8)GetProcAddress(hInstLib[slot], "PakMemRead8");
+    ModuleStatusCalls[slot] = (MODULESTATUS)GetProcAddress(hInstLib[slot], "ModuleStatus");
+    ModuleAudioSampleCalls[slot] = (MODULEAUDIOSAMPLE)GetProcAddress(hInstLib[slot], "ModuleAudioSample");
+    ModuleResetCalls[slot] = (MODULERESET)GetProcAddress(hInstLib[slot], "ModuleReset");
+    SetIniPathCalls[slot] = (SETINIPATH)GetProcAddress(hInstLib[slot], "SetIniPath");
 
     if (GetModuleNameCalls[slot] == NULL)
     {
@@ -627,13 +627,13 @@ void UnloadModule(unsigned char slot)
   strcpy(CatNumber[slot], "");
   strcpy(SlotLabel[slot], "Empty");
 
-  if (hinstLib[slot] != NULL)
-    FreeLibrary(hinstLib[slot]);
+  if (hInstLib[slot] != NULL)
+    FreeLibrary(hInstLib[slot]);
 
   if (ExtRomPointers[slot] != NULL)
     free(ExtRomPointers[slot]);
 
-  hinstLib[slot] = NULL;
+  hInstLib[slot] = NULL;
   ExtRomPointers[slot] = NULL;
   CartForSlot[slot] = 0;
   MenuIndex[slot] = 0;
