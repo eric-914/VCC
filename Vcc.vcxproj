@@ -206,7 +206,6 @@
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="IncreaseOverclockSpeed.c" />
     <ClCompile Include="InputConfig.c" />
-    <ClCompile Include="iobus.c" />
     <ClCompile Include="JoyStickConfig.c" />
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="LoadCassetteBuffer.c" />
@@ -224,6 +223,8 @@
     <ClCompile Include="PasteText.c" />
     <ClCompile Include="PeekClipboard.c" />
     <ClCompile Include="PopClipboard.c" />
+    <ClCompile Include="port_read.c" />
+    <ClCompile Include="port_write.c" />
     <ClCompile Include="ProfileAccessors.c" />
     <ClCompile Include="PurgeAuxBuffer.c" />
     <ClCompile Include="quickload.c" />
@@ -309,7 +310,6 @@
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="IncreaseOverclockSpeed.h" />
     <ClInclude Include="InputConfig.h" />
-    <ClInclude Include="iobus.h" />
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="LoadCassetteBuffer.h" />
@@ -329,6 +329,8 @@
     <ClInclude Include="PasteText.h" />
     <ClInclude Include="PeekClipboard.h" />
     <ClInclude Include="PopClipboard.h" />
+    <ClInclude Include="port_read.h" />
+    <ClInclude Include="port_write.h" />
     <ClInclude Include="ProfileAccessors.h" />
     <ClInclude Include="PurgeAuxBuffer.h" />
     <ClInclude Include="quickload.h" />
