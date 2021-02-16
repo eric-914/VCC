@@ -19,7 +19,11 @@ This file is part of VCC (Virtual Color Computer).
 #include "windows.h"
 #include "mc6809.h"
 #include "mc6809defs.h"
-#include "tcc1014mmu.h"
+#include "MmuAccessors.h"
+#include "MemRead8.h"
+#include "MemWrite8.h"
+#include "MemRead16.h"
+#include "MemWrite16.h"
 
 //Global variables for CPU Emulation-----------------------
 

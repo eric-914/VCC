@@ -4,9 +4,9 @@
 #include "library/graphicsstate.h"
 
 #include "SetClipboard.h"
+#include "MmuAccessors.h"
 
 extern unsigned char MemRead8(unsigned short);
-extern unsigned short GetMem(long);
 
 void CopyText() {
   int idx;

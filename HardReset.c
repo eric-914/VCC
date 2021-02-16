@@ -2,10 +2,9 @@
 
 #include "PakInterfaceAccessors.h"
 #include "SetClockSpeed.h"
+#include "MmuInit.h"
 
 #include "library/cpudef.h"
-
-extern unsigned char* MmuInit(unsigned char);
 
 extern void HD6309Init(void);
 extern int  HD6309Exec(int);

@@ -187,6 +187,7 @@
     <ClCompile Include="cocostate.cpp" />
     <ClCompile Include="ConfigAccessors.c" />
     <ClCompile Include="configstate.c" />
+    <ClCompile Include="CopyRom.c" />
     <ClCompile Include="CopyText.c" />
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CPUCycle.c" />
@@ -230,6 +231,7 @@
     <ClCompile Include="LoadCassetteBuffer.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadIniFile.c" />
+    <ClCompile Include="LoadInternalRom.c" />
     <ClCompile Include="LoadPack.c" />
     <ClCompile Include="LoadTape.c" />
     <ClCompile Include="load_ext_rom.c" />
@@ -238,7 +240,14 @@
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
+    <ClCompile Include="MemRead16.c" />
+    <ClCompile Include="MemRead8.c" />
+    <ClCompile Include="MemWrite16.c" />
+    <ClCompile Include="MemWrite8.c" />
     <ClCompile Include="MiscConfig.c" />
+    <ClCompile Include="MmuAccessors.c" />
+    <ClCompile Include="MmuInit.c" />
+    <ClCompile Include="MmuReset.c" />
     <ClCompile Include="mmustate.c" />
     <ClCompile Include="Motor.c" />
     <ClCompile Include="MountTape.c" />
@@ -273,6 +282,7 @@
     <ClCompile Include="SetCPUMultiplayer.c" />
     <ClCompile Include="SetCPUMultiplayerFlag.c" />
     <ClCompile Include="SetCpuType.c" />
+    <ClCompile Include="SetDistoRamBank.c" />
     <ClCompile Include="SetFrameSkip.c" />
     <ClCompile Include="SetGimeBorderColor.c" />
     <ClCompile Include="SetGimeHorzOffset.c" />
@@ -307,7 +317,6 @@
     <ClCompile Include="Static.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="TapeConfig.c" />
-    <ClCompile Include="tcc1014mmu.c" />
     <ClCompile Include="tcc1014registers.c" />
     <ClCompile Include="throttlestate.c" />
     <ClCompile Include="TranslateDisp2Scan.c" />
@@ -353,6 +362,7 @@
     <ClInclude Include="ConfigAccessors.h" />
     <ClInclude Include="configdef.h" />
     <ClInclude Include="configstate.h" />
+    <ClInclude Include="CopyRom.h" />
     <ClInclude Include="CopyText.h" />
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CPUCycle.h" />
@@ -398,6 +408,7 @@
     <ClInclude Include="LoadCassetteBuffer.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadIniFile.h" />
+    <ClInclude Include="LoadInternalRom.h" />
     <ClInclude Include="LoadPack.h" />
     <ClInclude Include="LoadTape.h" />
     <ClInclude Include="load_ext_rom.h" />
@@ -407,7 +418,14 @@
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
     <ClInclude Include="mc6821def.h" />
+    <ClInclude Include="MemRead16.h" />
+    <ClInclude Include="MemRead8.h" />
+    <ClInclude Include="MemWrite16.h" />
+    <ClInclude Include="MemWrite8.h" />
     <ClInclude Include="MiscConfig.h" />
+    <ClInclude Include="MmuAccessors.h" />
+    <ClInclude Include="MmuInit.h" />
+    <ClInclude Include="MmuReset.h" />
     <ClInclude Include="mmustate.h" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="MountTape.h" />
@@ -445,6 +463,7 @@
     <ClInclude Include="SetCPUMultiplayer.h" />
     <ClInclude Include="SetCPUMultiplayerFlag.h" />
     <ClInclude Include="SetCpuType.h" />
+    <ClInclude Include="SetDistoRamBank.h" />
     <ClInclude Include="SetFrameSkip.h" />
     <ClInclude Include="SetGimeBorderColor.h" />
     <ClInclude Include="SetGimeHorzOffset.h" />
@@ -479,7 +498,6 @@
     <ClInclude Include="Static.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="TapeConfig.h" />
-    <ClInclude Include="tcc1014mmu.h" />
     <ClInclude Include="tcc1014registers.h" />
     <ClInclude Include="throttlestate.h" />
     <ClInclude Include="TranslateDisp2Scan.h" />

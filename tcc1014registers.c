@@ -18,7 +18,6 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
-#include "tcc1014mmu.h"
 #include "SetHorzInterruptState.h"
 #include "SetTimerInterruptState.h"
 #include "SetInterruptTimer.h"
@@ -35,6 +34,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "SetGimeVres.h"
 #include "SetGimeHorzOffset.h"
 #include "SetGimeBorderColor.h"
+#include "SetDistoRamBank.h"
+#include "MmuAccessors.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
@@ -194,7 +195,7 @@ unsigned char GimeRead(unsigned char port)
 void SetInit0(unsigned char data)
 {
   SetCompatMode(!!(data & 128));
-  Set_MmuEnabled(!!(data & 64)); //MMUEN
+  SetMmuEnabled(!!(data & 64)); //MMUEN
   SetRomMap(data & 3);			//MC0-MC1
   SetVectors(data & 8);			//MC3
   EnhancedFIRQFlag = (data & 16) >> 4;
@@ -203,7 +204,7 @@ void SetInit0(unsigned char data)
 
 void SetInit1(unsigned char data)
 {
-  Set_MmuTask(data & 1);			//TR
+  SetMmuTask(data & 1);			//TR
   SetTimerClockRate(data & 32);	//TINS
 }
 
@@ -399,7 +400,7 @@ void mc6883_reset()
   VDG_Mode = 0;
   Dis_Offset = 0;
   MPU_Rate = 0;
-  rom = Getint_rom_pointer();
+  rom = GetInternalRomPointer();
 }
 
 unsigned char VDG_Offset(void)
