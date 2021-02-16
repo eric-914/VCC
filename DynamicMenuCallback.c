@@ -1,6 +1,7 @@
 #include <string>
 
 #include "pakinterfacestate.h"
+#include "vccstate.h"
 
 #include "RefreshDynamicMenu.h"
 
@@ -49,7 +50,5 @@ void DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, i
 */
 void DynamicMenuCallback(char* menuName, int menuId, int type)
 {
-  extern SystemState EmuState;
-
-  DynamicMenuCallback(&EmuState, menuName, menuId, type);
+  DynamicMenuCallback(&(GetVccState()->EmuState), menuName, menuId, type);
 }

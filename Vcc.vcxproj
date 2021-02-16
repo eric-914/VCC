@@ -286,6 +286,7 @@
     <ClCompile Include="vccKeyboardGetScan.c" />
     <ClCompile Include="vccKeyboardHandleKey.c" />
     <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
+    <ClCompile Include="vccstate.c" />
     <ClCompile Include="WavtoCas.c" />
     <ClCompile Include="WriteIniFile.c" />
   </ItemGroup>
@@ -417,10 +418,12 @@
     <ClInclude Include="UpdateSoundBar.h" />
     <ClInclude Include="UpdateTapeCounter.h" />
     <ClInclude Include="Vcc.h" />
+    <ClInclude Include="vccdef.h" />
     <ClInclude Include="vccKeyboardBuildRuntimeTable.h" />
     <ClInclude Include="vccKeyboardGetScan.h" />
     <ClInclude Include="vccKeyboardHandleKey.h" />
     <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
+    <ClInclude Include="vccstate.h" />
     <ClInclude Include="WavtoCas.h" />
     <ClInclude Include="WriteIniFile.h" />
   </ItemGroup>

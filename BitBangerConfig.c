@@ -2,6 +2,7 @@
 
 #include "configstate.h"
 #include "resource.h"
+#include "vccstate.h"
 
 #include "SelectFile.h"
 
@@ -11,11 +12,10 @@ extern void ClosePrintFile(void);
 extern void SetMonState(BOOL);
 extern void SetSerialParams(unsigned char);
 
-extern SystemState EmuState;
-
 LRESULT CALLBACK BitBangerConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();
+  VccState* vccState = GetVccState();
 
   switch (message)
   {
@@ -35,7 +35,7 @@ LRESULT CALLBACK BitBangerConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
     switch (LOWORD(wParam))
     {
     case IDC_OPEN:
-      SelectFile(&EmuState, configState->SerialCaptureFile);
+      SelectFile(&(vccState->EmuState), configState->SerialCaptureFile);
 
       SendDlgItemMessage(hDlg, IDC_SERIALFILE, WM_SETTEXT, strlen(configState->SerialCaptureFile), (LPARAM)(LPCSTR)(configState->SerialCaptureFile));
 

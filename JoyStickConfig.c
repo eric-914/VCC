@@ -2,6 +2,7 @@
 
 #include "configstate.h"
 #include "resource.h"
+#include "vccstate.h"
 
 #include "GetKeyName.h"
 #include "TranslateScan2Disp.h"
@@ -10,8 +11,6 @@
 #include "library/joystickstate.h"
 #include "library/joystickinput.h"
 #include "library/systemstate.h"
-
-extern SystemState EmuState;
 
 LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -22,14 +21,15 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
   ConfigState* configState = GetConfigState();
   JoystickState* joystickState = GetJoystickState();
+  VccState* vccState = GetVccState();
 
   switch (message)
   {
   case WM_INITDIALOG:
-    configState->JoystickIcons[0] = LoadIcon(EmuState.WindowInstance, (LPCTSTR)IDI_KEYBOARD);
-    configState->JoystickIcons[1] = LoadIcon(EmuState.WindowInstance, (LPCTSTR)IDI_MOUSE);
-    configState->JoystickIcons[2] = LoadIcon(EmuState.WindowInstance, (LPCTSTR)IDI_AUDIO);
-    configState->JoystickIcons[3] = LoadIcon(EmuState.WindowInstance, (LPCTSTR)IDI_JOYSTICK);
+    configState->JoystickIcons[0] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_KEYBOARD);
+    configState->JoystickIcons[1] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_MOUSE);
+    configState->JoystickIcons[2] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_AUDIO);
+    configState->JoystickIcons[3] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_JOYSTICK);
 
     for (unsigned char temp = 0; temp < 68; temp++)
     {

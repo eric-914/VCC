@@ -19,18 +19,12 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/di.version.h"
 #include "library/nt.version.h"
 
-#ifndef ABOVE_NORMAL_PRIORITY_CLASS 
-//#define ABOVE_NORMAL_PRIORITY_CLASS  32768
-#endif 
-
-#define TH_RUNNING	0
-#define TH_REQWAIT	1
-#define TH_WAITING	2
-
 #include <windows.h>
 #include <process.h>
 #include <string>
 
+#include "vccdef.h"
+#include "vccstate.h"
 #include "resource.h"
 #include "Vcc.h"
 #include "tcc1014mmu.h"
@@ -82,38 +76,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/graphicsstate.h"
 #include "library/joystickinput.h"
 
-static HANDLE hout = NULL;
-
-SystemState EmuState;
-static bool DialogOpen = false;
-static unsigned char Throttle = 0;
-static unsigned char AutoStart = 1;
-static unsigned char Qflag = 0;
-static char CpuName[20] = "CPUNAME";
-
-char QuickLoadFile[256];
-
-// Message handlers
-static 	HANDLE hEMUThread;
-
-static char g_szAppName[MAX_LOADSTRING] = "";
-bool BinaryRunning;
-static unsigned char FlagEmuStop = TH_RUNNING;
-
-struct CmdLineArguments CmdArg;
-
-//--------------------------------------------------------------------------
-// When the main window is about to lose keyboard focus there are one
-// or two keys down in the emulation that must be raised.  These routines
-// track the last two key down events so they can be raised when needed.
-//--------------------------------------------------------------------------
-
-static unsigned char SC_save1 = 0;
-static unsigned char SC_save2 = 0;
-static unsigned char KB_save1 = 0;
-static unsigned char KB_save2 = 0;
-static int KeySaveToggle = 0;
-
 /***Forward declarations of functions included in this code module*****/
 BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK About(HWND, UINT, WPARAM, LPARAM);
@@ -129,63 +91,67 @@ void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
 
-INT WINAPI WinMain(_In_ HINSTANCE hInstance, 
-  _In_opt_ HINSTANCE hPrevInstance,
-  _In_ PSTR lpCmdLine, 
-  _In_ INT nCmdShow)
-{
-  MSG  Msg;
-
-  EmuState.WindowInstance = hInstance;
+INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {
+  MSG  msg;
+  HANDLE hEvent;
+  HANDLE OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
   char temp1[MAX_PATH] = "";
   char temp2[MAX_PATH] = " Running on ";
   unsigned threadID;
-  HANDLE hEvent,
-    OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
 
-  LoadString(hInstance, IDS_APP_TITLE, g_szAppName, MAX_LOADSTRING);
+  VccState* vccState = GetVccState();
 
-  GetCmdLineArgs(lpCmdLine, &CmdArg); //Parse command line
+  vccState->EmuState.WindowInstance = hInstance;
 
-  if (strlen(CmdArg.QLoadFile) != 0)
+  LoadString(hInstance, IDS_APP_TITLE, vccState->AppName, MAX_LOADSTRING);
+
+  GetCmdLineArgs(lpCmdLine, &(vccState->CmdArg)); //Parse command line
+
+  if (strlen(vccState->CmdArg.QLoadFile) != 0)
   {
-    strcpy(QuickLoadFile, CmdArg.QLoadFile);
-    strcpy(temp1, CmdArg.QLoadFile);
+    strcpy(vccState->QuickLoadFile, vccState->CmdArg.QLoadFile);
+    strcpy(temp1, vccState->CmdArg.QLoadFile);
+
     FilePathStripPath(temp1);
+
     _strlwr(temp1);
+
     temp1[0] = toupper(temp1[0]);
+
     strcat(temp1, temp2);
-    strcat(temp1, g_szAppName);
-    strcpy(g_szAppName, temp1);
+    strcat(temp1, vccState->AppName);
+    strcpy(vccState->AppName, temp1);
   }
 
-  EmuState.WindowSize.x = 640;
-  EmuState.WindowSize.y = 480;
-  LoadConfig(&EmuState, CmdArg);
+  vccState->EmuState.WindowSize.x = 640;
+  vccState->EmuState.WindowSize.y = 480;
+
+  LoadConfig(&(vccState->EmuState), vccState->CmdArg);
   InitInstance(hInstance, nCmdShow);
 
-  if (!CreateDDWindow(&EmuState))
+  if (!CreateDDWindow(&(vccState->EmuState)))
   {
     MessageBox(0, "Can't create primary Window", "Error", 0);
+
     exit(0);
   }
 
-  Cls(0, &EmuState);
-  DynamicMenuCallback(&EmuState, "", 0, 0);
-  DynamicMenuCallback(&EmuState, "", 1, 0);
-  LoadConfig(&EmuState, CmdArg);			//Loads the default config file Vcc.ini from the exec directory
+  Cls(0, &(vccState->EmuState));
+  DynamicMenuCallback(&(vccState->EmuState), "", 0, 0);
+  DynamicMenuCallback(&(vccState->EmuState), "", 1, 0);
+  LoadConfig(&(vccState->EmuState), vccState->CmdArg);			//Loads the default config file Vcc.ini from the exec directory
 
-  EmuState.ResetPending = 2;
+  vccState->EmuState.ResetPending = 2;
 
   SetClockSpeed(1);	//Default clock speed .89 MHZ	
 
-  BinaryRunning = true;
-  EmuState.EmulationRunning = AutoStart;
+  vccState->BinaryRunning = true;
+  vccState->EmuState.EmulationRunning = vccState->AutoStart;
 
-  if (strlen(CmdArg.QLoadFile) != 0)
+  if (strlen(vccState->CmdArg.QLoadFile) != 0)
   {
-    Qflag = 255;
-    EmuState.EmulationRunning = 1;
+    vccState->Qflag = 255;
+    vccState->EmuState.EmulationRunning = 1;
   }
 
   hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -193,41 +159,46 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance,
   if (hEvent == NULL)
   {
     MessageBox(0, "Can't create Thread!!", "Error", 0);
+
     return(0);
   }
 
-  hEMUThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoop, hEvent, 0, &threadID);
+  vccState->hEMUThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoop, hEvent, 0, &threadID);
 
-  if (hEMUThread == NULL)
+  if (vccState->hEMUThread == NULL)
   {
     MessageBox(0, "Can't Start main Emulation Thread!", "Ok", 0);
+
     return(0);
   }
 
   WaitForSingleObject(hEvent, INFINITE);
-  SetThreadPriority(hEMUThread, THREAD_PRIORITY_NORMAL);
+  SetThreadPriority(vccState->hEMUThread, THREAD_PRIORITY_NORMAL);
 
-  while (BinaryRunning)
+  while (vccState->BinaryRunning)
   {
-    if (FlagEmuStop == TH_WAITING)		//Need to stop the EMU thread for screen mode change
+    if (vccState->FlagEmuStop == TH_WAITING)		//Need to stop the EMU thread for screen mode change
     {								                  //As it holds the Secondary screen buffer open while running
       FullScreenToggle();
-      FlagEmuStop = TH_RUNNING;
+
+      vccState->FlagEmuStop = TH_RUNNING;
     }
 
-    GetMessage(&Msg, NULL, 0, 0);		//Seems if the main loop stops polling for Messages the child threads stall
-    TranslateMessage(&Msg);
-    DispatchMessage(&Msg);
+    GetMessage(&msg, NULL, 0, 0);		//Seems if the main loop stops polling for Messages the child threads stall
+
+    TranslateMessage(&msg);
+
+    DispatchMessage(&msg);
   }
 
   CloseHandle(hEvent);
-  CloseHandle(hEMUThread);
+  CloseHandle(vccState->hEMUThread);
   timeEndPeriod(1);
-  UnloadDll(&EmuState);
+  UnloadDll(&(vccState->EmuState));
   SoundDeInit();
   WriteIniFile(); //Save Any changes to ini File
 
-  return (INT)Msg.wParam;
+  return (INT)msg.wParam;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -236,13 +207,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   int wmId, wmEvent;
   unsigned int x, y;
-  unsigned char kb_char;
+  unsigned char kb_char = (unsigned char)wParam;
   static unsigned char OEMscan = 0;
   static char ascii = 0;
-  static RECT ClientSize;
-  static unsigned long Width = 0, Height = 0;
+  static RECT clientSize;
+  static unsigned long width = 0, height = 0;
 
-  kb_char = (unsigned char)wParam;
+  VccState* vccState = GetVccState();
 
   switch (message)
   {
@@ -261,125 +232,134 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_COMMAND:
     // Force all keys up to prevent key repeats
     raise_saved_keys();
+
     wmId = LOWORD(wParam);
     wmEvent = HIWORD(wParam);
+
     // Parse the menu selections:
     // Added for Dynamic menu system
-    if ((wmId >= ID_SDYNAMENU) & (wmId <= ID_EDYNAMENU))
+    if ((wmId >= ID_SDYNAMENU) && (wmId <= ID_EDYNAMENU))
     {
-      DynamicMenuActivated(&EmuState, wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+      DynamicMenuActivated(&(vccState->EmuState), wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
       break;
     }
 
     switch (wmId)
     {
     case IDM_HELP_ABOUT:
-      DialogBox(EmuState.WindowInstance,
-        (LPCTSTR)IDD_ABOUTBOX,
-        hWnd,
-        (DLGPROC)About);
+      DialogBox(vccState->EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
       break;
 
     case ID_CONFIGURE_OPTIONS:
 #ifdef CONFIG_DIALOG_MODAL
       // open config dialog modally
-      DialogBox(EmuState.WindowInstance,
-        (LPCTSTR)IDD_TCONFIG,
-        hWnd,
-        (DLGPROC)Config
-      );
+      DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_TCONFIG, hWnd, (DLGPROC)Config);
 #else
+
       // open config dialog if not already open
       // opens modeless so you can control the cassette
       // while emulator is still running (assumed)
-      if (EmuState.ConfigDialog == NULL)
+      if (vccState->EmuState.ConfigDialog == NULL)
       {
-        EmuState.ConfigDialog = CreateDialog(
-          EmuState.WindowInstance, //NULL,
-          (LPCTSTR)IDD_TCONFIG,
-          EmuState.WindowHandle,
-          (DLGPROC)MainConfig
-        );
+        vccState->EmuState.ConfigDialog = CreateDialog(vccState->EmuState.WindowInstance, (LPCTSTR)IDD_TCONFIG, vccState->EmuState.WindowHandle, (DLGPROC)MainConfig);
+
         // open modeless
-        ShowWindow(EmuState.ConfigDialog, SW_SHOWNORMAL);
+        ShowWindow(vccState->EmuState.ConfigDialog, SW_SHOWNORMAL);
       }
 #endif
       break;
 
     case IDOK:
       SendMessage(hWnd, WM_CLOSE, 0, 0);
+
       break;
 
     case ID_FILE_EXIT:
-      BinaryRunning = 0;
+      vccState->BinaryRunning = 0;
+
       break;
 
     case ID_FILE_RESET:
-      if (EmuState.EmulationRunning)
-        EmuState.ResetPending = 2;
+      if (vccState->EmuState.EmulationRunning) {
+        vccState->EmuState.ResetPending = 2;
+      }
+
       break;
 
     case ID_FILE_RUN:
-      EmuState.EmulationRunning = TRUE;
+      vccState->EmuState.EmulationRunning = TRUE;
+
       InvalidateBoarder();
+
       break;
 
     case ID_FILE_RESET_SFT:
-      if (EmuState.EmulationRunning)
-        EmuState.ResetPending = 1;
+      if (vccState->EmuState.EmulationRunning) {
+        vccState->EmuState.ResetPending = 1;
+      }
+
       break;
 
     case ID_FILE_LOAD:
       LoadIniFile();
+
       break;
 
     case ID_SAVE_CONFIG:
       SaveConfig();
+
       break;
 
     case ID_COPY_TEXT:
       CopyText();
+
       break;
 
     case ID_PASTE_TEXT:
       PasteText();
+
       break;
 
     case ID_PASTE_BASIC:
       PasteBASIC();
+
       break;
 
     case ID_PASTE_BASIC_NEW:
       PasteBASICWithNew();
+
       break;
 
     case ID_FLIP_ARTIFACTS:
       FlipArtifacts();
+
       break;
 
     default:
       return DefWindowProc(hWnd, message, wParam, lParam);
     }
+
     break;
 
   case WM_KILLFOCUS:
     // Force keys up if main widow keyboard focus is lost.  Otherwise
     // down keys will cause issues with OS-9 on return
     raise_saved_keys();
+
     break;
 
   case WM_CLOSE:
-    BinaryRunning = 0;
+    vccState->BinaryRunning = 0;
+
     break;
 
   case WM_CHAR:
     return 0;
-    break;
 
   case WM_SYSCHAR:
     DefWindowProc(hWnd, message, wParam, lParam);
+
     return 0;
-    break;
 
   case WM_KEYUP:
   case WM_SYSKEYUP:
@@ -387,10 +367,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     // TODO: Key up checks whether the emulation is running, this does not
 
     OEMscan = (unsigned char)((lParam & 0x00FF0000) >> 16);
+
     vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyUp);
 
     return 0;
-    break;
 
     //----------------------------------------------------------------------------------------
     //	lParam bits
@@ -411,7 +391,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   case WM_SYSKEYDOWN:
     // Ignore repeated system keys
-    if (lParam >> 30) return 0;
+    if (lParam >> 30) {
+      return 0;
+    }
 
   case WM_KEYDOWN:
     // get key scan code for emulator control keys
@@ -420,17 +402,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (OEMscan)
     {
     case DIK_F3:
-      DecreaseOverclockSpeed(&EmuState);
+      DecreaseOverclockSpeed(&(vccState->EmuState));
       break;
 
     case DIK_F4:
-      IncreaseOverclockSpeed(&EmuState);
+      IncreaseOverclockSpeed(&(vccState->EmuState));
       break;
 
     case DIK_F5:
-      if (EmuState.EmulationRunning)
-      {
-        EmuState.ResetPending = 1;
+      if (vccState->EmuState.EmulationRunning) {
+        vccState->EmuState.ResetPending = 1;
       }
       break;
 
@@ -443,33 +424,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       break;
 
     case DIK_F9:
-      EmuState.EmulationRunning = !EmuState.EmulationRunning;
+      vccState->EmuState.EmulationRunning = !vccState->EmuState.EmulationRunning;
 
-      if (EmuState.EmulationRunning)
-        EmuState.ResetPending = 2;
-      else
-        SetStatusBarText("", &EmuState);
+      if (vccState->EmuState.EmulationRunning) {
+        vccState->EmuState.ResetPending = 2;
+      }
+      else {
+        SetStatusBarText("", &(vccState->EmuState));
+      }
+
       break;
 
     case DIK_F10:
       SetInfoBand(!SetInfoBand(QUERY));
       InvalidateBoarder();
+
       break;
 
     case DIK_F11:
-      if (FlagEmuStop == TH_RUNNING)
+      if (vccState->FlagEmuStop == TH_RUNNING)
       {
-        FlagEmuStop = TH_REQWAIT;
-        EmuState.FullScreen = !EmuState.FullScreen;
+        vccState->FlagEmuStop = TH_REQWAIT;
+        vccState->EmuState.FullScreen = !vccState->EmuState.FullScreen;
       }
 
       break;
 
     default:
       // send other keystrokes to the emulator if it is active
-      if (EmuState.EmulationRunning)
+      if (vccState->EmuState.EmulationRunning)
       {
         vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
+
         // Save key down in case focus is lost
         save_key_down(kb_char, OEMscan);
       }
@@ -477,7 +463,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return 0;
-    break;
 
   case WM_LBUTTONDOWN:  //0 = Left 1=right
     SetButtonStatus(0, 1);
@@ -496,54 +481,70 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
 
   case WM_MOUSEMOVE:
-    if (EmuState.EmulationRunning)
+    if (vccState->EmuState.EmulationRunning)
     {
       x = LOWORD(lParam);
       y = HIWORD(lParam);
-      GetClientRect(EmuState.WindowHandle, &ClientSize);
-      x /= ((ClientSize.right - ClientSize.left) >> 6);
-      y /= (((ClientSize.bottom - ClientSize.top) - 20) >> 6);
+
+      GetClientRect(vccState->EmuState.WindowHandle, &clientSize);
+
+      x /= ((clientSize.right - clientSize.left) >> 6);
+      y /= (((clientSize.bottom - clientSize.top) - 20) >> 6);
+
       SetJoystick(x, y);
     }
 
     return(0);
-    break;
   }
 
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 // Save last two key down events
-void save_key_down(unsigned char kb_char, unsigned char OEMscan) {
+void save_key_down(unsigned char kb_char, unsigned char oemScan) {
+  VccState* vccState = GetVccState();
+
   // Ignore zero scan code
-  if (OEMscan == 0) return;
+  if (oemScan == 0) {
+    return;
+  }
 
   // Remember it
-  KeySaveToggle = !KeySaveToggle;
-  if (KeySaveToggle) {
-    KB_save1 = kb_char;
-    SC_save1 = OEMscan;
+  vccState->KeySaveToggle = !vccState->KeySaveToggle;
+
+  if (vccState->KeySaveToggle) {
+    vccState->KB_save1 = kb_char;
+    vccState->SC_save1 = oemScan;
   }
   else {
-    KB_save2 = kb_char;
-    SC_save2 = OEMscan;
+    vccState->KB_save2 = kb_char;
+    vccState->SC_save2 = oemScan;
   }
 }
 
 // Send key up events to keyboard handler for saved keys
 void raise_saved_keys() {
-  if (SC_save1) vccKeyboardHandleKey(KB_save1, SC_save1, kEventKeyUp);
+  VccState* vccState = GetVccState();
 
-  if (SC_save2) vccKeyboardHandleKey(KB_save2, SC_save2, kEventKeyUp);
+  if (vccState->SC_save1) {
+    vccKeyboardHandleKey(vccState->KB_save1, vccState->SC_save1, kEventKeyUp);
+  }
 
-  SC_save1 = 0;
-  SC_save2 = 0;
+  if (vccState->SC_save2) {
+    vccKeyboardHandleKey(vccState->KB_save2, vccState->SC_save2, kEventKeyUp);
+  }
+
+  vccState->SC_save1 = 0;
+  vccState->SC_save2 = 0;
 }
 
 // Handle WM_DESTROY
 void OnDestroy(HWND)
 {
-  BinaryRunning = false;
+  VccState* vccState = GetVccState();
+
+  vccState->BinaryRunning = false;
+
   PostQuitMessage(0);
 }
 
@@ -554,51 +555,67 @@ void OnPaint(HWND hwnd)
 
 void SetCPUMultiplyerFlag(unsigned char double_speed)
 {
+  VccState* vccState = GetVccState();
+
   SetClockSpeed(1);
-  EmuState.DoubleSpeedFlag = double_speed;
 
-  if (EmuState.DoubleSpeedFlag)
-    SetClockSpeed(EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
+  vccState->EmuState.DoubleSpeedFlag = double_speed;
 
-  EmuState.CPUCurrentSpeed = .894;
+  if (vccState->EmuState.DoubleSpeedFlag) {
+    SetClockSpeed(vccState->EmuState.DoubleSpeedMultiplyer * vccState->EmuState.TurboSpeedFlag);
+  }
 
-  if (EmuState.DoubleSpeedFlag)
-    EmuState.CPUCurrentSpeed *= (EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
+  vccState->EmuState.CPUCurrentSpeed = .894;
+
+  if (vccState->EmuState.DoubleSpeedFlag) {
+    vccState->EmuState.CPUCurrentSpeed *= ((double)vccState->EmuState.DoubleSpeedMultiplyer * (double)vccState->EmuState.TurboSpeedFlag);
+  }
 }
 
 void SetTurboMode(unsigned char data)
 {
-  EmuState.TurboSpeedFlag = (data & 1) + 1;
+  VccState* vccState = GetVccState();
+
+  vccState->EmuState.TurboSpeedFlag = (data & 1) + 1;
+
   SetClockSpeed(1);
 
-  if (EmuState.DoubleSpeedFlag)
-    SetClockSpeed(EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
+  if (vccState->EmuState.DoubleSpeedFlag) {
+    SetClockSpeed(vccState->EmuState.DoubleSpeedMultiplyer * vccState->EmuState.TurboSpeedFlag);
+  }
 
-  EmuState.CPUCurrentSpeed = .894;
+  vccState->EmuState.CPUCurrentSpeed = .894;
 
-  if (EmuState.DoubleSpeedFlag)
-    EmuState.CPUCurrentSpeed *= (EmuState.DoubleSpeedMultiplyer * EmuState.TurboSpeedFlag);
+  if (vccState->EmuState.DoubleSpeedFlag) {
+    vccState->EmuState.CPUCurrentSpeed *= ((double)vccState->EmuState.DoubleSpeedMultiplyer * (double)vccState->EmuState.TurboSpeedFlag);
+  }
 }
 
 unsigned char SetCPUMultiplyer(unsigned char multiplyer)
 {
+  VccState* vccState = GetVccState();
+
   if (multiplyer != QUERY)
   {
-    EmuState.DoubleSpeedMultiplyer = multiplyer;
-    SetCPUMultiplyerFlag(EmuState.DoubleSpeedFlag);
+    vccState->EmuState.DoubleSpeedMultiplyer = multiplyer;
+
+    SetCPUMultiplyerFlag(vccState->EmuState.DoubleSpeedFlag);
   }
 
-  return(EmuState.DoubleSpeedMultiplyer);
+  return(vccState->EmuState.DoubleSpeedMultiplyer);
 }
 
 void DoHardReset(SystemState* const systemState)
 {
+  VccState* vccState = GetVccState();
+
   systemState->RamBuffer = MmuInit(systemState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
   systemState->WRamBuffer = (unsigned short*)systemState->RamBuffer;
 
   if (systemState->RamBuffer == NULL)
   {
     MessageBox(NULL, "Can't allocate enough RAM, Out of memory", "Error", 0);
+
     exit(0);
   }
 
@@ -632,7 +649,7 @@ void DoHardReset(SystemState* const systemState)
   GimeReset();
   UpdateBusPointer();
 
-  EmuState.TurboSpeedFlag = 1;
+  vccState->EmuState.TurboSpeedFlag = 1;
 
   ResetBus();
   SetClockSpeed(1);
@@ -640,6 +657,8 @@ void DoHardReset(SystemState* const systemState)
 
 void SoftReset(void)
 {
+  VccState* vccState = GetVccState();
+
   mc6883_reset();
   PiaReset();
 
@@ -650,24 +669,29 @@ void SoftReset(void)
   CopyRom();
   ResetBus();
 
-  EmuState.TurboSpeedFlag = 1;
+  vccState->EmuState.TurboSpeedFlag = 1;
 }
 
 // Mesage handler for the About box.
 LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+  VccState* vccState = GetVccState();
+
   switch (message)
   {
   case WM_INITDIALOG:
-    SendDlgItemMessage(hDlg, IDC_TITLE, WM_SETTEXT, strlen(g_szAppName), (LPARAM)(LPCSTR)g_szAppName);
+    SendDlgItemMessage(hDlg, IDC_TITLE, WM_SETTEXT, strlen(vccState->AppName), (LPARAM)(LPCSTR)(vccState->AppName));
+
     return TRUE;
 
   case WM_COMMAND:
     if (LOWORD(wParam) == IDOK)
     {
       EndDialog(hDlg, LOWORD(wParam));
+
       return TRUE;
     }
+
     break;
   }
 
@@ -676,61 +700,77 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 unsigned char SetRamSize(unsigned char size)
 {
+  VccState* vccState = GetVccState();
+
   if (size != QUERY) {
-    EmuState.RamSize = size;
+    vccState->EmuState.RamSize = size;
   }
 
-  return(EmuState.RamSize);
+  return(vccState->EmuState.RamSize);
 }
 
 unsigned char SetSpeedThrottle(unsigned char throttle)
 {
+  VccState* vccState = GetVccState();
+
   if (throttle != QUERY) {
-    Throttle = throttle;
+    vccState->Throttle = throttle;
   }
 
-  return(Throttle);
+  return(vccState->Throttle);
 }
 
 unsigned char SetFrameSkip(unsigned char skip)
 {
+  VccState* vccState = GetVccState();
+
   if (skip != QUERY) {
-    EmuState.FrameSkip = skip;
+    vccState->EmuState.FrameSkip = skip;
   }
 
-  return(EmuState.FrameSkip);
+  return(vccState->EmuState.FrameSkip);
 }
 
 unsigned char SetCpuType(unsigned char cpuType)
 {
+  VccState* vccState = GetVccState();
+
   switch (cpuType)
   {
   case 0:
-    EmuState.CpuType = 0;
-    strcpy(CpuName, "MC6809");
+    vccState->EmuState.CpuType = 0;
+
+    strcpy(vccState->CpuName, "MC6809");
+
     break;
 
   case 1:
-    EmuState.CpuType = 1;
-    strcpy(CpuName, "HD6309");
+    vccState->EmuState.CpuType = 1;
+
+    strcpy(vccState->CpuName, "HD6309");
+
     break;
   }
 
-  return(EmuState.CpuType);
+  return(vccState->EmuState.CpuType);
 }
 
 void DoReboot(void)
 {
-  EmuState.ResetPending = 2;
+  VccState* vccState = GetVccState();
+
+  vccState->EmuState.ResetPending = 2;
 }
 
 unsigned char SetAutoStart(unsigned char autostart)
 {
+  VccState* vccState = GetVccState();
+
   if (autostart != QUERY) {
-    AutoStart = autostart;
+    vccState->AutoStart = autostart;
   }
 
-  return(AutoStart);
+  return(vccState->AutoStart);
 }
 
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.
@@ -739,11 +779,14 @@ void LoadIniFile(void)
   OPENFILENAME ofn;
   char szFileName[MAX_PATH] = "";
 
+  VccState* vccState = GetVccState();
+
   GetIniFilePath(szFileName); // EJJ load current ini file path
 
   memset(&ofn, 0, sizeof(ofn));
+
   ofn.lStructSize = sizeof(OPENFILENAME);
-  ofn.hwndOwner = EmuState.WindowHandle;
+  ofn.hwndOwner = vccState->EmuState.WindowHandle;
   ofn.lpstrFilter = "INI\0*.ini\0\0";
   ofn.nFilterIndex = 1;
   ofn.lpstrFile = szFileName;
@@ -757,9 +800,10 @@ void LoadIniFile(void)
   if (GetOpenFileName(&ofn)) {
     WriteIniFile();               // Flush current profile
     SetIniFilePath(szFileName);   // Set new ini file path
-    ReadIniFile(&EmuState);                // Load it
-    UpdateConfig(&EmuState);
-    EmuState.ResetPending = 2;
+    ReadIniFile(&(vccState->EmuState));                // Load it
+    UpdateConfig(&(vccState->EmuState));
+
+    vccState->EmuState.ResetPending = 2;
   }
 }
 
@@ -771,12 +815,15 @@ void SaveConfig(void) {
   char curini[MAX_PATH];
   char newini[MAX_PATH + 4];  // Save room for '.ini' if needed
 
+  VccState* vccState = GetVccState();
+
   GetIniFilePath(curini);  // EJJ get current ini file path
   strcpy(newini, curini);   // Let GetOpenFilename suggest it
 
   memset(&ofn, 0, sizeof(ofn));
+
   ofn.lStructSize = sizeof(OPENFILENAME);
-  ofn.hwndOwner = EmuState.WindowHandle;
+  ofn.hwndOwner = vccState->EmuState.WindowHandle;
   ofn.lpstrFilter = "INI\0*.ini\0\0";      // filter string
   ofn.nFilterIndex = 1;                    // current filter index
   ofn.lpstrFile = newini;                  // contains full path on return
@@ -807,81 +854,91 @@ unsigned __stdcall EmuLoop(void* dummy)
   HANDLE hEvent = (HANDLE)dummy;
   static float fps;
   static unsigned int frameCounter = 0;
+
+  VccState* vccState = GetVccState();
+
   CalibrateThrottle();
   Sleep(30);
   SetEvent(hEvent);
 
   while (true)
   {
-    if (FlagEmuStop == TH_REQWAIT)
+    if (vccState->FlagEmuStop == TH_REQWAIT)
     {
-      FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
+      vccState->FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
 
-      while (FlagEmuStop == TH_WAITING) {
+      while (vccState->FlagEmuStop == TH_WAITING) {
         Sleep(1);
       }
     }
 
     fps = 0;
 
-    if ((Qflag == 255) && (frameCounter == 30))
+    if ((vccState->Qflag == 255) && (frameCounter == 30))
     {
-      Qflag = 0;
-      QuickLoad(&EmuState, QuickLoadFile);
+      vccState->Qflag = 0;
+
+      QuickLoad(&(vccState->EmuState), vccState->QuickLoadFile);
     }
 
     StartRender();
 
-    for (uint8_t frames = 1; frames <= EmuState.FrameSkip; frames++)
+    for (uint8_t frames = 1; frames <= vccState->EmuState.FrameSkip; frames++)
     {
       frameCounter++;
 
-      if (EmuState.ResetPending != 0) {
-        switch (EmuState.ResetPending)
+      if (vccState->EmuState.ResetPending != 0) {
+        switch (vccState->EmuState.ResetPending)
         {
         case 1:	//Soft Reset
           SoftReset();
           break;
 
         case 2:	//Hard Reset
-          UpdateConfig(&EmuState);
-          DoCls(&EmuState);
-          DoHardReset(&EmuState);
+          UpdateConfig(&(vccState->EmuState));
+          DoCls(&(vccState->EmuState));
+          DoHardReset(&(vccState->EmuState));
+
           break;
 
         case 3:
-          DoCls(&EmuState);
+          DoCls(&(vccState->EmuState));
           break;
 
         case 4:
-          UpdateConfig(&EmuState);
-          DoCls(&EmuState);
+          UpdateConfig(&(vccState->EmuState));
+          DoCls(&(vccState->EmuState));
+
           break;
 
         default:
           break;
         }
 
-        EmuState.ResetPending = 0;
+        vccState->EmuState.ResetPending = 0;
       }
 
-      if (EmuState.EmulationRunning == 1) {
-        fps += RenderFrame(&EmuState);
+      if (vccState->EmuState.EmulationRunning == 1) {
+        fps += RenderFrame(&(vccState->EmuState));
       }
       else {
-        fps += Static(&EmuState);
+        fps += Static(&(vccState->EmuState));
       }
     }
 
-    EndRender(EmuState.FrameSkip);
-    fps /= EmuState.FrameSkip;
-    GetModuleStatus(&EmuState);
+    EndRender(vccState->EmuState.FrameSkip);
+
+    fps /= vccState->EmuState.FrameSkip;
+
+    GetModuleStatus(&(vccState->EmuState));
 
     char ttbuff[256];
-    snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", EmuState.FrameSkip, fps, CpuName, EmuState.CPUCurrentSpeed, EmuState.StatusLine);
-    SetStatusBarText(ttbuff, &EmuState);
 
-    if (Throttle)	{ //Do nothing untill the frame is over returning unused time to OS
+    snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", vccState->EmuState.FrameSkip, fps, vccState->CpuName, vccState->EmuState.CPUCurrentSpeed, vccState->EmuState.StatusLine);
+
+    SetStatusBarText(ttbuff, &(vccState->EmuState));
+
+    if (vccState->Throttle) { //Do nothing untill the frame is over returning unused time to OS
       FrameWait();
     }
   }
@@ -893,37 +950,46 @@ void LoadPack(void)
 {
   unsigned threadID;
 
-  if (DialogOpen) {
+  VccState* vccState = GetVccState();
+
+  if (vccState->DialogOpen) {
     return;
   }
 
-  DialogOpen = true;
+  vccState->DialogOpen = true;
 
   _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
 }
 
 unsigned __stdcall CartLoad(void* dummy)
 {
-  LoadCart(&EmuState);
+  VccState* vccState = GetVccState();
 
-  EmuState.EmulationRunning = TRUE;
-  DialogOpen = false;
+  LoadCart(&(vccState->EmuState));
+
+  vccState->EmuState.EmulationRunning = TRUE;
+  vccState->DialogOpen = false;
 
   return(NULL);
 }
 
 void FullScreenToggle(void)
 {
+  VccState* vccState = GetVccState();
+
   PauseAudio(true);
 
-  if (!CreateDDWindow(&EmuState))
+  if (!CreateDDWindow(&(vccState->EmuState)))
   {
     MessageBox(0, "Can't rebuild primary Window", "Error", 0);
+
     exit(0);
   }
 
   InvalidateBoarder();
-  RefreshDynamicMenu(&EmuState);
-  EmuState.ConfigDialog = NULL;
+  RefreshDynamicMenu(&(vccState->EmuState));
+
+  vccState->EmuState.ConfigDialog = NULL;
+
   PauseAudio(false);
 }

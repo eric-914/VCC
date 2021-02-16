@@ -40,7 +40,7 @@ static unsigned char CartInserted = 0, CartAutoStart = 1;
 static unsigned char AddLF = 0;
 static HANDLE hPrintFile = INVALID_HANDLE_VALUE;
 void CaptureBit(unsigned char);
-static HANDLE hout = NULL;
+static HANDLE hOut = NULL;
 void WritePrintMon(char*);
 LRESULT CALLBACK PrintMon(HWND, UINT, WPARAM, LPARAM);
 static BOOL MonState = FALSE;
@@ -470,7 +470,7 @@ void ClosePrintFile(void)
   CloseHandle(hPrintFile);
   hPrintFile = INVALID_HANDLE_VALUE;
   FreeConsole();
-  hout = NULL;
+  hOut = NULL;
 }
 
 void SetSerialParams(unsigned char TextMode)
@@ -483,7 +483,7 @@ void SetMonState(BOOL State)
   if (MonState & !State)
   {
     FreeConsole();
-    hout = NULL;
+    hOut = NULL;
   }
 
   MonState = State;
@@ -493,18 +493,18 @@ void WritePrintMon(char* Data)
 {
   unsigned long dummy;
 
-  if (hout == NULL)
+  if (hOut == NULL)
   {
     AllocConsole();
-    hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTitle("Printer Monitor");
   }
 
-  WriteConsole(hout, Data, 1, &dummy, 0);
+  WriteConsole(hOut, Data, 1, &dummy, 0);
 
   if (Data[0] == 0x0D)
   {
     Data[0] = 0x0A;
-    WriteConsole(hout, Data, 1, &dummy, 0);
+    WriteConsole(hOut, Data, 1, &dummy, 0);
   }
 }
