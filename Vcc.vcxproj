@@ -176,6 +176,7 @@
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
     <ClCompile Include="CalculateFPS.c" />
     <ClCompile Include="CalibrateThrottle.c" />
+    <ClCompile Include="CartLoad.c" />
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
@@ -199,6 +200,7 @@
     <ClCompile Include="DSEnumCallback.c" />
     <ClCompile Include="DynamicMenuActivated.c" />
     <ClCompile Include="DynamicMenuCallback.c" />
+    <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="EndRender.c" />
     <ClCompile Include="FlushAudioBuffer.c" />
     <ClCompile Include="FlushCassetteBuffer.c" />
@@ -230,6 +232,7 @@
     <ClCompile Include="LoadTape.c" />
     <ClCompile Include="load_ext_rom.c" />
     <ClCompile Include="LockScreen.c" />
+    <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
@@ -255,7 +258,9 @@
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="ResetAudio.c" />
     <ClCompile Include="SaveConfig.c" />
+    <ClCompile Include="SaveLastTwoKeyDownEvents.c" />
     <ClCompile Include="SelectFile.c" />
+    <ClCompile Include="SendSavedKeyEvents.c" />
     <ClCompile Include="SetAudioRate.c" />
     <ClCompile Include="SetAutoStart.c" />
     <ClCompile Include="SetClipboard.c" />
@@ -297,7 +302,6 @@
     <ClCompile Include="UpdateConfig.c" />
     <ClCompile Include="UpdateSoundBar.c" />
     <ClCompile Include="UpdateTapeCounter.c" />
-    <ClCompile Include="Vcc.c" />
     <ClCompile Include="vccKeyboardBuildRuntimeTable.c" />
     <ClCompile Include="vccKeyboardGetScan.c" />
     <ClCompile Include="vccKeyboardHandleKey.c" />
@@ -320,6 +324,7 @@
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
     <ClInclude Include="CalculateFPS.h" />
     <ClInclude Include="CalibrateThrottle.h" />
+    <ClInclude Include="CartLoad.h" />
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
@@ -345,6 +350,7 @@
     <ClInclude Include="DSEnumCallback.h" />
     <ClInclude Include="DynamicMenuActivated.h" />
     <ClInclude Include="DynamicMenuCallback.h" />
+    <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="EndRender.h" />
     <ClInclude Include="FlushAudioBuffer.h" />
     <ClInclude Include="FlushCassetteBuffer.h" />
@@ -407,7 +413,9 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="sampledefs.h" />
     <ClInclude Include="SaveConfig.h" />
+    <ClInclude Include="SaveLastTwoKeyDownEvents.h" />
     <ClInclude Include="SelectFile.h" />
+    <ClInclude Include="SendSavedKeyEvents.h" />
     <ClInclude Include="SetAudioRate.h" />
     <ClInclude Include="SetAutoStart.h" />
     <ClInclude Include="SetClipboard.h" />
@@ -449,7 +457,6 @@
     <ClInclude Include="UpdateConfig.h" />
     <ClInclude Include="UpdateSoundBar.h" />
     <ClInclude Include="UpdateTapeCounter.h" />
-    <ClInclude Include="Vcc.h" />
     <ClInclude Include="vccdef.h" />
     <ClInclude Include="vccKeyboardBuildRuntimeTable.h" />
     <ClInclude Include="vccKeyboardGetScan.h" />

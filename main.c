@@ -1,100 +1,51 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include "library/di.version.h"
-#include "library/nt.version.h"
 
 #include <windows.h>
 #include <process.h>
-#include <string>
+#include <dinput.h>
 
 #include "vccdef.h"
 #include "vccstate.h"
 #include "resource.h"
-#include "Vcc.h"
-#include "tcc1014mmu.h"
-#include "tcc1014graphics.h"
-#include "tcc1014registers.h"
-#include "hd6309.h"
-#include "mc6809.h"
-#include "mc6821.h"
 #include "pakinterfacedef.h"
-#include "quickload.h"
 
-#include "SetClockSpeed.h"
-#include "RenderFrame.h"
-#include "LoadConfig.h"
-#include "WriteIniFile.h"
-#include "ReadIniFile.h"
-#include "IncreaseOverclockSpeed.h"
-#include "DecreaseOverclockSpeed.h"
-#include "ConfigAccessors.h"
-#include "UpdateConfig.h"
-#include "MainConfig.h"
-#include "CalibrateThrottle.h"
-#include "StartRender.h"
-#include "EndRender.h"
-#include "FrameWait.h"
-#include "PasteText.h"
-#include "CopyText.h"
-#include "PasteBASIC.h"
-#include "PasteBASICWithNew.h"
+#include "About.h"
 #include "AudioAccessors.h"
-#include "LoadCart.h"
-#include "PakInterfaceAccessors.h"
-#include "UnloadDll.h"
-#include "UpdateBusPointer.h"
-#include "RefreshDynamicMenu.h"
+#include "ConfigAccessors.h"
+#include "CopyText.h"
+#include "CreateDDWindow.h"
+#include "DecreaseOverclockSpeed.h"
+#include "DirectDrawAccessors.h"
 #include "DynamicMenuActivated.h"
 #include "DynamicMenuCallback.h"
-#include "JoystickAccessors.h"
-#include "vccKeyboardHandleKey.h"
-#include "DirectDrawAccessors.h"
-#include "CreateDDWindow.h"
-#include "DoCls.h"
-#include "Static.h"
-#include "About.h"
-#include "HardReset.h"
-#include "SoftReset.h"
+#include "EmuLoop.h"
 #include "FullScreenToggle.h"
-#include "LoadPack.h"
-#include "Reboot.h"
-#include "SaveConfig.h"
+#include "IncreaseOverclockSpeed.h"
+#include "InitInstance.h"
+#include "JoystickAccessors.h"
+#include "LoadConfig.h"
 #include "LoadIniFile.h"
-#include "SetCPUMultiplayerFlag.h"
+#include "MainConfig.h"
+#include "PakInterfaceAccessors.h"
+#include "PasteBASIC.h"
+#include "PasteBASICWithNew.h"
+#include "PasteText.h"
+#include "SaveConfig.h"
+#include "SaveLastTwoKeyDownEvents.h"
+#include "SendSavedKeyEvents.h"
+#include "SetClockSpeed.h"
 #include "SetSpeedThrottle.h"
+#include "UnloadDll.h"
+#include "WriteIniFile.h"
+#include "vccKeyboardHandleKey.h"
 
-#include "library/commandline.h"
-#include "library/cpudef.h"
-#include "library/defines.h"
-#include "library/fileoperations.h"
-#include "library/graphicsstate.h"
-#include "library/joystickinput.h"
+#include "library\fileoperations.h"
+#include "library\graphicsstate.h"
 
-/***Forward declarations of functions included in this code module*****/
-BOOL InitInstance(HINSTANCE, int);
+extern unsigned char SetMonitorType(unsigned char type);
+extern void InvalidateBoarder();
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-unsigned __stdcall EmuLoop(void*);
-unsigned __stdcall CartLoad(void*);
-
-void save_key_down(unsigned char kb_char, unsigned char OEMscan);
-void raise_saved_keys(void);
 
 INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {
   MSG  msg;
@@ -236,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   case WM_COMMAND:
     // Force all keys up to prevent key repeats
-    raise_saved_keys();
+    SendSavedKeyEvents();
 
     wmId = LOWORD(wParam);
     wmEvent = HIWORD(wParam);
@@ -349,7 +300,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_KILLFOCUS:
     // Force keys up if main widow keyboard focus is lost.  Otherwise
     // down keys will cause issues with OS-9 on return
-    raise_saved_keys();
+    SendSavedKeyEvents();
 
     break;
 
@@ -462,7 +413,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         vccKeyboardHandleKey(kb_char, OEMscan, kEventKeyDown);
 
         // Save key down in case focus is lost
-        save_key_down(kb_char, OEMscan);
+        SaveLastTwoKeyDownEvents(kb_char, OEMscan);
       }
       break;
     }
@@ -503,151 +454,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   }
 
   return DefWindowProc(hWnd, message, wParam, lParam);
-}
-
-// Save last two key down events
-void save_key_down(unsigned char kb_char, unsigned char oemScan) {
-  VccState* vccState = GetVccState();
-
-  // Ignore zero scan code
-  if (oemScan == 0) {
-    return;
-  }
-
-  // Remember it
-  vccState->KeySaveToggle = !vccState->KeySaveToggle;
-
-  if (vccState->KeySaveToggle) {
-    vccState->KB_save1 = kb_char;
-    vccState->SC_save1 = oemScan;
-  }
-  else {
-    vccState->KB_save2 = kb_char;
-    vccState->SC_save2 = oemScan;
-  }
-}
-
-// Send key up events to keyboard handler for saved keys
-void raise_saved_keys() {
-  VccState* vccState = GetVccState();
-
-  if (vccState->SC_save1) {
-    vccKeyboardHandleKey(vccState->KB_save1, vccState->SC_save1, kEventKeyUp);
-  }
-
-  if (vccState->SC_save2) {
-    vccKeyboardHandleKey(vccState->KB_save2, vccState->SC_save2, kEventKeyUp);
-  }
-
-  vccState->SC_save1 = 0;
-  vccState->SC_save2 = 0;
-}
-
-unsigned __stdcall EmuLoop(void* dummy)
-{
-  HANDLE hEvent = (HANDLE)dummy;
-  static float fps;
-  static unsigned int frameCounter = 0;
-
-  VccState* vccState = GetVccState();
-
-  CalibrateThrottle();
-  Sleep(30);
-  SetEvent(hEvent);
-
-  while (true)
-  {
-    if (vccState->FlagEmuStop == TH_REQWAIT)
-    {
-      vccState->FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
-
-      while (vccState->FlagEmuStop == TH_WAITING) {
-        Sleep(1);
-      }
-    }
-
-    fps = 0;
-
-    if ((vccState->Qflag == 255) && (frameCounter == 30))
-    {
-      vccState->Qflag = 0;
-
-      QuickLoad(&(vccState->EmuState), vccState->QuickLoadFile);
-    }
-
-    StartRender();
-
-    for (uint8_t frames = 1; frames <= vccState->EmuState.FrameSkip; frames++)
-    {
-      frameCounter++;
-
-      if (vccState->EmuState.ResetPending != 0) {
-        switch (vccState->EmuState.ResetPending)
-        {
-        case 1:	//Soft Reset
-          SoftReset();
-          break;
-
-        case 2:	//Hard Reset
-          UpdateConfig(&(vccState->EmuState));
-          DoCls(&(vccState->EmuState));
-          HardReset(&(vccState->EmuState));
-
-          break;
-
-        case 3:
-          DoCls(&(vccState->EmuState));
-          break;
-
-        case 4:
-          UpdateConfig(&(vccState->EmuState));
-          DoCls(&(vccState->EmuState));
-
-          break;
-
-        default:
-          break;
-        }
-
-        vccState->EmuState.ResetPending = 0;
-      }
-
-      if (vccState->EmuState.EmulationRunning == 1) {
-        fps += RenderFrame(&(vccState->EmuState));
-      }
-      else {
-        fps += Static(&(vccState->EmuState));
-      }
-    }
-
-    EndRender(vccState->EmuState.FrameSkip);
-
-    fps /= vccState->EmuState.FrameSkip;
-
-    GetModuleStatus(&(vccState->EmuState));
-
-    char ttbuff[256];
-
-    snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", vccState->EmuState.FrameSkip, fps, vccState->CpuName, vccState->EmuState.CPUCurrentSpeed, vccState->EmuState.StatusLine);
-
-    SetStatusBarText(ttbuff, &(vccState->EmuState));
-
-    if (vccState->Throttle) { //Do nothing untill the frame is over returning unused time to OS
-      FrameWait();
-    }
-  }
-
-  return(NULL);
-}
-
-unsigned __stdcall CartLoad(void* dummy)
-{
-  VccState* vccState = GetVccState();
-
-  LoadCart(&(vccState->EmuState));
-
-  vccState->EmuState.EmulationRunning = TRUE;
-  vccState->DialogOpen = false;
-
-  return(NULL);
 }
