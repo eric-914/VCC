@@ -19,12 +19,12 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 
 #include "tcc1014graphics.h"
-#include "DirectDrawInterface.h"
 
 #include "CocoReset.h"
 #include "SetLinesperScreen.h"
 #include "ConfigAccessors.h"
 #include "ResetAudio.h"
+#include "DirectDrawAccessors.h"
 
 #include "library/graphicsstate.h"
 #include "library/defines.h"

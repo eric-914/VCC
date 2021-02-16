@@ -1,10 +1,9 @@
 #include "configstate.h"
 
 #include "PakInterfaceAccessors.h"
+#include "DirectDrawAccessors.h"
 
 #include "library/joystickstate.h"
-
-extern POINT GetCurWindowSize();
 
 extern "C" __declspec(dllexport) void __cdecl FileValidatePath(char* path);
 extern "C" __declspec(dllexport) DWORD __cdecl FileWritePrivateProfileInt(LPCTSTR sectionName, LPCTSTR keyName, int keyValue, LPCTSTR iniFileName);
@@ -13,7 +12,7 @@ unsigned char WriteIniFile(void)
 {
   ConfigState* configState = GetConfigState();
 
-  POINT tp = GetCurWindowSize();
+  POINT tp = GetCurrentWindowSize();
   configState->CurrentConfig.Resize = 1;
 
   GetCurrentModule(configState->CurrentConfig.ModulePath);

@@ -188,10 +188,13 @@
     <ClCompile Include="CopyText.c" />
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CPUCycle.c" />
+    <ClCompile Include="CreateDDWindow.c" />
     <ClCompile Include="DecreaseOverclockSpeed.c" />
-    <ClCompile Include="DirectDrawInterface.cpp" />
+    <ClCompile Include="DirectDrawAccessors.c" />
     <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="DisplayConfig.c" />
+    <ClCompile Include="DisplayFlip.c" />
+    <ClCompile Include="DoCls.c" />
     <ClCompile Include="DSEnumCallback.c" />
     <ClCompile Include="DynamicMenuActivated.c" />
     <ClCompile Include="DynamicMenuCallback.c" />
@@ -208,6 +211,7 @@
     <ClCompile Include="GetTapeName.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="IncreaseOverclockSpeed.c" />
+    <ClCompile Include="InitInstance.c" />
     <ClCompile Include="InputConfig.c" />
     <ClCompile Include="InsertModule.c" />
     <ClCompile Include="JoystickAccessors.c" />
@@ -220,6 +224,7 @@
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadTape.c" />
     <ClCompile Include="load_ext_rom.c" />
+    <ClCompile Include="LockScreen.c" />
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
@@ -260,6 +265,7 @@
     <ClCompile Include="SetWindowSize.c" />
     <ClCompile Include="SoundInit.c" />
     <ClCompile Include="StartRender.c" />
+    <ClCompile Include="Static.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="TapeConfig.c" />
     <ClCompile Include="tcc1014graphics.c" />
@@ -270,6 +276,7 @@
     <ClCompile Include="TranslateScan2Disp.c" />
     <ClCompile Include="UnloadDll.c" />
     <ClCompile Include="UnloadPack.c" />
+    <ClCompile Include="UnlockScreen.c" />
     <ClCompile Include="UpdateBusPointer.c" />
     <ClCompile Include="UpdateConfig.c" />
     <ClCompile Include="UpdateSoundBar.c" />
@@ -309,11 +316,14 @@
     <ClInclude Include="CopyText.h" />
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CPUCycle.h" />
+    <ClInclude Include="CreateDDWindow.h" />
     <ClInclude Include="DecreaseOverclockSpeed.h" />
+    <ClInclude Include="DirectDrawAccessors.h" />
     <ClInclude Include="directdrawdef.h" />
-    <ClInclude Include="DirectDrawInterface.h" />
     <ClInclude Include="directdrawstate.h" />
     <ClInclude Include="DisplayConfig.h" />
+    <ClInclude Include="DisplayFlip.h" />
+    <ClInclude Include="DoCls.h" />
     <ClInclude Include="DSEnumCallback.h" />
     <ClInclude Include="DynamicMenuActivated.h" />
     <ClInclude Include="DynamicMenuCallback.h" />
@@ -331,6 +341,7 @@
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="IncreaseOverclockSpeed.h" />
+    <ClInclude Include="InitInstance.h" />
     <ClInclude Include="InputConfig.h" />
     <ClInclude Include="InsertModule.h" />
     <ClInclude Include="JoystickAccessors.h" />
@@ -343,6 +354,7 @@
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadTape.h" />
     <ClInclude Include="load_ext_rom.h" />
+    <ClInclude Include="LockScreen.h" />
     <ClInclude Include="MainConfig.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
@@ -388,6 +400,7 @@
     <ClInclude Include="SetWindowSize.h" />
     <ClInclude Include="SoundInit.h" />
     <ClInclude Include="StartRender.h" />
+    <ClInclude Include="Static.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="TapeConfig.h" />
     <ClInclude Include="tcc1014graphics.h" />
@@ -398,6 +411,7 @@
     <ClInclude Include="TranslateScan2Disp.h" />
     <ClInclude Include="UnloadDll.h" />
     <ClInclude Include="UnloadPack.h" />
+    <ClInclude Include="UnlockScreen.h" />
     <ClInclude Include="UpdateBusPointer.h" />
     <ClInclude Include="UpdateConfig.h" />
     <ClInclude Include="UpdateSoundBar.h" />

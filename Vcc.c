@@ -42,7 +42,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "mc6821.h"
 #include "pakinterfacedef.h"
 #include "quickload.h"
-#include "DirectDrawInterface.h"
+
 #include "SetClockSpeed.h"
 #include "RenderFrame.h"
 #include "LoadConfig.h"
@@ -71,6 +71,10 @@ This file is part of VCC (Virtual Color Computer).
 #include "DynamicMenuCallback.h"
 #include "JoystickAccessors.h"
 #include "vccKeyboardHandleKey.h"
+#include "DirectDrawAccessors.h"
+#include "CreateDDWindow.h"
+#include "DoCls.h"
+#include "Static.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"

@@ -3,17 +3,16 @@
 #include "FlushCassetteBuffer.h"
 #include "LoadCassetteBuffer.h"
 #include "FlushAudioBuffer.h"
+#include "CalculateFPS.h"
+#include "LockScreen.h"
+#include "UnlockScreen.h"
+#include "CPUCycle.h"
 
 #include "library/graphicsstate.h"
 
-extern /* _inline */ int CPUCycle(void);
-
 extern void irq_fs(int);
-extern unsigned char LockScreen(SystemState* systemState);
-extern void UnlockScreen(SystemState* USState);
 extern void GimeAssertVertInterrupt(void);
 extern void SetBoarderChange(unsigned char);
-extern float CalculateFPS(void);
 
 float RenderFrame(SystemState* systemState)
 {
