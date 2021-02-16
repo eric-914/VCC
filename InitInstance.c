@@ -1,4 +1,4 @@
-#include "directdrawdef.h"
+#include "library/nt.version.h"
 
 #include <afxwin.h>
 

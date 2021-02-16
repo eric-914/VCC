@@ -17,8 +17,7 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 #include "library/di.version.h"
-
-#define _WIN32_WINNT 0x0500
+#include "library/nt.version.h"
 
 #ifndef ABOVE_NORMAL_PRIORITY_CLASS 
 //#define ABOVE_NORMAL_PRIORITY_CLASS  32768
@@ -94,6 +93,27 @@ static char CpuName[20] = "CPUNAME";
 
 char QuickLoadFile[256];
 
+// Message handlers
+static 	HANDLE hEMUThread;
+
+static char g_szAppName[MAX_LOADSTRING] = "";
+bool BinaryRunning;
+static unsigned char FlagEmuStop = TH_RUNNING;
+
+struct CmdLineArguments CmdArg;
+
+//--------------------------------------------------------------------------
+// When the main window is about to lose keyboard focus there are one
+// or two keys down in the emulation that must be raised.  These routines
+// track the last two key down events so they can be raised when needed.
+//--------------------------------------------------------------------------
+
+static unsigned char SC_save1 = 0;
+static unsigned char SC_save2 = 0;
+static unsigned char KB_save1 = 0;
+static unsigned char KB_save2 = 0;
+static int KeySaveToggle = 0;
+
 /***Forward declarations of functions included in this code module*****/
 BOOL InitInstance(HINSTANCE, int);
 LRESULT CALLBACK About(HWND, UINT, WPARAM, LPARAM);
@@ -108,15 +128,6 @@ unsigned __stdcall CartLoad(void*);
 void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
-
-// Message handlers
-static 	HANDLE hEMUThread;
-
-static char g_szAppName[MAX_LOADSTRING] = "";
-bool BinaryRunning;
-static unsigned char FlagEmuStop = TH_RUNNING;
-
-struct CmdLineArguments CmdArg;
 
 INT WINAPI WinMain(_In_ HINSTANCE hInstance, 
   _In_opt_ HINSTANCE hPrevInstance,
@@ -501,18 +512,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
-
-//--------------------------------------------------------------------------
-// When the main window is about to lose keyboard focus there are one
-// or two keys down in the emulation that must be raised.  These routines
-// track the last two key down events so they can be raised when needed.
-//--------------------------------------------------------------------------
-
-static unsigned char SC_save1 = 0;
-static unsigned char SC_save2 = 0;
-static unsigned char KB_save1 = 0;
-static unsigned char KB_save2 = 0;
-static int KeySaveToggle = 0;
 
 // Save last two key down events
 void save_key_down(unsigned char kb_char, unsigned char OEMscan) {
