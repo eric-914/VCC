@@ -6,18 +6,16 @@
 #include "SetCPUMultiplayer.h"
 #include "SetFrameSkip.h"
 #include "SetSpeedThrottle.h"
+#include "SetMonitorType.h"
+#include "SetPaletteType.h"
+#include "SetScanLines.h"
+#include "Reboot.h"
 
 #include "library/systemstate.h"
 
-extern void SetPaletteType();
-
 extern unsigned char SetResize(unsigned char resizeable);
 extern unsigned char SetAspect(unsigned char forceAspect);
-extern unsigned char SetScanLines(SystemState* systemState, unsigned char lines);
-extern unsigned char SetMonitorType(unsigned char type);
 extern unsigned char SetCartAutoStart(unsigned char autostart);
-
-extern void Reboot(void);
 
 void UpdateConfig(SystemState* systemState)
 {

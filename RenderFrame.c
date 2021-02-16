@@ -7,12 +7,12 @@
 #include "LockScreen.h"
 #include "UnlockScreen.h"
 #include "CPUCycle.h"
+#include "SetBorderChange.h"
 
 #include "library/graphicsstate.h"
 
 extern void irq_fs(int);
 extern void GimeAssertVertInterrupt(void);
-extern void SetBoarderChange(unsigned char);
 
 float RenderFrame(SystemState* systemState)
 {
@@ -29,7 +29,7 @@ float RenderFrame(SystemState* systemState)
     CPUCycle();
   }
 
-  for (systemState->LineCounter = 0; systemState->LineCounter < 4; systemState->LineCounter++) {		//4 non-Rendered top Boarder lines
+  for (systemState->LineCounter = 0; systemState->LineCounter < 4; systemState->LineCounter++) {		//4 non-Rendered top Border lines
     CPUCycle();
   }
 
@@ -39,10 +39,10 @@ float RenderFrame(SystemState* systemState)
     }
   }
 
-  for (systemState->LineCounter = 0; systemState->LineCounter < (coco->TopBoarder - 4); systemState->LineCounter++)
+  for (systemState->LineCounter = 0; systemState->LineCounter < (coco->TopBorder - 4); systemState->LineCounter++)
   {
     if (!(FrameCounter % systemState->FrameSkip)) {
-      coco->DrawTopBoarder[systemState->BitDepth](systemState);
+      coco->DrawTopBorder[systemState->BitDepth](systemState);
     }
 
     CPUCycle();
@@ -63,19 +63,19 @@ float RenderFrame(SystemState* systemState)
     GimeAssertVertInterrupt();
   }
 
-  for (systemState->LineCounter = 0; systemState->LineCounter < (coco->BottomBoarder); systemState->LineCounter++)	// Bottom boarder
+  for (systemState->LineCounter = 0; systemState->LineCounter < (coco->BottomBorder); systemState->LineCounter++)	// Bottom border
   {
     CPUCycle();
 
     if (!(FrameCounter % systemState->FrameSkip)) {
-      coco->DrawBottomBoarder[systemState->BitDepth](systemState);
+      coco->DrawBottomBorder[systemState->BitDepth](systemState);
     }
   }
 
   if (!(FrameCounter % systemState->FrameSkip))
   {
     UnlockScreen(systemState);
-    SetBoarderChange(0);
+    SetBorderChange(0);
   }
 
   for (systemState->LineCounter = 0; systemState->LineCounter < 6; systemState->LineCounter++) {		//Vertical Retrace 6 H lines

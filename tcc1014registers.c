@@ -19,7 +19,6 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 
 #include "tcc1014mmu.h"
-#include "tcc1014graphics.h"
 #include "SetHorzInterruptState.h"
 #include "SetTimerInterruptState.h"
 #include "SetInterruptTimer.h"
@@ -28,6 +27,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "KeyboardAccessors.h"
 #include "SetTurboMode.h"
 #include "SetCPUMultiplayerFlag.h"
+#include "SetGimeVdgOffset.h"
+#include "SetGimeVdgMode.h"
+#include "SetVerticalOffsetRegister.h"
+#include "SetCompatMode.h"
+#include "SetGimeVmode.h"
+#include "SetGimeVres.h"
+#include "SetGimeHorzOffset.h"
+#include "SetGimeBorderColor.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
@@ -99,7 +106,7 @@ void GimeWrite(unsigned char port, unsigned char data)
     break;
 
   case 0x9A:
-    SetGimeBoarderColor(data);
+    SetGimeBorderColor(data);
     break;
 
   case 0x9B:

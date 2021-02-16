@@ -39,19 +39,19 @@ extern "C" {
 
     GraphicsState* gs = GetGraphicsState();
 
-    if ((gs->HorzCenter != 0) && (gs->BoarderChange > 0)) {
+    if ((gs->HorzCenter != 0) && (gs->BorderChange > 0)) {
       for (unsigned short x = 0; x < gs->HorzCenter; x++)
       {
-        systemState->PTRsurface8[x + (((systemState->LineCounter + gs->VertCenter) * 2) * systemState->SurfacePitch)] = gs->BoarderColor8;
+        systemState->PTRsurface8[x + (((systemState->LineCounter + gs->VertCenter) * 2) * systemState->SurfacePitch)] = gs->BorderColor8;
 
         if (!systemState->ScanLines) {
-          systemState->PTRsurface8[x + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * systemState->SurfacePitch)] = gs->BoarderColor8;
+          systemState->PTRsurface8[x + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * systemState->SurfacePitch)] = gs->BorderColor8;
         }
 
-        systemState->PTRsurface8[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2) * systemState->SurfacePitch)] = gs->BoarderColor8;
+        systemState->PTRsurface8[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2) * systemState->SurfacePitch)] = gs->BorderColor8;
 
         if (!systemState->ScanLines) {
-          systemState->PTRsurface8[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * systemState->SurfacePitch)] = gs->BoarderColor8;
+          systemState->PTRsurface8[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * systemState->SurfacePitch)] = gs->BorderColor8;
         }
       }
     }
@@ -3194,20 +3194,20 @@ extern "C" {
 
 extern "C" {
   __declspec(dllexport)
-    void __cdecl DrawTopBoarder8(SystemState* systemState)
+    void __cdecl DrawTopBorder8(SystemState* systemState)
   {
     GraphicsState* gs = GetGraphicsState();
 
-    if (gs->BoarderChange == 0) {
+    if (gs->BorderChange == 0) {
       return;
     }
 
     for (unsigned short x = 0; x < systemState->WindowSize.x; x++)
     {
-      systemState->PTRsurface8[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = gs->BoarderColor8 | 128;
+      systemState->PTRsurface8[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = gs->BorderColor8 | 128;
 
       if (!systemState->ScanLines) {
-        systemState->PTRsurface8[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = gs->BoarderColor8 | 128;
+        systemState->PTRsurface8[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = gs->BorderColor8 | 128;
       }
     }
   }
@@ -3215,20 +3215,20 @@ extern "C" {
 
 extern "C" {
   __declspec(dllexport)
-    void __cdecl DrawBottomBoarder8(SystemState* systemState)
+    void __cdecl DrawBottomBorder8(SystemState* systemState)
   {
     GraphicsState* gs = GetGraphicsState();
 
-    if (gs->BoarderChange == 0) {
+    if (gs->BorderChange == 0) {
       return;
     }
 
     for (unsigned short x = 0; x < systemState->WindowSize.x; x++)
     {
-      systemState->PTRsurface8[x + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BoarderColor8 | 128;
+      systemState->PTRsurface8[x + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BorderColor8 | 128;
 
       if (!systemState->ScanLines) {
-        systemState->PTRsurface8[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BoarderColor8 | 128;
+        systemState->PTRsurface8[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BorderColor8 | 128;
       }
     }
   }

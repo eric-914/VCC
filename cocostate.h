@@ -39,8 +39,8 @@ typedef struct
   unsigned char SoundOutputMode;
   unsigned char HorzInterruptEnabled;
   unsigned char VertInterruptEnabled;
-  unsigned char TopBoarder;
-  unsigned char BottomBoarder;
+  unsigned char TopBorder;
+  unsigned char BottomBorder;
   unsigned char LinesperScreen;
   unsigned char TimerInterruptEnabled;
   unsigned char BlinkPhase;
@@ -65,8 +65,8 @@ typedef struct
   unsigned char CassBuffer[8192];
 
   void (*AudioEvent)(void);
-  void (*DrawTopBoarder[4]) (SystemState*);
-  void (*DrawBottomBoarder[4]) (SystemState*);
+  void (*DrawTopBorder[4]) (SystemState*);
+  void (*DrawBottomBorder[4]) (SystemState*);
   void (*UpdateScreen[4]) (SystemState*);
 } CoCoState;
 

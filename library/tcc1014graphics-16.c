@@ -39,18 +39,18 @@ extern "C" {
 
     GraphicsState* gs = GetGraphicsState();
 
-    if ((gs->HorzCenter != 0) && (gs->BoarderChange > 0))
+    if ((gs->HorzCenter != 0) && (gs->BorderChange > 0))
       for (unsigned short x = 0; x < gs->HorzCenter; x++)
       {
-        systemState->PTRsurface16[x + (((systemState->LineCounter + gs->VertCenter) * 2) * (systemState->SurfacePitch))] = gs->BoarderColor16;
+        systemState->PTRsurface16[x + (((systemState->LineCounter + gs->VertCenter) * 2) * (systemState->SurfacePitch))] = gs->BorderColor16;
 
         if (!systemState->ScanLines)
-          systemState->PTRsurface16[x + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * (systemState->SurfacePitch))] = gs->BoarderColor16;
+          systemState->PTRsurface16[x + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * (systemState->SurfacePitch))] = gs->BorderColor16;
 
-        systemState->PTRsurface16[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2) * (systemState->SurfacePitch))] = gs->BoarderColor16;
+        systemState->PTRsurface16[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2) * (systemState->SurfacePitch))] = gs->BorderColor16;
 
         if (!systemState->ScanLines)
-          systemState->PTRsurface16[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * (systemState->SurfacePitch))] = gs->BoarderColor16;
+          systemState->PTRsurface16[x + (gs->PixelsperLine * (gs->Stretch + 1)) + gs->HorzCenter + (((systemState->LineCounter + gs->VertCenter) * 2 + 1) * (systemState->SurfacePitch))] = gs->BorderColor16;
       }
 
     if (gs->LinesperRow < 13) {
@@ -3191,20 +3191,20 @@ extern "C" {
 
 extern "C" {
   __declspec(dllexport)
-    void __cdecl DrawTopBoarder16(SystemState* systemState)
+    void __cdecl DrawTopBorder16(SystemState* systemState)
   {
     GraphicsState* gs = GetGraphicsState();
 
-    if (gs->BoarderChange == 0) {
+    if (gs->BorderChange == 0) {
       return;
     }
 
     for (unsigned short x = 0; x < systemState->WindowSize.x; x++)
     {
-      systemState->PTRsurface16[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = gs->BoarderColor16;
+      systemState->PTRsurface16[x + ((systemState->LineCounter * 2) * systemState->SurfacePitch)] = gs->BorderColor16;
 
       if (!systemState->ScanLines) {
-        systemState->PTRsurface16[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = gs->BoarderColor16;
+        systemState->PTRsurface16[x + ((systemState->LineCounter * 2 + 1) * systemState->SurfacePitch)] = gs->BorderColor16;
       }
     }
   }
@@ -3212,20 +3212,20 @@ extern "C" {
 
 extern "C" {
   __declspec(dllexport)
-    void __cdecl DrawBottomBoarder16(SystemState* systemState)
+    void __cdecl DrawBottomBorder16(SystemState* systemState)
   {
     GraphicsState* gs = GetGraphicsState();
 
-    if (gs->BoarderChange == 0) {
+    if (gs->BorderChange == 0) {
       return;
     }
 
     for (unsigned short x = 0; x < systemState->WindowSize.x; x++)
     {
-      systemState->PTRsurface16[x + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BoarderColor16;
+      systemState->PTRsurface16[x + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BorderColor16;
 
       if (!systemState->ScanLines) {
-        systemState->PTRsurface16[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BoarderColor16;
+        systemState->PTRsurface16[x + systemState->SurfacePitch + (2 * (systemState->LineCounter + gs->LinesperScreen + gs->VertCenter) * systemState->SurfacePitch)] = gs->BorderColor16;
       }
     }
   }

@@ -22,6 +22,7 @@
 #include "FullScreenToggle.h"
 #include "IncreaseOverclockSpeed.h"
 #include "InitInstance.h"
+#include "InvalidateBorder.h "
 #include "JoystickAccessors.h"
 #include "LoadConfig.h"
 #include "LoadIniFile.h"
@@ -34,6 +35,7 @@
 #include "SaveLastTwoKeyDownEvents.h"
 #include "SendSavedKeyEvents.h"
 #include "SetClockSpeed.h"
+#include "SetMonitorType.h"
 #include "SetSpeedThrottle.h"
 #include "UnloadDll.h"
 #include "WriteIniFile.h"
@@ -41,9 +43,6 @@
 
 #include "library\fileoperations.h"
 #include "library\graphicsstate.h"
-
-extern unsigned char SetMonitorType(unsigned char type);
-extern void InvalidateBoarder();
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -245,7 +244,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_FILE_RUN:
       vccState->EmuState.EmulationRunning = TRUE;
 
-      InvalidateBoarder();
+      InvalidateBorder();
 
       break;
 
@@ -393,7 +392,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     case DIK_F10:
       SetInfoBand(!SetInfoBand(QUERY));
-      InvalidateBoarder();
+      InvalidateBorder();
 
       break;
 

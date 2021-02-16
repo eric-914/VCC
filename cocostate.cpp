@@ -50,8 +50,8 @@ const int SndEnable = 1;
 const int OverClock = 1;
 const unsigned char HorzInterruptEnabled = 0;
 const unsigned char VertInterruptEnabled = 0;
-const unsigned char TopBoarder = 0;
-const unsigned char BottomBoarder = 0;
+const unsigned char TopBorder = 0;
+const unsigned char BottomBorder = 0;
 const unsigned char TimerInterruptEnabled = 0;
 const unsigned char BlinkPhase = 1;
 
@@ -90,8 +90,8 @@ CoCoState* InitializeInstance(CoCoState* c) {
   c->OverClock = OverClock;
   c->HorzInterruptEnabled = HorzInterruptEnabled;
   c->VertInterruptEnabled = VertInterruptEnabled;
-  c->TopBoarder = TopBoarder;
-  c->BottomBoarder = BottomBoarder;
+  c->TopBorder = TopBorder;
+  c->BottomBorder = BottomBorder;
   c->TimerInterruptEnabled = TimerInterruptEnabled;
   c->BlinkPhase = BlinkPhase;
 
@@ -102,15 +102,15 @@ CoCoState* InitializeInstance(CoCoState* c) {
 
   c->AudioEvent = AudioOut;
 
-  c->DrawTopBoarder[0] = DrawTopBoarder8;
-  c->DrawTopBoarder[1] = DrawTopBoarder16;
-  c->DrawTopBoarder[2] = DrawTopBoarder24;
-  c->DrawTopBoarder[3] = DrawTopBoarder32;
+  c->DrawTopBorder[0] = DrawTopBorder8;
+  c->DrawTopBorder[1] = DrawTopBorder16;
+  c->DrawTopBorder[2] = DrawTopBorder24;
+  c->DrawTopBorder[3] = DrawTopBorder32;
 
-  c->DrawBottomBoarder[0] = DrawBottomBoarder8;
-  c->DrawBottomBoarder[1] = DrawBottomBoarder16;
-  c->DrawBottomBoarder[2] = DrawBottomBoarder24;
-  c->DrawBottomBoarder[3] = DrawBottomBoarder32;
+  c->DrawBottomBorder[0] = DrawBottomBorder8;
+  c->DrawBottomBorder[1] = DrawBottomBorder16;
+  c->DrawBottomBorder[2] = DrawBottomBorder24;
+  c->DrawBottomBorder[3] = DrawBottomBorder32;
 
   c->UpdateScreen[0] = UpdateScreen8;
   c->UpdateScreen[1] = UpdateScreen16;

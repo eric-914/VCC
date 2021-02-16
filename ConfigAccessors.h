@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 char* AppDirectory();
 char* BasicRomName(void);
 

@@ -4,13 +4,13 @@
 typedef struct
 {
   unsigned char BlinkState;
-  unsigned char BoarderChange;
+  unsigned char BorderChange;
   unsigned char Bpp;
   unsigned char BytesperRow;
   unsigned char CC2Offset;
   unsigned char CC2VDGMode;
   unsigned char CC2VDGPiaMode;
-  unsigned char CC3BoarderColor;
+  unsigned char CC3BorderColor;
   unsigned char CC3Vmode;
   unsigned char CC3Vres;
   unsigned char ColorInvert;
@@ -45,9 +45,9 @@ typedef struct
   unsigned int StartofVidram;
   unsigned int VidMask;
 
-  unsigned char  BoarderColor8;
-  unsigned short BoarderColor16;
-  unsigned int   BoarderColor32;
+  unsigned char  BorderColor8;
+  unsigned short BorderColor16;
+  unsigned int   BorderColor32;
 
   unsigned char  Afacts8[2][4];
   unsigned short Afacts16[2][4];

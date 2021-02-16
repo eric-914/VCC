@@ -10,6 +10,6 @@ void SetLinesperScreen(unsigned char lines)
   lines = (lines & 3);
 
   coco->LinesperScreen = graphicsState->Lpf[lines];
-  coco->TopBoarder = graphicsState->VcenterTable[lines];
-  coco->BottomBoarder = 243 - (coco->TopBoarder + coco->LinesperScreen); //4 lines of top boarder are unrendered 244-4=240 rendered scanlines
+  coco->TopBorder = graphicsState->VcenterTable[lines];
+  coco->BottomBorder = 243 - (coco->TopBorder + coco->LinesperScreen); //4 lines of top border are unrendered 244-4=240 rendered scanlines
 }

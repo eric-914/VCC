@@ -22,8 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 
 extern "C" __declspec(dllexport) void __cdecl UpdateScreen32(SystemState*);
 
-extern "C" __declspec(dllexport) void __cdecl DrawBottomBoarder32(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl DrawBottomBorder32(SystemState*);
 
-extern "C" __declspec(dllexport) void __cdecl DrawTopBoarder32(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl DrawTopBorder32(SystemState*);
 
 #endif

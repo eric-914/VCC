@@ -23,13 +23,13 @@ This file is part of VCC (Virtual Color Computer).
 #include "graphicsstate.h"
 
 static const unsigned char BlinkState = 1;
-static const unsigned char BoarderChange = 3;
+static const unsigned char BorderChange = 3;
 static const unsigned char Bpp = 0;
 static const unsigned char BytesperRow = 32;
 static const unsigned char CC2Offset = 0;
 static const unsigned char CC2VDGMode = 0;
 static const unsigned char CC2VDGPiaMode = 0;
-static const unsigned char CC3BoarderColor = 0;
+static const unsigned char CC3BorderColor = 0;
 static const unsigned char CC3Vmode = 0;
 static const unsigned char CC3Vres = 0;
 static const unsigned char ColorInvert = 1;
@@ -64,9 +64,9 @@ static const unsigned int NewStartofVidram = 0;
 static const unsigned int StartofVidram = 0;
 static const unsigned int VidMask = 0x1FFFF;
 
-static const unsigned char  BoarderColor8 = 0;
-static const unsigned short BoarderColor16 = 0;
-static const unsigned int   BoarderColor32 = 0;
+static const unsigned char  BorderColor8 = 0;
+static const unsigned short BorderColor16 = 0;
+static const unsigned int   BorderColor32 = 0;
 
 static const unsigned char  ColorTable16Bit[4] = { 0, 10, 21, 31 };	//Color brightness at 0 1 2 and 3 (2 bits)
 static const unsigned char  ColorTable32Bit[4] = { 0, 85, 170, 255 };
@@ -113,7 +113,7 @@ extern "C" {
     instance->HorzOffsetReg = 0;
     instance->TagY = 0;
     instance->DistoOffset = 0;
-    instance->BoarderChange = 3;
+    instance->BorderChange = 3;
     instance->CC2Offset = 0;
     instance->Hoffset = 0;
     instance->VerticalOffsetRegister = 0;
@@ -297,13 +297,13 @@ extern "C" {
 
 GraphicsState* InitializeInstance(GraphicsState* g) {
   g->BlinkState = BlinkState;
-  g->BoarderChange = BoarderChange;
+  g->BorderChange = BorderChange;
   g->Bpp = Bpp;
   g->BytesperRow = BytesperRow;
   g->CC2Offset = CC2Offset;
   g->CC2VDGMode = CC2VDGMode;
   g->CC2VDGPiaMode = CC2VDGPiaMode;
-  g->CC3BoarderColor = CC3BoarderColor;
+  g->CC3BorderColor = CC3BorderColor;
   g->CC3Vmode = CC3Vmode;
   g->CC3Vres = CC3Vres;
   g->ColorInvert = ColorInvert;
@@ -338,9 +338,9 @@ GraphicsState* InitializeInstance(GraphicsState* g) {
   g->StartofVidram = StartofVidram;
   g->VidMask = VidMask;
 
-  g->BoarderColor8 = BoarderColor8;
-  g->BoarderColor16 = BoarderColor16;
-  g->BoarderColor32 = BoarderColor32;
+  g->BorderColor8 = BorderColor8;
+  g->BorderColor16 = BorderColor16;
+  g->BorderColor32 = BorderColor32;
 
   for (int i = 0; i < 4; i++) {
     g->ColorTable16Bit[i] = ColorTable16Bit[i];

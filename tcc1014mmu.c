@@ -20,13 +20,13 @@ This file is part of VCC (Virtual Color Computer).
 #include <iostream>
 
 #include "tcc1014mmu.h"
-#include "tcc1014graphics.h"
 
 #include "ConfigAccessors.h"
 #include "ProfileAccessors.h"
 #include "port_read.h"
 #include "port_write.h"
 #include "PakInterfaceAccessors.h"
+#include "SetVideoBank.h"
 
 #include "library\fileoperations.h"
 #include "library\graphicsstate.h"

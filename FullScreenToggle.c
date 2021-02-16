@@ -3,8 +3,7 @@
 #include "CreateDDWindow.h"
 #include "RefreshDynamicMenu.h"
 #include "AudioAccessors.h"
-
-extern void InvalidateBoarder();
+#include "InvalidateBorder.h "
 
 void FullScreenToggle(void)
 {
@@ -19,7 +18,7 @@ void FullScreenToggle(void)
     exit(0);
   }
 
-  InvalidateBoarder();
+  InvalidateBorder();
   RefreshDynamicMenu(&(vccState->EmuState));
 
   vccState->EmuState.ConfigDialog = NULL;

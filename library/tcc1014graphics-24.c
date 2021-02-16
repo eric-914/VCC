@@ -27,14 +27,14 @@ extern "C" {
 
 extern "C" {
   __declspec(dllexport)
-    void __cdecl DrawTopBoarder24(SystemState* systemState)
+    void __cdecl DrawTopBorder24(SystemState* systemState)
   {
   }
 }
 
 extern "C" {
   __declspec(dllexport)
-    void __cdecl DrawBottomBoarder24(SystemState* systemState)
+    void __cdecl DrawBottomBorder24(SystemState* systemState)
   {
   }
 }
