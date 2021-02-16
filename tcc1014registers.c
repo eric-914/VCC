@@ -27,6 +27,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "SetVertInterruptState.h"
 #include "SetTimerClockRate.h"
 #include "KeyboardAccessors.h"
+#include "SetTurboMode.h"
+#include "SetCPUMultiplayerFlag.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
@@ -380,10 +382,10 @@ void sam_write(unsigned char data, unsigned char port)
     SetMapType(port & 1);
 
   if ((port == 0xD7) || (port == 0xD9))
-    SetCPUMultiplyerFlag(1);
+    SetCPUMultiplayerFlag(1);
 
   if ((port == 0xD6) || (port == 0xD8))
-    SetCPUMultiplyerFlag(0);
+    SetCPUMultiplayerFlag(0);
 }
 
 void mc6883_reset()

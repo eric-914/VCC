@@ -26,23 +26,4 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "library/systemstate.h"
 
-void SetCPUMultiplyerFlag(unsigned char);
-void SetTurboMode(unsigned char);
-unsigned char SetCPUMultiplyer(unsigned char);
-unsigned char SetRamSize(unsigned char);
-unsigned char SetSpeedThrottle(unsigned char);
-unsigned char SetFrameSkip(unsigned char);
-unsigned char SetCpuType(unsigned char);
-unsigned char SetAutoStart(unsigned char);
-void SetPaletteType(void);
-
-void DoReboot(void);
-void DoHardReset(SystemState*);
-void LoadPack(void);
-
-//Type 0= HEAD TAG 1= Slave Tag 2=StandAlone
-#define	HEAD 0
-#define SLAVE 1
-#define STANDALONE 2
-
 #endif

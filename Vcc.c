@@ -68,6 +68,16 @@ This file is part of VCC (Virtual Color Computer).
 #include "CreateDDWindow.h"
 #include "DoCls.h"
 #include "Static.h"
+#include "About.h"
+#include "HardReset.h"
+#include "SoftReset.h"
+#include "FullScreenToggle.h"
+#include "LoadPack.h"
+#include "Reboot.h"
+#include "SaveConfig.h"
+#include "LoadIniFile.h"
+#include "SetCPUMultiplayerFlag.h"
+#include "SetSpeedThrottle.h"
 
 #include "library/commandline.h"
 #include "library/cpudef.h"
@@ -78,16 +88,11 @@ This file is part of VCC (Virtual Color Computer).
 
 /***Forward declarations of functions included in this code module*****/
 BOOL InitInstance(HINSTANCE, int);
-LRESULT CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-void SoftReset(void);
-void LoadIniFile(void);
-void SaveConfig(void);
 unsigned __stdcall EmuLoop(void*);
 unsigned __stdcall CartLoad(void*);
 
-void FullScreenToggle(void);
 void save_key_down(unsigned char kb_char, unsigned char OEMscan);
 void raise_saved_keys(void);
 
@@ -538,317 +543,6 @@ void raise_saved_keys() {
   vccState->SC_save2 = 0;
 }
 
-// Handle WM_DESTROY
-void OnDestroy(HWND)
-{
-  VccState* vccState = GetVccState();
-
-  vccState->BinaryRunning = false;
-
-  PostQuitMessage(0);
-}
-
-// Window painting function
-void OnPaint(HWND hwnd)
-{
-}
-
-void SetCPUMultiplyerFlag(unsigned char double_speed)
-{
-  VccState* vccState = GetVccState();
-
-  SetClockSpeed(1);
-
-  vccState->EmuState.DoubleSpeedFlag = double_speed;
-
-  if (vccState->EmuState.DoubleSpeedFlag) {
-    SetClockSpeed(vccState->EmuState.DoubleSpeedMultiplyer * vccState->EmuState.TurboSpeedFlag);
-  }
-
-  vccState->EmuState.CPUCurrentSpeed = .894;
-
-  if (vccState->EmuState.DoubleSpeedFlag) {
-    vccState->EmuState.CPUCurrentSpeed *= ((double)vccState->EmuState.DoubleSpeedMultiplyer * (double)vccState->EmuState.TurboSpeedFlag);
-  }
-}
-
-void SetTurboMode(unsigned char data)
-{
-  VccState* vccState = GetVccState();
-
-  vccState->EmuState.TurboSpeedFlag = (data & 1) + 1;
-
-  SetClockSpeed(1);
-
-  if (vccState->EmuState.DoubleSpeedFlag) {
-    SetClockSpeed(vccState->EmuState.DoubleSpeedMultiplyer * vccState->EmuState.TurboSpeedFlag);
-  }
-
-  vccState->EmuState.CPUCurrentSpeed = .894;
-
-  if (vccState->EmuState.DoubleSpeedFlag) {
-    vccState->EmuState.CPUCurrentSpeed *= ((double)vccState->EmuState.DoubleSpeedMultiplyer * (double)vccState->EmuState.TurboSpeedFlag);
-  }
-}
-
-unsigned char SetCPUMultiplyer(unsigned char multiplyer)
-{
-  VccState* vccState = GetVccState();
-
-  if (multiplyer != QUERY)
-  {
-    vccState->EmuState.DoubleSpeedMultiplyer = multiplyer;
-
-    SetCPUMultiplyerFlag(vccState->EmuState.DoubleSpeedFlag);
-  }
-
-  return(vccState->EmuState.DoubleSpeedMultiplyer);
-}
-
-void DoHardReset(SystemState* const systemState)
-{
-  VccState* vccState = GetVccState();
-
-  systemState->RamBuffer = MmuInit(systemState->RamSize);	//Alocate RAM/ROM & copy ROM Images from source
-  systemState->WRamBuffer = (unsigned short*)systemState->RamBuffer;
-
-  if (systemState->RamBuffer == NULL)
-  {
-    MessageBox(NULL, "Can't allocate enough RAM, Out of memory", "Error", 0);
-
-    exit(0);
-  }
-
-  CPU* cpu = GetCPU();
-
-  if (systemState->CpuType == 1)
-  {
-    cpu->CPUInit = HD6309Init;
-    cpu->CPUExec = HD6309Exec;
-    cpu->CPUReset = HD6309Reset;
-    cpu->CPUAssertInterrupt = HD6309AssertInterrupt;
-    cpu->CPUDeAssertInterrupt = HD6309DeAssertInterrupt;
-    cpu->CPUForcePC = HD6309ForcePC;
-  }
-  else
-  {
-    cpu->CPUInit = MC6809Init;
-    cpu->CPUExec = MC6809Exec;
-    cpu->CPUReset = MC6809Reset;
-    cpu->CPUAssertInterrupt = MC6809AssertInterrupt;
-    cpu->CPUDeAssertInterrupt = MC6809DeAssertInterrupt;
-    cpu->CPUForcePC = MC6809ForcePC;
-  }
-
-  PiaReset();
-  mc6883_reset();	//Captures interal rom pointer for CPU Interrupt Vectors
-
-  cpu->CPUInit();
-  cpu->CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
-
-  GimeReset();
-  UpdateBusPointer();
-
-  vccState->EmuState.TurboSpeedFlag = 1;
-
-  ResetBus();
-  SetClockSpeed(1);
-}
-
-void SoftReset(void)
-{
-  VccState* vccState = GetVccState();
-
-  mc6883_reset();
-  PiaReset();
-
-  GetCPU()->CPUReset();
-
-  GimeReset();
-  MmuReset();
-  CopyRom();
-  ResetBus();
-
-  vccState->EmuState.TurboSpeedFlag = 1;
-}
-
-// Mesage handler for the About box.
-LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-  VccState* vccState = GetVccState();
-
-  switch (message)
-  {
-  case WM_INITDIALOG:
-    SendDlgItemMessage(hDlg, IDC_TITLE, WM_SETTEXT, strlen(vccState->AppName), (LPARAM)(LPCSTR)(vccState->AppName));
-
-    return TRUE;
-
-  case WM_COMMAND:
-    if (LOWORD(wParam) == IDOK)
-    {
-      EndDialog(hDlg, LOWORD(wParam));
-
-      return TRUE;
-    }
-
-    break;
-  }
-
-  return FALSE;
-}
-
-unsigned char SetRamSize(unsigned char size)
-{
-  VccState* vccState = GetVccState();
-
-  if (size != QUERY) {
-    vccState->EmuState.RamSize = size;
-  }
-
-  return(vccState->EmuState.RamSize);
-}
-
-unsigned char SetSpeedThrottle(unsigned char throttle)
-{
-  VccState* vccState = GetVccState();
-
-  if (throttle != QUERY) {
-    vccState->Throttle = throttle;
-  }
-
-  return(vccState->Throttle);
-}
-
-unsigned char SetFrameSkip(unsigned char skip)
-{
-  VccState* vccState = GetVccState();
-
-  if (skip != QUERY) {
-    vccState->EmuState.FrameSkip = skip;
-  }
-
-  return(vccState->EmuState.FrameSkip);
-}
-
-unsigned char SetCpuType(unsigned char cpuType)
-{
-  VccState* vccState = GetVccState();
-
-  switch (cpuType)
-  {
-  case 0:
-    vccState->EmuState.CpuType = 0;
-
-    strcpy(vccState->CpuName, "MC6809");
-
-    break;
-
-  case 1:
-    vccState->EmuState.CpuType = 1;
-
-    strcpy(vccState->CpuName, "HD6309");
-
-    break;
-  }
-
-  return(vccState->EmuState.CpuType);
-}
-
-void DoReboot(void)
-{
-  VccState* vccState = GetVccState();
-
-  vccState->EmuState.ResetPending = 2;
-}
-
-unsigned char SetAutoStart(unsigned char autostart)
-{
-  VccState* vccState = GetVccState();
-
-  if (autostart != QUERY) {
-    vccState->AutoStart = autostart;
-  }
-
-  return(vccState->AutoStart);
-}
-
-// LoadIniFile allows user to browse for an ini file and reloads the config from it.
-void LoadIniFile(void)
-{
-  OPENFILENAME ofn;
-  char szFileName[MAX_PATH] = "";
-
-  VccState* vccState = GetVccState();
-
-  GetIniFilePath(szFileName); // EJJ load current ini file path
-
-  memset(&ofn, 0, sizeof(ofn));
-
-  ofn.lStructSize = sizeof(OPENFILENAME);
-  ofn.hwndOwner = vccState->EmuState.WindowHandle;
-  ofn.lpstrFilter = "INI\0*.ini\0\0";
-  ofn.nFilterIndex = 1;
-  ofn.lpstrFile = szFileName;
-  ofn.nMaxFile = MAX_PATH;
-  ofn.nMaxFileTitle = MAX_PATH;
-  ofn.lpstrFileTitle = NULL;
-  ofn.lpstrInitialDir = AppDirectory();
-  ofn.lpstrTitle = TEXT("Load Vcc Config File");
-  ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
-
-  if (GetOpenFileName(&ofn)) {
-    WriteIniFile();               // Flush current profile
-    SetIniFilePath(szFileName);   // Set new ini file path
-    ReadIniFile(&(vccState->EmuState));                // Load it
-    UpdateConfig(&(vccState->EmuState));
-
-    vccState->EmuState.ResetPending = 2;
-  }
-}
-
-// SaveIniFile copies the current config to a speficied ini file. The file is created
-// if it does not already exist.
-
-void SaveConfig(void) {
-  OPENFILENAME ofn;
-  char curini[MAX_PATH];
-  char newini[MAX_PATH + 4];  // Save room for '.ini' if needed
-
-  VccState* vccState = GetVccState();
-
-  GetIniFilePath(curini);  // EJJ get current ini file path
-  strcpy(newini, curini);   // Let GetOpenFilename suggest it
-
-  memset(&ofn, 0, sizeof(ofn));
-
-  ofn.lStructSize = sizeof(OPENFILENAME);
-  ofn.hwndOwner = vccState->EmuState.WindowHandle;
-  ofn.lpstrFilter = "INI\0*.ini\0\0";      // filter string
-  ofn.nFilterIndex = 1;                    // current filter index
-  ofn.lpstrFile = newini;                  // contains full path on return
-  ofn.nMaxFile = MAX_PATH;                 // sizeof lpstrFile
-  ofn.lpstrFileTitle = NULL;               // filename and extension only
-  ofn.nMaxFileTitle = MAX_PATH;            // sizeof lpstrFileTitle
-  ofn.lpstrInitialDir = AppDirectory();    // EJJ initial directory
-  ofn.lpstrTitle = TEXT("Save Vcc Config"); // title bar string
-  ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
-
-  if (GetOpenFileName(&ofn)) {
-    if (ofn.nFileExtension == 0) {
-      strcat(newini, ".ini");  //Add extension if none
-    }
-
-    WriteIniFile(); // Flush current config
-
-    if (_stricmp(curini, newini) != 0) {
-      if (!CopyFile(curini, newini, false)) { // Copy it to new file
-        MessageBox(0, "Copy config failed", "error", 0);
-      }
-    }
-  }
-}
-
 unsigned __stdcall EmuLoop(void* dummy)
 {
   HANDLE hEvent = (HANDLE)dummy;
@@ -897,7 +591,7 @@ unsigned __stdcall EmuLoop(void* dummy)
         case 2:	//Hard Reset
           UpdateConfig(&(vccState->EmuState));
           DoCls(&(vccState->EmuState));
-          DoHardReset(&(vccState->EmuState));
+          HardReset(&(vccState->EmuState));
 
           break;
 
@@ -946,21 +640,6 @@ unsigned __stdcall EmuLoop(void* dummy)
   return(NULL);
 }
 
-void LoadPack(void)
-{
-  unsigned threadID;
-
-  VccState* vccState = GetVccState();
-
-  if (vccState->DialogOpen) {
-    return;
-  }
-
-  vccState->DialogOpen = true;
-
-  _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
-}
-
 unsigned __stdcall CartLoad(void* dummy)
 {
   VccState* vccState = GetVccState();
@@ -971,25 +650,4 @@ unsigned __stdcall CartLoad(void* dummy)
   vccState->DialogOpen = false;
 
   return(NULL);
-}
-
-void FullScreenToggle(void)
-{
-  VccState* vccState = GetVccState();
-
-  PauseAudio(true);
-
-  if (!CreateDDWindow(&(vccState->EmuState)))
-  {
-    MessageBox(0, "Can't rebuild primary Window", "Error", 0);
-
-    exit(0);
-  }
-
-  InvalidateBoarder();
-  RefreshDynamicMenu(&(vccState->EmuState));
-
-  vccState->EmuState.ConfigDialog = NULL;
-
-  PauseAudio(false);
 }

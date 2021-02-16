@@ -167,6 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="About.c" />
     <ClCompile Include="AudioAccessors.c" />
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="AudioOut.c" />
@@ -202,6 +203,7 @@
     <ClCompile Include="FlushAudioBuffer.c" />
     <ClCompile Include="FlushCassetteBuffer.c" />
     <ClCompile Include="FrameWait.c" />
+    <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetClipboardText.c" />
     <ClCompile Include="GetCurrentKeyMap.c" />
     <ClCompile Include="GetFreeBlockCount.c" />
@@ -209,6 +211,7 @@
     <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="GetTapeCounter.c" />
     <ClCompile Include="GetTapeName.c" />
+    <ClCompile Include="HardReset.c" />
     <ClCompile Include="hd6309.c" />
     <ClCompile Include="IncreaseOverclockSpeed.c" />
     <ClCompile Include="InitInstance.c" />
@@ -222,6 +225,8 @@
     <ClCompile Include="LoadCart.c" />
     <ClCompile Include="LoadCassetteBuffer.c" />
     <ClCompile Include="LoadConfig.c" />
+    <ClCompile Include="LoadIniFile.c" />
+    <ClCompile Include="LoadPack.c" />
     <ClCompile Include="LoadTape.c" />
     <ClCompile Include="load_ext_rom.c" />
     <ClCompile Include="LockScreen.c" />
@@ -244,25 +249,36 @@
     <ClCompile Include="PurgeAuxBuffer.c" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="ReadIniFile.c" />
+    <ClCompile Include="Reboot.c" />
     <ClCompile Include="RefreshDynamicMenu.c" />
     <ClCompile Include="RefreshJoystickStatus.c" />
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="ResetAudio.c" />
+    <ClCompile Include="SaveConfig.c" />
     <ClCompile Include="SelectFile.c" />
     <ClCompile Include="SetAudioRate.c" />
+    <ClCompile Include="SetAutoStart.c" />
     <ClCompile Include="SetClipboard.c" />
     <ClCompile Include="SetClockSpeed.c" />
+    <ClCompile Include="SetCPUMultiplayer.c" />
+    <ClCompile Include="SetCPUMultiplayerFlag.c" />
+    <ClCompile Include="SetCpuType.c" />
+    <ClCompile Include="SetFrameSkip.c" />
     <ClCompile Include="SetHorzInterruptState.c" />
     <ClCompile Include="SetInterruptTimer.c" />
     <ClCompile Include="SetLinesperScreen.c" />
     <ClCompile Include="SetMasterTickCounter.c" />
+    <ClCompile Include="SetRamSize.c" />
     <ClCompile Include="SetSndOutMode.c" />
+    <ClCompile Include="SetSpeedThrottle.c" />
     <ClCompile Include="SetTapeCounter.c" />
     <ClCompile Include="SetTapeMode.c" />
     <ClCompile Include="SetTimerClockRate.c" />
     <ClCompile Include="SetTimerInterruptState.c" />
+    <ClCompile Include="SetTurboMode.c" />
     <ClCompile Include="SetVertInterruptState.c" />
     <ClCompile Include="SetWindowSize.c" />
+    <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
     <ClCompile Include="StartRender.c" />
     <ClCompile Include="Static.c" />
@@ -294,6 +310,7 @@
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="About.h" />
     <ClInclude Include="AudioAccessors.h" />
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="audiodef.h" />
@@ -332,6 +349,7 @@
     <ClInclude Include="FlushAudioBuffer.h" />
     <ClInclude Include="FlushCassetteBuffer.h" />
     <ClInclude Include="FrameWait.h" />
+    <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="GetCurrentKeyMap.h" />
     <ClInclude Include="GetFreeBlockCount.h" />
@@ -339,6 +357,7 @@
     <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="GetTapeCounter.h" />
     <ClInclude Include="GetTapeName.h" />
+    <ClInclude Include="HardReset.h" />
     <ClInclude Include="hd6309.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="IncreaseOverclockSpeed.h" />
@@ -353,6 +372,8 @@
     <ClInclude Include="LoadCart.h" />
     <ClInclude Include="LoadCassetteBuffer.h" />
     <ClInclude Include="LoadConfig.h" />
+    <ClInclude Include="LoadIniFile.h" />
+    <ClInclude Include="LoadPack.h" />
     <ClInclude Include="LoadTape.h" />
     <ClInclude Include="load_ext_rom.h" />
     <ClInclude Include="LockScreen.h" />
@@ -378,27 +399,38 @@
     <ClInclude Include="PurgeAuxBuffer.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="ReadIniFile.h" />
+    <ClInclude Include="Reboot.h" />
     <ClInclude Include="RefreshDynamicMenu.h" />
     <ClInclude Include="RefreshJoystickStatus.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="ResetAudio.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sampledefs.h" />
+    <ClInclude Include="SaveConfig.h" />
     <ClInclude Include="SelectFile.h" />
     <ClInclude Include="SetAudioRate.h" />
+    <ClInclude Include="SetAutoStart.h" />
     <ClInclude Include="SetClipboard.h" />
     <ClInclude Include="SetClockSpeed.h" />
+    <ClInclude Include="SetCPUMultiplayer.h" />
+    <ClInclude Include="SetCPUMultiplayerFlag.h" />
+    <ClInclude Include="SetCpuType.h" />
+    <ClInclude Include="SetFrameSkip.h" />
     <ClInclude Include="SetHorzInterruptState.h" />
     <ClInclude Include="SetInterruptTimer.h" />
     <ClInclude Include="SetLinesperScreen.h" />
     <ClInclude Include="SetMasterTickCounter.h" />
+    <ClInclude Include="SetRamSize.h" />
     <ClInclude Include="SetSndOutMode.h" />
+    <ClInclude Include="SetSpeedThrottle.h" />
     <ClInclude Include="SetTapeCounter.h" />
     <ClInclude Include="SetTapeMode.h" />
     <ClInclude Include="SetTimerClockRate.h" />
     <ClInclude Include="SetTimerInterruptState.h" />
+    <ClInclude Include="SetTurboMode.h" />
     <ClInclude Include="SetVertInterruptState.h" />
     <ClInclude Include="SetWindowSize.h" />
+    <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />
     <ClInclude Include="StartRender.h" />
     <ClInclude Include="Static.h" />
