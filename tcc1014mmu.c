@@ -19,6 +19,7 @@ This file is part of VCC (Virtual Color Computer).
 #include <windows.h>
 #include <iostream>
 
+#include "mmustate.h"
 #include "tcc1014mmu.h"
 
 #include "ConfigAccessors.h"
@@ -31,26 +32,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "library\fileoperations.h"
 #include "library\graphicsstate.h"
 
-static unsigned char* MemPages[1024];
-static unsigned short MemPageOffsets[1024];
-static unsigned char* memory = NULL;	//Emulated RAM
-static unsigned char* InternalRomBuffer = NULL;
-static unsigned char MmuTask = 0;		// $FF91 bit 0
-static unsigned char MmuEnabled = 0;	// $FF90 bit 6
-static unsigned char RamVectors = 0;	// $FF90 bit 3
-static unsigned char MmuState = 0;	// Composite variable handles MmuTask and MmuEnabled
-static unsigned char RomMap = 0;		// $FF90 bit 1-0
-static unsigned char MapType = 0;		// $FFDE/FFDF toggle Map type 0 = ram/rom
-static unsigned short MmuRegisters[4][8];	// $FFA0 - FFAF
-static unsigned int MemConfig[4] = { 0x20000,0x80000,0x200000,0x800000 };
-static unsigned short RamMask[4] = { 15,63,255,1023 };
-static unsigned char StateSwitch[4] = { 8,56,56,56 };
-static unsigned char VectorMask[4] = { 15,63,63,63 };
-static unsigned char VectorMaska[4] = { 12,60,60,60 };
-static unsigned int VidMask[4] = { 0x1FFFF,0x7FFFF,0x1FFFFF,0x7FFFFF };
-static unsigned char CurrentRamConfig = 1;
-static unsigned short MmuPrefix = 0;
-
 void UpdateMmuArray(void);
 int load_int_rom(TCHAR filename[MAX_PATH]);
 
@@ -61,67 +42,74 @@ int load_int_rom(TCHAR filename[MAX_PATH]);
 *****************************************************************************************/
 unsigned char* MmuInit(unsigned char RamConfig)
 {
-  unsigned int ramSize = 0;
   unsigned int index = 0;
+  unsigned int ramSize;
 
-  ramSize = MemConfig[RamConfig];
-  CurrentRamConfig = RamConfig;
+  MmuState* mmuState = GetMmuState();
 
-  if (memory != NULL) {
-    free(memory);
+  ramSize = mmuState->MemConfig[RamConfig];
+
+  mmuState->CurrentRamConfig = RamConfig;
+
+  if (mmuState->Memory != NULL) {
+    free(mmuState->Memory);
   }
 
-  memory = (unsigned char*)malloc(ramSize);
+  mmuState->Memory = (unsigned char*)malloc(ramSize);
 
-  if (memory == NULL) {
+  if (mmuState->Memory == NULL) {
     return(NULL);
   }
 
   for (index = 0;index < ramSize;index++)
   {
-    memory[index] = index & 1 ? 0 : 0xFF;
+    mmuState->Memory[index] = index & 1 ? 0 : 0xFF;
   }
 
-  GetGraphicsState()->VidMask = VidMask[CurrentRamConfig];
+  GetGraphicsState()->VidMask = mmuState->VidMask[mmuState->CurrentRamConfig];
 
-  if (InternalRomBuffer != NULL) {
-    free(InternalRomBuffer);
+  if (mmuState->InternalRomBuffer != NULL) {
+    free(mmuState->InternalRomBuffer);
   }
 
-  InternalRomBuffer = NULL;
-  InternalRomBuffer = (unsigned char*)malloc(0x8000);
+  mmuState->InternalRomBuffer = NULL;
+  mmuState->InternalRomBuffer = (unsigned char*)malloc(0x8000);
 
-  if (InternalRomBuffer == NULL) {
+  if (mmuState->InternalRomBuffer == NULL) {
     return(NULL);
   }
 
-  memset(InternalRomBuffer, 0xFF, 0x8000);
+  memset(mmuState->InternalRomBuffer, 0xFF, 0x8000);
   CopyRom();
   MmuReset();
 
-  return(memory);
+  return(mmuState->Memory);
 }
 
 void MmuReset(void)
 {
-  unsigned int Index1 = 0, Index2 = 0;
+  unsigned int index1 = 0, index2 = 0;
 
-  MmuTask = 0;
-  MmuEnabled = 0;
-  RamVectors = 0;
-  MmuState = 0;
-  RomMap = 0;
-  MapType = 0;
-  MmuPrefix = 0;
+  MmuState* mmuState = GetMmuState();
 
-  for (Index1 = 0;Index1 < 8;Index1++)
-    for (Index2 = 0;Index2 < 4;Index2++)
-      MmuRegisters[Index2][Index1] = Index1 + StateSwitch[CurrentRamConfig];
+  mmuState->MmuTask = 0;
+  mmuState->MmuEnabled = 0;
+  mmuState->RamVectors = 0;
+  mmuState->MmuState = 0;
+  mmuState->RomMap = 0;
+  mmuState->MapType = 0;
+  mmuState->MmuPrefix = 0;
 
-  for (Index1 = 0;Index1 < 1024;Index1++)
+  for (index1 = 0;index1 < 8;index1++) {
+    for (index2 = 0;index2 < 4;index2++) {
+      mmuState->MmuRegisters[index2][index1] = index1 + mmuState->StateSwitch[mmuState->CurrentRamConfig];
+    }
+  }
+
+  for (index1 = 0;index1 < 1024;index1++)
   {
-    MemPages[Index1] = memory + ((Index1 & RamMask[CurrentRamConfig]) * 0x2000);
-    MemPageOffsets[Index1] = 1;
+    mmuState->MemPages[index1] = mmuState->Memory + ((index1 & mmuState->RamMask[mmuState->CurrentRamConfig]) * 0x2000);
+    mmuState->MemPageOffsets[index1] = 1;
   }
 
   SetRomMap(0);
@@ -130,72 +118,101 @@ void MmuReset(void)
 
 void SetVectors(unsigned char data)
 {
-  RamVectors = !!data; //Bit 3 of $FF90 MC3
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->RamVectors = !!data; //Bit 3 of $FF90 MC3
 }
 
 void SetMmuRegister(unsigned char Register, unsigned char data)
 {
   unsigned char BankRegister, Task;
+
+  MmuState* mmuState = GetMmuState();
+
   BankRegister = Register & 7;
   Task = !!(Register & 8);
-  MmuRegisters[Task][BankRegister] = MmuPrefix | (data & RamMask[CurrentRamConfig]); //gime.c returns what was written so I can get away with this
+
+  mmuState->MmuRegisters[Task][BankRegister] = mmuState->MmuPrefix | (data & mmuState->RamMask[mmuState->CurrentRamConfig]); //gime.c returns what was written so I can get away with this
 }
 
 void SetRomMap(unsigned char data)
 {
-  RomMap = (data & 3);
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->RomMap = (data & 3);
+
   UpdateMmuArray();
 }
 
 void SetMapType(unsigned char type)
 {
-  MapType = type;
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->MapType = type;
+
   UpdateMmuArray();
 }
 
 void Set_MmuTask(unsigned char task)
 {
-  MmuTask = task;
-  MmuState = (!MmuEnabled) << 1 | MmuTask;
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->MmuTask = task;
+  mmuState->MmuState = (!mmuState->MmuEnabled) << 1 | mmuState->MmuTask;
 }
 
 void Set_MmuEnabled(unsigned char usingmmu)
 {
-  MmuEnabled = usingmmu;
-  MmuState = (!MmuEnabled) << 1 | MmuTask;
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->MmuEnabled = usingmmu;
+  mmuState->MmuState = (!mmuState->MmuEnabled) << 1 | mmuState->MmuTask;
 }
 
 unsigned char* Getint_rom_pointer(void)
 {
-  return(InternalRomBuffer);
+  MmuState* mmuState = GetMmuState();
+
+  return(mmuState->InternalRomBuffer);
 }
 
 void CopyRom(void)
 {
   char ExecPath[MAX_PATH];
   char COCO3ROMPath[MAX_PATH];
-  GetProfileText("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath);
   unsigned short temp = 0;
-  
+
+  GetProfileText("DefaultPaths", "COCO3ROMPath", "", COCO3ROMPath);
+
   strcat(COCO3ROMPath, "\\coco3.rom");
 
-  if (COCO3ROMPath != "") { temp = load_int_rom(COCO3ROMPath); } //Try loading from the user defined path first.
-  
-  if (temp) { OutputDebugString(" Found coco3.rom in COCO3ROMPath\n"); }
+  if (COCO3ROMPath != "") {
+    temp = load_int_rom(COCO3ROMPath);  //Try loading from the user defined path first.
+  }
 
-  if (temp == 0) { temp = load_int_rom(BasicRomName()); }		//Try to load the image
-  
-  if (temp == 0)
-  {	// If we can't find it use default copy
+  if (temp) {
+    OutputDebugString(" Found coco3.rom in COCO3ROMPath\n");
+  }
+
+  if (temp == 0) {
+    temp = load_int_rom(BasicRomName());  //Try to load the image
+  }
+
+  if (temp == 0) {
+    // If we can't find it use default copy
     GetModuleFileName(NULL, ExecPath, MAX_PATH);
+
     FilePathRemoveFileSpec(ExecPath);
+
     strcat(ExecPath, "coco3.rom");
+
     temp = load_int_rom(ExecPath);
   }
 
   if (temp == 0)
   {
     MessageBox(0, "Missing file coco3.rom", "Error", 0);
+
     exit(0);
   }
 }
@@ -203,15 +220,16 @@ void CopyRom(void)
 int load_int_rom(TCHAR filename[MAX_PATH])
 {
   unsigned short index = 0;
-  FILE* rom_handle;
-  rom_handle = fopen(filename, "rb");
+  FILE* rom_handle = fopen(filename, "rb");
+
+  MmuState* mmuState = GetMmuState();
 
   if (rom_handle == NULL) {
     return(0);
   }
 
   while ((feof(rom_handle) == 0) && (index < 0x8000)) {
-    InternalRomBuffer[index++] = fgetc(rom_handle);
+    mmuState->InternalRomBuffer[index++] = fgetc(rom_handle);
   }
 
   fclose(rom_handle);
@@ -222,32 +240,41 @@ int load_int_rom(TCHAR filename[MAX_PATH])
 // Coco3 MMU Code
 unsigned char MemRead8(unsigned short address)
 {
+  MmuState* mmuState = GetMmuState();
+
   if (address < 0xFE00)
   {
-    if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
-      return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+    if (mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] == 1) {
+      return(mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF]);
+    }
 
-    return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
+    return(PackMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
   }
 
-  if (address > 0xFEFF)
+  if (address > 0xFEFF) {
     return (port_read(address));
-  
-  if (RamVectors)	//Address must be $FE00 - $FEFF
-    return(memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)]);
-  
-  if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
-    return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+  }
 
-  return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
+  if (mmuState->RamVectors) { //Address must be $FE00 - $FEFF
+    return(mmuState->Memory[(0x2000 * mmuState->VectorMask[mmuState->CurrentRamConfig]) | (address & 0x1FFF)]);
+  }
+
+  if (mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] == 1) {
+    return(mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF]);
+  }
+
+  return(PackMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
 }
 
 void MemWrite8(unsigned char data, unsigned short address)
 {
+  MmuState* mmuState = GetMmuState();
+
   if (address < 0xFE00)
   {
-    if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
-      MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+    if (mmuState->MapType || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] < mmuState->VectorMaska[mmuState->CurrentRamConfig]) || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] > mmuState->VectorMask[mmuState->CurrentRamConfig])) {
+      mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF] = data;
+    }
 
     return;
   }
@@ -259,55 +286,67 @@ void MemWrite8(unsigned char data, unsigned short address)
     return;
   }
 
-  if (RamVectors)	//Address must be $FE00 - $FEFF
-    memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)] = data;
-  else
-    if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
-      MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+  if (mmuState->RamVectors) { //Address must be $FE00 - $FEFF
+    mmuState->Memory[(0x2000 * mmuState->VectorMask[mmuState->CurrentRamConfig]) | (address & 0x1FFF)] = data;
+  }
+  else if (mmuState->MapType || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] < mmuState->VectorMaska[mmuState->CurrentRamConfig]) || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] > mmuState->VectorMask[mmuState->CurrentRamConfig])) {
+    mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF] = data;
+  }
 }
 
 unsigned char __fastcall fMemRead8(unsigned short address)
 {
-  if (address < 0xFE00)
-  {
-    if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
-      return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
+  MmuState* mmuState = GetMmuState();
 
-    return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
+  if (address < 0xFE00) {
+    if (mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] == 1) {
+      return(mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF]);
+    }
+
+    return(PackMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
   }
 
-  if (address > 0xFEFF)
+  if (address > 0xFEFF) {
     return (port_read(address));
-  
-  if (RamVectors)	//Address must be $FE00 - $FEFF
-    return(memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)]);
-  
-  if (MemPageOffsets[MmuRegisters[MmuState][address >> 13]] == 1)
-    return(MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF]);
-  
-  return(PackMem8Read(MemPageOffsets[MmuRegisters[MmuState][address >> 13]] + (address & 0x1FFF)));
+  }
+
+  if (mmuState->RamVectors) { //Address must be $FE00 - $FEFF
+    return(mmuState->Memory[(0x2000 * mmuState->VectorMask[mmuState->CurrentRamConfig]) | (address & 0x1FFF)]);
+  }
+
+  if (mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] == 1) {
+    return(mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF]);
+  }
+
+  return(PackMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
 }
 
 void __fastcall fMemWrite8(unsigned char data, unsigned short address)
 {
+  MmuState* mmuState = GetMmuState();
+
   if (address < 0xFE00)
   {
-    if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
-      MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+    if (mmuState->MapType || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] < mmuState->VectorMaska[mmuState->CurrentRamConfig]) || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] > mmuState->VectorMask[mmuState->CurrentRamConfig])) {
+      mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF] = data;
+    }
+
     return;
   }
 
   if (address > 0xFEFF)
   {
     port_write(data, address);
+
     return;
   }
 
-  if (RamVectors)	//Address must be $FE00 - $FEFF
-    memory[(0x2000 * VectorMask[CurrentRamConfig]) | (address & 0x1FFF)] = data;
-  else
-    if (MapType | (MmuRegisters[MmuState][address >> 13] < VectorMaska[CurrentRamConfig]) | (MmuRegisters[MmuState][address >> 13] > VectorMask[CurrentRamConfig]))
-      MemPages[MmuRegisters[MmuState][address >> 13]][address & 0x1FFF] = data;
+  if (mmuState->RamVectors) { //Address must be $FE00 - $FEFF
+    mmuState->Memory[(0x2000 * mmuState->VectorMask[mmuState->CurrentRamConfig]) | (address & 0x1FFF)] = data;
+  }
+  else if (mmuState->MapType || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] < mmuState->VectorMaska[mmuState->CurrentRamConfig]) || (mmuState->MmuRegisters[mmuState->MmuState][address >> 13] > mmuState->VectorMask[mmuState->CurrentRamConfig])) {
+    mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF] = data;
+  }
 }
 
 /*****************************************************************
@@ -326,16 +365,22 @@ void MemWrite16(unsigned short data, unsigned short addr)
 }
 
 unsigned short GetMem(long address) {
-  return(memory[address]);
+  MmuState* mmuState = GetMmuState();
+
+  return(mmuState->Memory[address]);
 }
 
 void SetMem(long address, unsigned short data) {
-  memory[address] = (unsigned char)data;
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->Memory[address] = (unsigned char)data;
 }
 
 void SetDistoRamBank(unsigned char data)
 {
-  switch (CurrentRamConfig)
+  MmuState* mmuState = GetMmuState();
+
+  switch (mmuState->CurrentRamConfig)
   {
   case 0:	// 128K
     return;
@@ -348,78 +393,82 @@ void SetDistoRamBank(unsigned char data)
   case 2:	//2048K
     SetVideoBank(data & 3);
     SetMmuPrefix(0);
+
     return;
-    break;
 
   case 3:	//8192K	//No Can 3 
     SetVideoBank(data & 0x0F);
     SetMmuPrefix((data & 0x30) >> 4);
+
     return;
-    break;
   }
 }
 
 void SetMmuPrefix(unsigned char data)
 {
-  MmuPrefix = (data & 3) << 8;
+  MmuState* mmuState = GetMmuState();
+
+  mmuState->MmuPrefix = (data & 3) << 8;
 }
 
 void UpdateMmuArray(void)
 {
-  if (MapType)
-  {
-    MemPages[VectorMask[CurrentRamConfig] - 3] = memory + (0x2000 * (VectorMask[CurrentRamConfig] - 3));
-    MemPages[VectorMask[CurrentRamConfig] - 2] = memory + (0x2000 * (VectorMask[CurrentRamConfig] - 2));
-    MemPages[VectorMask[CurrentRamConfig] - 1] = memory + (0x2000 * (VectorMask[CurrentRamConfig] - 1));
-    MemPages[VectorMask[CurrentRamConfig]] = memory + (0x2000 * VectorMask[CurrentRamConfig]);
+  MmuState* mmuState = GetMmuState();
 
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 3] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 2] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 1] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig]] = 1;
+  if (mmuState->MapType) {
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = mmuState->Memory + (0x2000 * (mmuState->VectorMask[mmuState->CurrentRamConfig] - 3));
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = mmuState->Memory + (0x2000 * (mmuState->VectorMask[mmuState->CurrentRamConfig] - 2));
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = mmuState->Memory + (0x2000 * (mmuState->VectorMask[mmuState->CurrentRamConfig] - 1));
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig]] = mmuState->Memory + (0x2000 * mmuState->VectorMask[mmuState->CurrentRamConfig]);
+
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig]] = 1;
+
     return;
   }
 
-  switch (RomMap)
+  switch (mmuState->RomMap)
   {
   case 0:
   case 1:	//16K Internal 16K External
-    MemPages[VectorMask[CurrentRamConfig] - 3] = InternalRomBuffer;
-    MemPages[VectorMask[CurrentRamConfig] - 2] = InternalRomBuffer + 0x2000;
-    MemPages[VectorMask[CurrentRamConfig] - 1] = NULL;
-    MemPages[VectorMask[CurrentRamConfig]] = NULL;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = mmuState->InternalRomBuffer;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = mmuState->InternalRomBuffer + 0x2000;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = NULL;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig]] = NULL;
 
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 3] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 2] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 1] = 0;
-    MemPageOffsets[VectorMask[CurrentRamConfig]] = 0x2000;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = 0;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig]] = 0x2000;
+
     return;
-    break;
 
   case 2:	// 32K Internal
-    MemPages[VectorMask[CurrentRamConfig] - 3] = InternalRomBuffer;
-    MemPages[VectorMask[CurrentRamConfig] - 2] = InternalRomBuffer + 0x2000;
-    MemPages[VectorMask[CurrentRamConfig] - 1] = InternalRomBuffer + 0x4000;
-    MemPages[VectorMask[CurrentRamConfig]] = InternalRomBuffer + 0x6000;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = mmuState->InternalRomBuffer;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = mmuState->InternalRomBuffer + 0x2000;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = mmuState->InternalRomBuffer + 0x4000;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig]] = mmuState->InternalRomBuffer + 0x6000;
 
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 3] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 2] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 1] = 1;
-    MemPageOffsets[VectorMask[CurrentRamConfig]] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = 1;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig]] = 1;
+
     return;
-    break;
 
   case 3:	//32K External
-    MemPages[VectorMask[CurrentRamConfig] - 1] = NULL;
-    MemPages[VectorMask[CurrentRamConfig]] = NULL;
-    MemPages[VectorMask[CurrentRamConfig] - 3] = NULL;
-    MemPages[VectorMask[CurrentRamConfig] - 2] = NULL;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = NULL;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig]] = NULL;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = NULL;
+    mmuState->MemPages[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = NULL;
 
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 1] = 0;
-    MemPageOffsets[VectorMask[CurrentRamConfig]] = 0x2000;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 3] = 0x4000;
-    MemPageOffsets[VectorMask[CurrentRamConfig] - 2] = 0x6000;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 1] = 0;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig]] = 0x2000;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 3] = 0x4000;
+    mmuState->MemPageOffsets[mmuState->VectorMask[mmuState->CurrentRamConfig] - 2] = 0x6000;
+
     return;
-    break;
   }
 }
