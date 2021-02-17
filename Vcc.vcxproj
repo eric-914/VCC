@@ -241,6 +241,7 @@
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="mc6809.c" />
     <ClCompile Include="mc6821.c" />
+    <ClCompile Include="mc6821state.c" />
     <ClCompile Include="MC6883Reset.c" />
     <ClCompile Include="MemRead16.c" />
     <ClCompile Include="MemRead8.c" />
@@ -430,6 +431,7 @@
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6821.h" />
     <ClInclude Include="mc6821def.h" />
+    <ClInclude Include="mc6821state.h" />
     <ClInclude Include="MC6883Reset.h" />
     <ClInclude Include="MemRead16.h" />
     <ClInclude Include="MemRead8.h" />

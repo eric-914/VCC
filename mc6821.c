@@ -26,24 +26,14 @@ This file is part of VCC (Virtual Color Computer).
 #include "PakInterfaceAccessors.h"
 #include "vccKeyboardGetScan.h"
 #include "SetGimeVdgMode2.h"
+#include "mc6821state.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
 
-static unsigned char rega[4] = { 0,0,0,0 };
-static unsigned char regb[4] = { 0,0,0,0 };
-static unsigned char rega_dd[4] = { 0,0,0,0 };
-static unsigned char regb_dd[4] = { 0,0,0,0 };
-static unsigned char LeftChannel = 0, RightChannel = 0;
-static unsigned char Asample = 0, Ssample = 0, Csample = 0;
-static unsigned char CartInserted = 0, CartAutoStart = 1;
-static unsigned char AddLF = 0;
-static HANDLE hPrintFile = INVALID_HANDLE_VALUE;
 void CaptureBit(unsigned char);
-static HANDLE hOut = NULL;
 void WritePrintMon(char*);
 LRESULT CALLBACK PrintMon(HWND, UINT, WPARAM, LPARAM);
-static BOOL MonState = FALSE;
 
 //static unsigned char CoutSample=0;
 //extern STRConfig CurrentConfig;
@@ -52,38 +42,40 @@ unsigned char pia0_read(unsigned char port)
 {
   unsigned char dda, ddb;
 
-  dda = (rega[1] & 4);
-  ddb = (rega[3] & 4);
+  MC6821State* mc6821State = GetMC6821State();
+
+  dda = (mc6821State->rega[1] & 4);
+  ddb = (mc6821State->rega[3] & 4);
 
   switch (port)
   {
   case 1:
-    return(rega[port]);
-    break;
+    return(mc6821State->rega[port]);
 
   case 3:
-    return(rega[port]);
-    break;
+    return(mc6821State->rega[port]);
 
   case 0:
     if (dda)
     {
-      rega[1] = (rega[1] & 63);
-      return (vccKeyboardGetScan(rega[2])); //Read
+      mc6821State->rega[1] = (mc6821State->rega[1] & 63);
+
+      return (vccKeyboardGetScan(mc6821State->rega[2])); //Read
     }
-    else
-      return(rega_dd[port]);
-    break;
+    else {
+      return(mc6821State->rega_dd[port]);
+    }
 
   case 2: //Write 
     if (ddb)
     {
-      rega[3] = (rega[3] & 63);
-      return(rega[port] & rega_dd[port]);
+      mc6821State->rega[3] = (mc6821State->rega[3] & 63);
+
+      return(mc6821State->rega[port] & mc6821State->rega_dd[port]);
     }
-    else
-      return(rega_dd[port]);
-    break;
+    else {
+      return(mc6821State->rega_dd[port]);
+    }
   }
 
   return(0);
@@ -91,42 +83,45 @@ unsigned char pia0_read(unsigned char port)
 
 unsigned char pia1_read(unsigned char port)
 {
-  static unsigned int Flag = 0, Flag2 = 0;
+  static unsigned int flag = 0, flag2 = 0;
   unsigned char dda, ddb;
 
+  MC6821State* mc6821State = GetMC6821State();
+
   port -= 0x20;
-  dda = (regb[1] & 4);
-  ddb = (regb[3] & 4);
+  dda = (mc6821State->regb[1] & 4);
+  ddb = (mc6821State->regb[3] & 4);
 
   switch (port)
   {
   case 1:
     //	return(0);
+
   case 3:
-    return(regb[port]);
-    break;
+    return(mc6821State->regb[port]);
 
   case 2:
     if (ddb)
     {
-      regb[3] = (regb[3] & 63);
+      mc6821State->regb[3] = (mc6821State->regb[3] & 63);
 
-      return(regb[port] & regb_dd[port]);
+      return(mc6821State->regb[port] & mc6821State->regb_dd[port]);
     }
-    else
-      return(regb_dd[port]);
-    break;
+    else {
+      return(mc6821State->regb_dd[port]);
+    }
 
   case 0:
     if (dda)
     {
-      regb[1] = (regb[1] & 63); //Cass In
-      Flag = regb[port];//& regb_dd[port];
-      return(Flag);
+      mc6821State->regb[1] = (mc6821State->regb[1] & 63); //Cass In
+      flag = mc6821State->regb[port]; //& regb_dd[port];
+
+      return(flag);
     }
-    else
-      return(regb_dd[port]);
-    break;
+    else {
+      return(mc6821State->regb_dd[port]);
+    }
   }
 
   return(0);
@@ -135,35 +130,43 @@ unsigned char pia1_read(unsigned char port)
 void pia0_write(unsigned char data, unsigned char port)
 {
   unsigned char dda, ddb;
-  dda = (rega[1] & 4);
-  ddb = (rega[3] & 4);
+
+  MC6821State* mc6821State = GetMC6821State();
+
+  dda = (mc6821State->rega[1] & 4);
+  ddb = (mc6821State->rega[3] & 4);
 
   switch (port)
   {
   case 0:
-    if (dda)
-      rega[port] = data;
-    else
-      rega_dd[port] = data;
+    if (dda) {
+      mc6821State->rega[port] = data;
+    }
+    else {
+      mc6821State->rega_dd[port] = data;
+    }
+
     return;
 
   case 2:
-    if (ddb)
-      rega[port] = data;
-    else
-      rega_dd[port] = data;
+    if (ddb) {
+      mc6821State->rega[port] = data;
+    }
+    else {
+      mc6821State->rega_dd[port] = data;
+    }
+
     return;
-    break;
 
   case 1:
-    rega[port] = (data & 0x3F);
+    mc6821State->rega[port] = (data & 0x3F);
+
     return;
-    break;
 
   case 3:
-    rega[port] = (data & 0x3F);
+    mc6821State->rega[port] = (data & 0x3F);
+
     return;
-    break;
   }
 }
 
@@ -171,93 +174,110 @@ void pia1_write(unsigned char data, unsigned char port)
 {
   unsigned char dda, ddb;
   static unsigned short LastSS = 0;
+
+  MC6821State* mc6821State = GetMC6821State();
+
   port -= 0x20;
 
-  dda = (regb[1] & 4);
-  ddb = (regb[3] & 4);
+  dda = (mc6821State->regb[1] & 4);
+  ddb = (mc6821State->regb[3] & 4);
+
   switch (port)
   {
   case 0:
-    if (dda)
-    {
-      regb[port] = data;
-      CaptureBit((regb[0] & 2) >> 1);
+    if (dda) {
+      mc6821State->regb[port] = data;
 
-      if (GetMuxState() == 0)
-        if ((regb[3] & 8) != 0)//==0 for cassette writes
-          Asample = (regb[0] & 0xFC) >> 1; //0 to 127
-        else
-          Csample = (regb[0] & 0xFC);
+      CaptureBit((mc6821State->regb[0] & 2) >> 1);
+
+      if (GetMuxState() == 0) {
+        if ((mc6821State->regb[3] & 8) != 0) { //==0 for cassette writes
+          mc6821State->Asample = (mc6821State->regb[0] & 0xFC) >> 1; //0 to 127
+        }
+        else {
+          mc6821State->Csample = (mc6821State->regb[0] & 0xFC);
+        }
+      }
     }
-    else
-      regb_dd[port] = data;
+    else {
+      mc6821State->regb_dd[port] = data;
+    }
+
     return;
-    break;
 
   case 2: //FF22
     if (ddb)
     {
-      regb[port] = (data & regb_dd[port]);
-      SetGimeVdgMode2((regb[2] & 248) >> 3);
-      Ssample = (regb[port] & 2) << 6;
+      mc6821State->regb[port] = (data & mc6821State->regb_dd[port]);
+
+      SetGimeVdgMode2((mc6821State->regb[2] & 248) >> 3);
+
+      mc6821State->Ssample = (mc6821State->regb[port] & 2) << 6;
     }
-    else
-      regb_dd[port] = data;
+    else {
+      mc6821State->regb_dd[port] = data;
+    }
+
     return;
-    break;
 
   case 1:
-    regb[port] = (data & 0x3F);
+    mc6821State->regb[port] = (data & 0x3F);
+
     Motor((data & 8) >> 3);
+
     return;
-    break;
 
   case 3:
-    regb[port] = (data & 0x3F);
+    mc6821State->regb[port] = (data & 0x3F);
+
     return;
-    break;
   }
 }
 
 unsigned char VDG_Mode(void)
 {
-  return((regb[2] & 248) >> 3);
+  MC6821State* mc6821State = GetMC6821State();
+
+  return((mc6821State->regb[2] & 248) >> 3);
 }
 
 void irq_hs(int phase)	//63.5 uS
 {
+  MC6821State* mc6821State = GetMC6821State();
   CPU* cpu = GetCPU();
 
   switch (phase)
   {
   case FALLING:	//HS went High to low
-    if ((rega[1] & 2)) //IRQ on low to High transition
+    if ((mc6821State->rega[1] & 2)) { //IRQ on low to High transition
       return;
+    }
 
-    rega[1] = (rega[1] | 128);
+    mc6821State->rega[1] = (mc6821State->rega[1] | 128);
 
-    if (rega[1] & 1) {
+    if (mc6821State->rega[1] & 1) {
       cpu->CPUAssertInterrupt(IRQ, 1);
     }
 
     break;
 
   case RISING:	//HS went Low to High
-    if (!(rega[1] & 2)) //IRQ  High to low transition
+    if (!(mc6821State->rega[1] & 2)) { //IRQ  High to low transition
       return;
+    }
 
-    rega[1] = (rega[1] | 128);
+    mc6821State->rega[1] = (mc6821State->rega[1] | 128);
 
-    if (rega[1] & 1) {
+    if (mc6821State->rega[1] & 1) {
       cpu->CPUAssertInterrupt(IRQ, 1);
     }
 
     break;
 
   case ANY:
-    rega[1] = (rega[1] | 128);
+    mc6821State->rega[1] = (mc6821State->rega[1] | 128);
 
-    if (rega[1] & 1) {
+    if (mc6821State->rega[1] & 1) {
       cpu->CPUAssertInterrupt(IRQ, 1);
     }
 
@@ -267,7 +287,9 @@ void irq_hs(int phase)	//63.5 uS
 
 void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
 {
-  if ((CartInserted == 1) & (CartAutoStart == 1)) {
+  MC6821State* mc6821State = GetMC6821State();
+
+  if ((mc6821State->CartInserted == 1) && (mc6821State->CartAutoStart == 1)) {
     AssertCart();
   }
 
@@ -276,39 +298,39 @@ void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
   switch (phase)
   {
   case 0:	//FS went High to low
-    if ((rega[3] & 2) == 0) //IRQ on High to low transition
-      rega[3] = (rega[3] | 128);
+    if ((mc6821State->rega[3] & 2) == 0) { //IRQ on High to low transition
+      mc6821State->rega[3] = (mc6821State->rega[3] | 128);
+    }
 
-    if (rega[3] & 1) {
+    if (mc6821State->rega[3] & 1) {
       cpu->CPUAssertInterrupt(IRQ, 1);
     }
 
     return;
-    break;
 
   case 1:	//FS went Low to High
 
-    if ((rega[3] & 2)) //IRQ  Low to High transition
+    if ((mc6821State->rega[3] & 2)) //IRQ  Low to High transition
     {
-      rega[3] = (rega[3] | 128);
+      mc6821State->rega[3] = (mc6821State->rega[3] | 128);
 
-      if (rega[3] & 1) {
+      if (mc6821State->rega[3] & 1) {
         cpu->CPUAssertInterrupt(IRQ, 1);
       }
     }
 
     return;
-    break;
   }
 }
 
 void AssertCart(void)
 {
-  regb[3] = (regb[3] | 128);
-
+  MC6821State* mc6821State = GetMC6821State();
   CPU* cpu = GetCPU();
 
-  if (regb[3] & 1) {
+  mc6821State->regb[3] = (mc6821State->regb[3] | 128);
+
+  if (mc6821State->regb[3] & 1) {
     cpu->CPUAssertInterrupt(FIRQ, 0);
   }
   else {
@@ -318,136 +340,157 @@ void AssertCart(void)
 
 void PiaReset()
 {
+  MC6821State* mc6821State = GetMC6821State();
+
   // Clear the PIA registers
   for (uint8_t index = 0; index < 4; index++)
   {
-    rega[index] = 0;
-    regb[index] = 0;
-    rega_dd[index] = 0;
-    regb_dd[index] = 0;
+    mc6821State->rega[index] = 0;
+    mc6821State->regb[index] = 0;
+    mc6821State->rega_dd[index] = 0;
+    mc6821State->regb_dd[index] = 0;
   }
 }
 
 unsigned char GetMuxState(void)
 {
-  return (((rega[1] & 8) >> 3) + ((rega[3] & 8) >> 2));
+  MC6821State* mc6821State = GetMC6821State();
+
+  return (((mc6821State->rega[1] & 8) >> 3) + ((mc6821State->rega[3] & 8) >> 2));
 }
 
 unsigned char DACState(void)
 {
-  return (regb[0] >> 2);
+  MC6821State* mc6821State = GetMC6821State();
+
+  return (mc6821State->regb[0] >> 2);
 }
 
 void SetCart(unsigned char cart)
 {
-  CartInserted = cart;
+  MC6821State* mc6821State = GetMC6821State();
+
+  mc6821State->CartInserted = cart;
 }
 
 unsigned int GetDACSample(void)
 {
-  static unsigned int RetVal = 0;
-  static unsigned short SampleLeft = 0, SampleRight = 0, PakSample = 0;
-  static unsigned short OutLeft = 0, OutRight = 0;
-  static unsigned short LastLeft = 0, LastRight = 0;
+  static unsigned int retVal = 0;
+  static unsigned short sampleLeft = 0, sampleRight = 0, pakSample = 0;
+  static unsigned short outLeft = 0, outRight = 0;
+  static unsigned short lastLeft = 0, lastRight = 0;
 
-  PakSample = PackAudioSample();
-  SampleLeft = (PakSample >> 8) + Asample + Ssample;
-  SampleRight = (PakSample & 0xFF) + Asample + Ssample; //9 Bits each
-  SampleLeft = SampleLeft << 6;	//Conver to 16 bit values
-  SampleRight = SampleRight << 6;	//For Max volume
+  MC6821State* mc6821State = GetMC6821State();
 
-  if (SampleLeft == LastLeft)	//Simulate a slow high pass filter
+  pakSample = PackAudioSample();
+  sampleLeft = (pakSample >> 8) + mc6821State->Asample + mc6821State->Ssample;
+  sampleRight = (pakSample & 0xFF) + mc6821State->Asample + mc6821State->Ssample; //9 Bits each
+  sampleLeft = sampleLeft << 6;	//Conver to 16 bit values
+  sampleRight = sampleRight << 6;	//For Max volume
+
+  if (sampleLeft == lastLeft)	//Simulate a slow high pass filter
   {
-    if (OutLeft) {
-      OutLeft--;
+    if (outLeft) {
+      outLeft--;
     }
   }
   else
   {
-    OutLeft = SampleLeft;
-    LastLeft = SampleLeft;
+    outLeft = sampleLeft;
+    lastLeft = sampleLeft;
   }
 
-  if (SampleRight == LastRight)
+  if (sampleRight == lastRight)
   {
-    if (OutRight) {
-      OutRight--;
+    if (outRight) {
+      outRight--;
     }
   }
   else
   {
-    OutRight = SampleRight;
-    LastRight = SampleRight;
+    outRight = sampleRight;
+    lastRight = sampleRight;
   }
 
-  RetVal = (OutLeft << 16) + (OutRight);
+  retVal = (outLeft << 16) + (outRight);
 
-  return(RetVal);
+  return(retVal);
 }
 
 unsigned char SetCartAutoStart(unsigned char autostart)
 {
+  MC6821State* mc6821State = GetMC6821State();
+
   if (autostart != QUERY) {
-    CartAutoStart = autostart;
+    mc6821State->CartAutoStart = autostart;
   }
 
-  return(CartAutoStart);
+  return(mc6821State->CartAutoStart);
 }
 
 unsigned char GetCasSample(void)
 {
-  return(Csample);
+  MC6821State* mc6821State = GetMC6821State();
+
+  return(mc6821State->Csample);
 }
 
 void SetCassetteSample(unsigned char Sample)
 {
-  regb[0] = regb[0] & 0xFE;
+  MC6821State* mc6821State = GetMC6821State();
+
+  mc6821State->regb[0] = mc6821State->regb[0] & 0xFE;
 
   if (Sample > 0x7F) {
-    regb[0] = regb[0] | 1;
+    mc6821State->regb[0] = mc6821State->regb[0] | 1;
   }
 }
 
-void CaptureBit(unsigned char Sample)
+void CaptureBit(unsigned char sample)
 {
-  unsigned long BytesMoved = 0;
-  static unsigned char BitMask = 1, StartWait = 1;
+  unsigned long bytesMoved = 0;
+  static unsigned char bitMask = 1, startWait = 1;
   static char Byte = 0;
 
-  if (hPrintFile == INVALID_HANDLE_VALUE) {
+  MC6821State* mc6821State = GetMC6821State();
+
+  if (mc6821State->hPrintFile == INVALID_HANDLE_VALUE) {
     return;
   }
 
-  if (StartWait & Sample)	{ //Waiting for start bit
+  if (startWait & sample) { //Waiting for start bit
     return;
   }
 
-  if (StartWait)
+  if (startWait)
   {
-    StartWait = 0;
+    startWait = 0;
+
     return;
   }
 
-  if (Sample) {
-    Byte |= BitMask;
+  if (sample) {
+    Byte |= bitMask;
   }
 
-  BitMask = BitMask << 1;
+  bitMask = bitMask << 1;
 
-  if (!BitMask)
+  if (!bitMask)
   {
-    BitMask = 1;
-    StartWait = 1;
-    WriteFile(hPrintFile, &Byte, 1, &BytesMoved, NULL);
+    bitMask = 1;
+    startWait = 1;
 
-    if (MonState) {
+    WriteFile(mc6821State->hPrintFile, &Byte, 1, &bytesMoved, NULL);
+
+    if (mc6821State->MonState) {
       WritePrintMon(&Byte);
     }
 
-    if ((Byte == 0x0D) & AddLF)
+    if ((Byte == 0x0D) & mc6821State->AddLF)
     {
       Byte = 0x0A;
-      WriteFile(hPrintFile, &Byte, 1, &BytesMoved, NULL);
+
+      WriteFile(mc6821State->hPrintFile, &Byte, 1, &bytesMoved, NULL);
     }
 
     Byte = 0;
@@ -456,9 +499,11 @@ void CaptureBit(unsigned char Sample)
 
 int OpenPrintFile(char* FileName)
 {
-  hPrintFile = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+  MC6821State* mc6821State = GetMC6821State();
 
-  if (hPrintFile == INVALID_HANDLE_VALUE) {
+  mc6821State->hPrintFile = CreateFile(FileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+
+  if (mc6821State->hPrintFile == INVALID_HANDLE_VALUE) {
     return(0);
   }
 
@@ -467,44 +512,59 @@ int OpenPrintFile(char* FileName)
 
 void ClosePrintFile(void)
 {
-  CloseHandle(hPrintFile);
-  hPrintFile = INVALID_HANDLE_VALUE;
+  MC6821State* mc6821State = GetMC6821State();
+
+  CloseHandle(mc6821State->hPrintFile);
+
+  mc6821State->hPrintFile = INVALID_HANDLE_VALUE;
+
   FreeConsole();
-  hOut = NULL;
+
+  mc6821State->hOut = NULL;
 }
 
-void SetSerialParams(unsigned char TextMode)
+void SetSerialParams(unsigned char textMode)
 {
-  AddLF = TextMode;
+  MC6821State* mc6821State = GetMC6821State();
+
+  mc6821State->AddLF = textMode;
 }
 
-void SetMonState(BOOL State)
+void SetMonState(BOOL state)
 {
-  if (MonState & !State)
+  MC6821State* mc6821State = GetMC6821State();
+
+  if (mc6821State->MonState & !state)
   {
     FreeConsole();
-    hOut = NULL;
+
+    mc6821State->hOut = NULL;
   }
 
-  MonState = State;
+  mc6821State->MonState = state;
 }
 
-void WritePrintMon(char* Data)
+void WritePrintMon(char* data)
 {
   unsigned long dummy;
 
-  if (hOut == NULL)
+  MC6821State* mc6821State = GetMC6821State();
+
+  if (mc6821State->hOut == NULL)
   {
     AllocConsole();
-    hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    mc6821State->hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
     SetConsoleTitle("Printer Monitor");
   }
 
-  WriteConsole(hOut, Data, 1, &dummy, 0);
+  WriteConsole(mc6821State->hOut, data, 1, &dummy, 0);
 
-  if (Data[0] == 0x0D)
+  if (data[0] == 0x0D)
   {
-    Data[0] = 0x0A;
-    WriteConsole(hOut, Data, 1, &dummy, 0);
+    data[0] = 0x0A;
+
+    WriteConsole(mc6821State->hOut, data, 1, &dummy, 0);
   }
 }
