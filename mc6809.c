@@ -30,22 +30,22 @@ static CpuRegister pc, x, y, u, s, dp, d;
 
 static char InInterrupt = 0;
 static int CycleCounter = 0;
+static unsigned char IRQWaiter = 0;
+static unsigned char PendingInterrupts = 0;
+static unsigned char Source = 0;
+static unsigned char Dest = 0;
+static unsigned int SyncWaiting = 0;
+
 static unsigned char postbyte = 0;
 static short unsigned postword = 0;
 static signed char* spostbyte = (signed char*)&postbyte;
 static signed short* spostword = (signed short*)&postword;
-static unsigned char IRQWaiter = 0;
-static unsigned char PendingInterrupts = 0;
-static unsigned char Source = 0, Dest = 0;
-static unsigned char ccbits;
-static unsigned char* ureg8[8];
-static unsigned int SyncWaiting = 0;
-static unsigned short* xfreg16[8];
 
 static unsigned char temp8;
 static unsigned short temp16;
 static unsigned int temp32;
 
+static unsigned char ccbits;
 static unsigned int cc[8];
 
 MC6809State* mc6809State = GetMC6809State();
@@ -79,6 +79,12 @@ MC6809State* mc6809State = GetMC6809State();
 #define CC_V cc[V]
 #define CC_C cc[C]
 
+static unsigned char* ureg8[8];
+static unsigned short* xfreg16[8];
+
+#define PUR(_I) (*ureg8[_I])
+#define PXF(_I) (*xfreg16[_I])
+
 static void setcc(unsigned char);
 static unsigned char getcc(void);
 static void cpu_firq(void);
@@ -87,16 +93,36 @@ static void cpu_nmi(void);
 
 _inline unsigned short CalculateEA(unsigned char);
 
+void MC6809Init(void)
+{	//Call this first or RESET will core!
+  // reg pointers for TFR and EXG and LEA ops
+  xfreg16[0] = &D_REG;
+  xfreg16[1] = &X_REG;
+  xfreg16[2] = &Y_REG;
+  xfreg16[3] = &U_REG;
+  xfreg16[4] = &S_REG;
+  xfreg16[5] = &PC_REG;
+
+  ureg8[0] = (unsigned char*)(&A_REG);
+  ureg8[1] = (unsigned char*)(&B_REG);
+  ureg8[2] = (unsigned char*)(&ccbits);
+  ureg8[3] = (unsigned char*)(&DPA);
+  ureg8[4] = (unsigned char*)(&DPA);
+  ureg8[5] = (unsigned char*)(&DPA);
+  ureg8[6] = (unsigned char*)(&DPA);
+  ureg8[7] = (unsigned char*)(&DPA);
+}
+
 void MC6809Reset(void)
 {
   char index;
 
   for (index = 0; index <= 5; index++) {		//Set all register to 0 except V
-    *xfreg16[index] = 0;
+    PXF(index) = 0;
   }
 
   for (index = 0; index <= 7; index++) {
-    *ureg8[index] = 0;
+    PUR(index) = 0;
   }
 
   CC_E = 0;
@@ -117,56 +143,38 @@ void MC6809Reset(void)
   SetMapType(0);
 }
 
-void MC6809Init(void)
-{	//Call this first or RESET will core!
-  // reg pointers for TFR and EXG and LEA ops
-  xfreg16[0] = &D_REG;
-  xfreg16[1] = &X_REG;
-  xfreg16[2] = &Y_REG;
-  xfreg16[3] = &U_REG;
-  xfreg16[4] = &S_REG;
-  xfreg16[5] = &PC_REG;
-
-  ureg8[0] = (unsigned char*)&A_REG;
-  ureg8[1] = (unsigned char*)&B_REG;
-  ureg8[2] = (unsigned char*)&ccbits;
-  ureg8[3] = (unsigned char*)&DPA;
-  ureg8[4] = (unsigned char*)&DPA;
-  ureg8[5] = (unsigned char*)&DPA;
-  ureg8[6] = (unsigned char*)&DPA;
-  ureg8[7] = (unsigned char*)&DPA;
-
-  CC_I = 1;
-  CC_F = 1;
-}
-
-int MC6809Exec(int CycleFor)
+int MC6809Exec(int cycleFor)
 {
   static unsigned char opcode = 0;
   static unsigned char msn, lsn;
   CycleCounter = 0;
 
-  while (CycleCounter < CycleFor) {
+  while (CycleCounter < cycleFor) {
 
     if (PendingInterrupts)
     {
-      if (PendingInterrupts & 4)
+      if (PendingInterrupts & 4) {
         cpu_nmi();
+      }
 
-      if (PendingInterrupts & 2)
+      if (PendingInterrupts & 2) {
         cpu_firq();
+      }
 
       if (PendingInterrupts & 1)
       {
-        if (IRQWaiter == 0)	// This is needed to fix a subtle timming problem
+        if (IRQWaiter == 0) { // This is needed to fix a subtle timming problem
           cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
-        else				// The IRQ is asserted.
+        }
+        else {				// The IRQ is asserted.
           IRQWaiter -= 1;
+        }
       }
     }
 
-    if (SyncWaiting == 1)
+    if (SyncWaiting == 1) {
       return(0);
+    }
 
     switch (MemRead8(PC_REG++)) {
 
@@ -298,7 +306,6 @@ int MC6809Exec(int CycleFor)
     case Page2:
       switch (MemRead8(PC_REG++))
       {
-
       case LBEQ_R: //1027
         if (CC_Z)
         {
@@ -306,6 +313,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -322,6 +330,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -333,6 +342,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -344,6 +354,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 6;
         break;
@@ -355,6 +366,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -366,6 +378,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -377,6 +390,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -388,6 +402,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -399,6 +414,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -410,6 +426,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -421,6 +438,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -432,6 +450,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -443,6 +462,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -454,6 +474,7 @@ int MC6809Exec(int CycleFor)
           PC_REG += *spostword;
           CycleCounter += 1;
         }
+
         PC_REG += 2;
         CycleCounter += 5;
         break;
@@ -472,6 +493,7 @@ int MC6809Exec(int CycleFor)
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
         MemWrite8(getcc(), --S_REG);
+
         PC_REG = MemRead16(VSWI2);
         CycleCounter += 20;
         break;
@@ -701,6 +723,7 @@ int MC6809Exec(int CycleFor)
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
         MemWrite8(getcc(), --S_REG);
+
         PC_REG = MemRead16(VSWI3);
         CycleCounter += 20;
         break;
@@ -800,7 +823,7 @@ int MC6809Exec(int CycleFor)
       break;
 
     case SYNC_I: //13
-      CycleCounter = CycleFor;
+      CycleCounter = cycleFor;
       SyncWaiting = 1;
       break;
 
@@ -826,14 +849,17 @@ int MC6809Exec(int CycleFor)
       lsn = (A_REG & 0xF);
       temp8 = 0;
 
-      if (CC_H || (lsn > 9))
+      if (CC_H || (lsn > 9)) {
         temp8 |= 0x06;
+      }
 
-      if ((msn > 0x80) && (lsn > 9))
+      if ((msn > 0x80) && (lsn > 9)) {
         temp8 |= 0x60;
+      }
 
-      if ((msn > 0x90) || CC_C)
+      if ((msn > 0x90) || CC_C) {
         temp8 |= 0x60;
+      }
 
       temp16 = A_REG + temp8;
       CC_C |= ((temp16 & 0x100) >> 8);
@@ -874,15 +900,15 @@ int MC6809Exec(int CycleFor)
       {
         if (postbyte & 0x08) //8 bit EXG
         {
-          temp8 = (*ureg8[((postbyte & 0x70) >> 4)]);
-          (*ureg8[((postbyte & 0x70) >> 4)]) = (*ureg8[postbyte & 0x07]);
-          (*ureg8[postbyte & 0x07]) = temp8;
+          temp8 = PUR(((postbyte & 0x70) >> 4));
+          PUR(((postbyte & 0x70) >> 4)) = PUR(postbyte & 0x07);
+          PUR(postbyte & 0x07) = temp8;
         }
         else // 16 bit EXG
         {
-          temp16 = (*xfreg16[((postbyte & 0x70) >> 4)]);
-          (*xfreg16[((postbyte & 0x70) >> 4)]) = (*xfreg16[postbyte & 0x07]);
-          (*xfreg16[postbyte & 0x07]) = temp16;
+          temp16 = PXF(((postbyte & 0x70) >> 4));
+          PXF(((postbyte & 0x70) >> 4)) = PXF(postbyte & 0x07);
+          PXF(postbyte & 0x07) = temp16;
         }
       }
 
@@ -905,18 +931,18 @@ int MC6809Exec(int CycleFor)
       case 5:
       case 6:
       case 7:
-        *xfreg16[Dest] = 0xFFFF;
+        PXF(Dest) = 0xFFFF;
 
-        if ((Source == 12) | (Source == 13))
+        if ((Source == 12) || (Source == 13))
         {
-          *xfreg16[Dest] = 0;
+          PXF(Dest) = 0;
         }
         else if (Source <= 7)
         {
           //make sure the source is valud
           if (xfreg16[Source])
           {
-            *xfreg16[Dest] = *xfreg16[Source];
+            PXF(Dest) = PXF(Source);
           }
         }
         break;
@@ -928,13 +954,14 @@ int MC6809Exec(int CycleFor)
       case 14:
       case 15:
         ccbits = getcc();
-        *ureg8[Dest & 7] = 0xFF;
+        PUR(Dest & 7) = 0xFF;
 
-        if ((Source == 12) | (Source == 13))
-          *ureg8[Dest & 7] = 0;
-        else
-          if (Source > 7)
-            *ureg8[Dest & 7] = *ureg8[Source & 7];
+        if ((Source == 12) || (Source == 13)) {
+          PUR(Dest & 7) = 0;
+        }
+        else if (Source > 7) {
+          PUR(Dest & 7) = PUR(Source & 7);
+        }
 
         setcc(ccbits);
         break;
@@ -954,72 +981,81 @@ int MC6809Exec(int CycleFor)
       break;
 
     case BHI_R: //22
-      if (!(CC_C | CC_Z))
+      if (!(CC_C | CC_Z)) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BLS_R: //23
-      if (CC_C | CC_Z)
+      if (CC_C | CC_Z) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BHS_R: //24
-      if (!CC_C)
+      if (!CC_C) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BLO_R: //25
-      if (CC_C)
+      if (CC_C) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BNE_R: //26
-      if (!CC_Z)
+      if (!CC_Z) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BEQ_R: //27
-      if (CC_Z)
+      if (CC_Z) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BVC_R: //28
-      if (!CC_V)
+      if (!CC_V) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BVS_R: //29
-      if (CC_V)
+      if (CC_V) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
       break;
 
     case BPL_R: //2A
-      if (!CC_N)
+      if (!CC_N) {
         PC_REG += (signed char)MemRead8(PC_REG);
+      }
 
       PC_REG++;
       CycleCounter += 3;
@@ -1353,10 +1389,12 @@ int MC6809Exec(int CycleFor)
 
     case CWAI_I: //3C
       postbyte = MemRead8(PC_REG++);
+
       ccbits = getcc();
       ccbits = ccbits & postbyte;
       setcc(ccbits);
-      CycleCounter = CycleFor;
+
+      CycleCounter = cycleFor;
       SyncWaiting = 1;
       break;
 
@@ -3041,7 +3079,7 @@ int MC6809Exec(int CycleFor)
     }
   }
 
-  return(CycleFor - CycleCounter);
+  return(cycleFor - CycleCounter);
 }
 
 void cpu_firq(void)
@@ -3146,13 +3184,13 @@ unsigned char getcc(void)
 void MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
 {
   SyncWaiting = 0;
-  PendingInterrupts = PendingInterrupts | (1 << (interrupt - 1));
+  PendingInterrupts |= (1 << (interrupt - 1));
   IRQWaiter = waiter;
 }
 
 void MC6809DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
 {
-  PendingInterrupts = PendingInterrupts & ~(1 << (interrupt - 1));
+  PendingInterrupts &= ~(1 << (interrupt - 1));
   InInterrupt = 0;
 }
 
@@ -3177,40 +3215,40 @@ static unsigned short CalculateEA(unsigned char postbyte)
     switch (postbyte & 0x1F)
     {
     case 0:
-      ea = (*xfreg16[Register]);
-      (*xfreg16[Register])++;
+      ea = PXF(Register);
+      PXF(Register)++;
       CycleCounter += 2;
       break;
 
     case 1:
-      ea = (*xfreg16[Register]);
-      (*xfreg16[Register]) += 2;
+      ea = PXF(Register);
+      PXF(Register) += 2;
       CycleCounter += 3;
       break;
 
     case 2:
-      (*xfreg16[Register]) -= 1;
-      ea = (*xfreg16[Register]);
+      PXF(Register) -= 1;
+      ea = PXF(Register);
       CycleCounter += 2;
       break;
 
     case 3:
-      (*xfreg16[Register]) -= 2;
-      ea = (*xfreg16[Register]);
+      PXF(Register) -= 2;
+      ea = PXF(Register);
       CycleCounter += 3;
       break;
 
     case 4:
-      ea = (*xfreg16[Register]);
+      ea = PXF(Register);
       break;
 
     case 5:
-      ea = (*xfreg16[Register]) + ((signed char)B_REG);
+      ea = PXF(Register) + ((signed char)B_REG);
       CycleCounter += 1;
       break;
 
     case 6:
-      ea = (*xfreg16[Register]) + ((signed char)A_REG);
+      ea = PXF(Register) + ((signed char)A_REG);
       CycleCounter += 1;
       break;
 
@@ -3219,12 +3257,12 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 8:
-      ea = (*xfreg16[Register]) + (signed char)MemRead8(PC_REG++);
+      ea = PXF(Register) + (signed char)MemRead8(PC_REG++);
       CycleCounter += 1;
       break;
 
     case 9:
-      ea = (*xfreg16[Register]) + MemRead16(PC_REG);
+      ea = PXF(Register) + MemRead16(PC_REG);
       CycleCounter += 4;
       PC_REG += 2;
       break;
@@ -3234,7 +3272,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 11:
-      ea = (*xfreg16[Register]) + D_REG;
+      ea = PXF(Register) + D_REG;
       CycleCounter += 4;
       break;
 
@@ -3295,8 +3333,8 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 17: //10001
-      ea = (*xfreg16[Register]);
-      (*xfreg16[Register]) += 2;
+      ea = PXF(Register);
+      PXF(Register) += 2;
       ea = MemRead16(ea);
       CycleCounter += 6;
       break;
@@ -3306,26 +3344,26 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 19: //10011
-      (*xfreg16[Register]) -= 2;
-      ea = (*xfreg16[Register]);
+      PXF(Register) -= 2;
+      ea = PXF(Register);
       ea = MemRead16(ea);
       CycleCounter += 6;
       break;
 
     case 20: //10100
-      ea = (*xfreg16[Register]);
+      ea = PXF(Register);
       ea = MemRead16(ea);
       CycleCounter += 3;
       break;
 
     case 21: //10101
-      ea = (*xfreg16[Register]) + ((signed char)B_REG);
+      ea = PXF(Register) + ((signed char)B_REG);
       ea = MemRead16(ea);
       CycleCounter += 4;
       break;
 
     case 22: //10110
-      ea = (*xfreg16[Register]) + ((signed char)A_REG);
+      ea = PXF(Register) + ((signed char)A_REG);
       ea = MemRead16(ea);
       CycleCounter += 4;
       break;
@@ -3336,13 +3374,13 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 24: //11000
-      ea = (*xfreg16[Register]) + (signed char)MemRead8(PC_REG++);
+      ea = PXF(Register) + (signed char)MemRead8(PC_REG++);
       ea = MemRead16(ea);
       CycleCounter += 4;
       break;
 
     case 25: //11001
-      ea = (*xfreg16[Register]) + MemRead16(PC_REG);
+      ea = PXF(Register) + MemRead16(PC_REG);
       ea = MemRead16(ea);
       CycleCounter += 7;
       PC_REG += 2;
@@ -3354,7 +3392,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 27: //11011
-      ea = (*xfreg16[Register]) + D_REG;
+      ea = PXF(Register) + D_REG;
       ea = MemRead16(ea);
       CycleCounter += 7;
       break;
@@ -3391,7 +3429,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
     byte = (postbyte & 31);
     byte = (byte << 3);
     byte = byte / 8;
-    ea = *xfreg16[Register] + byte; //Was signed
+    ea = PXF(Register) + byte; //Was signed
 
     CycleCounter += 1;
   }
