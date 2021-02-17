@@ -24,14 +24,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemWrite8.h"
 #include "MemRead16.h"
 #include "MemWrite16.h"
-
-//Global variables for CPU Emulation-----------------------
-
-#define NTEST8(r) r>0x7F; 
-#define NTEST16(r) r>0x7FFF;
-#define OTEST8(c,a,b,r) c ^ (((a^b^r)>>7) &1);
-#define OTEST16(c,a,b,r) c ^ (((a^b^r)>>15)&1);
-#define ZTEST(r) !r;
+#include "mc6809state.h"
 
 typedef union
 {
@@ -40,45 +33,39 @@ typedef union
   {
     unsigned char lsb, msb;
   } B;
-} cpuregister;
+} CpuRegister;
 
-#define D_REG	d.Reg
-#define PC_REG	pc.Reg
-#define X_REG	x.Reg
-#define Y_REG	y.Reg
-#define U_REG	u.Reg
-#define S_REG	s.Reg
-#define A_REG	d.B.msb
-#define B_REG	d.B.lsb
+static CpuRegister pc, x, y, u, s, dp, d;
 
-static cpuregister pc, x, y, u, s, dp, d;
-static unsigned int cc[8];
-static unsigned char* ureg8[8];
-static unsigned char ccbits;
-static unsigned short* xfreg16[8];
+static char InInterrupt = 0;
 static int CycleCounter = 0;
-static unsigned int SyncWaiting = 0;
-static unsigned int temp32;
-static unsigned short temp16;
-static unsigned char temp8;
-static unsigned char PendingInterrupts = 0;
-static unsigned char IRQWaiter = 0;
-static unsigned char Source = 0, Dest = 0;
 static unsigned char postbyte = 0;
 static short unsigned postword = 0;
 static signed char* spostbyte = (signed char*)&postbyte;
 static signed short* spostword = (signed short*)&postword;
-static char InInterrupt = 0;
-//END Global variables for CPU Emulation-------------------
+static unsigned char IRQWaiter = 0;
+static unsigned char PendingInterrupts = 0;
+static unsigned char Source = 0, Dest = 0;
+static unsigned char ccbits;
+static unsigned char* ureg8[8];
+static unsigned int SyncWaiting = 0;
+static unsigned short* xfreg16[8];
 
-//Fuction Prototypes---------------------------------------
-_inline unsigned short CalculateEA(unsigned char);
+static unsigned char temp8;
+static unsigned short temp16;
+static unsigned int temp32;
+
+static unsigned int cc[8];
+
+MC6809State* mc6809State = GetMC6809State();
+
 static void setcc(unsigned char);
 static unsigned char getcc(void);
 static void cpu_firq(void);
 static void cpu_irq(void);
 static void cpu_nmi(void);
-//END Function Prototypes-----------------------------------
+
+_inline unsigned short CalculateEA(unsigned char);
 
 void MC6809Reset(void)
 {

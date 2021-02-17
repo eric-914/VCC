@@ -505,4 +505,61 @@ This file is part of VCC (Virtual Color Computer).
 #define STF_E	  0xF7	//6309
 #define ADDF_E	0xFB	//6309
 
+#if defined(_WIN64)
+#define MSABI 
+#else
+#define MSABI __attribute__((ms_abi))
+#endif
+
+#define NTEST8(r) r>0x7F;
+#define NTEST16(r) r>0x7FFF;
+#define NTEST32(r) r>0x7FFFFFFF;
+#define OVERFLOW8(c,a,b,r) c ^ (((a^b^r)>>7) &1);
+#define OVERFLOW16(c,a,b,r) c ^ (((a^b^r)>>15)&1);
+#define ZTEST(r) !r;
+
+#define DPADDRESS(r) (dp.Reg | MemRead8(r))
+#define IMMADDRESS(r) MemRead16(r)
+#define INDADDRESS(r) CalculateEA(MemRead8(r))
+
+#define M65		0
+#define M64		1
+#define M32		2
+#define M21		3
+#define M54		4
+#define M97		5
+#define M85		6
+#define M51		7
+#define M31		8
+#define M1110	9
+#define M76		10
+#define M75		11
+#define M43		12
+#define M87		13
+#define M86		14
+#define M98		15
+#define M2726	16
+#define M3635	17
+#define M3029	18
+#define M2827	19
+#define M3726	20
+#define M3130	21
+#define M42   22
+#define M53   23
+
+#define D_REG	q.Word.lsw
+#define W_REG	q.Word.msw
+#define PC_REG	pc.Reg
+#define X_REG	x.Reg
+#define Y_REG	y.Reg
+#define U_REG	u.Reg
+#define S_REG	s.Reg
+#define A_REG	q.Byte.lswmsb
+#define B_REG	q.Byte.lswlsb
+#define E_REG	q.Byte.mswmsb
+#define F_REG	q.Byte.mswlsb	
+#define Q_REG	q.Reg
+#define V_REG	v.Reg
+#define O_REG	z.Reg
+
 #endif
