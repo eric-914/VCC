@@ -1,9 +1,8 @@
 #include "GimeWrite.h"
 #include "SAMWrite.h"
 #include "PakInterfaceAccessors.h"
-
-extern void pia0_write(unsigned char data, unsigned char port);
-extern void pia1_write(unsigned char data, unsigned char port);
+#include "pia0_write.h"
+#include "pia1_write.h"
 
 void port_write(unsigned char data, unsigned short addr)
 {
@@ -112,6 +111,6 @@ void port_write(unsigned char data, unsigned short addr)
     break;
 
   default:
-    PackPortWrite(port, data);
+    PakPortWrite(port, data);
   }
 }

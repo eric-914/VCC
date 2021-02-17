@@ -64,7 +64,7 @@ void GetModuleStatus(SystemState* systemState)
   }
 }
 
-unsigned char PackPortRead(unsigned char port)
+unsigned char PakPortRead(unsigned char port)
 {
   PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
 
@@ -76,7 +76,7 @@ unsigned char PackPortRead(unsigned char port)
   }
 }
 
-void PackPortWrite(unsigned char port, unsigned char data)
+void PakPortWrite(unsigned char port, unsigned char data)
 {
   PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
 
@@ -91,7 +91,7 @@ void PackPortWrite(unsigned char port, unsigned char data)
   }
 }
 
-unsigned char PackMem8Read(unsigned short address)
+unsigned char PakMem8Read(unsigned short address)
 {
   PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
 
@@ -106,12 +106,12 @@ unsigned char PackMem8Read(unsigned short address)
   return(0);
 }
 
-void PackMem8Write(unsigned char port, unsigned char data)
+void PakMem8Write(unsigned char port, unsigned char data)
 {
   //TODO: This really is empty
 }
 
-unsigned short PackAudioSample(void)
+unsigned short PakAudioSample(void)
 {
   PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
 

@@ -168,6 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="About.c" />
+    <ClCompile Include="AssertCart.c" />
     <ClCompile Include="AudioAccessors.c" />
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="AudioOut.c" />
@@ -176,12 +177,14 @@
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
     <ClCompile Include="CalculateFPS.c" />
     <ClCompile Include="CalibrateThrottle.c" />
+    <ClCompile Include="CaptureBit.c" />
     <ClCompile Include="CartLoad.c" />
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
     <ClCompile Include="ClipboardEmpty.c" />
     <ClCompile Include="clipboardstate.c" />
+    <ClCompile Include="ClosePrintFile.c" />
     <ClCompile Include="CloseTapeFile.c" />
     <ClCompile Include="CocoReset.c" />
     <ClCompile Include="cocostate.cpp" />
@@ -192,6 +195,7 @@
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CPUCycle.c" />
     <ClCompile Include="CreateDDWindow.c" />
+    <ClCompile Include="DACState.c" />
     <ClCompile Include="DecreaseOverclockSpeed.c" />
     <ClCompile Include="DirectDrawAccessors.c" />
     <ClCompile Include="directdrawstate.c" />
@@ -207,10 +211,13 @@
     <ClCompile Include="FlushCassetteBuffer.c" />
     <ClCompile Include="FrameWait.c" />
     <ClCompile Include="FullScreenToggle.c" />
+    <ClCompile Include="GetCasSample.c" />
     <ClCompile Include="GetClipboardText.c" />
     <ClCompile Include="GetCurrentKeyMap.c" />
+    <ClCompile Include="GetDACSample.c" />
     <ClCompile Include="GetFreeBlockCount.c" />
     <ClCompile Include="GetKeyName.c" />
+    <ClCompile Include="GetMuxState.c" />
     <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="GetTapeCounter.c" />
     <ClCompile Include="GetTapeName.c" />
@@ -223,6 +230,8 @@
     <ClCompile Include="InputConfig.c" />
     <ClCompile Include="InsertModule.c" />
     <ClCompile Include="InvalidateBorder.c" />
+    <ClCompile Include="irq_fs.c" />
+    <ClCompile Include="irq_hs.c" />
     <ClCompile Include="JoystickAccessors.c" />
     <ClCompile Include="JoyStickConfig.c" />
     <ClCompile Include="KeyboardAccessors.c" />
@@ -240,7 +249,6 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="mc6809.c" />
-    <ClCompile Include="mc6821.c" />
     <ClCompile Include="mc6821state.c" />
     <ClCompile Include="MC6883Reset.c" />
     <ClCompile Include="MemRead16.c" />
@@ -254,12 +262,18 @@
     <ClCompile Include="mmustate.c" />
     <ClCompile Include="Motor.c" />
     <ClCompile Include="MountTape.c" />
+    <ClCompile Include="OpenPrintFile.c" />
     <ClCompile Include="PakInterfaceAccessors.c" />
     <ClCompile Include="pakinterfacestate.c" />
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
     <ClCompile Include="PeekClipboard.c" />
+    <ClCompile Include="pia0_read.c" />
+    <ClCompile Include="pia0_write.c" />
+    <ClCompile Include="pia1_read.c" />
+    <ClCompile Include="pia1_write.c" />
+    <ClCompile Include="PiaReset.c" />
     <ClCompile Include="PopClipboard.c" />
     <ClCompile Include="port_read.c" />
     <ClCompile Include="port_write.c" />
@@ -283,6 +297,9 @@
     <ClCompile Include="SetAudioRate.c" />
     <ClCompile Include="SetAutoStart.c" />
     <ClCompile Include="SetBorderChange.c" />
+    <ClCompile Include="SetCart.c" />
+    <ClCompile Include="SetCartAutoStart.c" />
+    <ClCompile Include="SetCassetteSample.c" />
     <ClCompile Include="SetClipboard.c" />
     <ClCompile Include="SetClockSpeed.c" />
     <ClCompile Include="SetCompatMode.c" />
@@ -307,9 +324,11 @@
     <ClCompile Include="SetLinesperScreen.c" />
     <ClCompile Include="SetMasterTickCounter.c" />
     <ClCompile Include="SetMonitorType.c" />
+    <ClCompile Include="SetMonState.c" />
     <ClCompile Include="SetPaletteType.c" />
     <ClCompile Include="SetRamSize.c" />
     <ClCompile Include="SetScanLines.c" />
+    <ClCompile Include="SetSerialParams.c" />
     <ClCompile Include="SetSndOutMode.c" />
     <ClCompile Include="SetSpeedThrottle.c" />
     <ClCompile Include="SetTapeCounter.c" />
@@ -345,14 +364,17 @@
     <ClCompile Include="vccKeyboardHandleKey.c" />
     <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
     <ClCompile Include="vccstate.c" />
+    <ClCompile Include="VDG_Mode.c" />
     <ClCompile Include="WavtoCas.c" />
     <ClCompile Include="WriteIniFile.c" />
+    <ClCompile Include="WritePrintMon.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="About.h" />
+    <ClInclude Include="AssertCart.h" />
     <ClInclude Include="AudioAccessors.h" />
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="audiodef.h" />
@@ -362,12 +384,14 @@
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
     <ClInclude Include="CalculateFPS.h" />
     <ClInclude Include="CalibrateThrottle.h" />
+    <ClInclude Include="CaptureBit.h" />
     <ClInclude Include="CartLoad.h" />
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
     <ClInclude Include="ClipboardEmpty.h" />
     <ClInclude Include="clipboardstate.h" />
+    <ClInclude Include="ClosePrintFile.h" />
     <ClInclude Include="CloseTapeFile.h" />
     <ClInclude Include="cocostate.h" />
     <ClInclude Include="CocoReset.h" />
@@ -379,6 +403,7 @@
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CPUCycle.h" />
     <ClInclude Include="CreateDDWindow.h" />
+    <ClInclude Include="DACState.h" />
     <ClInclude Include="DecreaseOverclockSpeed.h" />
     <ClInclude Include="DirectDrawAccessors.h" />
     <ClInclude Include="directdrawdef.h" />
@@ -395,10 +420,13 @@
     <ClInclude Include="FlushCassetteBuffer.h" />
     <ClInclude Include="FrameWait.h" />
     <ClInclude Include="FullScreenToggle.h" />
+    <ClInclude Include="GetCasSample.h" />
     <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="GetCurrentKeyMap.h" />
+    <ClInclude Include="GetDACSample.h" />
     <ClInclude Include="GetFreeBlockCount.h" />
     <ClInclude Include="GetKeyName.h" />
+    <ClInclude Include="GetMuxState.h" />
     <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="GetTapeCounter.h" />
     <ClInclude Include="GetTapeName.h" />
@@ -412,6 +440,8 @@
     <ClInclude Include="InputConfig.h" />
     <ClInclude Include="InsertModule.h" />
     <ClInclude Include="InvalidateBorder.h" />
+    <ClInclude Include="irq_fs.h" />
+    <ClInclude Include="irq_hs.h" />
     <ClInclude Include="JoystickAccessors.h" />
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="KeyboardAccessors.h" />
@@ -429,7 +459,6 @@
     <ClInclude Include="MainConfig.h" />
     <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
-    <ClInclude Include="mc6821.h" />
     <ClInclude Include="mc6821def.h" />
     <ClInclude Include="mc6821state.h" />
     <ClInclude Include="MC6883Reset.h" />
@@ -444,6 +473,7 @@
     <ClInclude Include="mmustate.h" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="MountTape.h" />
+    <ClInclude Include="OpenPrintFile.h" />
     <ClInclude Include="PakInterfaceAccessors.h" />
     <ClInclude Include="pakinterfacedef.h" />
     <ClInclude Include="pakinterfacestate.h" />
@@ -451,6 +481,11 @@
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />
     <ClInclude Include="PeekClipboard.h" />
+    <ClInclude Include="pia0_read.h" />
+    <ClInclude Include="pia0_write.h" />
+    <ClInclude Include="pia1_read.h" />
+    <ClInclude Include="pia1_write.h" />
+    <ClInclude Include="PiaReset.h" />
     <ClInclude Include="PopClipboard.h" />
     <ClInclude Include="port_read.h" />
     <ClInclude Include="port_write.h" />
@@ -466,7 +501,6 @@
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="ResetAudio.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="sampledefs.h" />
     <ClInclude Include="SAMRead.h" />
     <ClInclude Include="SAMWrite.h" />
     <ClInclude Include="SaveConfig.h" />
@@ -476,6 +510,9 @@
     <ClInclude Include="SetAudioRate.h" />
     <ClInclude Include="SetAutoStart.h" />
     <ClInclude Include="SetBorderChange.h" />
+    <ClInclude Include="SetCart.h" />
+    <ClInclude Include="SetCartAutoStart.h" />
+    <ClInclude Include="SetCassetteSample.h" />
     <ClInclude Include="SetClipboard.h" />
     <ClInclude Include="SetClockSpeed.h" />
     <ClInclude Include="SetCompatMode.h" />
@@ -500,9 +537,11 @@
     <ClInclude Include="SetLinesperScreen.h" />
     <ClInclude Include="SetMasterTickCounter.h" />
     <ClInclude Include="SetMonitorType.h" />
+    <ClInclude Include="SetMonState.h" />
     <ClInclude Include="SetPaletteType.h" />
     <ClInclude Include="SetRamSize.h" />
     <ClInclude Include="SetScanLines.h" />
+    <ClInclude Include="SetSerialParams.h" />
     <ClInclude Include="SetSndOutMode.h" />
     <ClInclude Include="SetSpeedThrottle.h" />
     <ClInclude Include="SetTapeCounter.h" />
@@ -539,8 +578,10 @@
     <ClInclude Include="vccKeyboardHandleKey.h" />
     <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
     <ClInclude Include="vccstate.h" />
+    <ClInclude Include="VDG_Mode.h" />
     <ClInclude Include="WavtoCas.h" />
     <ClInclude Include="WriteIniFile.h" />
+    <ClInclude Include="WritePrintMon.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\binfile.ico" />

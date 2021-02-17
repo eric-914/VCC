@@ -1,9 +1,8 @@
 #include "RegistersAccessors.h"
 #include "PakInterfaceAccessors.h"
 #include "SAMRead.h"
-
-extern unsigned char pia0_read(unsigned char port);
-extern unsigned char pia1_read(unsigned char port);
+#include "pia0_read.h"
+#include "pia1_read.h"
 
 unsigned char port_read(unsigned short addr)
 {
@@ -133,7 +132,7 @@ unsigned char port_read(unsigned short addr)
     break;
 
   default:
-    value = PackPortRead(port);
+    value = PakPortRead(port);
   }
 
   return(value);

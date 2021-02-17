@@ -377,7 +377,7 @@ __declspec(dllexport) void ModuleName(char* moduleName, char* catNumber, DYNAMIC
   return;
 }
 
-__declspec(dllexport) void PackPortWrite(unsigned char port, unsigned char data)
+__declspec(dllexport) void PakPortWrite(unsigned char port, unsigned char data)
 {
   switch (port)
   {
@@ -389,7 +389,7 @@ __declspec(dllexport) void PackPortWrite(unsigned char port, unsigned char data)
   return;
 }
 
-__declspec(dllexport) unsigned char PackPortRead(unsigned char port)
+__declspec(dllexport) unsigned char PakPortRead(unsigned char port)
 {
   switch (port)
   {

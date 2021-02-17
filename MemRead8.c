@@ -13,7 +13,7 @@ unsigned char MemRead8(unsigned short address)
       return(mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF]);
     }
 
-    return(PackMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
+    return(PakMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
   }
 
   if (address > 0xFEFF) {
@@ -28,5 +28,5 @@ unsigned char MemRead8(unsigned short address)
     return(mmuState->MemPages[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]][address & 0x1FFF]);
   }
 
-  return(PackMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
+  return(PakMem8Read(mmuState->MemPageOffsets[mmuState->MmuRegisters[mmuState->MmuState][address >> 13]] + (address & 0x1FFF)));
 }

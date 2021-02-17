@@ -13,12 +13,11 @@
 #include "vccKeyboardHandleKey.h"
 #include "RegistersAccessors.h"
 #include "SetSpeedThrottle.h"
+#include "irq_hs.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/keyboarddef.h"
-
-extern void irq_hs(int);
 
 /* _inline */ int CPUCycle(void)
 {

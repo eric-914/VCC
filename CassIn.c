@@ -1,7 +1,7 @@
 #include "cocostate.h"
+#include "SetCassetteSample.h"
 
 extern unsigned int GetDACSample(void); /* mc6821.c */
-extern void SetCassetteSample(unsigned char); /* mc6821.c */
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassIn(void)
