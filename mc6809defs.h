@@ -335,12 +335,3 @@ This file is part of VCC (Virtual Color Computer).
 #define OTEST8(c,a,b,r) c ^ (((a^b^r)>>7) &1);
 #define OTEST16(c,a,b,r) c ^ (((a^b^r)>>15)&1);
 #define ZTEST(r) !r;
-
-#define D_REG	d.Reg
-#define PC_REG	pc.Reg
-#define X_REG	x.Reg
-#define Y_REG	y.Reg
-#define U_REG	u.Reg
-#define S_REG	s.Reg
-#define A_REG	d.B.msb
-#define B_REG	d.B.lsb
