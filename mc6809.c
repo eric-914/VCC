@@ -682,8 +682,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPU_M: //1183
         postword = MemRead16(PC_REG);
-        temp16 = u.Reg - postword;
-        cc[C] = temp16 > u.Reg;
+        temp16 = U_REG - postword;
+        cc[C] = temp16 > U_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, U_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -704,8 +704,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPU_D: //1193
         postword = MemRead16((dp.Reg | MemRead8(PC_REG++)));
-        temp16 = u.Reg - postword;
-        cc[C] = temp16 > u.Reg;
+        temp16 = U_REG - postword;
+        cc[C] = temp16 > U_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, U_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -724,8 +724,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPU_X: //11A3
         postword = MemRead16(CalculateEA(MemRead8(PC_REG++)));
-        temp16 = u.Reg - postword;
-        cc[C] = temp16 > u.Reg;
+        temp16 = U_REG - postword;
+        cc[C] = temp16 > U_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, U_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -744,8 +744,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPU_E: //11B3
         postword = MemRead16(MemRead16(PC_REG));
-        temp16 = u.Reg - postword;
-        cc[C] = temp16 > u.Reg;
+        temp16 = U_REG - postword;
+        cc[C] = temp16 > U_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, U_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -1058,7 +1058,7 @@ int MC6809Exec(int CycleFor)
       break;
 
     case LEAU_X: //33
-      u.Reg = CalculateEA(MemRead8(PC_REG++));
+      U_REG = CalculateEA(MemRead8(PC_REG++));
       CycleCounter += 4;
       break;
 
@@ -1183,53 +1183,53 @@ int MC6809Exec(int CycleFor)
 
       if (postbyte & 0x80)
       {
-        MemWrite8(pc.B.lsb, --u.Reg);
-        MemWrite8(pc.B.msb, --u.Reg);
+        MemWrite8(pc.B.lsb, --U_REG);
+        MemWrite8(pc.B.msb, --U_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
-        MemWrite8(s.B.lsb, --u.Reg);
-        MemWrite8(s.B.msb, --u.Reg);
+        MemWrite8(s.B.lsb, --U_REG);
+        MemWrite8(s.B.msb, --U_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
-        MemWrite8(y.B.lsb, --u.Reg);
-        MemWrite8(y.B.msb, --u.Reg);
+        MemWrite8(y.B.lsb, --U_REG);
+        MemWrite8(y.B.msb, --U_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x10)
       {
-        MemWrite8(x.B.lsb, --u.Reg);
-        MemWrite8(x.B.msb, --u.Reg);
+        MemWrite8(x.B.lsb, --U_REG);
+        MemWrite8(x.B.msb, --U_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x08)
       {
-        MemWrite8(dp.B.msb, --u.Reg);
+        MemWrite8(dp.B.msb, --U_REG);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
-        MemWrite8(B_REG, --u.Reg);
+        MemWrite8(B_REG, --U_REG);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
-        MemWrite8(A_REG, --u.Reg);
+        MemWrite8(A_REG, --U_REG);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x01)
       {
-        MemWrite8(getcc(), --u.Reg);
+        MemWrite8(getcc(), --U_REG);
         CycleCounter += 1;
       }
 
@@ -1241,51 +1241,51 @@ int MC6809Exec(int CycleFor)
 
       if (postbyte & 0x01)
       {
-        setcc(MemRead8(u.Reg++));
+        setcc(MemRead8(U_REG++));
         CycleCounter += 1;
       }
       if (postbyte & 0x02)
       {
-        A_REG = MemRead8(u.Reg++);
+        A_REG = MemRead8(U_REG++);
         CycleCounter += 1;
       }
       if (postbyte & 0x04)
       {
-        B_REG = MemRead8(u.Reg++);
+        B_REG = MemRead8(U_REG++);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x08)
       {
-        dp.B.msb = MemRead8(u.Reg++);
+        dp.B.msb = MemRead8(U_REG++);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x10)
       {
-        x.B.msb = MemRead8(u.Reg++);
-        x.B.lsb = MemRead8(u.Reg++);
+        x.B.msb = MemRead8(U_REG++);
+        x.B.lsb = MemRead8(U_REG++);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
-        y.B.msb = MemRead8(u.Reg++);
-        y.B.lsb = MemRead8(u.Reg++);
+        y.B.msb = MemRead8(U_REG++);
+        y.B.lsb = MemRead8(U_REG++);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
-        s.B.msb = MemRead8(u.Reg++);
-        s.B.lsb = MemRead8(u.Reg++);
+        s.B.msb = MemRead8(U_REG++);
+        s.B.lsb = MemRead8(U_REG++);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x80)
       {
-        pc.B.msb = MemRead8(u.Reg++);
-        pc.B.lsb = MemRead8(u.Reg++);
+        pc.B.msb = MemRead8(U_REG++);
+        pc.B.lsb = MemRead8(U_REG++);
         CycleCounter += 2;
       }
 
@@ -2543,9 +2543,9 @@ int MC6809Exec(int CycleFor)
       break;
 
     case LDU_M: //CE
-      u.Reg = MemRead16(PC_REG);
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      U_REG = MemRead16(PC_REG);
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       PC_REG +=2;
       CycleCounter += 3;
@@ -2683,17 +2683,17 @@ int MC6809Exec(int CycleFor)
       break;
 
     case LDU_D: //DE
-      u.Reg = MemRead16((dp.Reg | MemRead8(PC_REG++)));
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      U_REG = MemRead16((dp.Reg | MemRead8(PC_REG++)));
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       CycleCounter += 5;
       break;
 
     case STU_D: //DF
-      MemWrite16(u.Reg, (dp.Reg | MemRead8(PC_REG++)));
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      MemWrite16(U_REG, (dp.Reg | MemRead8(PC_REG++)));
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       CycleCounter += 5;
       break;
@@ -2833,17 +2833,17 @@ int MC6809Exec(int CycleFor)
       break;
 
     case LDU_X: //EE
-      u.Reg = MemRead16(CalculateEA(MemRead8(PC_REG++)));
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      U_REG = MemRead16(CalculateEA(MemRead8(PC_REG++)));
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       CycleCounter += 5;
       break;
 
     case STU_X: //EF
-      MemWrite16(u.Reg, CalculateEA(MemRead8(PC_REG++)));
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      MemWrite16(U_REG, CalculateEA(MemRead8(PC_REG++)));
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       CycleCounter += 5;
       break;
@@ -2994,18 +2994,18 @@ int MC6809Exec(int CycleFor)
       break;
 
     case LDU_E: //FE
-      u.Reg = MemRead16(MemRead16(PC_REG));
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      U_REG = MemRead16(MemRead16(PC_REG));
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       PC_REG +=2;
       CycleCounter += 6;
       break;
 
     case STU_E: //FF
-      MemWrite16(u.Reg, MemRead16(PC_REG));
-      cc[Z] = ZTEST(u.Reg);
-      cc[N] = NTEST16(u.Reg);
+      MemWrite16(U_REG, MemRead16(PC_REG));
+      cc[Z] = ZTEST(U_REG);
+      cc[N] = NTEST16(U_REG);
       cc[V] = 0;
       PC_REG +=2;
       CycleCounter += 6;
