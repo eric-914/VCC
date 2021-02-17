@@ -267,6 +267,7 @@
     <ClCompile Include="Reboot.c" />
     <ClCompile Include="RefreshDynamicMenu.c" />
     <ClCompile Include="RefreshJoystickStatus.c" />
+    <ClCompile Include="registersstate.c" />
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="ResetAudio.c" />
     <ClCompile Include="SaveConfig.c" />
@@ -446,6 +447,7 @@
     <ClInclude Include="Reboot.h" />
     <ClInclude Include="RefreshDynamicMenu.h" />
     <ClInclude Include="RefreshJoystickStatus.h" />
+    <ClInclude Include="registersstate.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="ResetAudio.h" />
     <ClInclude Include="resource.h" />

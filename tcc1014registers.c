@@ -18,6 +18,8 @@ This file is part of VCC (Virtual Color Computer).
 
 #include <windows.h>
 
+#include "registersstate.h"
+
 #include "SetHorzInterruptState.h"
 #include "SetTimerInterruptState.h"
 #include "SetInterruptTimer.h"
@@ -41,15 +43,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/defines.h"
 #include "library/graphicsstate.h"
 
-static unsigned char VDG_Mode = 0;
-static unsigned char Dis_Offset = 0;
-static unsigned char MPU_Rate = 0;
-static unsigned char* rom;
-static unsigned char GimeRegisters[256];
-static unsigned short VerticalOffsetRegister = 0;
-static unsigned char EnhancedFIRQFlag = 0, EnhancedIRQFlag = 0;
-static int InterruptTimer = 0;
-
 void SetInit0(unsigned char);
 void SetInit1(unsigned char);
 void SetGimeIRQStearing(unsigned char);
@@ -57,13 +50,12 @@ void SetGimeFIRQStearing(unsigned char);
 void SetTimerMSB(unsigned char);
 void SetTimerLSB(unsigned char);
 unsigned char GetInit0(unsigned char port);
-static unsigned char IRQStearing[8] = { 0,0,0,0,0,0,0,0 };
-static unsigned char FIRQStearing[8] = { 0,0,0,0,0,0,0,0 };
-static unsigned char LastIrq = 0, LastFirq = 0, temp = 0;
 
 void GimeWrite(unsigned char port, unsigned char data)
 {
-  GimeRegisters[port] = data;
+  RegistersState* registersState = GetRegistersState();
+
+  registersState->GimeRegisters[port] = data;
 
   switch (port)
   {
@@ -119,7 +111,7 @@ void GimeWrite(unsigned char port, unsigned char data)
 
   case 0x9D:
   case 0x9E:
-    SetVerticalOffsetRegister((GimeRegisters[0x9D] << 8) | GimeRegisters[0x9E]);
+    SetVerticalOffsetRegister((registersState->GimeRegisters[0x9D] << 8) | registersState->GimeRegisters[0x9E]);
     break;
 
   case 0x9F:
@@ -168,38 +160,44 @@ void GimeWrite(unsigned char port, unsigned char data)
 
 unsigned char GimeRead(unsigned char port)
 {
+  static unsigned char temp;
+
+  RegistersState* registersState = GetRegistersState();
+
   switch (port)
   {
   case 0x92:
-    temp = LastIrq;
-    LastIrq = 0;
+    temp = registersState->LastIrq;
+    registersState->LastIrq = 0;
+
     return(temp);
-    break;
 
   case 0x93:
-    temp = LastFirq;
-    LastFirq = 0;
+    temp = registersState->LastFirq;
+    registersState->LastFirq = 0;
+
     return(temp);
-    break;
 
   case 0x94:
   case 0x95:
     return(126);
-    break;
 
   default:
-    return(GimeRegisters[port]);
+    return(registersState->GimeRegisters[port]);
   }
 }
 
 void SetInit0(unsigned char data)
 {
+  RegistersState* registersState = GetRegistersState();
+
   SetCompatMode(!!(data & 128));
   SetMmuEnabled(!!(data & 64)); //MMUEN
   SetRomMap(data & 3);			//MC0-MC1
   SetVectors(data & 8);			//MC3
-  EnhancedFIRQFlag = (data & 16) >> 4;
-  EnhancedIRQFlag = (data & 32) >> 5;
+
+  registersState->EnhancedFIRQFlag = (data & 16) >> 4;
+  registersState->EnhancedIRQFlag = (data & 32) >> 5;
 }
 
 void SetInit1(unsigned char data)
@@ -211,142 +209,177 @@ void SetInit1(unsigned char data)
 unsigned char GetInit0(unsigned char port)
 {
   unsigned char data = 0;
+
   return(data);
 }
 
 void SetGimeIRQStearing(unsigned char data) //92
 {
-  if ((GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2))
+  RegistersState* registersState = GetRegistersState();
+
+  if ((registersState->GimeRegisters[0x92] & 2) | (registersState->GimeRegisters[0x93] & 2)) {
     GimeSetKeyboardInterruptState(1);
-  else
+  }
+  else {
     GimeSetKeyboardInterruptState(0);
+  }
 
-  if ((GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8))
+  if ((registersState->GimeRegisters[0x92] & 8) | (registersState->GimeRegisters[0x93] & 8)) {
     SetVertInterruptState(1);
-  else
+  }
+  else {
     SetVertInterruptState(0);
+  }
 
-  if ((GimeRegisters[0x92] & 16) | (GimeRegisters[0x93] & 16))
+  if ((registersState->GimeRegisters[0x92] & 16) | (registersState->GimeRegisters[0x93] & 16)) {
     SetHorzInterruptState(1);
-  else
+  }
+  else {
     SetHorzInterruptState(0);
+  }
 
-  if ((GimeRegisters[0x92] & 32) | (GimeRegisters[0x93] & 32))
+  if ((registersState->GimeRegisters[0x92] & 32) | (registersState->GimeRegisters[0x93] & 32)) {
     SetTimerInterruptState(1);
-  else
+  }
+  else {
     SetTimerInterruptState(0);
+  }
 }
 
 void SetGimeFIRQStearing(unsigned char data) //93
 {
-  if ((GimeRegisters[0x92] & 2) | (GimeRegisters[0x93] & 2))
+  RegistersState* registersState = GetRegistersState();
+
+  if ((registersState->GimeRegisters[0x92] & 2) | (registersState->GimeRegisters[0x93] & 2)) {
     GimeSetKeyboardInterruptState(1);
-  else
+  }
+  else {
     GimeSetKeyboardInterruptState(0);
+  }
 
-  if ((GimeRegisters[0x92] & 8) | (GimeRegisters[0x93] & 8))
+  if ((registersState->GimeRegisters[0x92] & 8) | (registersState->GimeRegisters[0x93] & 8)) {
     SetVertInterruptState(1);
-  else
+  }
+  else {
     SetVertInterruptState(0);
+  }
 
-  if ((GimeRegisters[0x92] & 16) | (GimeRegisters[0x93] & 16))
+  if ((registersState->GimeRegisters[0x92] & 16) | (registersState->GimeRegisters[0x93] & 16)) {
     SetHorzInterruptState(1);
-  else
+  }
+  else {
     SetHorzInterruptState(0);
+  }
+
   // Moon Patrol Demo Using Timer for FIRQ Side Scroll 
-  if ((GimeRegisters[0x92] & 32) | (GimeRegisters[0x93] & 32))
+  if ((registersState->GimeRegisters[0x92] & 32) | (registersState->GimeRegisters[0x93] & 32)) {
     SetTimerInterruptState(1);
-  else
+  }
+  else {
     SetTimerInterruptState(0);
+  }
 }
 
 void SetTimerMSB(unsigned char data) //94
 {
-  unsigned short Temp;
-  Temp = ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 4095;
-  SetInterruptTimer(Temp);
+  unsigned short temp;
+
+  RegistersState* registersState = GetRegistersState();
+
+  temp = ((registersState->GimeRegisters[0x94] << 8) + registersState->GimeRegisters[0x95]) & 4095;
+
+  SetInterruptTimer(temp);
 }
 
 void SetTimerLSB(unsigned char data) //95
 {
-  unsigned short Temp;
-  Temp = ((GimeRegisters[0x94] << 8) + GimeRegisters[0x95]) & 4095;
-  SetInterruptTimer(Temp);
+  unsigned short temp;
+
+  RegistersState* registersState = GetRegistersState();
+
+  temp = ((registersState->GimeRegisters[0x94] << 8) + registersState->GimeRegisters[0x95]) & 4095;
+
+  SetInterruptTimer(temp);
 }
 
 void GimeAssertKeyboardInterrupt(void)
 {
+  RegistersState* registersState = GetRegistersState();
+
   CPU* cpu = GetCPU();
 
-  if (((GimeRegisters[0x93] & 2) != 0) & (EnhancedFIRQFlag == 1))
-  {
+  if (((registersState->GimeRegisters[0x93] & 2) != 0) && (registersState->EnhancedFIRQFlag == 1)) {
     cpu->CPUAssertInterrupt(FIRQ, 0);
-    LastFirq = LastFirq | 2;
+
+    registersState->LastFirq = registersState->LastFirq | 2;
   }
-  else
-    if (((GimeRegisters[0x92] & 2) != 0) & (EnhancedIRQFlag == 1))
-    {
-      cpu->CPUAssertInterrupt(IRQ, 0);
-      LastIrq = LastIrq | 2;
-    }
+  else if (((registersState->GimeRegisters[0x92] & 2) != 0) && (registersState->EnhancedIRQFlag == 1)) {
+    cpu->CPUAssertInterrupt(IRQ, 0);
+
+    registersState->LastIrq = registersState->LastIrq | 2;
+  }
 }
 
 void GimeAssertVertInterrupt(void)
 {
+  RegistersState* registersState = GetRegistersState();
+
   CPU* cpu = GetCPU();
 
-  if (((GimeRegisters[0x93] & 8) != 0) & (EnhancedFIRQFlag == 1))
-  {
+  if (((registersState->GimeRegisters[0x93] & 8) != 0) && (registersState->EnhancedFIRQFlag == 1)) {
     cpu->CPUAssertInterrupt(FIRQ, 0); //FIRQ
-    LastFirq = LastFirq | 8;
+
+    registersState->LastFirq = registersState->LastFirq | 8;
   }
-  else
-    if (((GimeRegisters[0x92] & 8) != 0) & (EnhancedIRQFlag == 1))
-    {
-      cpu->CPUAssertInterrupt(IRQ, 0); //IRQ moon patrol demo using this
-      LastIrq = LastIrq | 8;
-    }
-  return;
+  else if (((registersState->GimeRegisters[0x92] & 8) != 0) && (registersState->EnhancedIRQFlag == 1)) {
+    cpu->CPUAssertInterrupt(IRQ, 0); //IRQ moon patrol demo using this
+
+    registersState->LastIrq = registersState->LastIrq | 8;
+  }
 }
 
 void GimeAssertHorzInterrupt(void)
 {
+  RegistersState* registersState = GetRegistersState();
+
   CPU* cpu = GetCPU();
 
-  if (((GimeRegisters[0x93] & 16) != 0) & (EnhancedFIRQFlag == 1))
-  {
+  if (((registersState->GimeRegisters[0x93] & 16) != 0) && (registersState->EnhancedFIRQFlag == 1)) {
     cpu->CPUAssertInterrupt(FIRQ, 0);
-    LastFirq = LastFirq | 16;
+
+    registersState->LastFirq = registersState->LastFirq | 16;
   }
-  else
-    if (((GimeRegisters[0x92] & 16) != 0) & (EnhancedIRQFlag == 1))
-    {
-      cpu->CPUAssertInterrupt(IRQ, 0);
-      LastIrq = LastIrq | 16;
-    }
+  else if (((registersState->GimeRegisters[0x92] & 16) != 0) && (registersState->EnhancedIRQFlag == 1)) {
+    cpu->CPUAssertInterrupt(IRQ, 0);
+
+    registersState->LastIrq = registersState->LastIrq | 16;
+  }
 }
 
 void GimeAssertTimerInterrupt(void)
 {
+  RegistersState* registersState = GetRegistersState();
+
   CPU* cpu = GetCPU();
 
-  if (((GimeRegisters[0x93] & 32) != 0) & (EnhancedFIRQFlag == 1))
-  {
+  if (((registersState->GimeRegisters[0x93] & 32) != 0) && (registersState->EnhancedFIRQFlag == 1)) {
     cpu->CPUAssertInterrupt(FIRQ, 0);
-    LastFirq = LastFirq | 32;
+
+    registersState->LastFirq = registersState->LastFirq | 32;
   }
-  else
-    if (((GimeRegisters[0x92] & 32) != 0) & (EnhancedIRQFlag == 1))
-    {
-      cpu->CPUAssertInterrupt(IRQ, 0);
-      LastIrq = LastIrq | 32;
-    }
+  else if (((registersState->GimeRegisters[0x92] & 32) != 0) && (registersState->EnhancedIRQFlag == 1)) {
+    cpu->CPUAssertInterrupt(IRQ, 0);
+
+    registersState->LastIrq = registersState->LastIrq | 32;
+  }
 }
 
 unsigned char sam_read(unsigned char port) //SAM don't talk much :)
 {
-  if ((port >= 0xF0) & (port <= 0xFF)) { //IRQ vectors from rom
-    return(rom[0x3F00 + port]);
+  RegistersState* registersState = GetRegistersState();
+
+  if ((port >= 0xF0) && (port <= 0xFF)) { //IRQ vectors from rom
+    return(registersState->Rom[0x3F00 + port]);
   }
 
   return(0);
@@ -357,58 +390,71 @@ void sam_write(unsigned char data, unsigned char port)
   unsigned char mask = 0;
   unsigned char reg = 0;
 
-  if ((port >= 0xC6) & (port <= 0xD3))	//VDG Display offset Section
+  RegistersState* registersState = GetRegistersState();
+
+  if ((port >= 0xC6) && (port <= 0xD3))	//VDG Display offset Section
   {
     port = port - 0xC6;
     reg = ((port & 0x0E) >> 1);
     mask = 1 << reg;
-    Dis_Offset = Dis_Offset & (0xFF - mask); //Shut the bit off
+
+    registersState->Dis_Offset = registersState->Dis_Offset & (0xFF - mask); //Shut the bit off
 
     if (port & 1) {
-      Dis_Offset = Dis_Offset | mask;
+      registersState->Dis_Offset = registersState->Dis_Offset | mask;
     }
 
-    SetGimeVdgOffset(Dis_Offset);
+    SetGimeVdgOffset(registersState->Dis_Offset);
   }
 
-  if ((port >= 0xC0) & (port <= 0xC5))	//VDG Mode
+  if ((port >= 0xC0) && (port <= 0xC5))	//VDG Mode
   {
     port = port - 0xC0;
     reg = ((port & 0x0E) >> 1);
     mask = 1 << reg;
-    VDG_Mode = VDG_Mode & (0xFF - mask);
+    registersState->VDG_Mode = registersState->VDG_Mode & (0xFF - mask);
 
     if (port & 1) {
-      VDG_Mode = VDG_Mode | mask;
+      registersState->VDG_Mode = registersState->VDG_Mode | mask;
     }
 
-    SetGimeVdgMode(VDG_Mode);
+    SetGimeVdgMode(registersState->VDG_Mode);
   }
 
-  if ((port == 0xDE) || (port == 0xDF))
+  if ((port == 0xDE) || (port == 0xDF)) {
     SetMapType(port & 1);
+  }
 
-  if ((port == 0xD7) || (port == 0xD9))
+  if ((port == 0xD7) || (port == 0xD9)) {
     SetCPUMultiplayerFlag(1);
+  }
 
-  if ((port == 0xD6) || (port == 0xD8))
+  if ((port == 0xD6) || (port == 0xD8)) {
     SetCPUMultiplayerFlag(0);
+  }
 }
 
 void mc6883_reset()
 {
-  VDG_Mode = 0;
-  Dis_Offset = 0;
-  MPU_Rate = 0;
-  rom = GetInternalRomPointer();
+  RegistersState* registersState = GetRegistersState();
+
+  registersState->VDG_Mode = 0;
+  registersState->Dis_Offset = 0;
+  registersState->MPU_Rate = 0;
+
+  registersState->Rom = GetInternalRomPointer();
 }
 
 unsigned char VDG_Offset(void)
 {
-  return(Dis_Offset);
+  RegistersState* registersState = GetRegistersState();
+
+  return(registersState->Dis_Offset);
 }
 
 unsigned char VDG_Modes(void)
 {
-  return(VDG_Mode);
+  RegistersState* registersState = GetRegistersState();
+
+  return(registersState->VDG_Mode);
 }
