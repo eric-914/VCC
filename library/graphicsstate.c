@@ -282,7 +282,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl SetGimePallet(unsigned char pallete, unsigned char color)
+  __declspec(dllexport) void __cdecl SetGimePalette(unsigned char pallete, unsigned char color)
   {
     GraphicsState* gs = GetGraphicsState();
 

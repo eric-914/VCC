@@ -7,12 +7,11 @@
 #include "KeyboardAccessors.h"
 #include "JoystickAccessors.h"
 #include "vccKeyboardUpdateRolloverTable.h"
+#include "RegistersAccessors.h"
 
 #include "library/joystickstate.h"
 #include "library/keyboarddef.h"
 #include "library/xDebug.h"
-
-extern void GimeAssertKeyboardInterrupt(void);
 
 /*
   Dispatch keyboard event to the emulator.

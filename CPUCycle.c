@@ -11,15 +11,14 @@
 #include "KeyboardAccessors.h"
 #include "PakInterfaceAccessors.h"
 #include "vccKeyboardHandleKey.h"
+#include "RegistersAccessors.h"
+#include "SetSpeedThrottle.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/keyboarddef.h"
 
-extern void GimeAssertHorzInterrupt(void);
 extern void irq_hs(int);
-extern void GimeAssertTimerInterrupt(void);
-extern unsigned char SetSpeedThrottle(unsigned char);
 
 /* _inline */ int CPUCycle(void)
 {

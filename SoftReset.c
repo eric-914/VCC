@@ -8,13 +8,13 @@
 #include "library/cpudef.h"
 
 extern void PiaReset();
-extern void mc6883_reset();
+extern void MC6883Reset();
 
 void SoftReset(void)
 {
   VccState* vccState = GetVccState();
 
-  mc6883_reset();
+  MC6883Reset();
   PiaReset();
 
   GetCPU()->CPUReset();

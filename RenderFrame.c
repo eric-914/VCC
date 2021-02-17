@@ -8,11 +8,11 @@
 #include "UnlockScreen.h"
 #include "CPUCycle.h"
 #include "SetBorderChange.h"
+#include "RegistersAccessors.h"
 
 #include "library/graphicsstate.h"
 
 extern void irq_fs(int);
-extern void GimeAssertVertInterrupt(void);
 
 float RenderFrame(SystemState* systemState)
 {

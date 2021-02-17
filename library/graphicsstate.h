@@ -76,6 +76,6 @@ extern "C" __declspec(dllexport) void __cdecl FlipArtifacts();
 extern "C" __declspec(dllexport) void __cdecl ResetGraphicsState();
 extern "C" __declspec(dllexport) void MakeRGBPalette(void);
 extern "C" __declspec(dllexport) void __cdecl MakeCMPpalette(int paletteType);
-extern "C" __declspec(dllexport) void __cdecl SetGimePallet(unsigned char pallete, unsigned char color);
+extern "C" __declspec(dllexport) void __cdecl SetGimePalette(unsigned char palette, unsigned char color);
 
 #endif

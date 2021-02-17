@@ -1,8 +1,9 @@
+#include "GimeWrite.h"
+#include "SAMWrite.h"
+#include "PakInterfaceAccessors.h"
+
 extern void pia0_write(unsigned char data, unsigned char port);
 extern void pia1_write(unsigned char data, unsigned char port);
-extern void sam_write(unsigned char, unsigned char);
-extern void GimeWrite(unsigned char, unsigned char);
-extern void PackPortWrite(unsigned char, unsigned char);
 
 void port_write(unsigned char data, unsigned short addr)
 {
@@ -56,7 +57,7 @@ void port_write(unsigned char data, unsigned short addr)
   case 0xDD:
   case 0xDE:
   case 0xDF:
-    sam_write(data, port);	//MC6883 S.A.M. address range $FFC0-$FFDF
+    SAMWrite(data, port);	//MC6883 S.A.M. address range $FFC0-$FFDF
     break;
 
   case 0x90:

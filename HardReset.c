@@ -21,7 +21,7 @@ extern void MC6809DeAssertInterrupt(unsigned char);// 4 nmi 2 firq 1 irq
 extern void MC6809ForcePC(unsigned short);
 
 extern void PiaReset();
-extern void mc6883_reset();
+extern void MC6883Reset();
 extern void GimeReset(void);
 extern void UpdateBusPointer(void);
 
@@ -61,7 +61,7 @@ void HardReset(SystemState* const systemState)
   }
 
   PiaReset();
-  mc6883_reset();	//Captures interal rom pointer for CPU Interrupt Vectors
+  MC6883Reset();	//Captures interal rom pointer for CPU Interrupt Vectors
 
   cpu->CPUInit();
   cpu->CPUReset();		// Zero all CPU Registers and sets the PC to VRESET

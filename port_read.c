@@ -1,8 +1,9 @@
+#include "RegistersAccessors.h"
+#include "PakInterfaceAccessors.h"
+#include "SAMRead.h"
+
 extern unsigned char pia0_read(unsigned char port);
 extern unsigned char pia1_read(unsigned char port);
-extern unsigned char sam_read(unsigned char);
-extern unsigned char GimeRead(unsigned char);
-extern unsigned char PackPortRead(unsigned char);
 
 unsigned char port_read(unsigned short addr)
 {
@@ -58,7 +59,7 @@ unsigned char port_read(unsigned short addr)
   case 0xDD:
   case 0xDE:
   case 0xDF:
-    value = sam_read(port);	//MC6883 S.A.M. address range $FFC0-$FFDF
+    value = SAMRead(port);	//MC6883 S.A.M. address range $FFC0-$FFDF
     break;
 
   case 0xF0:
@@ -77,7 +78,7 @@ unsigned char port_read(unsigned short addr)
   case 0xFD:
   case 0xFE:
   case 0xFF:
-    value = sam_read(port);	// SAM controls IRQ Vectors at $FFF0 - $FFFF	
+    value = SAMRead(port);	// SAM controls IRQ Vectors at $FFF0 - $FFFF	
     break;
 
   case 0x90:					//TCC1014 G.I.M.E.
