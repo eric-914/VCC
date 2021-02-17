@@ -370,6 +370,7 @@
     <ClCompile Include="WritePrintMon.c" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="license.txt" />
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
@@ -634,6 +635,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="COPYING" />
     <None Include="resources\coco3.rom">
       <DeploymentContent>true</DeploymentContent>
     </None>
