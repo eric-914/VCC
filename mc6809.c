@@ -26,15 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemWrite16.h"
 #include "mc6809state.h"
 
-typedef union
-{
-  unsigned short Reg;
-  struct
-  {
-    unsigned char lsb, msb;
-  } B;
-} CpuRegister;
-
 static CpuRegister pc, x, y, u, s, dp, d;
 
 static char InInterrupt = 0;
@@ -444,18 +435,18 @@ int MC6809Exec(int CycleFor)
 
       case SWI2_I: //103F
         cc[E] = 1;
-        MemWrite8(pc.B.lsb, --s.Reg);
-        MemWrite8(pc.B.msb, --s.Reg);
-        MemWrite8(u.B.lsb, --s.Reg);
-        MemWrite8(u.B.msb, --s.Reg);
-        MemWrite8(y.B.lsb, --s.Reg);
-        MemWrite8(y.B.msb, --s.Reg);
-        MemWrite8(x.B.lsb, --s.Reg);
-        MemWrite8(x.B.msb, --s.Reg);
-        MemWrite8(dp.B.msb, --s.Reg);
-        MemWrite8(B_REG, --s.Reg);
-        MemWrite8(A_REG, --s.Reg);
-        MemWrite8(getcc(), --s.Reg);
+        MemWrite8(pc.B.lsb, --S_REG);
+        MemWrite8(pc.B.msb, --S_REG);
+        MemWrite8(u.B.lsb, --S_REG);
+        MemWrite8(u.B.msb, --S_REG);
+        MemWrite8(y.B.lsb, --S_REG);
+        MemWrite8(y.B.msb, --S_REG);
+        MemWrite8(x.B.lsb, --S_REG);
+        MemWrite8(x.B.msb, --S_REG);
+        MemWrite8(dp.B.msb, --S_REG);
+        MemWrite8(B_REG, --S_REG);
+        MemWrite8(A_REG, --S_REG);
+        MemWrite8(getcc(), --S_REG);
         PC_REG = MemRead16(VSWI2);
         CycleCounter += 20;
         break;
@@ -604,59 +595,59 @@ int MC6809Exec(int CycleFor)
         break;
 
       case LDS_I:  //10CE
-        s.Reg = MemRead16(PC_REG);
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        S_REG = MemRead16(PC_REG);
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         PC_REG += 2;
         CycleCounter += 4;
         break;
 
       case LDS_D: //10DE
-        s.Reg = MemRead16((dp.Reg | MemRead8(PC_REG++)));
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        S_REG = MemRead16((dp.Reg | MemRead8(PC_REG++)));
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         CycleCounter += 6;
         break;
 
       case STS_D: //10DF
-        MemWrite16(s.Reg, (dp.Reg | MemRead8(PC_REG++)));
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        MemWrite16(S_REG, (dp.Reg | MemRead8(PC_REG++)));
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         CycleCounter += 6;
         break;
 
       case LDS_X: //10EE
-        s.Reg = MemRead16(CalculateEA(MemRead8(PC_REG++)));
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        S_REG = MemRead16(CalculateEA(MemRead8(PC_REG++)));
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         CycleCounter += 6;
         break;
 
       case STS_X: //10EF
-        MemWrite16(s.Reg, CalculateEA(MemRead8(PC_REG++)));
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        MemWrite16(S_REG, CalculateEA(MemRead8(PC_REG++)));
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         CycleCounter += 6;
         break;
 
       case LDS_E: //10FE
-        s.Reg = MemRead16(MemRead16(PC_REG));
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        S_REG = MemRead16(MemRead16(PC_REG));
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         PC_REG += 2;
         CycleCounter += 7;
         break;
 
       case STS_E: //10FF
-        MemWrite16(s.Reg, MemRead16(PC_REG));
-        cc[Z] = ZTEST(s.Reg);
-        cc[N] = NTEST16(s.Reg);
+        MemWrite16(S_REG, MemRead16(PC_REG));
+        cc[Z] = ZTEST(S_REG);
+        cc[N] = NTEST16(S_REG);
         cc[V] = 0;
         PC_REG += 2;
         CycleCounter += 7;
@@ -673,18 +664,18 @@ int MC6809Exec(int CycleFor)
       {
       case SWI3_I: //113F
         cc[E] = 1;
-        MemWrite8(pc.B.lsb, --s.Reg);
-        MemWrite8(pc.B.msb, --s.Reg);
-        MemWrite8(u.B.lsb, --s.Reg);
-        MemWrite8(u.B.msb, --s.Reg);
-        MemWrite8(y.B.lsb, --s.Reg);
-        MemWrite8(y.B.msb, --s.Reg);
-        MemWrite8(x.B.lsb, --s.Reg);
-        MemWrite8(x.B.msb, --s.Reg);
-        MemWrite8(dp.B.msb, --s.Reg);
-        MemWrite8(B_REG, --s.Reg);
-        MemWrite8(A_REG, --s.Reg);
-        MemWrite8(getcc(), --s.Reg);
+        MemWrite8(pc.B.lsb, --S_REG);
+        MemWrite8(pc.B.msb, --S_REG);
+        MemWrite8(u.B.lsb, --S_REG);
+        MemWrite8(u.B.msb, --S_REG);
+        MemWrite8(y.B.lsb, --S_REG);
+        MemWrite8(y.B.msb, --S_REG);
+        MemWrite8(x.B.lsb, --S_REG);
+        MemWrite8(x.B.msb, --S_REG);
+        MemWrite8(dp.B.msb, --S_REG);
+        MemWrite8(B_REG, --S_REG);
+        MemWrite8(A_REG, --S_REG);
+        MemWrite8(getcc(), --S_REG);
         PC_REG = MemRead16(VSWI3);
         CycleCounter += 20;
         break;
@@ -702,8 +693,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPS_M: //118C
         postword = MemRead16(PC_REG);
-        temp16 = s.Reg - postword;
-        cc[C] = temp16 > s.Reg;
+        temp16 = S_REG - postword;
+        cc[C] = temp16 > S_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, S_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -723,8 +714,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPS_D: //119C
         postword = MemRead16((dp.Reg | MemRead8(PC_REG++)));
-        temp16 = s.Reg - postword;
-        cc[C] = temp16 > s.Reg;
+        temp16 = S_REG - postword;
+        cc[C] = temp16 > S_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, S_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -743,8 +734,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPS_X:  //11AC
         postword = MemRead16(CalculateEA(MemRead8(PC_REG++)));
-        temp16 = s.Reg - postword;
-        cc[C] = temp16 > s.Reg;
+        temp16 = S_REG - postword;
+        cc[C] = temp16 > S_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, S_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -764,8 +755,8 @@ int MC6809Exec(int CycleFor)
 
       case CMPS_E: //11BC
         postword = MemRead16(MemRead16(PC_REG));
-        temp16 = s.Reg - postword;
-        cc[C] = temp16 > s.Reg;
+        temp16 = S_REG - postword;
+        cc[C] = temp16 > S_REG;
         cc[V] = OTEST16(cc[C], postword, temp16, S_REG);
         cc[N] = NTEST16(temp16);
         cc[Z] = ZTEST(temp16);
@@ -798,9 +789,9 @@ int MC6809Exec(int CycleFor)
     case	LBSR_R: //17
       *spostword = MemRead16(PC_REG);
       PC_REG += 2;
-      s.Reg--;
-      MemWrite8(pc.B.lsb, s.Reg--);
-      MemWrite8(pc.B.msb, s.Reg);
+      S_REG--;
+      MemWrite8(pc.B.lsb, S_REG--);
+      MemWrite8(pc.B.msb, S_REG);
       PC_REG += *spostword;
       CycleCounter += 9;
       break;
@@ -1062,7 +1053,7 @@ int MC6809Exec(int CycleFor)
       break;
 
     case LEAS_X: //32
-      s.Reg = CalculateEA(MemRead8(PC_REG++));
+      S_REG = CalculateEA(MemRead8(PC_REG++));
       CycleCounter += 4;
       break;
 
@@ -1076,53 +1067,53 @@ int MC6809Exec(int CycleFor)
 
       if (postbyte & 0x80)
       {
-        MemWrite8(pc.B.lsb, --s.Reg);
-        MemWrite8(pc.B.msb, --s.Reg);
+        MemWrite8(pc.B.lsb, --S_REG);
+        MemWrite8(pc.B.msb, --S_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
-        MemWrite8(u.B.lsb, --s.Reg);
-        MemWrite8(u.B.msb, --s.Reg);
+        MemWrite8(u.B.lsb, --S_REG);
+        MemWrite8(u.B.msb, --S_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
-        MemWrite8(y.B.lsb, --s.Reg);
-        MemWrite8(y.B.msb, --s.Reg);
+        MemWrite8(y.B.lsb, --S_REG);
+        MemWrite8(y.B.msb, --S_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x10)
       {
-        MemWrite8(x.B.lsb, --s.Reg);
-        MemWrite8(x.B.msb, --s.Reg);
+        MemWrite8(x.B.lsb, --S_REG);
+        MemWrite8(x.B.msb, --S_REG);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x08)
       {
-        MemWrite8(dp.B.msb, --s.Reg);
+        MemWrite8(dp.B.msb, --S_REG);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
-        MemWrite8(B_REG, --s.Reg);
+        MemWrite8(B_REG, --S_REG);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
-        MemWrite8(A_REG, --s.Reg);
+        MemWrite8(A_REG, --S_REG);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x01)
       {
-        MemWrite8(getcc(), --s.Reg);
+        MemWrite8(getcc(), --S_REG);
         CycleCounter += 1;
       }
 
@@ -1134,53 +1125,53 @@ int MC6809Exec(int CycleFor)
 
       if (postbyte & 0x01)
       {
-        setcc(MemRead8(s.Reg++));
+        setcc(MemRead8(S_REG++));
         CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
-        A_REG = MemRead8(s.Reg++);
+        A_REG = MemRead8(S_REG++);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
-        B_REG = MemRead8(s.Reg++);
+        B_REG = MemRead8(S_REG++);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x08)
       {
-        dp.B.msb = MemRead8(s.Reg++);
+        dp.B.msb = MemRead8(S_REG++);
         CycleCounter += 1;
       }
 
       if (postbyte & 0x10)
       {
-        x.B.msb = MemRead8(s.Reg++);
-        x.B.lsb = MemRead8(s.Reg++);
+        x.B.msb = MemRead8(S_REG++);
+        x.B.lsb = MemRead8(S_REG++);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
-        y.B.msb = MemRead8(s.Reg++);
-        y.B.lsb = MemRead8(s.Reg++);
+        y.B.msb = MemRead8(S_REG++);
+        y.B.lsb = MemRead8(S_REG++);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
-        u.B.msb = MemRead8(s.Reg++);
-        u.B.lsb = MemRead8(s.Reg++);
+        u.B.msb = MemRead8(S_REG++);
+        u.B.lsb = MemRead8(S_REG++);
         CycleCounter += 2;
       }
 
       if (postbyte & 0x80)
       {
-        pc.B.msb = MemRead8(s.Reg++);
-        pc.B.lsb = MemRead8(s.Reg++);
+        pc.B.msb = MemRead8(S_REG++);
+        pc.B.lsb = MemRead8(S_REG++);
         CycleCounter += 2;
       }
 
@@ -1302,8 +1293,8 @@ int MC6809Exec(int CycleFor)
       break;
 
     case RTS_I: //39
-      pc.B.msb = MemRead8(s.Reg++);
-      pc.B.lsb = MemRead8(s.Reg++);
+      pc.B.msb = MemRead8(S_REG++);
+      pc.B.lsb = MemRead8(S_REG++);
       CycleCounter += 5;
       break;
 
@@ -1313,26 +1304,26 @@ int MC6809Exec(int CycleFor)
       break;
 
     case RTI_I: //3B
-      setcc(MemRead8(s.Reg++));
+      setcc(MemRead8(S_REG++));
       CycleCounter += 6;
       InInterrupt = 0;
 
       if (cc[E])
       {
-        A_REG = MemRead8(s.Reg++);
-        B_REG = MemRead8(s.Reg++);
-        dp.B.msb = MemRead8(s.Reg++);
-        x.B.msb = MemRead8(s.Reg++);
-        x.B.lsb = MemRead8(s.Reg++);
-        y.B.msb = MemRead8(s.Reg++);
-        y.B.lsb = MemRead8(s.Reg++);
-        u.B.msb = MemRead8(s.Reg++);
-        u.B.lsb = MemRead8(s.Reg++);
+        A_REG = MemRead8(S_REG++);
+        B_REG = MemRead8(S_REG++);
+        dp.B.msb = MemRead8(S_REG++);
+        x.B.msb = MemRead8(S_REG++);
+        x.B.lsb = MemRead8(S_REG++);
+        y.B.msb = MemRead8(S_REG++);
+        y.B.lsb = MemRead8(S_REG++);
+        u.B.msb = MemRead8(S_REG++);
+        u.B.lsb = MemRead8(S_REG++);
         CycleCounter += 9;
       }
 
-      pc.B.msb = MemRead8(s.Reg++);
-      pc.B.lsb = MemRead8(s.Reg++);
+      pc.B.msb = MemRead8(S_REG++);
+      pc.B.lsb = MemRead8(S_REG++);
       break;
 
     case CWAI_I: //3C
@@ -1357,18 +1348,18 @@ int MC6809Exec(int CycleFor)
 
     case SWI1_I: //3F
       cc[E] = 1;
-      MemWrite8(pc.B.lsb, --s.Reg);
-      MemWrite8(pc.B.msb, --s.Reg);
-      MemWrite8(u.B.lsb, --s.Reg);
-      MemWrite8(u.B.msb, --s.Reg);
-      MemWrite8(y.B.lsb, --s.Reg);
-      MemWrite8(y.B.msb, --s.Reg);
-      MemWrite8(x.B.lsb, --s.Reg);
-      MemWrite8(x.B.msb, --s.Reg);
-      MemWrite8(dp.B.msb, --s.Reg);
-      MemWrite8(B_REG, --s.Reg);
-      MemWrite8(A_REG, --s.Reg);
-      MemWrite8(getcc(), --s.Reg);
+      MemWrite8(pc.B.lsb, --S_REG);
+      MemWrite8(pc.B.msb, --S_REG);
+      MemWrite8(u.B.lsb, --S_REG);
+      MemWrite8(u.B.msb, --S_REG);
+      MemWrite8(y.B.lsb, --S_REG);
+      MemWrite8(y.B.msb, --S_REG);
+      MemWrite8(x.B.lsb, --S_REG);
+      MemWrite8(x.B.msb, --S_REG);
+      MemWrite8(dp.B.msb, --S_REG);
+      MemWrite8(B_REG, --S_REG);
+      MemWrite8(A_REG, --S_REG);
+      MemWrite8(getcc(), --S_REG);
       PC_REG = MemRead16(VSWI);
       CycleCounter += 19;
       cc[I] = 1;
@@ -1951,9 +1942,9 @@ int MC6809Exec(int CycleFor)
 
     case BSR_R: //8D
       *spostbyte = MemRead8(PC_REG++);
-      s.Reg--;
-      MemWrite8(pc.B.lsb, s.Reg--);
-      MemWrite8(pc.B.msb, s.Reg);
+      S_REG--;
+      MemWrite8(pc.B.lsb, S_REG--);
+      MemWrite8(pc.B.msb, S_REG);
       PC_REG +=*spostbyte;
       CycleCounter += 7;
       break;
@@ -2094,9 +2085,9 @@ int MC6809Exec(int CycleFor)
 
     case BSR_D: //9D
       temp16 = (dp.Reg | MemRead8(PC_REG++));
-      s.Reg--;
-      MemWrite8(pc.B.lsb, s.Reg--);
-      MemWrite8(pc.B.msb, s.Reg);
+      S_REG--;
+      MemWrite8(pc.B.lsb, S_REG--);
+      MemWrite8(pc.B.msb, S_REG);
       PC_REG = temp16;
       CycleCounter += 7;
       break;
@@ -2244,9 +2235,9 @@ int MC6809Exec(int CycleFor)
 
     case BSR_X: //AD
       temp16 = CalculateEA(MemRead8(PC_REG++));
-      s.Reg--;
-      MemWrite8(pc.B.lsb, s.Reg--);
-      MemWrite8(pc.B.msb, s.Reg);
+      S_REG--;
+      MemWrite8(pc.B.lsb, S_REG--);
+      MemWrite8(pc.B.msb, S_REG);
       PC_REG = temp16;
       CycleCounter += 7;
       break;
@@ -2409,9 +2400,9 @@ int MC6809Exec(int CycleFor)
     case BSR_E: //BD
       postword = MemRead16(PC_REG);
       PC_REG +=2;
-      s.Reg--;
-      MemWrite8(pc.B.lsb, s.Reg--);
-      MemWrite8(pc.B.msb, s.Reg);
+      S_REG--;
+      MemWrite8(pc.B.lsb, S_REG--);
+      MemWrite8(pc.B.msb, S_REG);
       PC_REG = postword;
       CycleCounter += 8;
       break;
@@ -3035,9 +3026,9 @@ void cpu_firq(void)
   {
     InInterrupt = 1; //Flag to indicate FIRQ has been asserted
     cc[E] = 0; // Turn E flag off
-    MemWrite8(pc.B.lsb, --s.Reg);
-    MemWrite8(pc.B.msb, --s.Reg);
-    MemWrite8(getcc(), --s.Reg);
+    MemWrite8(pc.B.lsb, --S_REG);
+    MemWrite8(pc.B.msb, --S_REG);
+    MemWrite8(getcc(), --S_REG);
     cc[I] = 1;
     cc[F] = 1;
     PC_REG = MemRead16(VFIRQ);
@@ -3054,18 +3045,18 @@ void cpu_irq(void)
   if ((!cc[I]))
   {
     cc[E] = 1;
-    MemWrite8(pc.B.lsb, --s.Reg);
-    MemWrite8(pc.B.msb, --s.Reg);
-    MemWrite8(u.B.lsb, --s.Reg);
-    MemWrite8(u.B.msb, --s.Reg);
-    MemWrite8(y.B.lsb, --s.Reg);
-    MemWrite8(y.B.msb, --s.Reg);
-    MemWrite8(x.B.lsb, --s.Reg);
-    MemWrite8(x.B.msb, --s.Reg);
-    MemWrite8(dp.B.msb, --s.Reg);
-    MemWrite8(B_REG, --s.Reg);
-    MemWrite8(A_REG, --s.Reg);
-    MemWrite8(getcc(), --s.Reg);
+    MemWrite8(pc.B.lsb, --S_REG);
+    MemWrite8(pc.B.msb, --S_REG);
+    MemWrite8(u.B.lsb, --S_REG);
+    MemWrite8(u.B.msb, --S_REG);
+    MemWrite8(y.B.lsb, --S_REG);
+    MemWrite8(y.B.msb, --S_REG);
+    MemWrite8(x.B.lsb, --S_REG);
+    MemWrite8(x.B.msb, --S_REG);
+    MemWrite8(dp.B.msb, --S_REG);
+    MemWrite8(B_REG, --S_REG);
+    MemWrite8(A_REG, --S_REG);
+    MemWrite8(getcc(), --S_REG);
     PC_REG = MemRead16(VIRQ);
     cc[I] = 1;
   }
@@ -3076,18 +3067,18 @@ void cpu_irq(void)
 void cpu_nmi(void)
 {
   cc[E] = 1;
-  MemWrite8(pc.B.lsb, --s.Reg);
-  MemWrite8(pc.B.msb, --s.Reg);
-  MemWrite8(u.B.lsb, --s.Reg);
-  MemWrite8(u.B.msb, --s.Reg);
-  MemWrite8(y.B.lsb, --s.Reg);
-  MemWrite8(y.B.msb, --s.Reg);
-  MemWrite8(x.B.lsb, --s.Reg);
-  MemWrite8(x.B.msb, --s.Reg);
-  MemWrite8(dp.B.msb, --s.Reg);
-  MemWrite8(B_REG, --s.Reg);
-  MemWrite8(A_REG, --s.Reg);
-  MemWrite8(getcc(), --s.Reg);
+  MemWrite8(pc.B.lsb, --S_REG);
+  MemWrite8(pc.B.msb, --S_REG);
+  MemWrite8(u.B.lsb, --S_REG);
+  MemWrite8(u.B.msb, --S_REG);
+  MemWrite8(y.B.lsb, --S_REG);
+  MemWrite8(y.B.msb, --S_REG);
+  MemWrite8(x.B.lsb, --S_REG);
+  MemWrite8(x.B.msb, --S_REG);
+  MemWrite8(dp.B.msb, --S_REG);
+  MemWrite8(B_REG, --S_REG);
+  MemWrite8(A_REG, --S_REG);
+  MemWrite8(getcc(), --S_REG);
   cc[I] = 1;
   cc[F] = 1;
   PC_REG = MemRead16(VNMI);
