@@ -175,6 +175,7 @@
     <ClCompile Include="AudioState.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
+    <ClCompile Include="CalculateEA.c" />
     <ClCompile Include="CalculateFPS.c" />
     <ClCompile Include="CalibrateThrottle.c" />
     <ClCompile Include="CaptureBit.c" />
@@ -182,6 +183,11 @@
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
+    <ClCompile Include="MC6809AssertInterrupt.c" />
+    <ClCompile Include="MC6809DeAssertInterrupt.c" />
+    <ClCompile Include="MC6809Exec.c" />
+    <ClCompile Include="MC6809ForcePC.c" />
+    <ClCompile Include="mc6809_cc.c" />
     <ClCompile Include="ClipboardEmpty.c" />
     <ClCompile Include="clipboardstate.c" />
     <ClCompile Include="ClosePrintFile.c" />
@@ -249,8 +255,10 @@
     <ClCompile Include="LockScreen.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
-    <ClCompile Include="mc6809.c" />
+    <ClCompile Include="MC6809Init.c" />
+    <ClCompile Include="MC6809Reset.c" />
     <ClCompile Include="mc6809state.c" />
+    <ClCompile Include="mc6809_i.c" />
     <ClCompile Include="mc6821state.c" />
     <ClCompile Include="MC6883Reset.c" />
     <ClCompile Include="MemRead16.c" />
@@ -385,6 +393,7 @@
     <ClInclude Include="AudioState.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
+    <ClInclude Include="CalculateEA.h" />
     <ClInclude Include="CalculateFPS.h" />
     <ClInclude Include="CalibrateThrottle.h" />
     <ClInclude Include="CaptureBit.h" />
@@ -392,6 +401,11 @@
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
+    <ClInclude Include="MC6809AssertInterrupt.h" />
+    <ClInclude Include="MC6809DeAssertInterrupt.h" />
+    <ClInclude Include="MC6809Exec.h" />
+    <ClInclude Include="MC6809ForcePC.h" />
+    <ClInclude Include="mc6809_cc.h" />
     <ClInclude Include="ClipboardEmpty.h" />
     <ClInclude Include="clipboardstate.h" />
     <ClInclude Include="ClosePrintFile.h" />
@@ -461,9 +475,11 @@
     <ClInclude Include="load_ext_rom.h" />
     <ClInclude Include="LockScreen.h" />
     <ClInclude Include="MainConfig.h" />
-    <ClInclude Include="mc6809.h" />
     <ClInclude Include="mc6809defs.h" />
+    <ClInclude Include="MC6809Init.h" />
+    <ClInclude Include="MC6809Reset.h" />
     <ClInclude Include="mc6809state.h" />
+    <ClInclude Include="mc6809_i.h" />
     <ClInclude Include="mc6821def.h" />
     <ClInclude Include="mc6821state.h" />
     <ClInclude Include="MC6883Reset.h" />

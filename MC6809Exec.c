@@ -1,124 +1,14 @@
-/*
-Copyright 2015 by Joseph Forgione
-This file is part of VCC (Virtual Color Computer).
-
-    VCC (Virtual Color Computer) is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    VCC (Virtual Color Computer) is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include "windows.h"
-#include "mc6809.h"
 #include "mc6809defs.h"
-#include "MmuAccessors.h"
+#include "mc6809state.h"
+#include "mc6809_i.h"
+#include "mc6809_cc.h"
+
+#include "MC6809Reset.h"
+#include "CalculateEA.h"
 #include "MemRead8.h"
 #include "MemWrite8.h"
 #include "MemRead16.h"
 #include "MemWrite16.h"
-#include "mc6809state.h"
-
-MC6809State* mc6809State = GetMC6809State();
-
-#define D_REG	(mc6809State->d.Reg)
-#define PC_REG (mc6809State->pc.Reg)
-#define X_REG	(mc6809State->x.Reg)
-#define Y_REG	(mc6809State->y.Reg)
-#define U_REG	(mc6809State->u.Reg)
-#define S_REG	(mc6809State->s.Reg)
-#define A_REG	(mc6809State->d.B.msb)
-#define B_REG	(mc6809State->d.B.lsb)
-
-#define DP_REG (mc6809State->dp.Reg)
-#define DPA (mc6809State->dp.B.msb)
-#define PC_H (mc6809State->pc.B.msb)
-#define PC_L (mc6809State->pc.B.lsb)
-#define U_H (mc6809State->u.B.msb)
-#define U_L (mc6809State->u.B.lsb)
-#define S_H (mc6809State->s.B.msb)
-#define S_L (mc6809State->s.B.lsb)
-#define X_H (mc6809State->x.B.msb)
-#define X_L (mc6809State->x.B.lsb)
-#define Y_H (mc6809State->y.B.msb)
-#define Y_L (mc6809State->y.B.lsb)
-
-#define CC_E mc6809State->cc[E]
-#define CC_F mc6809State->cc[F]
-#define CC_H mc6809State->cc[H]
-#define CC_I mc6809State->cc[I]
-#define CC_N mc6809State->cc[N]
-#define CC_Z mc6809State->cc[Z]
-#define CC_V mc6809State->cc[V]
-#define CC_C mc6809State->cc[C]
-
-#define PUR(_I) (*(mc6809State->ureg8[_I]))
-#define PXF(_I) (*(mc6809State->xfreg16[_I]))
-
-static void setcc(unsigned char);
-static unsigned char getcc(void);
-static void cpu_firq(void);
-static void cpu_irq(void);
-static void cpu_nmi(void);
-
-_inline unsigned short CalculateEA(unsigned char);
-
-void MC6809Init(void)
-{	//Call this first or RESET will core!
-  // reg pointers for TFR and EXG and LEA ops
-  mc6809State->xfreg16[0] = &D_REG;
-  mc6809State->xfreg16[1] = &X_REG;
-  mc6809State->xfreg16[2] = &Y_REG;
-  mc6809State->xfreg16[3] = &U_REG;
-  mc6809State->xfreg16[4] = &S_REG;
-  mc6809State->xfreg16[5] = &PC_REG;
-
-  mc6809State->ureg8[0] = (unsigned char*)(&A_REG);
-  mc6809State->ureg8[1] = (unsigned char*)(&B_REG);
-  mc6809State->ureg8[2] = (unsigned char*)(&(mc6809State->ccbits));
-  mc6809State->ureg8[3] = (unsigned char*)(&DPA);
-  mc6809State->ureg8[4] = (unsigned char*)(&DPA);
-  mc6809State->ureg8[5] = (unsigned char*)(&DPA);
-  mc6809State->ureg8[6] = (unsigned char*)(&DPA);
-  mc6809State->ureg8[7] = (unsigned char*)(&DPA);
-}
-
-void MC6809Reset(void)
-{
-  char index;
-
-  for (index = 0; index <= 5; index++) {		//Set all register to 0 except V
-    PXF(index) = 0;
-  }
-
-  for (index = 0; index <= 7; index++) {
-    PUR(index) = 0;
-  }
-
-  CC_E = 0;
-  CC_F = 1;
-  CC_H = 0;
-  CC_I = 1;
-  CC_N = 0;
-  CC_Z = 0;
-  CC_V = 0;
-  CC_C = 0;
-
-  DP_REG = 0;
-
-  mc6809State->SyncWaiting = 0;
-
-  PC_REG = MemRead16(VRESET);	//PC gets its reset vector
-
-  SetMapType(0);
-}
 
 int MC6809Exec(int cycleFor)
 {
@@ -135,6 +25,8 @@ int MC6809Exec(int cycleFor)
   short unsigned postword = 0;
   signed char* spostbyte = (signed char*)&postbyte;
   signed short* spostword = (signed short*)&postword;
+
+  MC6809State* mc6809State = GetMC6809State();
 
   mc6809State->CycleCounter = 0;
 
@@ -481,7 +373,7 @@ int MC6809Exec(int cycleFor)
         MemWrite8(DPA, --S_REG);
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
-        MemWrite8(getcc(), --S_REG);
+        MemWrite8(mc6809_getcc(), --S_REG);
 
         PC_REG = MemRead16(VSWI2);
         mc6809State->CycleCounter += 20;
@@ -711,7 +603,7 @@ int MC6809Exec(int cycleFor)
         MemWrite8(DPA, --S_REG);
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
-        MemWrite8(getcc(), --S_REG);
+        MemWrite8(mc6809_getcc(), --S_REG);
 
         PC_REG = MemRead16(VSWI3);
         mc6809State->CycleCounter += 20;
@@ -860,17 +752,17 @@ int MC6809Exec(int cycleFor)
 
     case ORCC_M: //1A
       postbyte = MemRead8(PC_REG++);
-      temp8 = getcc();
+      temp8 = mc6809_getcc();
       temp8 = (temp8 | postbyte);
-      setcc(temp8);
+      mc6809_setcc(temp8);
       mc6809State->CycleCounter += 3;
       break;
 
     case ANDCC_M: //1C
       postbyte = MemRead8(PC_REG++);
-      temp8 = getcc();
+      temp8 = mc6809_getcc();
       temp8 = (temp8 & postbyte);
-      setcc(temp8);
+      mc6809_setcc(temp8);
       mc6809State->CycleCounter += 3;
       break;
 
@@ -883,7 +775,7 @@ int MC6809Exec(int cycleFor)
 
     case EXG_M: //1E
       postbyte = MemRead8(PC_REG++);
-      mc6809State->ccbits = getcc();
+      mc6809State->ccbits = mc6809_getcc();
 
       if (((postbyte & 0x80) >> 4) == (postbyte & 0x08)) //Verify like size registers
       {
@@ -901,7 +793,7 @@ int MC6809Exec(int cycleFor)
         }
       }
 
-      setcc(mc6809State->ccbits);
+      mc6809_setcc(mc6809State->ccbits);
       mc6809State->CycleCounter += 8;
       break;
 
@@ -942,7 +834,7 @@ int MC6809Exec(int cycleFor)
       case 11:
       case 14:
       case 15:
-        mc6809State->ccbits = getcc();
+        mc6809State->ccbits = mc6809_getcc();
         PUR(dest & 7) = 0xFF;
 
         if ((source == 12) || (source == 13)) {
@@ -952,7 +844,7 @@ int MC6809Exec(int cycleFor)
           PUR(dest & 7) = PUR(source & 7);
         }
 
-        setcc(mc6809State->ccbits);
+        mc6809_setcc(mc6809State->ccbits);
         break;
       }
       mc6809State->CycleCounter += 6;
@@ -1163,7 +1055,7 @@ int MC6809Exec(int cycleFor)
 
       if (postbyte & 0x01)
       {
-        MemWrite8(getcc(), --S_REG);
+        MemWrite8(mc6809_getcc(), --S_REG);
         mc6809State->CycleCounter += 1;
       }
 
@@ -1175,7 +1067,7 @@ int MC6809Exec(int cycleFor)
 
       if (postbyte & 0x01)
       {
-        setcc(MemRead8(S_REG++));
+        mc6809_setcc(MemRead8(S_REG++));
         mc6809State->CycleCounter += 1;
       }
 
@@ -1279,7 +1171,7 @@ int MC6809Exec(int cycleFor)
 
       if (postbyte & 0x01)
       {
-        MemWrite8(getcc(), --U_REG);
+        MemWrite8(mc6809_getcc(), --U_REG);
         mc6809State->CycleCounter += 1;
       }
 
@@ -1291,7 +1183,7 @@ int MC6809Exec(int cycleFor)
 
       if (postbyte & 0x01)
       {
-        setcc(MemRead8(U_REG++));
+        mc6809_setcc(MemRead8(U_REG++));
         mc6809State->CycleCounter += 1;
       }
       if (postbyte & 0x02)
@@ -1354,7 +1246,7 @@ int MC6809Exec(int cycleFor)
       break;
 
     case RTI_I: //3B
-      setcc(MemRead8(S_REG++));
+      mc6809_setcc(MemRead8(S_REG++));
       mc6809State->CycleCounter += 6;
       mc6809State->InInterrupt = 0;
 
@@ -1379,9 +1271,9 @@ int MC6809Exec(int cycleFor)
     case CWAI_I: //3C
       postbyte = MemRead8(PC_REG++);
 
-      mc6809State->ccbits = getcc();
+      mc6809State->ccbits = mc6809_getcc();
       mc6809State->ccbits = mc6809State->ccbits & postbyte;
-      setcc(mc6809State->ccbits);
+      mc6809_setcc(mc6809State->ccbits);
 
       mc6809State->CycleCounter = cycleFor;
       mc6809State->SyncWaiting = 1;
@@ -1411,7 +1303,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(DPA, --S_REG);
       MemWrite8(B_REG, --S_REG);
       MemWrite8(A_REG, --S_REG);
-      MemWrite8(getcc(), --S_REG);
+      MemWrite8(mc6809_getcc(), --S_REG);
       PC_REG = MemRead16(VSWI);
       mc6809State->CycleCounter += 19;
       CC_I = 1;
@@ -3069,359 +2961,4 @@ int MC6809Exec(int cycleFor)
   }
 
   return(cycleFor - mc6809State->CycleCounter);
-}
-
-void cpu_firq(void)
-{
-
-  if (!CC_F)
-  {
-    mc6809State->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
-    CC_E = 0; // Turn E flag off
-
-    MemWrite8(PC_L, --S_REG);
-    MemWrite8(PC_H, --S_REG);
-    MemWrite8(getcc(), --S_REG);
-
-    CC_I = 1;
-    CC_F = 1;
-    PC_REG = MemRead16(VFIRQ);
-  }
-
-  mc6809State->PendingInterrupts &= 253;
-}
-
-void cpu_irq(void)
-{
-  if (mc6809State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
-    return;
-  }
-
-  if (!CC_I) {
-    CC_E = 1;
-    MemWrite8(PC_L, --S_REG);
-    MemWrite8(PC_H, --S_REG);
-    MemWrite8(U_L, --S_REG);
-    MemWrite8(U_H, --S_REG);
-    MemWrite8(Y_L, --S_REG);
-    MemWrite8(Y_H, --S_REG);
-    MemWrite8(X_L, --S_REG);
-    MemWrite8(X_H, --S_REG);
-    MemWrite8(DPA, --S_REG);
-    MemWrite8(B_REG, --S_REG);
-    MemWrite8(A_REG, --S_REG);
-    MemWrite8(getcc(), --S_REG);
-    PC_REG = MemRead16(VIRQ);
-    CC_I = 1;
-  }
-
-  mc6809State->PendingInterrupts &= 254;
-}
-
-void cpu_nmi(void)
-{
-  CC_E = 1;
-  MemWrite8(PC_L, --S_REG);
-  MemWrite8(PC_H, --S_REG);
-  MemWrite8(U_L, --S_REG);
-  MemWrite8(U_H, --S_REG);
-  MemWrite8(Y_L, --S_REG);
-  MemWrite8(Y_H, --S_REG);
-  MemWrite8(X_L, --S_REG);
-  MemWrite8(X_H, --S_REG);
-  MemWrite8(DPA, --S_REG);
-  MemWrite8(B_REG, --S_REG);
-  MemWrite8(A_REG, --S_REG);
-  MemWrite8(getcc(), --S_REG);
-  CC_I = 1;
-  CC_F = 1;
-  PC_REG = MemRead16(VNMI);
-
-  mc6809State->PendingInterrupts &= 251;
-}
-
-void setcc(unsigned char bincc)
-{
-  CC_E = !!(bincc & (1 << E));
-  CC_F = !!(bincc & (1 << F));
-  CC_H = !!(bincc & (1 << H));
-  CC_I = !!(bincc & (1 << I));
-  CC_N = !!(bincc & (1 << N));
-  CC_Z = !!(bincc & (1 << Z));
-  CC_V = !!(bincc & (1 << V));
-  CC_C = !!(bincc & (1 << C));
-}
-
-unsigned char getcc(void)
-{
-  unsigned char bincc = 0;
-
-#define TST(_CC, _F) if (_CC) { bincc |= (1 << _F); }
-
-  TST(CC_E, E);
-  TST(CC_F, F);
-  TST(CC_H, H);
-  TST(CC_I, I);
-  TST(CC_N, N);
-  TST(CC_Z, Z);
-  TST(CC_V, V);
-  TST(CC_C, C);
-
-  return(bincc);
-}
-
-void MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
-{
-  mc6809State->SyncWaiting = 0;
-  mc6809State->PendingInterrupts |= (1 << (interrupt - 1));
-  mc6809State->IRQWaiter = waiter;
-}
-
-void MC6809DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
-{
-  mc6809State->PendingInterrupts &= ~(1 << (interrupt - 1));
-  mc6809State->InInterrupt = 0;
-}
-
-void MC6809ForcePC(unsigned short NewPC)
-{
-  PC_REG = NewPC;
-
-  mc6809State->PendingInterrupts = 0;
-  mc6809State->SyncWaiting = 0;
-}
-
-static unsigned short CalculateEA(unsigned char postbyte)
-{
-  static unsigned short int ea = 0;
-  static signed char byte = 0;
-  static unsigned char reg;
-
-  reg = ((postbyte >> 5) & 3) + 1;
-
-  if (postbyte & 0x80)
-  {
-    switch (postbyte & 0x1F)
-    {
-    case 0:
-      ea = PXF(reg);
-      PXF(reg)++;
-      mc6809State->CycleCounter += 2;
-      break;
-
-    case 1:
-      ea = PXF(reg);
-      PXF(reg) += 2;
-      mc6809State->CycleCounter += 3;
-      break;
-
-    case 2:
-      PXF(reg) -= 1;
-      ea = PXF(reg);
-      mc6809State->CycleCounter += 2;
-      break;
-
-    case 3:
-      PXF(reg) -= 2;
-      ea = PXF(reg);
-      mc6809State->CycleCounter += 3;
-      break;
-
-    case 4:
-      ea = PXF(reg);
-      break;
-
-    case 5:
-      ea = PXF(reg) + ((signed char)B_REG);
-      mc6809State->CycleCounter += 1;
-      break;
-
-    case 6:
-      ea = PXF(reg) + ((signed char)A_REG);
-      mc6809State->CycleCounter += 1;
-      break;
-
-    case 7:
-      mc6809State->CycleCounter += 1;
-      break;
-
-    case 8:
-      ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
-      mc6809State->CycleCounter += 1;
-      break;
-
-    case 9:
-      ea = PXF(reg) + MemRead16(PC_REG);
-      mc6809State->CycleCounter += 4;
-      PC_REG += 2;
-      break;
-
-    case 10:
-      mc6809State->CycleCounter += 1;
-      break;
-
-    case 11:
-      ea = PXF(reg) + D_REG;
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 12:
-      ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
-      mc6809State->CycleCounter += 1;
-      PC_REG++;
-      break;
-
-    case 13: //MM
-      ea = PC_REG + MemRead16(PC_REG) + 2;
-      mc6809State->CycleCounter += 5;
-      PC_REG += 2;
-      break;
-
-    case 14:
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 15: //01111
-      byte = (postbyte >> 5) & 3;
-
-      switch (byte)
-      {
-      case 0:
-        break;
-
-      case 1:
-        PC_REG += 2;
-        break;
-
-      case 2:
-        break;
-
-      case 3:
-        break;
-      }
-      break;
-
-    case 16: //10000
-      byte = (postbyte >> 5) & 3;
-
-      switch (byte)
-      {
-      case 0:
-        break;
-
-      case 1:
-        PC_REG += 2;
-        break;
-
-      case 2:
-        break;
-
-      case 3:
-        break;
-      }
-      break;
-
-    case 17: //10001
-      ea = PXF(reg);
-      PXF(reg) += 2;
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 6;
-      break;
-
-    case 18: //10010
-      mc6809State->CycleCounter += 6;
-      break;
-
-    case 19: //10011
-      PXF(reg) -= 2;
-      ea = PXF(reg);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 6;
-      break;
-
-    case 20: //10100
-      ea = PXF(reg);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 3;
-      break;
-
-    case 21: //10101
-      ea = PXF(reg) + ((signed char)B_REG);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 22: //10110
-      ea = PXF(reg) + ((signed char)A_REG);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 23: //10111
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 24: //11000
-      ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 25: //11001
-      ea = PXF(reg) + MemRead16(PC_REG);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 7;
-      PC_REG += 2;
-      break;
-
-    case 26: //11010
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 4;
-      break;
-
-    case 27: //11011
-      ea = PXF(reg) + D_REG;
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 7;
-      break;
-
-    case 28: //11100
-      ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 4;
-      PC_REG++;
-      break;
-
-    case 29: //11101
-      ea = PC_REG + MemRead16(PC_REG) + 2;
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 8;
-      PC_REG += 2;
-      break;
-
-    case 30: //11110
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 7;
-      break;
-
-    case 31: //11111
-      ea = MemRead16(PC_REG);
-      ea = MemRead16(ea);
-      mc6809State->CycleCounter += 8;
-      PC_REG += 2;
-      break;
-    }
-  }
-  else
-  {
-    byte = (postbyte & 31);
-    byte = (byte << 3);
-    byte = byte / 8;
-    ea = PXF(reg) + byte; //Was signed
-
-    mc6809State->CycleCounter += 1;
-  }
-
-  return(ea);
 }
