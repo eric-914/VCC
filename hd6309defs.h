@@ -520,7 +520,7 @@ This file is part of VCC (Virtual Color Computer).
 
 #define DPADDRESS(r) (dp.Reg | MemRead8(r))
 #define IMMADDRESS(r) MemRead16(r)
-#define INDADDRESS(r) CalculateEA(MemRead8(r))
+#define INDADDRESS(r) hd6309_CalculateEA(MemRead8(r))
 
 #define M65		0
 #define M64		1

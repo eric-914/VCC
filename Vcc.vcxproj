@@ -175,7 +175,7 @@
     <ClCompile Include="AudioState.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
-    <ClCompile Include="CalculateEA.c" />
+    <ClCompile Include="mc6809_CalculateEA.c" />
     <ClCompile Include="CalculateFPS.c" />
     <ClCompile Include="CalibrateThrottle.c" />
     <ClCompile Include="CaptureBit.c" />
@@ -183,6 +183,7 @@
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
     <ClCompile Include="CastoWav.c" />
+    <ClCompile Include="hd6309opcodes.c" />
     <ClCompile Include="MC6809AssertInterrupt.c" />
     <ClCompile Include="MC6809DeAssertInterrupt.c" />
     <ClCompile Include="MC6809Exec.c" />
@@ -393,7 +394,7 @@
     <ClInclude Include="AudioState.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
-    <ClInclude Include="CalculateEA.h" />
+    <ClInclude Include="mc6809_CalculateEA.h" />
     <ClInclude Include="CalculateFPS.h" />
     <ClInclude Include="CalibrateThrottle.h" />
     <ClInclude Include="CaptureBit.h" />
@@ -401,6 +402,7 @@
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
     <ClInclude Include="CastoWav.h" />
+    <ClInclude Include="hd6309opcodes.h" />
     <ClInclude Include="MC6809AssertInterrupt.h" />
     <ClInclude Include="MC6809DeAssertInterrupt.h" />
     <ClInclude Include="MC6809Exec.h" />

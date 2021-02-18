@@ -2,7 +2,7 @@
 #include "MemRead8.h"
 #include "MemRead16.h"
 
-/* _inline */ unsigned short CalculateEA(unsigned char postbyte)
+/* _inline */ unsigned short mc6809_CalculateEA(unsigned char postbyte)
 {
   static unsigned short int ea = 0;
   static signed char byte = 0;
