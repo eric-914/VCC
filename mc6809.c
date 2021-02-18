@@ -26,64 +26,46 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemWrite16.h"
 #include "mc6809state.h"
 
-static CpuRegister pc, x, y, u, s, dp, d;
-
-static char InInterrupt = 0;
-static int CycleCounter = 0;
-static unsigned char IRQWaiter = 0;
-static unsigned char PendingInterrupts = 0;
-static unsigned char Source = 0;
-static unsigned char Dest = 0;
-static unsigned int SyncWaiting = 0;
-
 static unsigned char postbyte = 0;
 static short unsigned postword = 0;
 static signed char* spostbyte = (signed char*)&postbyte;
 static signed short* spostword = (signed short*)&postword;
 
-static unsigned char temp8;
-static unsigned short temp16;
-static unsigned int temp32;
-
-static unsigned char ccbits;
-static unsigned int cc[8];
-
 MC6809State* mc6809State = GetMC6809State();
 
-#define D_REG	d.Reg
-#define PC_REG pc.Reg
-#define X_REG	x.Reg
-#define Y_REG	y.Reg
-#define U_REG	u.Reg
-#define S_REG	s.Reg
-#define A_REG	d.B.msb
-#define B_REG	d.B.lsb
+#define D_REG	(mc6809State->d.Reg)
+#define PC_REG (mc6809State->pc.Reg)
+#define X_REG	(mc6809State->x.Reg)
+#define Y_REG	(mc6809State->y.Reg)
+#define U_REG	(mc6809State->u.Reg)
+#define S_REG	(mc6809State->s.Reg)
+#define A_REG	(mc6809State->d.B.msb)
+#define B_REG	(mc6809State->d.B.lsb)
 
-#define DP_REG dp.Reg
-#define DPA dp.B.msb
-#define PC_H pc.B.msb
-#define PC_L pc.B.lsb
-#define U_H u.B.msb
-#define U_L u.B.lsb
-#define X_H x.B.msb
-#define X_L x.B.lsb
-#define Y_H y.B.msb
-#define Y_L y.B.lsb
+#define DP_REG (mc6809State->dp.Reg)
+#define DPA (mc6809State->dp.B.msb)
+#define PC_H (mc6809State->pc.B.msb)
+#define PC_L (mc6809State->pc.B.lsb)
+#define U_H (mc6809State->u.B.msb)
+#define U_L (mc6809State->u.B.lsb)
+#define S_H (mc6809State->s.B.msb)
+#define S_L (mc6809State->s.B.lsb)
+#define X_H (mc6809State->x.B.msb)
+#define X_L (mc6809State->x.B.lsb)
+#define Y_H (mc6809State->y.B.msb)
+#define Y_L (mc6809State->y.B.lsb)
 
-#define CC_E cc[E]
-#define CC_F cc[F]
-#define CC_H cc[H]
-#define CC_I cc[I]
-#define CC_N cc[N]
-#define CC_Z cc[Z]
-#define CC_V cc[V]
-#define CC_C cc[C]
+#define CC_E mc6809State->cc[E]
+#define CC_F mc6809State->cc[F]
+#define CC_H mc6809State->cc[H]
+#define CC_I mc6809State->cc[I]
+#define CC_N mc6809State->cc[N]
+#define CC_Z mc6809State->cc[Z]
+#define CC_V mc6809State->cc[V]
+#define CC_C mc6809State->cc[C]
 
-static unsigned char* ureg8[8];
-static unsigned short* xfreg16[8];
-
-#define PUR(_I) (*ureg8[_I])
-#define PXF(_I) (*xfreg16[_I])
+#define PUR(_I) (*(mc6809State->ureg8[_I]))
+#define PXF(_I) (*(mc6809State->xfreg16[_I]))
 
 static void setcc(unsigned char);
 static unsigned char getcc(void);
@@ -96,21 +78,21 @@ _inline unsigned short CalculateEA(unsigned char);
 void MC6809Init(void)
 {	//Call this first or RESET will core!
   // reg pointers for TFR and EXG and LEA ops
-  xfreg16[0] = &D_REG;
-  xfreg16[1] = &X_REG;
-  xfreg16[2] = &Y_REG;
-  xfreg16[3] = &U_REG;
-  xfreg16[4] = &S_REG;
-  xfreg16[5] = &PC_REG;
+  mc6809State->xfreg16[0] = &D_REG;
+  mc6809State->xfreg16[1] = &X_REG;
+  mc6809State->xfreg16[2] = &Y_REG;
+  mc6809State->xfreg16[3] = &U_REG;
+  mc6809State->xfreg16[4] = &S_REG;
+  mc6809State->xfreg16[5] = &PC_REG;
 
-  ureg8[0] = (unsigned char*)(&A_REG);
-  ureg8[1] = (unsigned char*)(&B_REG);
-  ureg8[2] = (unsigned char*)(&ccbits);
-  ureg8[3] = (unsigned char*)(&DPA);
-  ureg8[4] = (unsigned char*)(&DPA);
-  ureg8[5] = (unsigned char*)(&DPA);
-  ureg8[6] = (unsigned char*)(&DPA);
-  ureg8[7] = (unsigned char*)(&DPA);
+  mc6809State->ureg8[0] = (unsigned char*)(&A_REG);
+  mc6809State->ureg8[1] = (unsigned char*)(&B_REG);
+  mc6809State->ureg8[2] = (unsigned char*)(&(mc6809State->ccbits));
+  mc6809State->ureg8[3] = (unsigned char*)(&DPA);
+  mc6809State->ureg8[4] = (unsigned char*)(&DPA);
+  mc6809State->ureg8[5] = (unsigned char*)(&DPA);
+  mc6809State->ureg8[6] = (unsigned char*)(&DPA);
+  mc6809State->ureg8[7] = (unsigned char*)(&DPA);
 }
 
 void MC6809Reset(void)
@@ -136,7 +118,7 @@ void MC6809Reset(void)
 
   DP_REG = 0;
 
-  SyncWaiting = 0;
+  mc6809State->SyncWaiting = 0;
 
   PC_REG = MemRead16(VRESET);	//PC gets its reset vector
 
@@ -145,34 +127,40 @@ void MC6809Reset(void)
 
 int MC6809Exec(int cycleFor)
 {
-  static unsigned char opcode = 0;
-  static unsigned char msn, lsn;
-  CycleCounter = 0;
+  unsigned char opcode = 0;
+  unsigned char msn, lsn;
+  unsigned char Source = 0;
+  unsigned char Dest = 0;
+  unsigned char temp8;
+  unsigned short temp16;
+  unsigned int temp32;
 
-  while (CycleCounter < cycleFor) {
+  mc6809State->CycleCounter = 0;
 
-    if (PendingInterrupts)
+  while (mc6809State->CycleCounter < cycleFor) {
+
+    if (mc6809State->PendingInterrupts)
     {
-      if (PendingInterrupts & 4) {
+      if (mc6809State->PendingInterrupts & 4) {
         cpu_nmi();
       }
 
-      if (PendingInterrupts & 2) {
+      if (mc6809State->PendingInterrupts & 2) {
         cpu_firq();
       }
 
-      if (PendingInterrupts & 1)
+      if (mc6809State->PendingInterrupts & 1)
       {
-        if (IRQWaiter == 0) { // This is needed to fix a subtle timming problem
+        if (mc6809State->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
           cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
         }
         else {				// The IRQ is asserted.
-          IRQWaiter -= 1;
+          mc6809State->IRQWaiter -= 1;
         }
       }
     }
 
-    if (SyncWaiting == 1) {
+    if (mc6809State->SyncWaiting == 1) {
       return(0);
     }
 
@@ -187,7 +175,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case COM_D:
@@ -199,7 +187,7 @@ int MC6809Exec(int cycleFor)
       CC_C = 1;
       CC_V = 0;
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case LSR_D: //S2
@@ -210,7 +198,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = 0;
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ROR_D: //S2
@@ -222,7 +210,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ASR_D: //7
@@ -233,7 +221,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ASL_D: //8
@@ -245,7 +233,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ROL_D:	//9
@@ -258,7 +246,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case DEC_D: //A
@@ -268,7 +256,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_V = temp8 == 0x7F;
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case INC_D: //C
@@ -278,7 +266,7 @@ int MC6809Exec(int cycleFor)
       CC_V = temp8 == 0x80;
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case TST_D: //D
@@ -286,12 +274,12 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       CC_V = 0;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case JMP_D:	//E
       PC_REG = ((DP_REG | MemRead8(PC_REG)));
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case CLR_D:	//F
@@ -300,7 +288,7 @@ int MC6809Exec(int cycleFor)
       CC_N = 0;
       CC_V = 0;
       CC_C = 0;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case Page2:
@@ -311,16 +299,16 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBRN_R: //1021
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBHI_R: //1022
@@ -328,11 +316,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBLS_R: //1023
@@ -340,11 +328,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBHS_R: //1024
@@ -352,11 +340,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case LBCS_R: //1025
@@ -364,11 +352,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBNE_R: //1026
@@ -376,11 +364,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBVC_R: //1028
@@ -388,11 +376,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBVS_R: //1029
@@ -400,11 +388,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBPL_R: //102A
@@ -412,11 +400,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBMI_R: //102B
@@ -424,11 +412,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBGE_R: //102C
@@ -436,11 +424,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBLT_R: //102D
@@ -448,11 +436,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBGT_R: //102E
@@ -460,11 +448,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LBLE_R:	//102F
@@ -472,11 +460,11 @@ int MC6809Exec(int cycleFor)
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          CycleCounter += 1;
+          mc6809State->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case SWI2_I: //103F
@@ -495,7 +483,7 @@ int MC6809Exec(int cycleFor)
         MemWrite8(getcc(), --S_REG);
 
         PC_REG = MemRead16(VSWI2);
-        CycleCounter += 20;
+        mc6809State->CycleCounter += 20;
         break;
 
       case CMPD_M: //1083
@@ -506,7 +494,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case CMPY_M: //108C
@@ -517,7 +505,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case LDY_M: //108E
@@ -526,7 +514,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case CMPD_D: //1093
@@ -536,7 +524,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, D_REG); //CC_C^((postword^temp16^D_REG)>>15);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case CMPY_D:	//109C
@@ -546,7 +534,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, Y_REG);//CC_C^((postword^temp16^Y_REG)>>15);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case LDY_D: //109E
@@ -554,7 +542,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case STY_D: //109F
@@ -562,7 +550,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case CMPD_X: //10A3
@@ -572,7 +560,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, D_REG);//CC_C^((postword^temp16^D_REG)>>15);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case CMPY_X: //10AC
@@ -582,7 +570,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, Y_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case LDY_X: //10AE
@@ -590,7 +578,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case STY_X: //10AF
@@ -598,7 +586,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case CMPD_E: //10B3
@@ -609,7 +597,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 8;
+        mc6809State->CycleCounter += 8;
         break;
 
       case CMPY_E: //10BC
@@ -620,7 +608,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 8;
+        mc6809State->CycleCounter += 8;
         break;
 
       case LDY_E: //10BE
@@ -629,7 +617,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
         PC_REG += 2;
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case STY_E: //10BF
@@ -638,7 +626,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
         PC_REG += 2;
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case LDS_I:  //10CE
@@ -647,7 +635,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(S_REG);
         CC_V = 0;
         PC_REG += 2;
-        CycleCounter += 4;
+        mc6809State->CycleCounter += 4;
         break;
 
       case LDS_D: //10DE
@@ -655,7 +643,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case STS_D: //10DF
@@ -663,7 +651,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case LDS_X: //10EE
@@ -671,7 +659,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case STS_X: //10EF
@@ -679,7 +667,7 @@ int MC6809Exec(int cycleFor)
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        CycleCounter += 6;
+        mc6809State->CycleCounter += 6;
         break;
 
       case LDS_E: //10FE
@@ -688,7 +676,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(S_REG);
         CC_V = 0;
         PC_REG += 2;
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case STS_E: //10FF
@@ -697,7 +685,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(S_REG);
         CC_V = 0;
         PC_REG += 2;
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       default:
@@ -725,7 +713,7 @@ int MC6809Exec(int cycleFor)
         MemWrite8(getcc(), --S_REG);
 
         PC_REG = MemRead16(VSWI3);
-        CycleCounter += 20;
+        mc6809State->CycleCounter += 20;
         break;
 
       case CMPU_M: //1183
@@ -736,7 +724,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case CMPS_M: //118C
@@ -747,7 +735,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 5;
+        mc6809State->CycleCounter += 5;
         break;
 
       case CMPU_D: //1193
@@ -757,7 +745,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, U_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case CMPS_D: //119C
@@ -767,7 +755,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, S_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case CMPU_X: //11A3
@@ -777,7 +765,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, U_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case CMPS_X:  //11AC
@@ -787,7 +775,7 @@ int MC6809Exec(int cycleFor)
         CC_V = OTEST16(CC_C, postword, temp16, S_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        CycleCounter += 7;
+        mc6809State->CycleCounter += 7;
         break;
 
       case CMPU_E: //11B3
@@ -798,7 +786,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 8;
+        mc6809State->CycleCounter += 8;
         break;
 
       case CMPS_E: //11BC
@@ -809,7 +797,7 @@ int MC6809Exec(int cycleFor)
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        CycleCounter += 8;
+        mc6809State->CycleCounter += 8;
         break;
 
       default:
@@ -819,19 +807,19 @@ int MC6809Exec(int cycleFor)
       break;
 
     case NOP_I:	//12
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case SYNC_I: //13
-      CycleCounter = cycleFor;
-      SyncWaiting = 1;
+      mc6809State->CycleCounter = cycleFor;
+      mc6809State->SyncWaiting = 1;
       break;
 
     case LBRA_R: //16
       *spostword = MemRead16(PC_REG);
       PC_REG += 2;
       PC_REG += *spostword;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case	LBSR_R: //17
@@ -841,7 +829,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG += *spostword;
-      CycleCounter += 9;
+      mc6809State->CycleCounter += 9;
       break;
 
     case DAA_I: //19
@@ -866,7 +854,7 @@ int MC6809Exec(int cycleFor)
       A_REG = temp16 & 0xFF;
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ORCC_M: //1A
@@ -874,7 +862,7 @@ int MC6809Exec(int cycleFor)
       temp8 = getcc();
       temp8 = (temp8 | postbyte);
       setcc(temp8);
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case ANDCC_M: //1C
@@ -882,19 +870,19 @@ int MC6809Exec(int cycleFor)
       temp8 = getcc();
       temp8 = (temp8 & postbyte);
       setcc(temp8);
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case SEX_I: //1D
       A_REG = 0 - (B_REG >> 7);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case EXG_M: //1E
       postbyte = MemRead8(PC_REG++);
-      ccbits = getcc();
+      mc6809State->ccbits = getcc();
 
       if (((postbyte & 0x80) >> 4) == (postbyte & 0x08)) //Verify like size registers
       {
@@ -912,8 +900,8 @@ int MC6809Exec(int cycleFor)
         }
       }
 
-      setcc(ccbits);
-      CycleCounter += 8;
+      setcc(mc6809State->ccbits);
+      mc6809State->CycleCounter += 8;
       break;
 
     case TFR_M: //1F
@@ -940,7 +928,7 @@ int MC6809Exec(int cycleFor)
         else if (Source <= 7)
         {
           //make sure the source is valud
-          if (xfreg16[Source])
+          if (mc6809State->xfreg16[Source])
           {
             PXF(Dest) = PXF(Source);
           }
@@ -953,7 +941,7 @@ int MC6809Exec(int cycleFor)
       case 11:
       case 14:
       case 15:
-        ccbits = getcc();
+        mc6809State->ccbits = getcc();
         PUR(Dest & 7) = 0xFF;
 
         if ((Source == 12) || (Source == 13)) {
@@ -963,20 +951,20 @@ int MC6809Exec(int cycleFor)
           PUR(Dest & 7) = PUR(Source & 7);
         }
 
-        setcc(ccbits);
+        setcc(mc6809State->ccbits);
         break;
       }
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case BRA_R: //20
       *spostbyte = MemRead8(PC_REG++);
       PC_REG += *spostbyte;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BRN_R: //21
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       PC_REG++;
       break;
 
@@ -986,7 +974,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BLS_R: //23
@@ -995,7 +983,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BHS_R: //24
@@ -1004,7 +992,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BLO_R: //25
@@ -1013,7 +1001,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BNE_R: //26
@@ -1022,7 +1010,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BEQ_R: //27
@@ -1031,7 +1019,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BVC_R: //28
@@ -1040,7 +1028,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BVS_R: //29
@@ -1049,7 +1037,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BPL_R: //2A
@@ -1058,7 +1046,7 @@ int MC6809Exec(int cycleFor)
       }
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BMI_R: //2B
@@ -1066,7 +1054,7 @@ int MC6809Exec(int cycleFor)
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BGE_R: //2C
@@ -1074,7 +1062,7 @@ int MC6809Exec(int cycleFor)
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BLT_R: //2D
@@ -1082,7 +1070,7 @@ int MC6809Exec(int cycleFor)
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BGT_R: //2E
@@ -1090,7 +1078,7 @@ int MC6809Exec(int cycleFor)
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case BLE_R: //2F
@@ -1098,29 +1086,29 @@ int MC6809Exec(int cycleFor)
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case LEAX_X: //30
       X_REG = CalculateEA(MemRead8(PC_REG++));
       CC_Z = ZTEST(X_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LEAY_X: //31
       Y_REG = CalculateEA(MemRead8(PC_REG++));
       CC_Z = ZTEST(Y_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LEAS_X: //32
       S_REG = CalculateEA(MemRead8(PC_REG++));
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LEAU_X: //33
       U_REG = CalculateEA(MemRead8(PC_REG++));
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case PSHS_M: //34
@@ -1130,55 +1118,55 @@ int MC6809Exec(int cycleFor)
       {
         MemWrite8(PC_L, --S_REG);
         MemWrite8(PC_H, --S_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
         MemWrite8(U_L, --S_REG);
         MemWrite8(U_H, --S_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         MemWrite8(Y_L, --S_REG);
         MemWrite8(Y_H, --S_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x10)
       {
         MemWrite8(X_L, --S_REG);
         MemWrite8(X_H, --S_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x08)
       {
         MemWrite8(DPA, --S_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
         MemWrite8(B_REG, --S_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
         MemWrite8(A_REG, --S_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x01)
       {
         MemWrite8(getcc(), --S_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case PULS_M: //35
@@ -1187,56 +1175,56 @@ int MC6809Exec(int cycleFor)
       if (postbyte & 0x01)
       {
         setcc(MemRead8(S_REG++));
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
         A_REG = MemRead8(S_REG++);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
         B_REG = MemRead8(S_REG++);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x08)
       {
         DPA = MemRead8(S_REG++);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x10)
       {
         X_H = MemRead8(S_REG++);
         X_L = MemRead8(S_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         Y_H = MemRead8(S_REG++);
         Y_L = MemRead8(S_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
         U_H = MemRead8(S_REG++);
         U_L = MemRead8(S_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x80)
       {
         PC_H = MemRead8(S_REG++);
         PC_L = MemRead8(S_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case PSHU_M: //36
@@ -1246,55 +1234,55 @@ int MC6809Exec(int cycleFor)
       {
         MemWrite8(PC_L, --U_REG);
         MemWrite8(PC_H, --U_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
-        MemWrite8(s.B.lsb, --U_REG);
-        MemWrite8(s.B.msb, --U_REG);
-        CycleCounter += 2;
+        MemWrite8(S_L, --U_REG);
+        MemWrite8(S_H, --U_REG);
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         MemWrite8(Y_L, --U_REG);
         MemWrite8(Y_H, --U_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x10)
       {
         MemWrite8(X_L, --U_REG);
         MemWrite8(X_H, --U_REG);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x08)
       {
         MemWrite8(DPA, --U_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
         MemWrite8(B_REG, --U_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
         MemWrite8(A_REG, --U_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x01)
       {
         MemWrite8(getcc(), --U_REG);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case PULU_M: //37
@@ -1303,71 +1291,71 @@ int MC6809Exec(int cycleFor)
       if (postbyte & 0x01)
       {
         setcc(MemRead8(U_REG++));
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
       if (postbyte & 0x02)
       {
         A_REG = MemRead8(U_REG++);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
       if (postbyte & 0x04)
       {
         B_REG = MemRead8(U_REG++);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x08)
       {
         DPA = MemRead8(U_REG++);
-        CycleCounter += 1;
+        mc6809State->CycleCounter += 1;
       }
 
       if (postbyte & 0x10)
       {
         X_H = MemRead8(U_REG++);
         X_L = MemRead8(U_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         Y_H = MemRead8(U_REG++);
         Y_L = MemRead8(U_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
-        s.B.msb = MemRead8(U_REG++);
-        s.B.lsb = MemRead8(U_REG++);
-        CycleCounter += 2;
+        S_H = MemRead8(U_REG++);
+        S_L = MemRead8(U_REG++);
+        mc6809State->CycleCounter += 2;
       }
 
       if (postbyte & 0x80)
       {
         PC_H = MemRead8(U_REG++);
         PC_L = MemRead8(U_REG++);
-        CycleCounter += 2;
+        mc6809State->CycleCounter += 2;
       }
 
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case RTS_I: //39
       PC_H = MemRead8(S_REG++);
       PC_L = MemRead8(S_REG++);
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ABX_I: //3A
       X_REG = X_REG + B_REG;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case RTI_I: //3B
       setcc(MemRead8(S_REG++));
-      CycleCounter += 6;
-      InInterrupt = 0;
+      mc6809State->CycleCounter += 6;
+      mc6809State->InInterrupt = 0;
 
       if (CC_E)
       {
@@ -1380,7 +1368,7 @@ int MC6809Exec(int cycleFor)
         Y_L = MemRead8(S_REG++);
         U_H = MemRead8(S_REG++);
         U_L = MemRead8(S_REG++);
-        CycleCounter += 9;
+        mc6809State->CycleCounter += 9;
       }
 
       PC_H = MemRead8(S_REG++);
@@ -1390,19 +1378,19 @@ int MC6809Exec(int cycleFor)
     case CWAI_I: //3C
       postbyte = MemRead8(PC_REG++);
 
-      ccbits = getcc();
-      ccbits = ccbits & postbyte;
-      setcc(ccbits);
+      mc6809State->ccbits = getcc();
+      mc6809State->ccbits = mc6809State->ccbits & postbyte;
+      setcc(mc6809State->ccbits);
 
-      CycleCounter = cycleFor;
-      SyncWaiting = 1;
+      mc6809State->CycleCounter = cycleFor;
+      mc6809State->SyncWaiting = 1;
       break;
 
     case MUL_I: //3D
       D_REG = A_REG * B_REG;
       CC_C = B_REG > 0x7F;
       CC_Z = ZTEST(D_REG);
-      CycleCounter += 11;
+      mc6809State->CycleCounter += 11;
       break;
 
     case RESET:	//Undocumented
@@ -1424,7 +1412,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(A_REG, --S_REG);
       MemWrite8(getcc(), --S_REG);
       PC_REG = MemRead16(VSWI);
-      CycleCounter += 19;
+      mc6809State->CycleCounter += 19;
       CC_I = 1;
       CC_F = 1;
       break;
@@ -1436,7 +1424,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       A_REG = temp8;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case COMA_I: //43
@@ -1445,7 +1433,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_C = 1;
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case LSRA_I: //44
@@ -1453,7 +1441,7 @@ int MC6809Exec(int cycleFor)
       A_REG = A_REG >> 1;
       CC_Z = ZTEST(A_REG);
       CC_N = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case RORA_I: //46
@@ -1462,7 +1450,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (A_REG >> 1) | postbyte;
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ASRA_I: //47
@@ -1470,7 +1458,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (A_REG & 0x80) | (A_REG >> 1);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ASLA_I: //48 JF
@@ -1479,7 +1467,7 @@ int MC6809Exec(int cycleFor)
       A_REG = A_REG << 1;
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ROLA_I: //49
@@ -1489,7 +1477,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (A_REG << 1) | postbyte;
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case DECA_I: //4A
@@ -1497,7 +1485,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_V = A_REG == 0x7F;
       CC_N = NTEST8(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case INCA_I: //4C
@@ -1505,14 +1493,14 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_V = A_REG == 0x80;
       CC_N = NTEST8(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case TSTA_I: //4D
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case CLRA_I: //4F
@@ -1521,7 +1509,7 @@ int MC6809Exec(int cycleFor)
       CC_V = 0;
       CC_N = 0;
       CC_Z = 1;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case NEGB_I: //50
@@ -1531,7 +1519,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       B_REG = temp8;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case COMB_I: //53
@@ -1540,7 +1528,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_C = 1;
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case LSRB_I: //54
@@ -1548,7 +1536,7 @@ int MC6809Exec(int cycleFor)
       B_REG = B_REG >> 1;
       CC_Z = ZTEST(B_REG);
       CC_N = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case RORB_I: //56
@@ -1557,7 +1545,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (B_REG >> 1) | postbyte;
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ASRB_I: //57
@@ -1565,7 +1553,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (B_REG & 0x80) | (B_REG >> 1);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ASLB_I: //58
@@ -1574,7 +1562,7 @@ int MC6809Exec(int cycleFor)
       B_REG = B_REG << 1;
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ROLB_I: //59
@@ -1584,7 +1572,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (B_REG << 1) | postbyte;
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case DECB_I: //5A
@@ -1592,7 +1580,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_V = B_REG == 0x7F;
       CC_N = NTEST8(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case INCB_I: //5C
@@ -1600,14 +1588,14 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_V = B_REG == 0x80;
       CC_N = NTEST8(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case TSTB_I: //5D
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case CLRB_I: //5F
@@ -1616,7 +1604,7 @@ int MC6809Exec(int cycleFor)
       CC_N = 0;
       CC_V = 0;
       CC_Z = 1;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case NEG_X: //60
@@ -1628,7 +1616,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case COM_X: //63
@@ -1640,7 +1628,7 @@ int MC6809Exec(int cycleFor)
       CC_V = 0;
       CC_C = 1;
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case LSR_X: //64
@@ -1651,7 +1639,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = 0;
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ROR_X: //66
@@ -1663,7 +1651,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ASR_X: //67
@@ -1674,7 +1662,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ASL_X: //68
@@ -1686,7 +1674,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ROL_X: //69
@@ -1699,7 +1687,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case DEC_X: //6A
@@ -1710,7 +1698,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_V = (temp8 == 0x7F);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case INC_X: //6C
@@ -1721,7 +1709,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case TST_X: //6D
@@ -1729,12 +1717,12 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       CC_V = 0;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case JMP_X: //6E
       PC_REG = CalculateEA(MemRead8(PC_REG++));
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case CLR_X: //6F
@@ -1743,7 +1731,7 @@ int MC6809Exec(int cycleFor)
       CC_N = 0;
       CC_V = 0;
       CC_Z = 1;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case NEG_E: //70
@@ -1756,7 +1744,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case COM_E: //73
@@ -1769,7 +1757,7 @@ int MC6809Exec(int cycleFor)
       CC_V = 0;
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case LSR_E:  //74
@@ -1781,7 +1769,7 @@ int MC6809Exec(int cycleFor)
       CC_N = 0;
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case ROR_E: //76
@@ -1794,7 +1782,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case ASR_E: //77
@@ -1806,7 +1794,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case ASL_E: //78
@@ -1819,7 +1807,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case ROL_E: //79
@@ -1833,7 +1821,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case DEC_E: //7A
@@ -1845,7 +1833,7 @@ int MC6809Exec(int cycleFor)
       CC_V = temp8 == 0x7F;
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case INC_E: //7C
@@ -1857,7 +1845,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case TST_E: //7D
@@ -1866,12 +1854,12 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case JMP_E: //7E
       PC_REG = MemRead16(PC_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CLR_E: //7F
@@ -1881,7 +1869,7 @@ int MC6809Exec(int cycleFor)
       CC_V = 0;
       CC_Z = 1;
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case SUBA_M: //80
@@ -1892,7 +1880,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case CMPA_M: //81
@@ -1902,7 +1890,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST8(CC_C, postbyte, temp8, A_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case SBCA_M:  //82
@@ -1913,7 +1901,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case SUBD_M: //83
@@ -1925,7 +1913,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ANDA_M: //84
@@ -1933,7 +1921,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case BITA_M: //85
@@ -1941,7 +1929,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case LDA_M: //86
@@ -1949,7 +1937,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case EORA_M: //88
@@ -1957,7 +1945,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ADCA_M: //89
@@ -1969,7 +1957,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ORA_M: //8A
@@ -1977,7 +1965,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ADDA_M: //8B
@@ -1989,7 +1977,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case CMPX_M: //8C
@@ -2000,7 +1988,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
       PC_REG += 2;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case BSR_R: //8D
@@ -2009,7 +1997,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG += *spostbyte;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case LDX_M: //8E
@@ -2018,7 +2006,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(X_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case SUBA_D: //90
@@ -2029,7 +2017,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CMPA_D: //91
@@ -2039,7 +2027,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST8(CC_C, postbyte, temp8, A_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case SBCA_D: //92
@@ -2050,7 +2038,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case SUBD_D: //93
@@ -2061,7 +2049,7 @@ int MC6809Exec(int cycleFor)
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ANDA_D: //94
@@ -2069,7 +2057,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case BITA_D: //95
@@ -2077,7 +2065,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LDA_D: //96
@@ -2085,7 +2073,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case STA_D: //97
@@ -2093,7 +2081,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case EORA_D: //98
@@ -2101,7 +2089,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADCA_D: //99
@@ -2113,7 +2101,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ORA_D: //9A
@@ -2121,7 +2109,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADDA_D: //9B
@@ -2133,7 +2121,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CMPX_D: //9C
@@ -2143,7 +2131,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST16(CC_C, postword, temp16, X_REG);
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case BSR_D: //9D
@@ -2152,7 +2140,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG = temp16;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case LDX_D: //9E
@@ -2160,7 +2148,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STX_D: //9F
@@ -2168,7 +2156,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SUBA_X: //A0
@@ -2179,7 +2167,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CMPA_X: //A1
@@ -2189,7 +2177,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST8(CC_C, postbyte, temp8, A_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case SBCA_X: //A2
@@ -2200,7 +2188,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case SUBD_X: //A3
@@ -2211,7 +2199,7 @@ int MC6809Exec(int cycleFor)
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ANDA_X: //A4
@@ -2219,7 +2207,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case BITA_X:  //A5
@@ -2227,7 +2215,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LDA_X: //A6
@@ -2235,7 +2223,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case STA_X: //A7
@@ -2243,7 +2231,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case EORA_X: //A8
@@ -2251,7 +2239,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADCA_X: //A9
@@ -2263,7 +2251,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ORA_X: //AA
@@ -2271,7 +2259,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADDA_X: //AB
@@ -2283,7 +2271,7 @@ int MC6809Exec(int cycleFor)
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CMPX_X: //AC
@@ -2293,7 +2281,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST16(CC_C, postword, temp16, X_REG);
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case BSR_X: //AD
@@ -2302,7 +2290,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG = temp16;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case LDX_X: //AE
@@ -2310,7 +2298,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STX_X: //AF
@@ -2318,7 +2306,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SUBA_E: //B0
@@ -2330,7 +2318,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case	CMPA_E: //B1
@@ -2341,7 +2329,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SBCA_E: //B2
@@ -2353,7 +2341,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SUBD_E: //B3
@@ -2365,7 +2353,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case ANDA_E: //B4
@@ -2375,7 +2363,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case BITA_E: //B5
@@ -2384,7 +2372,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case LDA_E: //B6
@@ -2393,7 +2381,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STA_E: //B7
@@ -2402,7 +2390,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case EORA_E:  //B8
@@ -2411,7 +2399,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ADCA_E: //B9
@@ -2424,7 +2412,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ORA_E: //BA
@@ -2433,7 +2421,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ADDA_E: //BB
@@ -2446,7 +2434,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case CMPX_E: //BC
@@ -2457,7 +2445,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case BSR_E: //BD
@@ -2467,7 +2455,7 @@ int MC6809Exec(int cycleFor)
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG = postword;
-      CycleCounter += 8;
+      mc6809State->CycleCounter += 8;
       break;
 
     case LDX_E: //BE
@@ -2476,7 +2464,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(X_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case STX_E: //BF
@@ -2485,7 +2473,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(X_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case SUBB_M: //C0
@@ -2496,7 +2484,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case CMPB_M: //C1
@@ -2506,7 +2494,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST8(CC_C, postbyte, temp8, B_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case SBCB_M: //C3
@@ -2517,7 +2505,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ADDD_M: //C3
@@ -2529,7 +2517,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ANDB_M: //C4
@@ -2537,7 +2525,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case BITB_M: //C5
@@ -2545,7 +2533,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case LDB_M: //C6
@@ -2553,7 +2541,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case EORB_M: //C8
@@ -2561,7 +2549,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ADCB_M: //C9
@@ -2573,7 +2561,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ORB_M: //CA
@@ -2581,7 +2569,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case ADDB_M: //CB
@@ -2593,7 +2581,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case LDD_M: //CC
@@ -2602,7 +2590,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(D_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case LDU_M: //CE
@@ -2611,7 +2599,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(U_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case SUBB_D: //D0
@@ -2622,7 +2610,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CMPB_D: //D1
@@ -2632,7 +2620,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST8(CC_C, postbyte, temp8, B_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case SBCB_D: //D2
@@ -2643,7 +2631,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADDD_D: //D3
@@ -2654,7 +2642,7 @@ int MC6809Exec(int cycleFor)
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ANDB_D: //D4 
@@ -2662,7 +2650,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case BITB_D: //D5
@@ -2670,7 +2658,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LDB_D: //D6
@@ -2678,7 +2666,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case	STB_D: //D7
@@ -2686,7 +2674,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case EORB_D: //D8	
@@ -2694,7 +2682,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADCB_D: //D9
@@ -2706,7 +2694,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ORB_D: //DA
@@ -2714,7 +2702,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADDB_D: //DB
@@ -2726,7 +2714,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LDD_D: //DC
@@ -2734,7 +2722,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STD_D: //DD
@@ -2742,7 +2730,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case LDU_D: //DE
@@ -2750,7 +2738,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STU_D: //DF
@@ -2758,7 +2746,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SUBB_X: //E0
@@ -2769,7 +2757,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case CMPB_X: //E1
@@ -2779,7 +2767,7 @@ int MC6809Exec(int cycleFor)
       CC_V = OTEST8(CC_C, postbyte, temp8, B_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case SBCB_X: //E2
@@ -2790,7 +2778,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADDD_X: //E3 
@@ -2801,7 +2789,7 @@ int MC6809Exec(int cycleFor)
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case ANDB_X: //E4
@@ -2809,7 +2797,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case BITB_X: //E5 
@@ -2817,7 +2805,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LDB_X: //E6
@@ -2825,7 +2813,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case STB_X: //E7
@@ -2833,7 +2821,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case EORB_X: //E8
@@ -2842,7 +2830,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ADCB_X: //E9
@@ -2854,7 +2842,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case ORB_X: //EA 
@@ -2862,7 +2850,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
 
       break;
 
@@ -2875,7 +2863,7 @@ int MC6809Exec(int cycleFor)
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case LDD_X: //EC
@@ -2884,7 +2872,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STD_X: //ED
@@ -2892,7 +2880,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case LDU_X: //EE
@@ -2900,7 +2888,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STU_X: //EF
@@ -2908,7 +2896,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SUBB_E: //F0
@@ -2920,7 +2908,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case CMPB_E: //F1
@@ -2931,7 +2919,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case SBCB_E: //F2
@@ -2943,7 +2931,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ADDD_E: //F3
@@ -2955,7 +2943,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case ANDB_E:  //F4
@@ -2964,7 +2952,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case BITB_E: //F5
@@ -2973,7 +2961,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(temp8);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case LDB_E: //F6
@@ -2982,7 +2970,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case STB_E: //F7 
@@ -2991,7 +2979,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case EORB_E: //F8
@@ -3000,7 +2988,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ADCB_E: //F9
@@ -3013,7 +3001,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ORB_E: //FA
@@ -3022,7 +3010,7 @@ int MC6809Exec(int cycleFor)
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case ADDB_E: //FB
@@ -3035,7 +3023,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       PC_REG += 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       break;
 
     case LDD_E: //FC
@@ -3044,7 +3032,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(D_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case STD_E: //FD
@@ -3053,7 +3041,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(D_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case LDU_E: //FE
@@ -3062,7 +3050,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(U_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case STU_E: //FF
@@ -3071,7 +3059,7 @@ int MC6809Exec(int cycleFor)
       CC_N = NTEST16(U_REG);
       CC_V = 0;
       PC_REG += 2;
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     default:
@@ -3079,7 +3067,7 @@ int MC6809Exec(int cycleFor)
     }
   }
 
-  return(cycleFor - CycleCounter);
+  return(cycleFor - mc6809State->CycleCounter);
 }
 
 void cpu_firq(void)
@@ -3087,7 +3075,7 @@ void cpu_firq(void)
 
   if (!CC_F)
   {
-    InInterrupt = 1; //Flag to indicate FIRQ has been asserted
+    mc6809State->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
     CC_E = 0; // Turn E flag off
 
     MemWrite8(PC_L, --S_REG);
@@ -3099,16 +3087,16 @@ void cpu_firq(void)
     PC_REG = MemRead16(VFIRQ);
   }
 
-  PendingInterrupts = PendingInterrupts & 253;
+  mc6809State->PendingInterrupts &= 253;
 }
 
 void cpu_irq(void)
 {
-  if (InInterrupt == 1) //If FIRQ is running postpone the IRQ
+  if (mc6809State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
     return;
+  }
 
-  if (!CC_I)
-  {
+  if (!CC_I) {
     CC_E = 1;
     MemWrite8(PC_L, --S_REG);
     MemWrite8(PC_H, --S_REG);
@@ -3126,7 +3114,7 @@ void cpu_irq(void)
     CC_I = 1;
   }
 
-  PendingInterrupts = PendingInterrupts & 254;
+  mc6809State->PendingInterrupts &= 254;
 }
 
 void cpu_nmi(void)
@@ -3148,7 +3136,7 @@ void cpu_nmi(void)
   CC_F = 1;
   PC_REG = MemRead16(VNMI);
 
-  PendingInterrupts = PendingInterrupts & 251;
+  mc6809State->PendingInterrupts &= 251;
 }
 
 void setcc(unsigned char bincc)
@@ -3183,23 +3171,23 @@ unsigned char getcc(void)
 
 void MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
 {
-  SyncWaiting = 0;
-  PendingInterrupts |= (1 << (interrupt - 1));
-  IRQWaiter = waiter;
+  mc6809State->SyncWaiting = 0;
+  mc6809State->PendingInterrupts |= (1 << (interrupt - 1));
+  mc6809State->IRQWaiter = waiter;
 }
 
 void MC6809DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
 {
-  PendingInterrupts &= ~(1 << (interrupt - 1));
-  InInterrupt = 0;
+  mc6809State->PendingInterrupts &= ~(1 << (interrupt - 1));
+  mc6809State->InInterrupt = 0;
 }
 
 void MC6809ForcePC(unsigned short NewPC)
 {
   PC_REG = NewPC;
 
-  PendingInterrupts = 0;
-  SyncWaiting = 0;
+  mc6809State->PendingInterrupts = 0;
+  mc6809State->SyncWaiting = 0;
 }
 
 static unsigned short CalculateEA(unsigned char postbyte)
@@ -3217,25 +3205,25 @@ static unsigned short CalculateEA(unsigned char postbyte)
     case 0:
       ea = PXF(Register);
       PXF(Register)++;
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case 1:
       ea = PXF(Register);
       PXF(Register) += 2;
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case 2:
       PXF(Register) -= 1;
       ea = PXF(Register);
-      CycleCounter += 2;
+      mc6809State->CycleCounter += 2;
       break;
 
     case 3:
       PXF(Register) -= 2;
       ea = PXF(Register);
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case 4:
@@ -3244,52 +3232,52 @@ static unsigned short CalculateEA(unsigned char postbyte)
 
     case 5:
       ea = PXF(Register) + ((signed char)B_REG);
-      CycleCounter += 1;
+      mc6809State->CycleCounter += 1;
       break;
 
     case 6:
       ea = PXF(Register) + ((signed char)A_REG);
-      CycleCounter += 1;
+      mc6809State->CycleCounter += 1;
       break;
 
     case 7:
-      CycleCounter += 1;
+      mc6809State->CycleCounter += 1;
       break;
 
     case 8:
       ea = PXF(Register) + (signed char)MemRead8(PC_REG++);
-      CycleCounter += 1;
+      mc6809State->CycleCounter += 1;
       break;
 
     case 9:
       ea = PXF(Register) + MemRead16(PC_REG);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       PC_REG += 2;
       break;
 
     case 10:
-      CycleCounter += 1;
+      mc6809State->CycleCounter += 1;
       break;
 
     case 11:
       ea = PXF(Register) + D_REG;
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 12:
       ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
-      CycleCounter += 1;
+      mc6809State->CycleCounter += 1;
       PC_REG++;
       break;
 
     case 13: //MM
       ea = PC_REG + MemRead16(PC_REG) + 2;
-      CycleCounter += 5;
+      mc6809State->CycleCounter += 5;
       PC_REG += 2;
       break;
 
     case 14:
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 15: //01111
@@ -3336,90 +3324,90 @@ static unsigned short CalculateEA(unsigned char postbyte)
       ea = PXF(Register);
       PXF(Register) += 2;
       ea = MemRead16(ea);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case 18: //10010
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case 19: //10011
       PXF(Register) -= 2;
       ea = PXF(Register);
       ea = MemRead16(ea);
-      CycleCounter += 6;
+      mc6809State->CycleCounter += 6;
       break;
 
     case 20: //10100
       ea = PXF(Register);
       ea = MemRead16(ea);
-      CycleCounter += 3;
+      mc6809State->CycleCounter += 3;
       break;
 
     case 21: //10101
       ea = PXF(Register) + ((signed char)B_REG);
       ea = MemRead16(ea);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 22: //10110
       ea = PXF(Register) + ((signed char)A_REG);
       ea = MemRead16(ea);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 23: //10111
       ea = MemRead16(ea);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 24: //11000
       ea = PXF(Register) + (signed char)MemRead8(PC_REG++);
       ea = MemRead16(ea);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 25: //11001
       ea = PXF(Register) + MemRead16(PC_REG);
       ea = MemRead16(ea);
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       PC_REG += 2;
       break;
 
     case 26: //11010
       ea = MemRead16(ea);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       break;
 
     case 27: //11011
       ea = PXF(Register) + D_REG;
       ea = MemRead16(ea);
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case 28: //11100
       ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
       ea = MemRead16(ea);
-      CycleCounter += 4;
+      mc6809State->CycleCounter += 4;
       PC_REG++;
       break;
 
     case 29: //11101
       ea = PC_REG + MemRead16(PC_REG) + 2;
       ea = MemRead16(ea);
-      CycleCounter += 8;
+      mc6809State->CycleCounter += 8;
       PC_REG += 2;
       break;
 
     case 30: //11110
       ea = MemRead16(ea);
-      CycleCounter += 7;
+      mc6809State->CycleCounter += 7;
       break;
 
     case 31: //11111
       ea = MemRead16(PC_REG);
       ea = MemRead16(ea);
-      CycleCounter += 8;
+      mc6809State->CycleCounter += 8;
       PC_REG += 2;
       break;
     }
@@ -3431,7 +3419,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
     byte = byte / 8;
     ea = PXF(Register) + byte; //Was signed
 
-    CycleCounter += 1;
+    mc6809State->CycleCounter += 1;
   }
 
   return(ea);
