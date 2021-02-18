@@ -26,11 +26,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemWrite16.h"
 #include "mc6809state.h"
 
-static unsigned char postbyte = 0;
-static short unsigned postword = 0;
-static signed char* spostbyte = (signed char*)&postbyte;
-static signed short* spostword = (signed short*)&postword;
-
 MC6809State* mc6809State = GetMC6809State();
 
 #define D_REG	(mc6809State->d.Reg)
@@ -129,11 +124,17 @@ int MC6809Exec(int cycleFor)
 {
   unsigned char opcode = 0;
   unsigned char msn, lsn;
-  unsigned char Source = 0;
-  unsigned char Dest = 0;
+  unsigned char source = 0;
+  unsigned char dest = 0;
+
   unsigned char temp8;
   unsigned short temp16;
   unsigned int temp32;
+
+  unsigned char postbyte = 0;
+  short unsigned postword = 0;
+  signed char* spostbyte = (signed char*)&postbyte;
+  signed short* spostword = (signed short*)&postword;
 
   mc6809State->CycleCounter = 0;
 
@@ -906,10 +907,10 @@ int MC6809Exec(int cycleFor)
 
     case TFR_M: //1F
       postbyte = MemRead8(PC_REG++);
-      Source = postbyte >> 4;
-      Dest = postbyte & 15;
+      source = postbyte >> 4;
+      dest = postbyte & 15;
 
-      switch (Dest)
+      switch (dest)
       {
       case 0:
       case 1:
@@ -919,18 +920,18 @@ int MC6809Exec(int cycleFor)
       case 5:
       case 6:
       case 7:
-        PXF(Dest) = 0xFFFF;
+        PXF(dest) = 0xFFFF;
 
-        if ((Source == 12) || (Source == 13))
+        if ((source == 12) || (source == 13))
         {
-          PXF(Dest) = 0;
+          PXF(dest) = 0;
         }
-        else if (Source <= 7)
+        else if (source <= 7)
         {
           //make sure the source is valud
-          if (mc6809State->xfreg16[Source])
+          if (mc6809State->xfreg16[source])
           {
-            PXF(Dest) = PXF(Source);
+            PXF(dest) = PXF(source);
           }
         }
         break;
@@ -942,13 +943,13 @@ int MC6809Exec(int cycleFor)
       case 14:
       case 15:
         mc6809State->ccbits = getcc();
-        PUR(Dest & 7) = 0xFF;
+        PUR(dest & 7) = 0xFF;
 
-        if ((Source == 12) || (Source == 13)) {
-          PUR(Dest & 7) = 0;
+        if ((source == 12) || (source == 13)) {
+          PUR(dest & 7) = 0;
         }
-        else if (Source > 7) {
-          PUR(Dest & 7) = PUR(Source & 7);
+        else if (source > 7) {
+          PUR(dest & 7) = PUR(source & 7);
         }
 
         setcc(mc6809State->ccbits);
@@ -3194,49 +3195,49 @@ static unsigned short CalculateEA(unsigned char postbyte)
 {
   static unsigned short int ea = 0;
   static signed char byte = 0;
-  static unsigned char Register;
+  static unsigned char reg;
 
-  Register = ((postbyte >> 5) & 3) + 1;
+  reg = ((postbyte >> 5) & 3) + 1;
 
   if (postbyte & 0x80)
   {
     switch (postbyte & 0x1F)
     {
     case 0:
-      ea = PXF(Register);
-      PXF(Register)++;
+      ea = PXF(reg);
+      PXF(reg)++;
       mc6809State->CycleCounter += 2;
       break;
 
     case 1:
-      ea = PXF(Register);
-      PXF(Register) += 2;
+      ea = PXF(reg);
+      PXF(reg) += 2;
       mc6809State->CycleCounter += 3;
       break;
 
     case 2:
-      PXF(Register) -= 1;
-      ea = PXF(Register);
+      PXF(reg) -= 1;
+      ea = PXF(reg);
       mc6809State->CycleCounter += 2;
       break;
 
     case 3:
-      PXF(Register) -= 2;
-      ea = PXF(Register);
+      PXF(reg) -= 2;
+      ea = PXF(reg);
       mc6809State->CycleCounter += 3;
       break;
 
     case 4:
-      ea = PXF(Register);
+      ea = PXF(reg);
       break;
 
     case 5:
-      ea = PXF(Register) + ((signed char)B_REG);
+      ea = PXF(reg) + ((signed char)B_REG);
       mc6809State->CycleCounter += 1;
       break;
 
     case 6:
-      ea = PXF(Register) + ((signed char)A_REG);
+      ea = PXF(reg) + ((signed char)A_REG);
       mc6809State->CycleCounter += 1;
       break;
 
@@ -3245,12 +3246,12 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 8:
-      ea = PXF(Register) + (signed char)MemRead8(PC_REG++);
+      ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
       mc6809State->CycleCounter += 1;
       break;
 
     case 9:
-      ea = PXF(Register) + MemRead16(PC_REG);
+      ea = PXF(reg) + MemRead16(PC_REG);
       mc6809State->CycleCounter += 4;
       PC_REG += 2;
       break;
@@ -3260,7 +3261,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 11:
-      ea = PXF(Register) + D_REG;
+      ea = PXF(reg) + D_REG;
       mc6809State->CycleCounter += 4;
       break;
 
@@ -3321,8 +3322,8 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 17: //10001
-      ea = PXF(Register);
-      PXF(Register) += 2;
+      ea = PXF(reg);
+      PXF(reg) += 2;
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 6;
       break;
@@ -3332,26 +3333,26 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 19: //10011
-      PXF(Register) -= 2;
-      ea = PXF(Register);
+      PXF(reg) -= 2;
+      ea = PXF(reg);
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 6;
       break;
 
     case 20: //10100
-      ea = PXF(Register);
+      ea = PXF(reg);
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 3;
       break;
 
     case 21: //10101
-      ea = PXF(Register) + ((signed char)B_REG);
+      ea = PXF(reg) + ((signed char)B_REG);
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 4;
       break;
 
     case 22: //10110
-      ea = PXF(Register) + ((signed char)A_REG);
+      ea = PXF(reg) + ((signed char)A_REG);
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 4;
       break;
@@ -3362,13 +3363,13 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 24: //11000
-      ea = PXF(Register) + (signed char)MemRead8(PC_REG++);
+      ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 4;
       break;
 
     case 25: //11001
-      ea = PXF(Register) + MemRead16(PC_REG);
+      ea = PXF(reg) + MemRead16(PC_REG);
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 7;
       PC_REG += 2;
@@ -3380,7 +3381,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
       break;
 
     case 27: //11011
-      ea = PXF(Register) + D_REG;
+      ea = PXF(reg) + D_REG;
       ea = MemRead16(ea);
       mc6809State->CycleCounter += 7;
       break;
@@ -3417,7 +3418,7 @@ static unsigned short CalculateEA(unsigned char postbyte)
     byte = (postbyte & 31);
     byte = (byte << 3);
     byte = byte / 8;
-    ea = PXF(Register) + byte; //Was signed
+    ea = PXF(reg) + byte; //Was signed
 
     mc6809State->CycleCounter += 1;
   }
