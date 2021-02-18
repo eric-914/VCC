@@ -31,47 +31,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemRead32.h"
 #include "MemWrite32.h"
 
-CpuRegister pc, x, y, u, s, dp, v, z;
-WideRegister q;
-
-unsigned char cc[8];
-unsigned int md[8];
-unsigned char ccbits;
-unsigned char mdbits;
-
-unsigned char* ureg8[8];
-unsigned short* xfreg16[8];
-
-char InInterrupt = 0;
-int CycleCounter = 0;
-unsigned int SyncWaiting = 0;
-
-int gCycleFor;
-
-unsigned char NatEmuCycles65 = 6;
-unsigned char NatEmuCycles64 = 6;
-unsigned char NatEmuCycles32 = 3;
-unsigned char NatEmuCycles21 = 2;
-unsigned char NatEmuCycles54 = 5;
-unsigned char NatEmuCycles97 = 9;
-unsigned char NatEmuCycles85 = 8;
-unsigned char NatEmuCycles51 = 5;
-unsigned char NatEmuCycles31 = 3;
-unsigned char NatEmuCycles1110 = 11;
-unsigned char NatEmuCycles76 = 7;
-unsigned char NatEmuCycles75 = 7;
-unsigned char NatEmuCycles43 = 4;
-unsigned char NatEmuCycles87 = 8;
-unsigned char NatEmuCycles86 = 8;
-unsigned char NatEmuCycles98 = 9;
-unsigned char NatEmuCycles2726 = 27;
-unsigned char NatEmuCycles3635 = 36;
-unsigned char NatEmuCycles3029 = 30;
-unsigned char NatEmuCycles2827 = 28;
-unsigned char NatEmuCycles3726 = 37;
-unsigned char NatEmuCycles3130 = 31;
-unsigned char NatEmuCycles42 = 4;
-unsigned char NatEmuCycles53 = 5;
+static HD6309State* hd63096State = GetHD6309State();
 
 static unsigned char IRQWaiter = 0;
 static unsigned char PendingInterrupts = 0;
@@ -79,33 +39,31 @@ static unsigned char InsCycles[2][25];
 
 static unsigned char* NatEmuCycles[] =
 {
-  &NatEmuCycles65,
-  &NatEmuCycles64,
-  &NatEmuCycles32,
-  &NatEmuCycles21,
-  &NatEmuCycles54,
-  &NatEmuCycles97,
-  &NatEmuCycles85,
-  &NatEmuCycles51,
-  &NatEmuCycles31,
-  &NatEmuCycles1110,
-  &NatEmuCycles76,
-  &NatEmuCycles75,
-  &NatEmuCycles43,
-  &NatEmuCycles87,
-  &NatEmuCycles86,
-  &NatEmuCycles98,
-  &NatEmuCycles2726,
-  &NatEmuCycles3635,
-  &NatEmuCycles3029,
-  &NatEmuCycles2827,
-  &NatEmuCycles3726,
-  &NatEmuCycles3130,
-  &NatEmuCycles42,
-  &NatEmuCycles53
+  &(hd63096State->NatEmuCycles65),
+  &(hd63096State->NatEmuCycles64),
+  &(hd63096State->NatEmuCycles32),
+  &(hd63096State->NatEmuCycles21),
+  &(hd63096State->NatEmuCycles54),
+  &(hd63096State->NatEmuCycles97),
+  &(hd63096State->NatEmuCycles85),
+  &(hd63096State->NatEmuCycles51),
+  &(hd63096State->NatEmuCycles31),
+  &(hd63096State->NatEmuCycles1110),
+  &(hd63096State->NatEmuCycles76),
+  &(hd63096State->NatEmuCycles75),
+  &(hd63096State->NatEmuCycles43),
+  &(hd63096State->NatEmuCycles87),
+  &(hd63096State->NatEmuCycles86),
+  &(hd63096State->NatEmuCycles98),
+  &(hd63096State->NatEmuCycles2726),
+  &(hd63096State->NatEmuCycles3635),
+  &(hd63096State->NatEmuCycles3029),
+  &(hd63096State->NatEmuCycles2827),
+  &(hd63096State->NatEmuCycles3726),
+  &(hd63096State->NatEmuCycles3130),
+  &(hd63096State->NatEmuCycles42),
+  &(hd63096State->NatEmuCycles53)
 };
-
-HD6309State* hd63096State = GetHD6309State();
 
 unsigned short hd6309_CalculateEA(unsigned char);
 void InvalidInsHandler(void);
@@ -154,9 +112,9 @@ void HD6309Reset(void)
   MD_ILLEGAL = 0;
   MD_ZERODIV = 0;
 
-  mdbits = getmd();
+  hd63096State->mdbits = getmd();
 
-  SyncWaiting = 0;
+  hd63096State->SyncWaiting = 0;
 
   DP_REG = 0;
   PC_REG = MemRead16(VRESET);	//PC gets its reset vector
@@ -167,23 +125,23 @@ void HD6309Reset(void)
 void HD6309Init(void)
 {	//Call this first or RESET will core!
   // reg pointers for TFR and EXG and LEA ops
-  xfreg16[0] = &D_REG;
-  xfreg16[1] = &X_REG;
-  xfreg16[2] = &Y_REG;
-  xfreg16[3] = &U_REG;
-  xfreg16[4] = &S_REG;
-  xfreg16[5] = &PC_REG;
-  xfreg16[6] = &W_REG;
-  xfreg16[7] = &V_REG;
+  hd63096State->xfreg16[0] = &D_REG;
+  hd63096State->xfreg16[1] = &X_REG;
+  hd63096State->xfreg16[2] = &Y_REG;
+  hd63096State->xfreg16[3] = &U_REG;
+  hd63096State->xfreg16[4] = &S_REG;
+  hd63096State->xfreg16[5] = &PC_REG;
+  hd63096State->xfreg16[6] = &W_REG;
+  hd63096State->xfreg16[7] = &V_REG;
 
-  ureg8[0] = (unsigned char*)&A_REG;
-  ureg8[1] = (unsigned char*)&B_REG;
-  ureg8[2] = (unsigned char*)&ccbits;
-  ureg8[3] = (unsigned char*)&DPA;
-  ureg8[4] = (unsigned char*)&Z_H;
-  ureg8[5] = (unsigned char*)&Z_L;
-  ureg8[6] = (unsigned char*)&E_REG;
-  ureg8[7] = (unsigned char*)&F_REG;
+  hd63096State->ureg8[0] = (unsigned char*)&A_REG;
+  hd63096State->ureg8[1] = (unsigned char*)&B_REG;
+  hd63096State->ureg8[2] = (unsigned char*)&(hd63096State->ccbits);
+  hd63096State->ureg8[3] = (unsigned char*)&DPA;
+  hd63096State->ureg8[4] = (unsigned char*)&Z_H;
+  hd63096State->ureg8[5] = (unsigned char*)&Z_L;
+  hd63096State->ureg8[6] = (unsigned char*)&E_REG;
+  hd63096State->ureg8[7] = (unsigned char*)&F_REG;
 
   //This handles the disparity between 6309 and 6809 Instruction timing
   InsCycles[0][M65] = 6;	//6-5
@@ -238,10 +196,10 @@ void HD6309Init(void)
 
 int HD6309Exec(int cycleFor)
 {
-  CycleCounter = 0;
-  gCycleFor = cycleFor;
+  hd63096State->CycleCounter = 0;
+  hd63096State->gCycleFor = cycleFor;
 
-  while (CycleCounter < cycleFor) {
+  while (hd63096State->CycleCounter < cycleFor) {
 
     if (PendingInterrupts)
     {
@@ -264,14 +222,14 @@ int HD6309Exec(int cycleFor)
       }
     }
 
-    if (SyncWaiting == 1) { //Abort the run nothing happens asyncronously from the CPU
+    if (hd63096State->SyncWaiting == 1) { //Abort the run nothing happens asyncronously from the CPU
       return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
     }
 
     JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
   }
 
-  return(cycleFor - CycleCounter);
+  return(cycleFor - hd63096State->CycleCounter);
 }
 
 void Page_2(void) //10
@@ -288,7 +246,7 @@ void cpu_firq(void)
 {
   if (!CC_F)
   {
-    InInterrupt = 1; //Flag to indicate FIRQ has been asserted
+    hd63096State->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
 
     switch (MD_FIRQMODE)
     {
@@ -341,7 +299,7 @@ void cpu_firq(void)
 
 void cpu_irq(void)
 {
-  if (InInterrupt == 1) { //If FIRQ is running postpone the IRQ
+  if (hd63096State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
     return;
   }
 
@@ -423,7 +381,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
       PXF(reg)++;
 
-      CycleCounter += NatEmuCycles21;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 
       break;
 
@@ -432,7 +390,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
       PXF(reg) += 2;
 
-      CycleCounter += NatEmuCycles32;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 
       break;
 
@@ -441,7 +399,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
       ea = PXF(reg);
 
-      CycleCounter += NatEmuCycles21;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 
       break;
 
@@ -450,7 +408,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
       ea = PXF(reg);
 
-      CycleCounter += NatEmuCycles32;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 
       break;
 
@@ -462,35 +420,35 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 5: // B reg offset
       ea = PXF(reg) + ((signed char)B_REG);
 
-      CycleCounter += 1;
+      hd63096State->CycleCounter += 1;
 
       break;
 
     case 6: // A reg offset
       ea = PXF(reg) + ((signed char)A_REG);
 
-      CycleCounter += 1;
+      hd63096State->CycleCounter += 1;
 
       break;
 
     case 7: // E reg offset 
       ea = PXF(reg) + ((signed char)E_REG);
 
-      CycleCounter += 1;
+      hd63096State->CycleCounter += 1;
 
       break;
 
     case 8: // 8 bit offset
       ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
 
-      CycleCounter += 1;
+      hd63096State->CycleCounter += 1;
 
       break;
 
     case 9: // 16 bit offset
       ea = PXF(reg) + IMMADDRESS(PC_REG);
 
-      CycleCounter += NatEmuCycles43;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 
       PC_REG += 2;
 
@@ -499,21 +457,21 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 10: // F reg offset
       ea = PXF(reg) + ((signed char)F_REG);
 
-      CycleCounter += 1;
+      hd63096State->CycleCounter += 1;
 
       break;
 
     case 11: // D reg offset 
       ea = PXF(reg) + D_REG; //Changed to unsigned 03/14/2005 NG Was signed
 
-      CycleCounter += NatEmuCycles42;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles42;
 
       break;
 
     case 12: // 8 bit PC relative
       ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
 
-      CycleCounter += 1;
+      hd63096State->CycleCounter += 1;
 
       PC_REG++;
 
@@ -522,7 +480,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 13: // 16 bit PC relative
       ea = PC_REG + IMMADDRESS(PC_REG) + 2;
 
-      CycleCounter += NatEmuCycles53;
+      hd63096State->CycleCounter += hd63096State->NatEmuCycles53;
 
       PC_REG += 2;
 
@@ -531,7 +489,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 14: // W reg offset
       ea = PXF(reg) + W_REG;
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       break;
 
@@ -550,7 +508,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
         PC_REG += 2;
 
-        CycleCounter += 2;
+        hd63096State->CycleCounter += 2;
 
         break;
 
@@ -559,7 +517,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
         W_REG += 2;
 
-        CycleCounter += 1;
+        hd63096State->CycleCounter += 1;
 
         break;
 
@@ -568,7 +526,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
         ea = W_REG;
 
-        CycleCounter += 1;
+        hd63096State->CycleCounter += 1;
 
         break;
       }
@@ -583,7 +541,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
       case 0: // Indirect no offset from W reg
         ea = MemRead16(W_REG);
 
-        CycleCounter += 3;
+        hd63096State->CycleCounter += 3;
 
         break;
 
@@ -592,7 +550,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
         PC_REG += 2;
 
-        CycleCounter += 5;
+        hd63096State->CycleCounter += 5;
 
         break;
 
@@ -601,7 +559,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
         W_REG += 2;
 
-        CycleCounter += 4;
+        hd63096State->CycleCounter += 4;
 
         break;
 
@@ -610,7 +568,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
         ea = MemRead16(W_REG);
 
-        CycleCounter += 4;
+        hd63096State->CycleCounter += 4;
 
         break;
       }
@@ -623,12 +581,12 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
       ea = MemRead16(ea);
 
-      CycleCounter += 6;
+      hd63096State->CycleCounter += 6;
 
       break;
 
     case 18: // possibly illegal instruction
-      CycleCounter += 6;
+      hd63096State->CycleCounter += 6;
 
       break;
 
@@ -637,49 +595,49 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
       ea = MemRead16(PXF(reg));
 
-      CycleCounter += 6;
+      hd63096State->CycleCounter += 6;
 
       break;
 
     case 20: // Indirect no offset 
       ea = MemRead16(PXF(reg));
 
-      CycleCounter += 3;
+      hd63096State->CycleCounter += 3;
 
       break;
 
     case 21: // Indirect B reg offset
       ea = MemRead16(PXF(reg) + ((signed char)B_REG));
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       break;
 
     case 22: // indirect A reg offset
       ea = MemRead16(PXF(reg) + ((signed char)A_REG));
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       break;
 
     case 23: // indirect E reg offset
       ea = MemRead16(PXF(reg) + ((signed char)E_REG));
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       break;
 
     case 24: // indirect 8 bit offset
       ea = MemRead16(PXF(reg) + (signed char)MemRead8(PC_REG++));
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       break;
 
     case 25: // indirect 16 bit offset
       ea = MemRead16(PXF(reg) + IMMADDRESS(PC_REG));
 
-      CycleCounter += 7;
+      hd63096State->CycleCounter += 7;
 
       PC_REG += 2;
 
@@ -688,21 +646,21 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 26: // indirect F reg offset
       ea = MemRead16(PXF(reg) + ((signed char)F_REG));
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       break;
 
     case 27: // indirect D reg offset
       ea = MemRead16(PXF(reg) + D_REG);
 
-      CycleCounter += 7;
+      hd63096State->CycleCounter += 7;
 
       break;
 
     case 28: // indirect 8 bit PC relative
       ea = MemRead16((signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1);
 
-      CycleCounter += 4;
+      hd63096State->CycleCounter += 4;
 
       PC_REG++;
 
@@ -711,7 +669,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 29: //indirect 16 bit PC relative
       ea = MemRead16(PC_REG + IMMADDRESS(PC_REG) + 2);
 
-      CycleCounter += 8;
+      hd63096State->CycleCounter += 8;
 
       PC_REG += 2;
 
@@ -720,14 +678,14 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
     case 30: // indirect W reg offset
       ea = MemRead16(PXF(reg) + W_REG);
 
-      CycleCounter += 7;
+      hd63096State->CycleCounter += 7;
 
       break;
 
     case 31: // extended indirect
       ea = MemRead16(IMMADDRESS(PC_REG));
 
-      CycleCounter += 8;
+      hd63096State->CycleCounter += 8;
 
       PC_REG += 2;
 
@@ -742,7 +700,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
     ea = PXF(reg) + byte; //Was signed
 
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   return(ea);
@@ -750,7 +708,7 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
 void setcc(unsigned char bincc)
 {
-  ccbits = bincc;
+  hd63096State->ccbits = bincc;
 
   CC_E = !!(bincc & (1 << E));
   CC_F = !!(bincc & (1 << F));
@@ -817,7 +775,7 @@ unsigned char getmd(void)
 
 void HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
 {
-  SyncWaiting = 0;
+  hd63096State->SyncWaiting = 0;
   PendingInterrupts |= (1 << (interrupt - 1));
   IRQWaiter = waiter;
 }
@@ -825,13 +783,13 @@ void HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nm
 void HD6309DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
 {
   PendingInterrupts &= ~(1 << (interrupt - 1));
-  InInterrupt = 0;
+  hd63096State->InInterrupt = 0;
 }
 
 void InvalidInsHandler(void)
 {
   MD_ILLEGAL = 1;
-  mdbits = getmd();
+  hd63096State->mdbits = getmd();
 
   ErrorVector();
 }
@@ -839,7 +797,7 @@ void InvalidInsHandler(void)
 void DivbyZero(void)
 {
   MD_ZERODIV = 1;
-  mdbits = getmd();
+  hd63096State->mdbits = getmd();
 
   ErrorVector();
 }
@@ -863,7 +821,7 @@ void ErrorVector(void)
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
 
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   MemWrite8(B_REG, --S_REG);
@@ -872,7 +830,7 @@ void ErrorVector(void)
 
   PC_REG = MemRead16(VTRAP);
 
-  CycleCounter += (12 + NatEmuCycles54);	//One for each byte +overhead? Guessing from PSHS
+  hd63096State->CycleCounter += (12 + hd63096State->NatEmuCycles54);	//One for each byte +overhead? Guessing from PSHS
 }
 
 unsigned char GetSorceReg(unsigned char tmp)
@@ -893,5 +851,5 @@ void HD6309ForcePC(unsigned short address)
   PC_REG = address;
 
   PendingInterrupts = 0;
-  SyncWaiting = 0;
+  hd63096State->SyncWaiting = 0;
 }

@@ -9,47 +9,6 @@
 #include "MemRead32.h"
 #include "MemWrite32.h"
 
-extern CpuRegister pc, x, y, u, s, dp, v, z;
-extern WideRegister q;
-
-extern unsigned char cc[8];
-extern unsigned char* ureg8[8];
-extern unsigned short* xfreg16[8];
-extern unsigned int md[8];
-extern unsigned char ccbits;
-extern unsigned char mdbits;
-
-extern int CycleCounter;
-extern unsigned int SyncWaiting;
-extern char InInterrupt;
-
-extern int gCycleFor;
-
-extern unsigned char NatEmuCycles65;
-extern unsigned char NatEmuCycles64;
-extern unsigned char NatEmuCycles32;
-extern unsigned char NatEmuCycles21;
-extern unsigned char NatEmuCycles54;
-extern unsigned char NatEmuCycles97;
-extern unsigned char NatEmuCycles85;
-extern unsigned char NatEmuCycles51;
-extern unsigned char NatEmuCycles31;
-extern unsigned char NatEmuCycles1110;
-extern unsigned char NatEmuCycles76;
-extern unsigned char NatEmuCycles75;
-extern unsigned char NatEmuCycles43;
-extern unsigned char NatEmuCycles87;
-extern unsigned char NatEmuCycles86;
-extern unsigned char NatEmuCycles98;
-extern unsigned char NatEmuCycles2726;
-extern unsigned char NatEmuCycles3635;
-extern unsigned char NatEmuCycles3029;
-extern unsigned char NatEmuCycles2827;
-extern unsigned char NatEmuCycles3726;
-extern unsigned char NatEmuCycles3130;
-extern unsigned char NatEmuCycles42;
-extern unsigned char NatEmuCycles53;
-
 extern void setcc(unsigned char);
 extern unsigned char getcc(void);
 extern void setmd(unsigned char);
@@ -58,6 +17,8 @@ extern unsigned char getmd(void);
 extern void InvalidInsHandler(void);
 extern unsigned short hd6309_CalculateEA(unsigned char);
 extern void DivbyZero(void);
+
+static HD6309State* hd63096State = GetHD6309State();
 
 static signed short stemp16;
 static int stemp32;
@@ -84,7 +45,7 @@ void Neg_D(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Oim_D(void)
@@ -96,7 +57,7 @@ void Oim_D(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Aim_D(void)
@@ -108,7 +69,7 @@ void Aim_D(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Com_D(void)
@@ -121,7 +82,7 @@ void Com_D(void)
   CC_C = 1;
   CC_V = 0;
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Lsr_D(void)
@@ -133,7 +94,7 @@ void Lsr_D(void)
   CC_Z = ZTEST(temp8);
   CC_N = 0;
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Eim_D(void)
@@ -145,7 +106,7 @@ void Eim_D(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Ror_D(void)
@@ -158,7 +119,7 @@ void Ror_D(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Asr_D(void)
@@ -170,7 +131,7 @@ void Asr_D(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Asl_D(void)
@@ -183,7 +144,7 @@ void Asl_D(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Rol_D(void)
@@ -197,7 +158,7 @@ void Rol_D(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Dec_D(void)
@@ -208,7 +169,7 @@ void Dec_D(void)
   CC_N = NTEST8(temp8);
   CC_V = temp8 == 0x7F;
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Tim_D(void)
@@ -219,7 +180,7 @@ void Tim_D(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Inc_D(void)
@@ -230,7 +191,7 @@ void Inc_D(void)
   CC_V = temp8 == 0x80;
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Tst_D(void)
@@ -239,13 +200,13 @@ void Tst_D(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   CC_V = 0;
-  CycleCounter += NatEmuCycles64;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles64;
 }
 
 void Jmp_D(void)
 {	//E
   PC_REG = ((DP_REG | MemRead8(PC_REG)));
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Clr_D(void)
@@ -255,7 +216,7 @@ void Clr_D(void)
   CC_N = 0;
   CC_V = 0;
   CC_C = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void LBeq_R(void)
@@ -263,16 +224,16 @@ void LBeq_R(void)
   if (CC_Z) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBrn_R(void)
 { //1021
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBhi_R(void)
@@ -280,11 +241,11 @@ void LBhi_R(void)
   if (!(CC_C | CC_Z)) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBls_R(void)
@@ -292,11 +253,11 @@ void LBls_R(void)
   if (CC_C | CC_Z) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBhs_R(void)
@@ -304,11 +265,11 @@ void LBhs_R(void)
   if (!CC_C) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void LBcs_R(void)
@@ -316,11 +277,11 @@ void LBcs_R(void)
   if (CC_C) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBne_R(void)
@@ -328,11 +289,11 @@ void LBne_R(void)
   if (!CC_Z) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBvc_R(void)
@@ -340,11 +301,11 @@ void LBvc_R(void)
   if (!CC_V) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBvs_R(void)
@@ -352,11 +313,11 @@ void LBvs_R(void)
   if (CC_V) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBpl_R(void)
@@ -364,11 +325,11 @@ void LBpl_R(void)
   if (!CC_N) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBmi_R(void)
@@ -376,11 +337,11 @@ void LBmi_R(void)
   if (CC_N) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBge_R(void)
@@ -388,11 +349,11 @@ void LBge_R(void)
   if (!(CC_N ^ CC_V)) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBlt_R(void)
@@ -400,11 +361,11 @@ void LBlt_R(void)
   if (CC_V ^ CC_N) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBgt_R(void)
@@ -412,11 +373,11 @@ void LBgt_R(void)
   if (!(CC_Z | (CC_N ^ CC_V))) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void LBle_R(void)
@@ -424,11 +385,11 @@ void LBle_R(void)
   if (CC_Z | (CC_N ^ CC_V)) {
     *spostword = IMMADDRESS(PC_REG);
     PC_REG += *spostword;
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   PC_REG += 2;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Addr(void)
@@ -509,7 +470,7 @@ void Addr(void)
     CC_Z = ZTEST(PXF(Dest));
   }
 
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Adcr(void)
@@ -616,7 +577,7 @@ void Adcr(void)
     CC_Z = ZTEST(PXF(Dest));
   }
 
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Subr(void)
@@ -722,7 +683,7 @@ void Subr(void)
     CC_Z = ZTEST(temp32);
   }
 
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Sbcr(void)
@@ -830,7 +791,7 @@ void Sbcr(void)
     CC_Z = ZTEST(temp32);
   }
 
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Andr(void)
@@ -933,7 +894,7 @@ void Andr(void)
     CC_Z = ZTEST(temp16);
   }
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Orr(void)
@@ -1038,7 +999,7 @@ void Orr(void)
   }
 
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Eorr(void)
@@ -1143,7 +1104,7 @@ void Eorr(void)
   }
 
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Cmpr(void)
@@ -1235,35 +1196,35 @@ void Cmpr(void)
     CC_Z = ZTEST(temp32);
   }
 
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Pshsw(void)
 { //1038 DONE 6309
   MemWrite8((F_REG), --S_REG);
   MemWrite8((E_REG), --S_REG);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Pulsw(void)
 {	//1039 6309 Untested wcreate
   E_REG = MemRead8(S_REG++);
   F_REG = MemRead8(S_REG++);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Pshuw(void)
 { //103A 6309 Untested
   MemWrite8((F_REG), --U_REG);
   MemWrite8((E_REG), --U_REG);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Puluw(void)
 { //103B 6309 Untested
   E_REG = MemRead8(U_REG++);
   F_REG = MemRead8(U_REG++);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Swi2_I(void)
@@ -1283,14 +1244,14 @@ void Swi2_I(void)
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
   PC_REG = MemRead16(VSWI2);
-  CycleCounter += 20;
+  hd63096State->CycleCounter += 20;
 }
 
 void Negd_I(void)
@@ -1300,7 +1261,7 @@ void Negd_I(void)
   CC_V = D_REG == 0x8000;
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Comd_I(void)
@@ -1310,7 +1271,7 @@ void Comd_I(void)
   CC_N = NTEST16(D_REG);
   CC_C = 1;
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Lsrd_I(void)
@@ -1319,7 +1280,7 @@ void Lsrd_I(void)
   D_REG = D_REG >> 1;
   CC_Z = ZTEST(D_REG);
   CC_N = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Rord_I(void)
@@ -1329,7 +1290,7 @@ void Rord_I(void)
   D_REG = (D_REG >> 1) | postword;
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Asrd_I(void)
@@ -1338,7 +1299,7 @@ void Asrd_I(void)
   D_REG = (D_REG & 0x8000) | (D_REG >> 1);
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Asld_I(void)
@@ -1348,7 +1309,7 @@ void Asld_I(void)
   D_REG = D_REG << 1;
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Rold_I(void)
@@ -1359,7 +1320,7 @@ void Rold_I(void)
   D_REG = (D_REG << 1) | postword;
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Decd_I(void)
@@ -1368,7 +1329,7 @@ void Decd_I(void)
   CC_Z = ZTEST(D_REG);
   CC_V = D_REG == 0x7FFF;
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Incd_I(void)
@@ -1377,7 +1338,7 @@ void Incd_I(void)
   CC_Z = ZTEST(D_REG);
   CC_V = D_REG == 0x8000;
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Tstd_I(void)
@@ -1385,7 +1346,7 @@ void Tstd_I(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Clrd_I(void)
@@ -1395,7 +1356,7 @@ void Clrd_I(void)
   CC_V = 0;
   CC_N = 0;
   CC_Z = 1;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Comw_I(void)
@@ -1405,7 +1366,7 @@ void Comw_I(void)
   CC_N = NTEST16(W_REG);
   CC_C = 1;
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Lsrw_I(void)
@@ -1414,7 +1375,7 @@ void Lsrw_I(void)
   W_REG = W_REG >> 1;
   CC_Z = ZTEST(W_REG);
   CC_N = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Rorw_I(void)
@@ -1424,7 +1385,7 @@ void Rorw_I(void)
   W_REG = (W_REG >> 1) | postword;
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Rolw_I(void)
@@ -1435,7 +1396,7 @@ void Rolw_I(void)
   W_REG = (W_REG << 1) | postword;
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Decw_I(void)
@@ -1444,7 +1405,7 @@ void Decw_I(void)
   CC_Z = ZTEST(W_REG);
   CC_V = W_REG == 0x7FFF;
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Incw_I(void)
@@ -1453,7 +1414,7 @@ void Incw_I(void)
   CC_Z = ZTEST(W_REG);
   CC_V = W_REG == 0x8000;
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Tstw_I(void)
@@ -1461,7 +1422,7 @@ void Tstw_I(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Clrw_I(void)
@@ -1471,7 +1432,7 @@ void Clrw_I(void)
   CC_V = 0;
   CC_N = 0;
   CC_Z = 1;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Subw_M(void)
@@ -1484,7 +1445,7 @@ void Subw_M(void)
   CC_Z = ZTEST(temp16);
   W_REG = temp16;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpw_M(void)
@@ -1496,7 +1457,7 @@ void Cmpw_M(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Sbcd_M(void)
@@ -1509,7 +1470,7 @@ void Sbcd_M(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpd_M(void)
@@ -1521,7 +1482,7 @@ void Cmpd_M(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Andd_M(void)
@@ -1531,7 +1492,7 @@ void Andd_M(void)
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Bitd_M(void)
@@ -1541,7 +1502,7 @@ void Bitd_M(void)
   CC_Z = ZTEST(temp16);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ldw_M(void)
@@ -1551,7 +1512,7 @@ void Ldw_M(void)
   CC_N = NTEST16(W_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Eord_M(void)
@@ -1561,7 +1522,7 @@ void Eord_M(void)
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Adcd_M(void)
@@ -1575,7 +1536,7 @@ void Adcd_M(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ord_M(void)
@@ -1585,7 +1546,7 @@ void Ord_M(void)
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Addw_M(void)
@@ -1598,7 +1559,7 @@ void Addw_M(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpy_M(void)
@@ -1610,7 +1571,7 @@ void Cmpy_M(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ldy_M(void)
@@ -1620,7 +1581,7 @@ void Ldy_M(void)
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Subw_D(void)
@@ -1632,7 +1593,7 @@ void Subw_D(void)
   W_REG = temp32;
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Cmpw_D(void)
@@ -1643,7 +1604,7 @@ void Cmpw_D(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, W_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Sbcd_D(void)
@@ -1655,7 +1616,7 @@ void Sbcd_D(void)
   D_REG = temp32;
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Cmpd_D(void)
@@ -1666,7 +1627,7 @@ void Cmpd_D(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, D_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Andd_D(void)
@@ -1676,7 +1637,7 @@ void Andd_D(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Bitd_D(void)
@@ -1685,7 +1646,7 @@ void Bitd_D(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   CC_V = 0;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Ldw_D(void)
@@ -1694,7 +1655,7 @@ void Ldw_D(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Stw_D(void)
@@ -1703,7 +1664,7 @@ void Stw_D(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Eord_D(void)
@@ -1712,7 +1673,7 @@ void Eord_D(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Adcd_D(void)
@@ -1725,7 +1686,7 @@ void Adcd_D(void)
   D_REG = temp32;
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Ord_D(void)
@@ -1734,7 +1695,7 @@ void Ord_D(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Addw_D(void)
@@ -1746,7 +1707,7 @@ void Addw_D(void)
   W_REG = temp32;
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Cmpy_D(void)
@@ -1757,7 +1718,7 @@ void Cmpy_D(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, Y_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Ldy_D(void)
@@ -1766,7 +1727,7 @@ void Ldy_D(void)
   CC_Z = ZTEST(Y_REG);
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Sty_D(void)
@@ -1775,7 +1736,7 @@ void Sty_D(void)
   CC_Z = ZTEST(Y_REG);
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Subw_X(void)
@@ -1787,7 +1748,7 @@ void Subw_X(void)
   W_REG = temp32;
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Cmpw_X(void)
@@ -1798,7 +1759,7 @@ void Cmpw_X(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, W_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Sbcd_X(void)
@@ -1810,7 +1771,7 @@ void Sbcd_X(void)
   D_REG = temp32;
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Cmpd_X(void)
@@ -1821,7 +1782,7 @@ void Cmpd_X(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, D_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Andd_X(void)
@@ -1830,7 +1791,7 @@ void Andd_X(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Bitd_X(void)
@@ -1839,7 +1800,7 @@ void Bitd_X(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   CC_V = 0;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ldw_X(void)
@@ -1848,7 +1809,7 @@ void Ldw_X(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Stw_X(void)
@@ -1857,7 +1818,7 @@ void Stw_X(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Eord_X(void)
@@ -1866,7 +1827,7 @@ void Eord_X(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Adcd_X(void)
@@ -1879,7 +1840,7 @@ void Adcd_X(void)
   D_REG = temp32;
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ord_X(void)
@@ -1888,7 +1849,7 @@ void Ord_X(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Addw_X(void)
@@ -1900,7 +1861,7 @@ void Addw_X(void)
   W_REG = temp32;
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Cmpy_X(void)
@@ -1911,7 +1872,7 @@ void Cmpy_X(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, Y_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ldy_X(void)
@@ -1920,7 +1881,7 @@ void Ldy_X(void)
   CC_Z = ZTEST(Y_REG);
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Sty_X(void)
@@ -1929,7 +1890,7 @@ void Sty_X(void)
   CC_Z = ZTEST(Y_REG);
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Subw_E(void)
@@ -1942,7 +1903,7 @@ void Subw_E(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Cmpw_E(void)
@@ -1954,7 +1915,7 @@ void Cmpw_E(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Sbcd_E(void)
@@ -1967,7 +1928,7 @@ void Sbcd_E(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Cmpd_E(void)
@@ -1979,7 +1940,7 @@ void Cmpd_E(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Andd_E(void)
@@ -1989,7 +1950,7 @@ void Andd_E(void)
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Bitd_E(void)
@@ -1999,7 +1960,7 @@ void Bitd_E(void)
   CC_Z = ZTEST(temp16);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Ldw_E(void)
@@ -2009,7 +1970,7 @@ void Ldw_E(void)
   CC_N = NTEST16(W_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Stw_E(void)
@@ -2019,7 +1980,7 @@ void Stw_E(void)
   CC_N = NTEST16(W_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Eord_E(void)
@@ -2029,7 +1990,7 @@ void Eord_E(void)
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Adcd_E(void)
@@ -2043,7 +2004,7 @@ void Adcd_E(void)
   CC_N = NTEST16(D_REG);
   CC_Z = ZTEST(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Ord_E(void)
@@ -2053,7 +2014,7 @@ void Ord_E(void)
   CC_Z = ZTEST(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Addw_E(void)
@@ -2066,7 +2027,7 @@ void Addw_E(void)
   CC_Z = ZTEST(W_REG);
   CC_N = NTEST16(W_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Cmpy_E(void)
@@ -2078,7 +2039,7 @@ void Cmpy_E(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Ldy_E(void)
@@ -2088,7 +2049,7 @@ void Ldy_E(void)
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Sty_E(void)
@@ -2098,7 +2059,7 @@ void Sty_E(void)
   CC_N = NTEST16(Y_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Lds_I(void)
@@ -2108,7 +2069,7 @@ void Lds_I(void)
   CC_N = NTEST16(S_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Ldq_D(void)
@@ -2117,7 +2078,7 @@ void Ldq_D(void)
   CC_Z = ZTEST(Q_REG);
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles87;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles87;
 }
 
 void Stq_D(void)
@@ -2126,7 +2087,7 @@ void Stq_D(void)
   CC_Z = ZTEST(Q_REG);
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles87;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles87;
 }
 
 void Lds_D(void)
@@ -2135,7 +2096,7 @@ void Lds_D(void)
   CC_Z = ZTEST(S_REG);
   CC_N = NTEST16(S_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Sts_D(void)
@@ -2144,7 +2105,7 @@ void Sts_D(void)
   CC_Z = ZTEST(S_REG);
   CC_N = NTEST16(S_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Ldq_X(void)
@@ -2153,7 +2114,7 @@ void Ldq_X(void)
   CC_Z = ZTEST(Q_REG);
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
-  CycleCounter += 8;
+  hd63096State->CycleCounter += 8;
 }
 
 void Stq_X(void)
@@ -2162,7 +2123,7 @@ void Stq_X(void)
   CC_Z = ZTEST(Q_REG);
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
-  CycleCounter += 8;
+  hd63096State->CycleCounter += 8;
 }
 
 void Lds_X(void)
@@ -2171,7 +2132,7 @@ void Lds_X(void)
   CC_Z = ZTEST(S_REG);
   CC_N = NTEST16(S_REG);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Sts_X(void)
@@ -2180,7 +2141,7 @@ void Sts_X(void)
   CC_Z = ZTEST(S_REG);
   CC_N = NTEST16(S_REG);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Ldq_E(void)
@@ -2190,7 +2151,7 @@ void Ldq_E(void)
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles98;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles98;
 }
 
 void Stq_E(void)
@@ -2200,7 +2161,7 @@ void Stq_E(void)
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles98;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles98;
 }
 
 void Lds_E(void)
@@ -2210,7 +2171,7 @@ void Lds_E(void)
   CC_N = NTEST16(S_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Sts_E(void)
@@ -2220,7 +2181,7 @@ void Sts_E(void)
   CC_N = NTEST16(S_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Band(void)
@@ -2253,7 +2214,7 @@ void Band(void)
   }
 
   // Else nothing changes
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Biand(void)
@@ -2286,7 +2247,7 @@ void Biand(void)
   }
 
   // Else do nothing
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Bor(void)
@@ -2319,7 +2280,7 @@ void Bor(void)
   }
 
   // Else do nothing
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Bior(void)
@@ -2352,7 +2313,7 @@ void Bior(void)
   }
 
   // Else do nothing
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Beor(void)
@@ -2384,7 +2345,7 @@ void Beor(void)
     }
   }
 
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Bieor(void)
@@ -2416,7 +2377,7 @@ void Bieor(void)
     }
   }
 
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ldbt(void)
@@ -2462,7 +2423,7 @@ void Ldbt(void)
     }
   }
 
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Stbt(void)
@@ -2502,14 +2463,14 @@ void Stbt(void)
   }
 
   MemWrite8(temp8, temp16);
-  CycleCounter += NatEmuCycles87;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles87;
 }
 
 void Tfm1(void)
 { //1138 TFM R+,R+ 6309
   if (W_REG == 0)
   {
-    CycleCounter += 6;
+    hd63096State->CycleCounter += 6;
     PC_REG++;
     return;
   }
@@ -2529,7 +2490,7 @@ void Tfm1(void)
   (PXF(Dest))++;
   (PXF(Source))++;
   W_REG--;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
   PC_REG -= 2;
 }
 
@@ -2537,7 +2498,7 @@ void Tfm2(void)
 { //1139 TFM R-,R- Phase 3 6309
   if (W_REG == 0)
   {
-    CycleCounter += 6;
+    hd63096State->CycleCounter += 6;
     PC_REG++;
     return;
   }
@@ -2557,7 +2518,7 @@ void Tfm2(void)
   (PXF(Dest))--;
   (PXF(Source))--;
   W_REG--;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
   PC_REG -= 2;
 }
 
@@ -2565,7 +2526,7 @@ void Tfm3(void)
 { //113A 6309 TFM R+,R 6309
   if (W_REG == 0)
   {
-    CycleCounter += 6;
+    hd63096State->CycleCounter += 6;
     PC_REG++;
     return;
   }
@@ -2585,14 +2546,14 @@ void Tfm3(void)
   (PXF(Source))++;
   W_REG--;
   PC_REG -= 2; //Hit the same instruction on the next loop if not done copying
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Tfm4(void)
 { //113B TFM R,R+ 6309 
   if (W_REG == 0)
   {
-    CycleCounter += 6;
+    hd63096State->CycleCounter += 6;
     PC_REG++;
     return;
   }
@@ -2612,7 +2573,7 @@ void Tfm4(void)
   (PXF(Dest))++;
   W_REG--;
   PC_REG -= 2; //Hit the same instruction on the next loop if not done copying
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bitmd_M(void)
@@ -2624,14 +2585,14 @@ void Bitmd_M(void)
   if (temp8 & 0x80) MD_ZERODIV = 0;
   if (temp8 & 0x40) MD_ILLEGAL = 0;
 
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Ldmd_M(void)
 { //113D DONE 6309
-  mdbits = MemRead8(PC_REG++) & 0x03;
-  setmd(mdbits);
-  CycleCounter += 5;
+  hd63096State->mdbits = MemRead8(PC_REG++) & 0x03;
+  setmd(hd63096State->mdbits);
+  hd63096State->CycleCounter += 5;
 }
 
 void Swi3_I(void)
@@ -2651,14 +2612,14 @@ void Swi3_I(void)
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
   PC_REG = MemRead16(VSWI3);
-  CycleCounter += 20;
+  hd63096State->CycleCounter += 20;
 }
 
 void Come_I(void)
@@ -2668,7 +2629,7 @@ void Come_I(void)
   CC_N = NTEST8(E_REG);
   CC_C = 1;
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Dece_I(void)
@@ -2677,7 +2638,7 @@ void Dece_I(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = E_REG == 0x7F;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Ince_I(void)
@@ -2686,7 +2647,7 @@ void Ince_I(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = E_REG == 0x80;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Tste_I(void)
@@ -2694,7 +2655,7 @@ void Tste_I(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Clre_I(void)
@@ -2704,7 +2665,7 @@ void Clre_I(void)
   CC_V = 0;
   CC_N = 0;
   CC_Z = 1;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Comf_I(void)
@@ -2714,7 +2675,7 @@ void Comf_I(void)
   CC_N = NTEST8(F_REG);
   CC_C = 1;
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Decf_I(void)
@@ -2723,7 +2684,7 @@ void Decf_I(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = F_REG == 0x7F;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Incf_I(void)
@@ -2732,7 +2693,7 @@ void Incf_I(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = F_REG == 0x80;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Tstf_I(void)
@@ -2740,7 +2701,7 @@ void Tstf_I(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Clrf_I(void)
@@ -2750,7 +2711,7 @@ void Clrf_I(void)
   CC_V = 0;
   CC_N = 0;
   CC_Z = 1;
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Sube_M(void)
@@ -2762,7 +2723,7 @@ void Sube_M(void)
   E_REG = (unsigned char)temp16;
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Cmpe_M(void)
@@ -2773,7 +2734,7 @@ void Cmpe_M(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, E_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Cmpu_M(void)
@@ -2785,7 +2746,7 @@ void Cmpu_M(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Lde_M(void)
@@ -2794,7 +2755,7 @@ void Lde_M(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = 0;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Adde_M(void)
@@ -2807,7 +2768,7 @@ void Adde_M(void)
   E_REG = (unsigned char)temp16;
   CC_N = NTEST8(E_REG);
   CC_Z = ZTEST(E_REG);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Cmps_M(void)
@@ -2819,7 +2780,7 @@ void Cmps_M(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Divd_M(void)
@@ -2828,7 +2789,7 @@ void Divd_M(void)
 
   if (postbyte == 0)
   {
-    CycleCounter += 3;
+    hd63096State->CycleCounter += 3;
     DivbyZero();
     return;
   }
@@ -2842,7 +2803,7 @@ void Divd_M(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += 17;
+    hd63096State->CycleCounter += 17;
     return;
   }
 
@@ -2862,7 +2823,7 @@ void Divd_M(void)
   }
 
   CC_C = B_REG & 1;
-  CycleCounter += 25;
+  hd63096State->CycleCounter += 25;
 }
 
 void Divq_M(void)
@@ -2872,7 +2833,7 @@ void Divq_M(void)
 
   if (postword == 0)
   {
-    CycleCounter += 4;
+    hd63096State->CycleCounter += 4;
     DivbyZero();
     return;
   }
@@ -2886,7 +2847,7 @@ void Divq_M(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += 34 - 21;
+    hd63096State->CycleCounter += 34 - 21;
     return;
   }
 
@@ -2906,7 +2867,7 @@ void Divq_M(void)
   }
 
   CC_C = B_REG & 1;
-  CycleCounter += 34;
+  hd63096State->CycleCounter += 34;
 }
 
 void Muld_M(void)
@@ -2917,7 +2878,7 @@ void Muld_M(void)
   CC_V = 0;
   CC_N = NTEST32(Q_REG);
   PC_REG += 2;
-  CycleCounter += 28;
+  hd63096State->CycleCounter += 28;
 }
 
 void Sube_D(void)
@@ -2929,7 +2890,7 @@ void Sube_D(void)
   E_REG = (unsigned char)temp16;
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpe_D(void)
@@ -2940,7 +2901,7 @@ void Cmpe_D(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, E_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpu_D(void)
@@ -2951,7 +2912,7 @@ void Cmpu_D(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, U_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Lde_D(void)
@@ -2960,7 +2921,7 @@ void Lde_D(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ste_D(void)
@@ -2969,7 +2930,7 @@ void Ste_D(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Adde_D(void)
@@ -2982,7 +2943,7 @@ void Adde_D(void)
   E_REG = (unsigned char)temp16;
   CC_N = NTEST8(E_REG);
   CC_Z = ZTEST(E_REG);
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmps_D(void)
@@ -2993,7 +2954,7 @@ void Cmps_D(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, S_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Divd_D(void)
@@ -3002,7 +2963,7 @@ void Divd_D(void)
 
   if (postbyte == 0)
   {
-    CycleCounter += 3;
+    hd63096State->CycleCounter += 3;
     DivbyZero();
     return;
   }
@@ -3016,7 +2977,7 @@ void Divd_D(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += 19;
+    hd63096State->CycleCounter += 19;
     return;
   }
 
@@ -3036,7 +2997,7 @@ void Divd_D(void)
   }
 
   CC_C = B_REG & 1;
-  CycleCounter += 27;
+  hd63096State->CycleCounter += 27;
 }
 
 void Divq_D(void)
@@ -3045,7 +3006,7 @@ void Divq_D(void)
 
   if (postword == 0)
   {
-    CycleCounter += 4;
+    hd63096State->CycleCounter += 4;
     DivbyZero();
     return;
   }
@@ -3059,7 +3020,7 @@ void Divq_D(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += NatEmuCycles3635 - 21;
+    hd63096State->CycleCounter += hd63096State->NatEmuCycles3635 - 21;
     return;
   }
 
@@ -3079,7 +3040,7 @@ void Divq_D(void)
   }
 
   CC_C = B_REG & 1;
-  CycleCounter += NatEmuCycles3635;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles3635;
 }
 
 void Muld_D(void)
@@ -3089,7 +3050,7 @@ void Muld_D(void)
   CC_Z = ZTEST(Q_REG);
   CC_V = 0;
   CC_N = NTEST32(Q_REG);
-  CycleCounter += NatEmuCycles3029;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles3029;
 }
 
 void Sube_X(void)
@@ -3101,7 +3062,7 @@ void Sube_X(void)
   E_REG = (unsigned char)temp16;
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Cmpe_X(void)
@@ -3112,7 +3073,7 @@ void Cmpe_X(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, E_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Cmpu_X(void)
@@ -3123,7 +3084,7 @@ void Cmpu_X(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, U_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Lde_X(void)
@@ -3132,7 +3093,7 @@ void Lde_X(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Ste_X(void)
@@ -3141,7 +3102,7 @@ void Ste_X(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Adde_X(void)
@@ -3154,7 +3115,7 @@ void Adde_X(void)
   E_REG = (unsigned char)temp16;
   CC_N = NTEST8(E_REG);
   CC_Z = ZTEST(E_REG);
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Cmps_X(void)
@@ -3165,7 +3126,7 @@ void Cmps_X(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, S_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Divd_X(void)
@@ -3174,7 +3135,7 @@ void Divd_X(void)
 
   if (postbyte == 0)
   {
-    CycleCounter += 3;
+    hd63096State->CycleCounter += 3;
     DivbyZero();
     return;
   }
@@ -3188,7 +3149,7 @@ void Divd_X(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += 19;
+    hd63096State->CycleCounter += 19;
     return;
   }
 
@@ -3207,7 +3168,7 @@ void Divd_X(void)
     CC_V = 0;
   }
   CC_C = B_REG & 1;
-  CycleCounter += 27;
+  hd63096State->CycleCounter += 27;
 }
 
 void Divq_X(void)
@@ -3216,7 +3177,7 @@ void Divq_X(void)
 
   if (postword == 0)
   {
-    CycleCounter += 4;
+    hd63096State->CycleCounter += 4;
     DivbyZero();
     return;
   }
@@ -3230,7 +3191,7 @@ void Divq_X(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += NatEmuCycles3635 - 21;
+    hd63096State->CycleCounter += hd63096State->NatEmuCycles3635 - 21;
     return;
   }
 
@@ -3250,7 +3211,7 @@ void Divq_X(void)
   }
 
   CC_C = B_REG & 1;
-  CycleCounter += NatEmuCycles3635;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles3635;
 }
 
 void Muld_X(void)
@@ -3260,7 +3221,7 @@ void Muld_X(void)
   CC_Z = ZTEST(Q_REG);
   CC_V = 0;
   CC_N = NTEST32(Q_REG);
-  CycleCounter += 30;
+  hd63096State->CycleCounter += 30;
 }
 
 void Sube_E(void)
@@ -3273,7 +3234,7 @@ void Sube_E(void)
   CC_Z = ZTEST(E_REG);
   CC_N = NTEST8(E_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Cmpe_E(void)
@@ -3285,7 +3246,7 @@ void Cmpe_E(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Cmpu_E(void)
@@ -3297,7 +3258,7 @@ void Cmpu_E(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Lde_E(void)
@@ -3307,7 +3268,7 @@ void Lde_E(void)
   CC_N = NTEST8(E_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Ste_E(void)
@@ -3317,7 +3278,7 @@ void Ste_E(void)
   CC_N = NTEST8(E_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Adde_E(void)
@@ -3331,7 +3292,7 @@ void Adde_E(void)
   CC_N = NTEST8(E_REG);
   CC_Z = ZTEST(E_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Cmps_E(void)
@@ -3343,7 +3304,7 @@ void Cmps_E(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles86;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles86;
 }
 
 void Divd_E(void)
@@ -3353,7 +3314,7 @@ void Divd_E(void)
 
   if (postbyte == 0)
   {
-    CycleCounter += 3;
+    hd63096State->CycleCounter += 3;
     DivbyZero();
     return;
   }
@@ -3367,7 +3328,7 @@ void Divd_E(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += 17;
+    hd63096State->CycleCounter += 17;
     return;
   }
 
@@ -3386,7 +3347,7 @@ void Divd_E(void)
     CC_V = 0;
   }
   CC_C = B_REG & 1;
-  CycleCounter += 25;
+  hd63096State->CycleCounter += 25;
 }
 
 void Divq_E(void)
@@ -3396,7 +3357,7 @@ void Divq_E(void)
 
   if (postword == 0)
   {
-    CycleCounter += 4;
+    hd63096State->CycleCounter += 4;
     DivbyZero();
     return;
   }
@@ -3410,7 +3371,7 @@ void Divq_E(void)
     CC_N = 0;
     CC_Z = 0;
     CC_C = 0;
-    CycleCounter += NatEmuCycles3635 - 21;
+    hd63096State->CycleCounter += hd63096State->NatEmuCycles3635 - 21;
     return;
   }
 
@@ -3429,7 +3390,7 @@ void Divq_E(void)
     CC_V = 0;
   }
   CC_C = B_REG & 1;
-  CycleCounter += NatEmuCycles3635;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles3635;
 }
 
 void Muld_E(void)
@@ -3440,7 +3401,7 @@ void Muld_E(void)
   CC_Z = ZTEST(Q_REG);
   CC_V = 0;
   CC_N = NTEST32(Q_REG);
-  CycleCounter += NatEmuCycles3130;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles3130;
 }
 
 void Subf_M(void)
@@ -3452,7 +3413,7 @@ void Subf_M(void)
   F_REG = (unsigned char)temp16;
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Cmpf_M(void)
@@ -3463,7 +3424,7 @@ void Cmpf_M(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, F_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Ldf_M(void)
@@ -3472,7 +3433,7 @@ void Ldf_M(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = 0;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Addf_M(void)
@@ -3485,7 +3446,7 @@ void Addf_M(void)
   F_REG = (unsigned char)temp16;
   CC_N = NTEST8(F_REG);
   CC_Z = ZTEST(F_REG);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Subf_D(void)
@@ -3497,7 +3458,7 @@ void Subf_D(void)
   F_REG = (unsigned char)temp16;
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpf_D(void)
@@ -3508,7 +3469,7 @@ void Cmpf_D(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, F_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ldf_D(void)
@@ -3517,7 +3478,7 @@ void Ldf_D(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Stf_D(void)
@@ -3526,7 +3487,7 @@ void Stf_D(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Addf_D(void)
@@ -3539,7 +3500,7 @@ void Addf_D(void)
   F_REG = (unsigned char)temp16;
   CC_N = NTEST8(F_REG);
   CC_Z = ZTEST(F_REG);
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Subf_X(void)
@@ -3551,7 +3512,7 @@ void Subf_X(void)
   F_REG = (unsigned char)temp16;
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Cmpf_X(void)
@@ -3562,7 +3523,7 @@ void Cmpf_X(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, F_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Ldf_X(void)
@@ -3571,7 +3532,7 @@ void Ldf_X(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Stf_X(void)
@@ -3580,7 +3541,7 @@ void Stf_X(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Addf_X(void)
@@ -3593,7 +3554,7 @@ void Addf_X(void)
   F_REG = (unsigned char)temp16;
   CC_N = NTEST8(F_REG);
   CC_Z = ZTEST(F_REG);
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Subf_E(void)
@@ -3606,7 +3567,7 @@ void Subf_E(void)
   CC_Z = ZTEST(F_REG);
   CC_N = NTEST8(F_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Cmpf_E(void)
@@ -3618,7 +3579,7 @@ void Cmpf_E(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Ldf_E(void)
@@ -3628,7 +3589,7 @@ void Ldf_E(void)
   CC_N = NTEST8(F_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Stf_E(void)
@@ -3638,7 +3599,7 @@ void Stf_E(void)
   CC_N = NTEST8(F_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Addf_E(void)
@@ -3652,18 +3613,18 @@ void Addf_E(void)
   CC_N = NTEST8(F_REG);
   CC_Z = ZTEST(F_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Nop_I(void)
 {	//12
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Sync_I(void)
 { //13
-  CycleCounter = gCycleFor;
-  SyncWaiting = 1;
+  hd63096State->CycleCounter = hd63096State->gCycleFor;
+  hd63096State->SyncWaiting = 1;
 }
 
 void Sexw_I(void)
@@ -3675,7 +3636,7 @@ void Sexw_I(void)
 
   CC_Z = ZTEST(Q_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Lbra_R(void)
@@ -3683,7 +3644,7 @@ void Lbra_R(void)
   *spostword = IMMADDRESS(PC_REG);
   PC_REG += 2;
   PC_REG += *spostword;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Lbsr_R(void)
@@ -3694,7 +3655,7 @@ void Lbsr_R(void)
   MemWrite8(PC_L, S_REG--);
   MemWrite8(PC_H, S_REG);
   PC_REG += *spostword;
-  CycleCounter += NatEmuCycles97;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles97;
 }
 
 void Daa_I(void)
@@ -3719,7 +3680,7 @@ void Daa_I(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Orcc_M(void)
@@ -3728,7 +3689,7 @@ void Orcc_M(void)
   temp8 = getcc();
   temp8 = (temp8 | postbyte);
   setcc(temp8);
-  CycleCounter += NatEmuCycles32;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
 }
 
 void Andcc_M(void)
@@ -3737,7 +3698,7 @@ void Andcc_M(void)
   temp8 = getcc();
   temp8 = (temp8 & postbyte);
   setcc(temp8);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Sex_I(void)
@@ -3745,7 +3706,7 @@ void Sex_I(void)
   A_REG = 0 - (B_REG >> 7);
   CC_Z = ZTEST(D_REG);
   CC_N = D_REG >> 15;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Exg_M(void)
@@ -3754,7 +3715,7 @@ void Exg_M(void)
   Source = postbyte >> 4;
   Dest = postbyte & 15;
 
-  ccbits = getcc();
+  hd63096State->ccbits = getcc();
 
   if ((Source & 0x08) == (Dest & 0x08)) //Verify like size registers
   {
@@ -3813,8 +3774,8 @@ void Exg_M(void)
     }
   }
 
-  setcc(ccbits);
-  CycleCounter += NatEmuCycles85;
+  setcc(hd63096State->ccbits);
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles85;
 }
 
 void Tfr_M(void)
@@ -3834,7 +3795,7 @@ void Tfr_M(void)
   }
   else
   {
-    ccbits = getcc();
+    hd63096State->ccbits = getcc();
     Dest &= 7;
 
     if (Source < 8)
@@ -3856,22 +3817,22 @@ void Tfr_M(void)
     }
 
     O_REG = 0;
-    setcc(ccbits);
+    setcc(hd63096State->ccbits);
   }
 
-  CycleCounter += NatEmuCycles64;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles64;
 }
 
 void Bra_R(void)
 { //20
   *spostbyte = MemRead8(PC_REG++);
   PC_REG += *spostbyte;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Brn_R(void)
 { //21
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
   PC_REG++;
 }
 
@@ -3881,7 +3842,7 @@ void Bhi_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bls_R(void)
@@ -3890,7 +3851,7 @@ void Bls_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bhs_R(void)
@@ -3899,7 +3860,7 @@ void Bhs_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Blo_R(void)
@@ -3908,7 +3869,7 @@ void Blo_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bne_R(void)
@@ -3917,7 +3878,7 @@ void Bne_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Beq_R(void)
@@ -3926,7 +3887,7 @@ void Beq_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bvc_R(void)
@@ -3935,7 +3896,7 @@ void Bvc_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bvs_R(void)
@@ -3944,7 +3905,7 @@ void Bvs_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bpl_R(void)
@@ -3953,7 +3914,7 @@ void Bpl_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bmi_R(void)
@@ -3962,7 +3923,7 @@ void Bmi_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bge_R(void)
@@ -3971,7 +3932,7 @@ void Bge_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Blt_R(void)
@@ -3980,7 +3941,7 @@ void Blt_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Bgt_R(void)
@@ -3989,7 +3950,7 @@ void Bgt_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Ble_R(void)
@@ -3998,33 +3959,33 @@ void Ble_R(void)
     PC_REG += (signed char)MemRead8(PC_REG);
 
   PC_REG++;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Leax_X(void)
 { //30
   X_REG = INDADDRESS(PC_REG++);
   CC_Z = ZTEST(X_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Leay_X(void)
 { //31
   Y_REG = INDADDRESS(PC_REG++);
   CC_Z = ZTEST(Y_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Leas_X(void)
 { //32
   S_REG = INDADDRESS(PC_REG++);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Leau_X(void)
 { //33
   U_REG = INDADDRESS(PC_REG++);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Pshs_M(void)
@@ -4035,55 +3996,55 @@ void Pshs_M(void)
   {
     MemWrite8(PC_L, --S_REG);
     MemWrite8(PC_H, --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x40)
   {
     MemWrite8(U_L, --S_REG);
     MemWrite8(U_H, --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x20)
   {
     MemWrite8(Y_L, --S_REG);
     MemWrite8(Y_H, --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x10)
   {
     MemWrite8(X_L, --S_REG);
     MemWrite8(X_H, --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x08)
   {
     MemWrite8(DPA, --S_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x04)
   {
     MemWrite8(B_REG, --S_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x02)
   {
     MemWrite8(A_REG, --S_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x01)
   {
     MemWrite8(getcc(), --S_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Puls_M(void)
@@ -4093,56 +4054,56 @@ void Puls_M(void)
   if (postbyte & 0x01)
   {
     setcc(MemRead8(S_REG++));
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x02)
   {
     A_REG = MemRead8(S_REG++);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x04)
   {
     B_REG = MemRead8(S_REG++);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x08)
   {
     DPA = MemRead8(S_REG++);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x10)
   {
     X_H = MemRead8(S_REG++);
     X_L = MemRead8(S_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x20)
   {
     Y_H = MemRead8(S_REG++);
     Y_L = MemRead8(S_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x40)
   {
     U_H = MemRead8(S_REG++);
     U_L = MemRead8(S_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x80)
   {
     PC_H = MemRead8(S_REG++);
     PC_L = MemRead8(S_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Pshu_M(void)
@@ -4153,55 +4114,55 @@ void Pshu_M(void)
   {
     MemWrite8(PC_L, --U_REG);
     MemWrite8(PC_H, --U_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x40)
   {
     MemWrite8(S_L, --U_REG);
     MemWrite8(S_H, --U_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x20)
   {
     MemWrite8(Y_L, --U_REG);
     MemWrite8(Y_H, --U_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x10)
   {
     MemWrite8(X_L, --U_REG);
     MemWrite8(X_H, --U_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x08)
   {
     MemWrite8(DPA, --U_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x04)
   {
     MemWrite8(B_REG, --U_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x02)
   {
     MemWrite8(A_REG, --U_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x01)
   {
     MemWrite8(getcc(), --U_REG);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Pulu_M(void)
@@ -4211,76 +4172,76 @@ void Pulu_M(void)
   if (postbyte & 0x01)
   {
     setcc(MemRead8(U_REG++));
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x02)
   {
     A_REG = MemRead8(U_REG++);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x04)
   {
     B_REG = MemRead8(U_REG++);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x08)
   {
     DPA = MemRead8(U_REG++);
-    CycleCounter += 1;
+    hd63096State->CycleCounter += 1;
   }
 
   if (postbyte & 0x10)
   {
     X_H = MemRead8(U_REG++);
     X_L = MemRead8(U_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x20)
   {
     Y_H = MemRead8(U_REG++);
     Y_L = MemRead8(U_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x40)
   {
     S_H = MemRead8(U_REG++);
     S_L = MemRead8(U_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   if (postbyte & 0x80)
   {
     PC_H = MemRead8(U_REG++);
     PC_L = MemRead8(U_REG++);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Rts_I(void)
 { //39
   PC_H = MemRead8(S_REG++);
   PC_L = MemRead8(S_REG++);
-  CycleCounter += NatEmuCycles51;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles51;
 }
 
 void Abx_I(void)
 { //3A
   X_REG = X_REG + B_REG;
-  CycleCounter += NatEmuCycles31;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles31;
 }
 
 void Rti_I(void)
 { //3B
   setcc(MemRead8(S_REG++));
-  CycleCounter += 6;
-  InInterrupt = 0;
+  hd63096State->CycleCounter += 6;
+  hd63096State->InInterrupt = 0;
 
   if (CC_E)
   {
@@ -4291,7 +4252,7 @@ void Rti_I(void)
     {
       (E_REG) = MemRead8(S_REG++);
       (F_REG) = MemRead8(S_REG++);
-      CycleCounter += 2;
+      hd63096State->CycleCounter += 2;
     }
 
     DPA = MemRead8(S_REG++);
@@ -4301,7 +4262,7 @@ void Rti_I(void)
     Y_L = MemRead8(S_REG++);
     U_H = MemRead8(S_REG++);
     U_L = MemRead8(S_REG++);
-    CycleCounter += 9;
+    hd63096State->CycleCounter += 9;
   }
 
   PC_H = MemRead8(S_REG++);
@@ -4311,11 +4272,11 @@ void Rti_I(void)
 void Cwai_I(void)
 { //3C
   postbyte = MemRead8(PC_REG++);
-  ccbits = getcc();
-  ccbits = ccbits & postbyte;
-  setcc(ccbits);
-  CycleCounter = gCycleFor;
-  SyncWaiting = 1;
+  hd63096State->ccbits = getcc();
+  hd63096State->ccbits = hd63096State->ccbits & postbyte;
+  setcc(hd63096State->ccbits);
+  hd63096State->CycleCounter = hd63096State->gCycleFor;
+  hd63096State->SyncWaiting = 1;
 }
 
 void Mul_I(void)
@@ -4323,7 +4284,7 @@ void Mul_I(void)
   D_REG = A_REG * B_REG;
   CC_C = B_REG > 0x7F;
   CC_Z = ZTEST(D_REG);
-  CycleCounter += NatEmuCycles1110;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles1110;
 }
 
 void Reset(void) // 3E
@@ -4348,14 +4309,14 @@ void Swi1_I(void)
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
-    CycleCounter += 2;
+    hd63096State->CycleCounter += 2;
   }
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
   MemWrite8(getcc(), --S_REG);
   PC_REG = MemRead16(VSWI);
-  CycleCounter += 19;
+  hd63096State->CycleCounter += 19;
   CC_I = 1;
   CC_F = 1;
 }
@@ -4368,7 +4329,7 @@ void Nega_I(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   A_REG = temp8;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Coma_I(void)
@@ -4378,7 +4339,7 @@ void Coma_I(void)
   CC_N = NTEST8(A_REG);
   CC_C = 1;
   CC_V = 0;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Lsra_I(void)
@@ -4387,7 +4348,7 @@ void Lsra_I(void)
   A_REG = A_REG >> 1;
   CC_Z = ZTEST(A_REG);
   CC_N = 0;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Rora_I(void)
@@ -4397,7 +4358,7 @@ void Rora_I(void)
   A_REG = (A_REG >> 1) | postbyte;
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Asra_I(void)
@@ -4406,7 +4367,7 @@ void Asra_I(void)
   A_REG = (A_REG & 0x80) | (A_REG >> 1);
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Asla_I(void)
@@ -4416,7 +4377,7 @@ void Asla_I(void)
   A_REG = A_REG << 1;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Rola_I(void)
@@ -4427,7 +4388,7 @@ void Rola_I(void)
   A_REG = (A_REG << 1) | postbyte;
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Deca_I(void)
@@ -4436,7 +4397,7 @@ void Deca_I(void)
   CC_Z = ZTEST(A_REG);
   CC_V = A_REG == 0x7F;
   CC_N = NTEST8(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Inca_I(void)
@@ -4445,7 +4406,7 @@ void Inca_I(void)
   CC_Z = ZTEST(A_REG);
   CC_V = A_REG == 0x80;
   CC_N = NTEST8(A_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Tsta_I(void)
@@ -4453,7 +4414,7 @@ void Tsta_I(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Clra_I(void)
@@ -4463,7 +4424,7 @@ void Clra_I(void)
   CC_V = 0;
   CC_N = 0;
   CC_Z = 1;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Negb_I(void)
@@ -4474,7 +4435,7 @@ void Negb_I(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   B_REG = temp8;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Comb_I(void)
@@ -4484,7 +4445,7 @@ void Comb_I(void)
   CC_N = NTEST8(B_REG);
   CC_C = 1;
   CC_V = 0;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Lsrb_I(void)
@@ -4493,7 +4454,7 @@ void Lsrb_I(void)
   B_REG = B_REG >> 1;
   CC_Z = ZTEST(B_REG);
   CC_N = 0;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Rorb_I(void)
@@ -4503,7 +4464,7 @@ void Rorb_I(void)
   B_REG = (B_REG >> 1) | postbyte;
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Asrb_I(void)
@@ -4512,7 +4473,7 @@ void Asrb_I(void)
   B_REG = (B_REG & 0x80) | (B_REG >> 1);
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Aslb_I(void)
@@ -4522,7 +4483,7 @@ void Aslb_I(void)
   B_REG = B_REG << 1;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Rolb_I(void)
@@ -4533,7 +4494,7 @@ void Rolb_I(void)
   B_REG = (B_REG << 1) | postbyte;
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Decb_I(void)
@@ -4542,7 +4503,7 @@ void Decb_I(void)
   CC_Z = ZTEST(B_REG);
   CC_V = B_REG == 0x7F;
   CC_N = NTEST8(B_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Incb_I(void)
@@ -4551,7 +4512,7 @@ void Incb_I(void)
   CC_Z = ZTEST(B_REG);
   CC_V = B_REG == 0x80;
   CC_N = NTEST8(B_REG);
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Tstb_I(void)
@@ -4559,7 +4520,7 @@ void Tstb_I(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Clrb_I(void)
@@ -4569,7 +4530,7 @@ void Clrb_I(void)
   CC_N = 0;
   CC_V = 0;
   CC_Z = 1;
-  CycleCounter += NatEmuCycles21;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
 }
 
 void Neg_X(void)
@@ -4582,7 +4543,7 @@ void Neg_X(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Oim_X(void)
@@ -4594,7 +4555,7 @@ void Oim_X(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Aim_X(void)
@@ -4606,7 +4567,7 @@ void Aim_X(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Com_X(void)
@@ -4619,7 +4580,7 @@ void Com_X(void)
   CC_V = 0;
   CC_C = 1;
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Lsr_X(void)
@@ -4631,7 +4592,7 @@ void Lsr_X(void)
   CC_Z = ZTEST(temp8);
   CC_N = 0;
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Eim_X(void)
@@ -4643,7 +4604,7 @@ void Eim_X(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 7;
+  hd63096State->CycleCounter += 7;
 }
 
 void Ror_X(void)
@@ -4656,7 +4617,7 @@ void Ror_X(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Asr_X(void)
@@ -4668,7 +4629,7 @@ void Asr_X(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Asl_X(void)
@@ -4681,7 +4642,7 @@ void Asl_X(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Rol_X(void)
@@ -4695,7 +4656,7 @@ void Rol_X(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Dec_X(void)
@@ -4707,7 +4668,7 @@ void Dec_X(void)
   CC_N = NTEST8(temp8);
   CC_V = (temp8 == 0x7F);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Tim_X(void)
@@ -4718,7 +4679,7 @@ void Tim_X(void)
   CC_N = NTEST8(postbyte);
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
-  CycleCounter += 7;
+  hd63096State->CycleCounter += 7;
 }
 
 void Inc_X(void)
@@ -4730,7 +4691,7 @@ void Inc_X(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Tst_X(void)
@@ -4739,13 +4700,13 @@ void Tst_X(void)
   CC_Z = ZTEST(temp8);
   CC_N = NTEST8(temp8);
   CC_V = 0;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Jmp_X(void)
 { //6E
   PC_REG = INDADDRESS(PC_REG++);
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Clr_X(void)
@@ -4755,7 +4716,7 @@ void Clr_X(void)
   CC_N = 0;
   CC_V = 0;
   CC_Z = 1;
-  CycleCounter += 6;
+  hd63096State->CycleCounter += 6;
 }
 
 void Neg_E(void)
@@ -4769,7 +4730,7 @@ void Neg_E(void)
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Oim_E(void)
@@ -4782,7 +4743,7 @@ void Oim_E(void)
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 7;
+  hd63096State->CycleCounter += 7;
 }
 
 void Aim_E(void)
@@ -4795,7 +4756,7 @@ void Aim_E(void)
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 7;
+  hd63096State->CycleCounter += 7;
 }
 
 void Com_E(void)
@@ -4809,7 +4770,7 @@ void Com_E(void)
   CC_V = 0;
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Lsr_E(void)
@@ -4822,7 +4783,7 @@ void Lsr_E(void)
   CC_N = 0;
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Eim_E(void)
@@ -4835,7 +4796,7 @@ void Eim_E(void)
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 7;
+  hd63096State->CycleCounter += 7;
 }
 
 void Ror_E(void)
@@ -4849,7 +4810,7 @@ void Ror_E(void)
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Asr_E(void)
@@ -4862,7 +4823,7 @@ void Asr_E(void)
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Asl_E(void)
@@ -4876,7 +4837,7 @@ void Asl_E(void)
   CC_Z = ZTEST(temp8);
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Rol_E(void)
@@ -4891,7 +4852,7 @@ void Rol_E(void)
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Dec_E(void)
@@ -4904,7 +4865,7 @@ void Dec_E(void)
   CC_V = temp8 == 0x7F;
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Tim_E(void)
@@ -4916,7 +4877,7 @@ void Tim_E(void)
   CC_Z = ZTEST(postbyte);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 7;
+  hd63096State->CycleCounter += 7;
 }
 
 void Inc_E(void)
@@ -4929,7 +4890,7 @@ void Inc_E(void)
   CC_N = NTEST8(temp8);
   MemWrite8(temp8, temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Tst_E(void)
@@ -4939,13 +4900,13 @@ void Tst_E(void)
   CC_N = NTEST8(temp8);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Jmp_E(void)
 { //7E
   PC_REG = IMMADDRESS(PC_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Clr_E(void)
@@ -4956,7 +4917,7 @@ void Clr_E(void)
   CC_V = 0;
   CC_Z = 1;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Suba_M(void)
@@ -4968,7 +4929,7 @@ void Suba_M(void)
   A_REG = (unsigned char)temp16;
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Cmpa_M(void)
@@ -4979,7 +4940,7 @@ void Cmpa_M(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, A_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Sbca_M(void)
@@ -4991,7 +4952,7 @@ void Sbca_M(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Subd_M(void)
@@ -5004,7 +4965,7 @@ void Subd_M(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Anda_M(void)
@@ -5013,7 +4974,7 @@ void Anda_M(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Bita_M(void)
@@ -5022,7 +4983,7 @@ void Bita_M(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Lda_M(void)
@@ -5031,7 +4992,7 @@ void Lda_M(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Eora_M(void)
@@ -5040,7 +5001,7 @@ void Eora_M(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Adca_M(void)
@@ -5053,7 +5014,7 @@ void Adca_M(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Ora_M(void)
@@ -5062,7 +5023,7 @@ void Ora_M(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Adda_M(void)
@@ -5075,7 +5036,7 @@ void Adda_M(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Cmpx_M(void)
@@ -5087,7 +5048,7 @@ void Cmpx_M(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Bsr_R(void)
@@ -5097,7 +5058,7 @@ void Bsr_R(void)
   MemWrite8(PC_L, S_REG--);
   MemWrite8(PC_H, S_REG);
   PC_REG += *spostbyte;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ldx_M(void)
@@ -5107,7 +5068,7 @@ void Ldx_M(void)
   CC_N = NTEST16(X_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Suba_D(void)
@@ -5119,7 +5080,7 @@ void Suba_D(void)
   A_REG = (unsigned char)temp16;
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Cmpa_D(void)
@@ -5130,7 +5091,7 @@ void Cmpa_D(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, A_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Scba_D(void)
@@ -5142,7 +5103,7 @@ void Scba_D(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Subd_D(void)
@@ -5154,7 +5115,7 @@ void Subd_D(void)
   D_REG = temp32;
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles64;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles64;
 }
 
 void Anda_D(void)
@@ -5163,7 +5124,7 @@ void Anda_D(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Bita_D(void)
@@ -5172,7 +5133,7 @@ void Bita_D(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Lda_D(void)
@@ -5181,7 +5142,7 @@ void Lda_D(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Sta_D(void)
@@ -5190,7 +5151,7 @@ void Sta_D(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Eora_D(void)
@@ -5199,7 +5160,7 @@ void Eora_D(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Adca_D(void)
@@ -5212,7 +5173,7 @@ void Adca_D(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Ora_D(void)
@@ -5221,7 +5182,7 @@ void Ora_D(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Adda_D(void)
@@ -5234,7 +5195,7 @@ void Adda_D(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Cmpx_D(void)
@@ -5245,7 +5206,7 @@ void Cmpx_D(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, X_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles64;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles64;
 }
 
 void Jsr_D(void)
@@ -5255,7 +5216,7 @@ void Jsr_D(void)
   MemWrite8(PC_L, S_REG--);
   MemWrite8(PC_H, S_REG);
   PC_REG = temp16;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ldx_D(void)
@@ -5264,7 +5225,7 @@ void Ldx_D(void)
   CC_Z = ZTEST(X_REG);
   CC_N = NTEST16(X_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Stx_D(void)
@@ -5273,7 +5234,7 @@ void Stx_D(void)
   CC_Z = ZTEST(X_REG);
   CC_N = NTEST16(X_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Suba_X(void)
@@ -5285,7 +5246,7 @@ void Suba_X(void)
   A_REG = (unsigned char)temp16;
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Cmpa_X(void)
@@ -5296,7 +5257,7 @@ void Cmpa_X(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, A_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Sbca_X(void)
@@ -5308,7 +5269,7 @@ void Sbca_X(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Subd_X(void)
@@ -5320,7 +5281,7 @@ void Subd_X(void)
   D_REG = temp32;
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Anda_X(void)
@@ -5329,7 +5290,7 @@ void Anda_X(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Bita_X(void)
@@ -5338,7 +5299,7 @@ void Bita_X(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Lda_X(void)
@@ -5347,7 +5308,7 @@ void Lda_X(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Sta_X(void)
@@ -5356,7 +5317,7 @@ void Sta_X(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Eora_X(void)
@@ -5365,7 +5326,7 @@ void Eora_X(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Adca_X(void)
@@ -5378,7 +5339,7 @@ void Adca_X(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Ora_X(void)
@@ -5387,7 +5348,7 @@ void Ora_X(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Adda_X(void)
@@ -5400,7 +5361,7 @@ void Adda_X(void)
   A_REG = (unsigned char)temp16;
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Cmpx_X(void)
@@ -5411,7 +5372,7 @@ void Cmpx_X(void)
   CC_V = OVERFLOW16(CC_C, postword, temp16, X_REG);
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Jsr_X(void)
@@ -5421,7 +5382,7 @@ void Jsr_X(void)
   MemWrite8(PC_L, S_REG--);
   MemWrite8(PC_H, S_REG);
   PC_REG = temp16;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Ldx_X(void)
@@ -5430,7 +5391,7 @@ void Ldx_X(void)
   CC_Z = ZTEST(X_REG);
   CC_N = NTEST16(X_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Stx_X(void)
@@ -5439,7 +5400,7 @@ void Stx_X(void)
   CC_Z = ZTEST(X_REG);
   CC_N = NTEST16(X_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Suba_E(void)
@@ -5452,7 +5413,7 @@ void Suba_E(void)
   CC_Z = ZTEST(A_REG);
   CC_N = NTEST8(A_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpa_E(void)
@@ -5464,7 +5425,7 @@ void Cmpa_E(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Sbca_E(void)
@@ -5477,7 +5438,7 @@ void Sbca_E(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Subd_E(void)
@@ -5490,7 +5451,7 @@ void Subd_E(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Anda_E(void)
@@ -5501,7 +5462,7 @@ void Anda_E(void)
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Bita_E(void)
@@ -5511,7 +5472,7 @@ void Bita_E(void)
   CC_Z = ZTEST(temp8);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Lda_E(void)
@@ -5521,7 +5482,7 @@ void Lda_E(void)
   CC_N = NTEST8(A_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Sta_E(void)
@@ -5531,7 +5492,7 @@ void Sta_E(void)
   CC_N = NTEST8(A_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Eora_E(void)
@@ -5541,7 +5502,7 @@ void Eora_E(void)
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Adca_E(void)
@@ -5555,7 +5516,7 @@ void Adca_E(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ora_E(void)
@@ -5565,7 +5526,7 @@ void Ora_E(void)
   CC_Z = ZTEST(A_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Adda_E(void)
@@ -5579,7 +5540,7 @@ void Adda_E(void)
   CC_N = NTEST8(A_REG);
   CC_Z = ZTEST(A_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpx_E(void)
@@ -5591,7 +5552,7 @@ void Cmpx_E(void)
   CC_N = NTEST16(temp16);
   CC_Z = ZTEST(temp16);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles75;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles75;
 }
 
 void Bsr_E(void)
@@ -5602,7 +5563,7 @@ void Bsr_E(void)
   MemWrite8(PC_L, S_REG--);
   MemWrite8(PC_H, S_REG);
   PC_REG = postword;
-  CycleCounter += NatEmuCycles87;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles87;
 }
 
 void Ldx_E(void)
@@ -5612,7 +5573,7 @@ void Ldx_E(void)
   CC_N = NTEST16(X_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Stx_E(void)
@@ -5622,7 +5583,7 @@ void Stx_E(void)
   CC_N = NTEST16(X_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Subb_M(void)
@@ -5634,7 +5595,7 @@ void Subb_M(void)
   B_REG = (unsigned char)temp16;
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Cmpb_M(void)
@@ -5645,7 +5606,7 @@ void Cmpb_M(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, B_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Sbcb_M(void)
@@ -5657,7 +5618,7 @@ void Sbcb_M(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Addd_M(void)
@@ -5670,7 +5631,7 @@ void Addd_M(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Andb_M(void)
@@ -5679,7 +5640,7 @@ void Andb_M(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Bitb_M(void)
@@ -5688,7 +5649,7 @@ void Bitb_M(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Ldb_M(void)
@@ -5697,7 +5658,7 @@ void Ldb_M(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Eorb_M(void)
@@ -5706,7 +5667,7 @@ void Eorb_M(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Adcb_M(void)
@@ -5719,7 +5680,7 @@ void Adcb_M(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Orb_M(void)
@@ -5728,7 +5689,7 @@ void Orb_M(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Addb_M(void)
@@ -5741,7 +5702,7 @@ void Addb_M(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += 2;
+  hd63096State->CycleCounter += 2;
 }
 
 void Ldd_M(void)
@@ -5751,7 +5712,7 @@ void Ldd_M(void)
   CC_N = NTEST16(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Ldq_M(void)
@@ -5761,7 +5722,7 @@ void Ldq_M(void)
   CC_Z = ZTEST(Q_REG);
   CC_N = NTEST32(Q_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Ldu_M(void)
@@ -5771,7 +5732,7 @@ void Ldu_M(void)
   CC_N = NTEST16(U_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += 3;
+  hd63096State->CycleCounter += 3;
 }
 
 void Subb_D(void)
@@ -5783,7 +5744,7 @@ void Subb_D(void)
   B_REG = (unsigned char)temp16;
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Cmpb_D(void)
@@ -5794,7 +5755,7 @@ void Cmpb_D(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, B_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Sbcb_D(void)
@@ -5806,7 +5767,7 @@ void Sbcb_D(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Addd_D(void)
@@ -5818,7 +5779,7 @@ void Addd_D(void)
   D_REG = temp32;
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles64;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles64;
 }
 
 void Andb_D(void)
@@ -5827,7 +5788,7 @@ void Andb_D(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Bitb_D(void)
@@ -5836,7 +5797,7 @@ void Bitb_D(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Ldb_D(void)
@@ -5845,7 +5806,7 @@ void Ldb_D(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Stb_D(void)
@@ -5854,7 +5815,7 @@ void Stb_D(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Eorb_D(void)
@@ -5863,7 +5824,7 @@ void Eorb_D(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Adcb_D(void)
@@ -5876,7 +5837,7 @@ void Adcb_D(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Orb_D(void)
@@ -5885,7 +5846,7 @@ void Orb_D(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Addb_D(void)
@@ -5898,7 +5859,7 @@ void Addb_D(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += NatEmuCycles43;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
 }
 
 void Ldd_D(void)
@@ -5907,7 +5868,7 @@ void Ldd_D(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Std_D(void)
@@ -5916,7 +5877,7 @@ void Std_D(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ldu_D(void)
@@ -5925,7 +5886,7 @@ void Ldu_D(void)
   CC_Z = ZTEST(U_REG);
   CC_N = NTEST16(U_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Stu_D(void)
@@ -5934,7 +5895,7 @@ void Stu_D(void)
   CC_Z = ZTEST(U_REG);
   CC_N = NTEST16(U_REG);
   CC_V = 0;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Subb_X(void)
@@ -5946,7 +5907,7 @@ void Subb_X(void)
   B_REG = (unsigned char)temp16;
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Cmpb_X(void)
@@ -5957,7 +5918,7 @@ void Cmpb_X(void)
   CC_V = OVERFLOW8(CC_C, postbyte, temp8, B_REG);
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Sbcb_X(void)
@@ -5969,7 +5930,7 @@ void Sbcb_X(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Addd_X(void)
@@ -5981,7 +5942,7 @@ void Addd_X(void)
   D_REG = temp32;
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Andb_X(void)
@@ -5990,7 +5951,7 @@ void Andb_X(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Bitb_X(void)
@@ -5999,7 +5960,7 @@ void Bitb_X(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Ldb_X(void)
@@ -6008,7 +5969,7 @@ void Ldb_X(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Stb_X(void)
@@ -6017,7 +5978,7 @@ void Stb_X(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Eorb_X(void)
@@ -6026,7 +5987,7 @@ void Eorb_X(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Adcb_X(void)
@@ -6039,7 +6000,7 @@ void Adcb_X(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Orb_X(void)
@@ -6048,7 +6009,7 @@ void Orb_X(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Addb_X(void)
@@ -6061,7 +6022,7 @@ void Addb_X(void)
   B_REG = (unsigned char)temp16;
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
-  CycleCounter += 4;
+  hd63096State->CycleCounter += 4;
 }
 
 void Ldd_X(void)
@@ -6070,7 +6031,7 @@ void Ldd_X(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Std_X(void)
@@ -6079,7 +6040,7 @@ void Std_X(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Ldu_X(void)
@@ -6088,7 +6049,7 @@ void Ldu_X(void)
   CC_Z = ZTEST(U_REG);
   CC_N = NTEST16(U_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Stu_X(void)
@@ -6097,7 +6058,7 @@ void Stu_X(void)
   CC_Z = ZTEST(U_REG);
   CC_N = NTEST16(U_REG);
   CC_V = 0;
-  CycleCounter += 5;
+  hd63096State->CycleCounter += 5;
 }
 
 void Subb_E(void)
@@ -6110,7 +6071,7 @@ void Subb_E(void)
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Cmpb_E(void)
@@ -6122,7 +6083,7 @@ void Cmpb_E(void)
   CC_N = NTEST8(temp8);
   CC_Z = ZTEST(temp8);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Sbcb_E(void)
@@ -6135,7 +6096,7 @@ void Sbcb_E(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Addd_E(void)
@@ -6148,7 +6109,7 @@ void Addd_E(void)
   CC_Z = ZTEST(D_REG);
   CC_N = NTEST16(D_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles76;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles76;
 }
 
 void Andb_E(void)
@@ -6158,7 +6119,7 @@ void Andb_E(void)
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Bitb_E(void)
@@ -6168,7 +6129,7 @@ void Bitb_E(void)
   CC_Z = ZTEST(temp8);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ldb_E(void)
@@ -6178,7 +6139,7 @@ void Ldb_E(void)
   CC_N = NTEST8(B_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Stb_E(void)
@@ -6188,7 +6149,7 @@ void Stb_E(void)
   CC_N = NTEST8(B_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Eorb_E(void)
@@ -6198,7 +6159,7 @@ void Eorb_E(void)
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Adcb_E(void)
@@ -6212,7 +6173,7 @@ void Adcb_E(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Orb_E(void)
@@ -6222,7 +6183,7 @@ void Orb_E(void)
   CC_Z = ZTEST(B_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Addb_E(void)
@@ -6236,7 +6197,7 @@ void Addb_E(void)
   CC_N = NTEST8(B_REG);
   CC_Z = ZTEST(B_REG);
   PC_REG += 2;
-  CycleCounter += NatEmuCycles54;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles54;
 }
 
 void Ldd_E(void)
@@ -6246,7 +6207,7 @@ void Ldd_E(void)
   CC_N = NTEST16(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Std_E(void)
@@ -6256,7 +6217,7 @@ void Std_E(void)
   CC_N = NTEST16(D_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Ldu_E(void)
@@ -6266,7 +6227,7 @@ void Ldu_E(void)
   CC_N = NTEST16(U_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
 
 void Stu_E(void)
@@ -6276,5 +6237,5 @@ void Stu_E(void)
   CC_N = NTEST16(U_REG);
   CC_V = 0;
   PC_REG += 2;
-  CycleCounter += NatEmuCycles65;
+  hd63096State->CycleCounter += hd63096State->NatEmuCycles65;
 }
