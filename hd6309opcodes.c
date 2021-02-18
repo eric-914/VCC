@@ -1279,7 +1279,7 @@ void Swi2_I(void)
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
 
-  if (md[NATIVE6309])
+  if (MD_NATIVE6309)
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
@@ -2621,8 +2621,8 @@ void Bitmd_M(void)
   temp8 = getmd() & postbyte;
   cc[Z] = ZTEST(temp8);
 
-  if (temp8 & 0x80) md[7] = 0;
-  if (temp8 & 0x40) md[6] = 0;
+  if (temp8 & 0x80) MD_ZERODIV = 0;
+  if (temp8 & 0x40) MD_ILLEGAL = 0;
 
   CycleCounter += 4;
 }
@@ -2647,7 +2647,7 @@ void Swi3_I(void)
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
 
-  if (md[NATIVE6309])
+  if (MD_NATIVE6309)
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);
@@ -4284,7 +4284,7 @@ void Rti_I(void)
     A_REG = MemRead8(S_REG++);
     B_REG = MemRead8(S_REG++);
 
-    if (md[NATIVE6309])
+    if (MD_NATIVE6309)
     {
       (E_REG) = MemRead8(S_REG++);
       (F_REG) = MemRead8(S_REG++);
@@ -4341,7 +4341,7 @@ void Swi1_I(void)
   MemWrite8(x.B.msb, --S_REG);
   MemWrite8(dp.B.msb, --S_REG);
 
-  if (md[NATIVE6309])
+  if (MD_NATIVE6309)
   {
     MemWrite8((F_REG), --S_REG);
     MemWrite8((E_REG), --S_REG);

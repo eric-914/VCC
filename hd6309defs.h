@@ -31,6 +31,10 @@ This file is part of VCC (Virtual Color Computer).
 //MD Flag masks
 #define NATIVE6309	0
 #define FIRQMODE	  1
+#define MD_UNDEF2   2 //UNDEFINED
+#define MD_UNDEF3   3 //UNDEFINED
+#define MD_UNDEF4   4 //UNDEFINED
+#define MD_UNDEF5   5 //UNDEFINED
 #define ILLEGAL		  6
 #define ZERODIV		  7
 
@@ -518,7 +522,6 @@ This file is part of VCC (Virtual Color Computer).
 #define OVERFLOW16(c,a,b,r) c ^ (((a^b^r)>>15)&1);
 #define ZTEST(r) !r;
 
-#define DPADDRESS(r) (dp.Reg | MemRead8(r))
 #define IMMADDRESS(r) MemRead16(r)
 #define INDADDRESS(r) hd6309_CalculateEA(MemRead8(r))
 
@@ -546,20 +549,5 @@ This file is part of VCC (Virtual Color Computer).
 #define M3130	21
 #define M42   22
 #define M53   23
-
-#define D_REG	q.Word.lsw
-#define W_REG	q.Word.msw
-#define PC_REG	pc.Reg
-#define X_REG	x.Reg
-#define Y_REG	y.Reg
-#define U_REG	u.Reg
-#define S_REG	s.Reg
-#define A_REG	q.Byte.lswmsb
-#define B_REG	q.Byte.lswlsb
-#define E_REG	q.Byte.mswmsb
-#define F_REG	q.Byte.mswlsb	
-#define Q_REG	q.Reg
-#define V_REG	v.Reg
-#define O_REG	z.Reg
 
 #endif
