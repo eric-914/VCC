@@ -18,9 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     Additional 6309 modifications by Walter ZAMBOTTI 2019
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "hd6309.h"
 #include "hd6309defs.h"
 #include "hd6309state.h"
@@ -48,20 +45,6 @@ unsigned short* xfreg16[8];
 char InInterrupt = 0;
 int CycleCounter = 0;
 unsigned int SyncWaiting = 0;
-unsigned char Source = 0;
-unsigned char Dest = 0;
-
-unsigned char postbyte = 0;
-short unsigned postword = 0;
-signed char* spostbyte = (signed char*)&postbyte;
-signed short* spostword = (signed short*)&postword;
-
-unsigned char temp8;
-unsigned short temp16;
-unsigned int temp32;
-
-signed short stemp16;
-int stemp32;
 
 int gCycleFor;
 
