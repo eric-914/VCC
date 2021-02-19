@@ -84,7 +84,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
   LoadConfig(&(vccState->EmuState), vccState->CmdArg);
   InitInstance(hInstance, nCmdShow);
 
-  if (!CreateDDWindow(&(vccState->EmuState)))
+  if (!CreateDDWindow(&(vccState->EmuState), WndProc))
   {
     MessageBox(0, "Can't create primary Window", "Error", 0);
 
@@ -134,7 +134,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
   {
     if (vccState->FlagEmuStop == TH_WAITING)		//Need to stop the EMU thread for screen mode change
     {								                  //As it holds the Secondary screen buffer open while running
-      FullScreenToggle();
+      FullScreenToggle(WndProc);
 
       vccState->FlagEmuStop = TH_RUNNING;
     }

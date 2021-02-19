@@ -5,13 +5,13 @@
 #include "AudioAccessors.h"
 #include "InvalidateBorder.h "
 
-void FullScreenToggle(void)
+void FullScreenToggle(WNDPROC WndProc)
 {
   VccState* vccState = GetVccState();
 
   PauseAudio(true);
 
-  if (!CreateDDWindow(&(vccState->EmuState)))
+  if (!CreateDDWindow(&(vccState->EmuState), WndProc))
   {
     MessageBox(0, "Can't rebuild primary Window", "Error", 0);
 

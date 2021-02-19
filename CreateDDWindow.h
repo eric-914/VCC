@@ -2,4 +2,4 @@
 
 #include "library/systemstate.h"
 
-bool CreateDDWindow(SystemState*);
+bool CreateDDWindow(SystemState*, WNDPROC);

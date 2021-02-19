@@ -9,10 +9,7 @@
 
 #include "library/systemstate.h"
 
-//Function Prototypes for this module
-extern LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); //Callback for the main window
-
-bool CreateDDWindow(SystemState* systemState)
+bool CreateDDWindow(SystemState* systemState, WNDPROC WndProc)
 {
   HRESULT hr;
   DDSURFACEDESC ddsd;				// A structure to describe the surfaces we want

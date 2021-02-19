@@ -1,3 +1,3 @@
 #pragma once
 
-void FullScreenToggle(void);
+void FullScreenToggle(WNDPROC);
