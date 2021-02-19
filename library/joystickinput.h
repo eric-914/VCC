@@ -1,5 +1,5 @@
-#ifndef __JOYSTICKINPUT_H__
-#define __JOYSTICKINPUT_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -29,5 +29,3 @@ extern "C" __declspec(dllexport) char* __cdecl GetStickName(int index);
 extern "C" __declspec(dllexport) HRESULT __cdecl JoyStickPoll(DIJOYSTATE2*, unsigned char);
 extern "C" __declspec(dllexport) int __cdecl EnumerateJoysticks(void);
 extern "C" __declspec(dllexport) bool __cdecl InitJoyStick(unsigned char);
-
-#endif

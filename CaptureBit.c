@@ -1,4 +1,4 @@
-#include "mc6821state.h"
+#include "library/mc6821state.h"
 #include "WritePrintMon.h"
 
 void CaptureBit(unsigned char sample)

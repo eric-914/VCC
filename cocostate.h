@@ -1,5 +1,5 @@
-#ifndef __COCO_STATE_H__
-#define __COCO_STATE_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -71,5 +71,3 @@ typedef struct
 } CoCoState;
 
 extern "C" __declspec(dllexport) CoCoState * __cdecl GetCoCoState();
-
-#endif

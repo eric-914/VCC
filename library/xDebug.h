@@ -1,5 +1,4 @@
-#ifndef _xDebug_h_
-#define _xDebug_h_
+#pragma once
 
 /*
   Debug trace macros
@@ -14,5 +13,3 @@ extern "C"
 {
   __declspec(dllexport) void __cdecl _xDbgTrace(const void* pFile, const int iLine, const void* pFormat, ...);
 }
-
-#endif

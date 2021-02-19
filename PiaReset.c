@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "mc6821state.h"
+#include "library/mc6821state.h"
 
 void PiaReset()
 {

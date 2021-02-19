@@ -1,5 +1,4 @@
-#ifndef __JOYSTICKDEF_H__
-#define __JOYSTICKDEF_H__
+#pragma once
 
 typedef struct {
   unsigned char UseMouse;
@@ -12,5 +11,3 @@ typedef struct {
   unsigned char DiDevice;
   unsigned char HiRes;
 } JoyStick;
-
-#endif

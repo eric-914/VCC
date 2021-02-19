@@ -1,5 +1,5 @@
-#ifndef __QUICKLOAD_H__
-#define __QUICKLOAD_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -19,5 +19,3 @@ This file is part of VCC (Virtual Color Computer).
 */
 
 unsigned char QuickLoad(SystemState* systemState, char* binFileName);
-
-#endif

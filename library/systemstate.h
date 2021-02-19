@@ -1,5 +1,4 @@
-#ifndef __SYSTEMSTATE_H__
-#define __SYSTEMSTATE_H__
+#pragma once
 
 #include <windows.h>
 
@@ -30,5 +29,3 @@ typedef struct
   unsigned char	FullScreen;
   char			StatusLine[256];
 } SystemState;
-
-#endif

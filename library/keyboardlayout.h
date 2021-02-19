@@ -1,3 +1,5 @@
+#pragma once
+
 /*****************************************************************************/
 /*
   Copyright 2015 by Joseph Forgione
@@ -18,14 +20,9 @@
 */
 /*****************************************************************************/
 
-#ifndef _KEYBOARDLAYOUT_H_
-#define _KEYBOARDLAYOUT_H_
-
 #include "keyboarddef.h"
 
 extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCoCo(void);
 extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsNatural(void);
 extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCompact(void);
 extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCustom(void);
-
-#endif

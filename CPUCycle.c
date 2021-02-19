@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "cocostate.h"
-#include "mc6821def.h"
+#include "library/mc6821def.h"
 
 #include "PopClipboard.h"
 #include "PeekClipboard.h"

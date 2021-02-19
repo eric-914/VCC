@@ -1,5 +1,5 @@
-#ifndef __CASSETTE_STATE_H__
-#define __CASSETTE_STATE_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -52,5 +52,3 @@ typedef struct
 } CassetteState;
 
 extern "C" __declspec(dllexport) CassetteState * __cdecl GetCassetteState();
-
-#endif

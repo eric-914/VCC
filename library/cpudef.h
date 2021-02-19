@@ -1,5 +1,4 @@
-#ifndef __CPUDEF_H__
-#define __CPUDEF_H__
+#pragma once
 
 /*
 Copyright 2015 by Joseph Forgione
@@ -30,5 +29,3 @@ typedef struct
 } CPU;
 
 extern "C" __declspec(dllexport) CPU* __cdecl GetCPU();
-
-#endif

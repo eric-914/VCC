@@ -1,5 +1,4 @@
-#ifndef __GRAPHICS_STATE_H__
-#define __GRAPHICS_STATE_H__
+#pragma once
 
 typedef struct
 {
@@ -77,5 +76,3 @@ extern "C" __declspec(dllexport) void __cdecl ResetGraphicsState();
 extern "C" __declspec(dllexport) void MakeRGBPalette(void);
 extern "C" __declspec(dllexport) void __cdecl MakeCMPpalette(int paletteType);
 extern "C" __declspec(dllexport) void __cdecl SetGimePalette(unsigned char palette, unsigned char color);
-
-#endif

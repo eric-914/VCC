@@ -264,7 +264,6 @@
     <ClCompile Include="MC6809Init.c" />
     <ClCompile Include="MC6809Reset.c" />
     <ClCompile Include="mc6809_i.c" />
-    <ClCompile Include="mc6821state.c" />
     <ClCompile Include="MC6883Reset.c" />
     <ClCompile Include="MemRead16.c" />
     <ClCompile Include="MemRead32.c" />
@@ -281,7 +280,6 @@
     <ClCompile Include="MountTape.c" />
     <ClCompile Include="OpenPrintFile.c" />
     <ClCompile Include="PakInterfaceAccessors.c" />
-    <ClCompile Include="pakinterfacestate.c" />
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
@@ -487,8 +485,6 @@
     <ClInclude Include="MC6809Init.h" />
     <ClInclude Include="MC6809Reset.h" />
     <ClInclude Include="mc6809_i.h" />
-    <ClInclude Include="mc6821def.h" />
-    <ClInclude Include="mc6821state.h" />
     <ClInclude Include="MC6883Reset.h" />
     <ClInclude Include="MemRead16.h" />
     <ClInclude Include="MemRead32.h" />
@@ -505,8 +501,6 @@
     <ClInclude Include="MountTape.h" />
     <ClInclude Include="OpenPrintFile.h" />
     <ClInclude Include="PakInterfaceAccessors.h" />
-    <ClInclude Include="pakinterfacedef.h" />
-    <ClInclude Include="pakinterfacestate.h" />
     <ClInclude Include="PasteBASIC.h" />
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />

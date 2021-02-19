@@ -1,5 +1,5 @@
-#ifndef __COMMANDLINE_H__
-#define __COMMANDLINE_H__
+#pragma once
+
 /*
 
 Copyright 2015 by E J Jaquay
@@ -33,5 +33,3 @@ extern "C" __declspec(dllexport) int __cdecl GetCmdLineArgs(char* lpCmdLine, Cmd
 // Errors returned
 #define CL_ERR_UNKOPT 1  // Unknown option found
 #define CL_ERR_XTRARG 2  // Too many arguments
-
-#endif

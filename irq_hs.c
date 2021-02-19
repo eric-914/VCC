@@ -1,5 +1,5 @@
-#include "mc6821state.h"
-#include "mc6821def.h"
+#include "library/mc6821state.h"
+#include "library/mc6821def.h"
 
 #include "library/cpudef.h"
 #include "library/defines.h"

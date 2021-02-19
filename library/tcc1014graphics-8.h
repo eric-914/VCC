@@ -1,5 +1,5 @@
-#ifndef __TCC1014GRAPHICS_8_H__
-#define __TCC1014GRAPHICS_8_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -25,5 +25,3 @@ extern "C" __declspec(dllexport) void __cdecl UpdateScreen8(SystemState*);
 extern "C" __declspec(dllexport) void __cdecl DrawBottomBorder8(SystemState*);
 
 extern "C" __declspec(dllexport) void __cdecl DrawTopBorder8(SystemState*);
-
-#endif

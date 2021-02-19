@@ -193,6 +193,8 @@
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809state.c" />
+    <ClCompile Include="mc6821state.c" />
+    <ClCompile Include="pakinterfacestate.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
     <ClCompile Include="tcc1014graphics-24.c" />
     <ClCompile Include="tcc1014graphics-32.c" />
@@ -212,6 +214,10 @@
     <ClInclude Include="keyboardstate.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6809state.h" />
+    <ClInclude Include="mc6821def.h" />
+    <ClInclude Include="mc6821state.h" />
+    <ClInclude Include="pakinterfacedef.h" />
+    <ClInclude Include="pakinterfacestate.h" />
     <ClInclude Include="SndCardList.h" />
     <ClInclude Include="cassettedef.h" />
     <ClInclude Include="cassettestate.h" />

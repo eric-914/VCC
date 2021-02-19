@@ -1,5 +1,5 @@
-#ifndef __FILEOPS_H__
-#define __FILEOPS_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -32,6 +32,4 @@ extern "C" {
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

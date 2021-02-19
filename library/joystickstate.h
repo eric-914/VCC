@@ -1,5 +1,4 @@
-#ifndef __JOYSTICK_STATE_H__
-#define __JOYSTICK_STATE_H__
+#pragma once
 
 #include "joystickdef.h"
 
@@ -23,5 +22,3 @@ typedef struct
 } JoystickState;
 
 extern "C" __declspec(dllexport) JoystickState* __cdecl GetJoystickState();
-
-#endif

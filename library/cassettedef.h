@@ -1,5 +1,4 @@
-#ifndef __CASSETTE_DEF_H__
-#define __CASSETTE_DEF_H__
+#pragma once
 
 #define STOP	0
 #define PLAY	1
@@ -8,5 +7,3 @@
 #define CAS	1
 #define WAV 0
 #define WRITEBUFFERSIZE	0x1FFFF
-
-#endif

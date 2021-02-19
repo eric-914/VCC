@@ -7,7 +7,7 @@
 #include "vccdef.h"
 #include "vccstate.h"
 #include "resource.h"
-#include "pakinterfacedef.h"
+#include "library/pakinterfacestate.h"
 
 #include "About.h"
 #include "AudioAccessors.h"

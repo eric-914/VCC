@@ -1,5 +1,4 @@
-#ifndef __KEYBOARDDEF_H__
-#define __KEYBOARDDEF_H__
+#pragma once
 
 #define KBTABLE_ENTRY_COUNT 100	///< key translation table maximum size, (arbitrary) most of the layouts are < 80 entries
 #define KEY_DOWN	1
@@ -47,5 +46,3 @@ typedef struct keytranslationentry_t
   unsigned char Row2;
   unsigned char Col2;
 } keytranslationentry_t;
-
-#endif
