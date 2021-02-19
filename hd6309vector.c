@@ -1,9 +1,8 @@
 #include "hd6309opcodes.h"
+#include "HD6309Handlers.h"
 
 extern void Page_2(void);
 extern void Page_3(void);
-
-extern void InvalidInsHandler(void);
 
 void(*JmpVec1[256])(void) = {
   Neg_D,		// 00

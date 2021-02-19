@@ -1,11 +1,11 @@
 #include "hd6309defs.h"
-#include "hd6309.h"
 #include "hd6309state.h"
 
 #include "hd6309_cc.h"
 #include "hd6309_md.h"
 #include "hd6309_CalculateEA.h"
 #include "HD6309Reset.h"
+#include "HD6309Handlers.h"
 
 #include "MemRead8.h"
 #include "MemWrite8.h"
@@ -13,9 +13,6 @@
 #include "MemWrite16.h"
 #include "MemRead32.h"
 #include "MemWrite32.h"
-
-extern void InvalidInsHandler(void);
-extern void DivbyZero(void);
 
 static HD6309State* hd63096State = GetHD6309State();
 
