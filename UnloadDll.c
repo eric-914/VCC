@@ -2,7 +2,7 @@
 
 #include "library/systemstate.h"
 
-extern void DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, int type);
+#include "DynamicMenuCallback.h"
 
 void UnloadDll(SystemState* systemState)
 {

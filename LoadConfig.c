@@ -15,8 +15,7 @@
 
 #include "library/commandline.h"
 #include "library/systemstate.h"
-
-extern "C" __declspec(dllexport) BOOL __cdecl FilePathRemoveFileSpec(char* path);
+#include "library/fileoperations.h"
 
 void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 {

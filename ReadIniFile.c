@@ -5,13 +5,12 @@
 #include "library/joystickstate.h"
 #include "library/keyboarddef.h"
 #include "library/systemstate.h"
+#include "library/fileoperations.h"
 
 #include "SetWindowSize.h"
 #include "ProfileAccessors.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "InsertModule.h"
-
-extern "C" __declspec(dllexport) int __cdecl FileCheckPath(char* path);
 
 unsigned char ReadIniFile(SystemState* systemState)
 {

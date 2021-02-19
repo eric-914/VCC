@@ -1,9 +1,9 @@
 #include "mc6821state.h"
 
+#include "AssertCart.h"
+
 #include "library/cpudef.h"
 #include "library/defines.h"
-
-extern void AssertCart(void);
 
 void irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
 {

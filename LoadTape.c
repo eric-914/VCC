@@ -5,9 +5,8 @@
 
 //--CASSETTE--//
 
+#include "ProfileAccessors.h"
 #include "MountTape.h"
-
-extern void GetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpDefault, LPSTR lpReturnedString);
 
 unsigned int LoadTape(void)
 {

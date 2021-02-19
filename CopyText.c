@@ -5,8 +5,7 @@
 
 #include "SetClipboard.h"
 #include "MmuAccessors.h"
-
-extern unsigned char MemRead8(unsigned short);
+#include "MemRead8.h"
 
 void CopyText() {
   int idx;

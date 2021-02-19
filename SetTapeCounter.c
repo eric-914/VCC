@@ -2,7 +2,7 @@
 
 //--CASSETTE--//
 
-extern void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
+#include "UpdateTapeCounter.h"
 
 void SetTapeCounter(unsigned int count)
 {

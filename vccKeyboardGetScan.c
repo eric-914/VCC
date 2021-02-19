@@ -1,10 +1,9 @@
 #include "keyboardstate.h"
+#include "GetMuxState.h"
+#include "DACState.h"
+#include "JoystickAccessors.h"
+
 #include "library/joystickstate.h"
-
-extern unsigned char GetMuxState(void);
-extern unsigned char DACState(void);
-
-extern "C" unsigned short	get_pot_value(unsigned char pot);
 
 /*
   Get CoCo 'scan' code

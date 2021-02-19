@@ -6,8 +6,7 @@
 #include "LoadTape.h"
 #include "Motor.h"
 #include "CloseTapeFile.h"
-
-extern void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
+#include "UpdateTapeCounter.h"
 
 void SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog
 {

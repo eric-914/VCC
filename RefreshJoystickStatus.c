@@ -1,11 +1,9 @@
 #include "configstate.h"
 
 #include "library/joystickstate.h"
+#include "library/joystickinput.h"
 
-extern "C" void SetStickNumbers(unsigned char, unsigned char);
-
-extern "C" __declspec(dllexport) int __cdecl EnumerateJoysticks(void);
-extern "C" __declspec(dllexport) bool __cdecl InitJoyStick(unsigned char);
+#include "JoystickAccessors.h"
 
 void RefreshJoystickStatus(void)
 {

@@ -2,9 +2,8 @@
 
 #include "SetGimeVdgMode2.h"
 #include "Motor.h"
-
-extern void CaptureBit(unsigned char);
-extern unsigned char GetMuxState(void);
+#include "GetMuxState.h"
+#include "CaptureBit.h"
 
 void pia1_write(unsigned char data, unsigned char port)
 {

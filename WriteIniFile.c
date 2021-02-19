@@ -4,9 +4,7 @@
 #include "DirectDrawAccessors.h"
 
 #include "library/joystickstate.h"
-
-extern "C" __declspec(dllexport) void __cdecl FileValidatePath(char* path);
-extern "C" __declspec(dllexport) DWORD __cdecl FileWritePrivateProfileInt(LPCTSTR sectionName, LPCTSTR keyName, int keyValue, LPCTSTR iniFileName);
+#include "library/fileoperations.h"
 
 unsigned char WriteIniFile(void)
 {

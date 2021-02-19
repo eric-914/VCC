@@ -10,12 +10,10 @@
 #include "SetPaletteType.h"
 #include "SetScanLines.h"
 #include "Reboot.h"
+#include "DirectDrawAccessors.h"
+#include "SetCartAutoStart.h"
 
 #include "library/systemstate.h"
-
-extern unsigned char SetResize(unsigned char resizeable);
-extern unsigned char SetAspect(unsigned char forceAspect);
-extern unsigned char SetCartAutoStart(unsigned char autostart);
 
 void UpdateConfig(SystemState* systemState)
 {

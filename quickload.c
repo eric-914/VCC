@@ -23,8 +23,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/fileoperations.h"
 #include "library/systemstate.h"
 
-extern int InsertModule(SystemState* systemState, char* modulePath);
-extern void MemWrite8(unsigned char, unsigned short);
+#include "MemWrite8.h"
+#include "InsertModule.h"
 
 unsigned char QuickLoad(SystemState* systemState, char* binFileName)
 {

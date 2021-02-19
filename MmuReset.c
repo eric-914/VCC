@@ -1,7 +1,5 @@
 #include "mmustate.h"
-
-extern void SetRomMap(unsigned char);
-extern void SetMapType(unsigned char);
+#include "MmuAccessors.h"
 
 void MmuReset(void)
 {

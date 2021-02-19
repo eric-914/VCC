@@ -4,26 +4,27 @@
 #include "SetClockSpeed.h"
 #include "MmuInit.h"
 
+#include "HD6309Init.h"
+#include "HD6309Exec.h"
+#include "HD6309Reset.h"
+#include "HD6309AssertInterrupt.h"
+#include "HD6309DeAssertInterrupt.h"
+#include "HD6309ForcePC.h"
+
+#include "MC6809Init.h"
+#include "MC6809Exec.h"
+#include "MC6809Reset.h"
+#include "MC6809AssertInterrupt.h"
+#include "MC6809DeAssertInterrupt.h"
+#include "MC6809ForcePC.h"
+
+#include "MC6883Reset.h"
+
+#include "PiaReset.h"
+#include "GimeReset.h"
+#include "UpdateBusPointer.h"
+
 #include "library/cpudef.h"
-
-extern void HD6309Init(void);
-extern int  HD6309Exec(int);
-extern void HD6309Reset(void);
-extern void HD6309AssertInterrupt(unsigned char, unsigned char);
-extern void HD6309DeAssertInterrupt(unsigned char);// 4 nmi 2 firq 1 irq
-extern void HD6309ForcePC(unsigned short);
-
-extern void MC6809Init(void);
-extern int  MC6809Exec(int);
-extern void MC6809Reset(void);
-extern void MC6809AssertInterrupt(unsigned char, unsigned char);
-extern void MC6809DeAssertInterrupt(unsigned char);// 4 nmi 2 firq 1 irq
-extern void MC6809ForcePC(unsigned short);
-
-extern void PiaReset();
-extern void MC6883Reset();
-extern void GimeReset(void);
-extern void UpdateBusPointer(void);
 
 void HardReset(SystemState* const systemState)
 {

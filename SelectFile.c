@@ -3,11 +3,10 @@ using namespace std;
 #include <string>
 
 #include "configstate.h"
+#include "ProfileAccessors.h"
+#include "OpenPrintFile.h"
 
 #include "library/systemstate.h"
-
-extern void GetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpDefault, LPSTR lpReturnedString);
-extern int OpenPrintFile(char* FileName);
 
 int SelectFile(SystemState* systemState, char* filename)
 {

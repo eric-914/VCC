@@ -5,12 +5,11 @@
 #include "vccstate.h"
 
 #include "SelectFile.h"
+#include "ClosePrintFile.h"
+#include "SetMonState.h"
+#include "SetSerialParams.h"
 
 #include "library/systemstate.h"
-
-extern void ClosePrintFile(void);
-extern void SetMonState(BOOL);
-extern void SetSerialParams(unsigned char);
 
 LRESULT CALLBACK BitBangerConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

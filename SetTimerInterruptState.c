@@ -6,4 +6,3 @@ extern "C" {
     GetCoCoState()->TimerInterruptEnabled = state;
   }
 }
-

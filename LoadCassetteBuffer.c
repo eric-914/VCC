@@ -4,9 +4,8 @@
 
 //--CASSETTE--//
 
+#include "UpdateTapeCounter.h"
 #include "CastoWav.h"
-
-extern void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
 
 void LoadCassetteBuffer(unsigned char* cassBuffer)
 {

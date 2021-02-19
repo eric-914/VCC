@@ -1,6 +1,5 @@
 #include "mc6821state.h"
-
-extern void WritePrintMon(char*);
+#include "WritePrintMon.h"
 
 void CaptureBit(unsigned char sample)
 {

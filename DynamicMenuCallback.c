@@ -46,7 +46,7 @@ void DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, i
 }
 
 /*
-* TODO: This exists because this is what the different plugins expect, but it requires the extern EmuState
+* TODO: This exists because this is what the different plugins expect, but it requires the EmuState
 */
 void DynamicMenuCallback(char* menuName, int menuId, int type)
 {

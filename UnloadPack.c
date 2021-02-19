@@ -1,11 +1,10 @@
 #include "pakinterfacestate.h"
 
 #include "UnloadDll.h"
+#include "DynamicMenuCallback.h"
+#include "SetCart.h"
 
 #include "library/systemstate.h"
-
-extern void SetCart(unsigned char);
-extern void DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, int type);
 
 void UnloadPack(SystemState* systemState)
 {

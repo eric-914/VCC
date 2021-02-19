@@ -4,11 +4,10 @@
 #include "CopyRom.h"
 #include "MmuReset.h"
 #include "GimeReset.h"
+#include "PiaReset.h"
+#include "MC6883Reset.h"
 
 #include "library/cpudef.h"
-
-extern void PiaReset();
-extern void MC6883Reset();
 
 void SoftReset(void)
 {

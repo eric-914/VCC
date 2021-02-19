@@ -1,10 +1,9 @@
 #include <iostream>
 
 #include "pakinterfacestate.h"
+#include "UnloadDll.h"
 
 #include "library/systemstate.h"
-
-extern void UnloadDll(SystemState* systemState);
 
 /**
 Load a ROM pack

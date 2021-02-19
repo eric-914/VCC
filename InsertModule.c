@@ -11,12 +11,11 @@
 #include "library/fileoperations.h"
 #include "library/systemstate.h"
 
-extern void UnloadDll(SystemState* systemState);
-extern void DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, int type);
-extern void DynamicMenuCallback(char* menuName, int menuId, int type);
-extern void SetCart(unsigned char);
-extern unsigned char MemRead8(unsigned short);
-extern void MemWrite8(unsigned char, unsigned short);
+#include "UnloadDll.h"
+#include "DynamicMenuCallback.h"
+#include "SetCart.h"
+#include "MemRead8.h"
+#include "MemWrite8.h"
 
 int InsertModule(SystemState* systemState, char* modulePath)
 {

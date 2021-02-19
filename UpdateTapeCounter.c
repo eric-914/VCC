@@ -7,8 +7,7 @@
 #include "GetTapeName.h"
 
 #include "library/cassettedef.h"
-
-extern "C" __declspec(dllexport) void __cdecl FilePathStripPath(char* path);
+#include "library/fileoperations.h"
 
 void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode)
 {

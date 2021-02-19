@@ -1,8 +1,7 @@
 #include <process.h>
 
 #include "vccstate.h"
-
-extern unsigned __stdcall CartLoad(void* dummy);
+#include "CartLoad.h"
 
 void LoadPack(void)
 {

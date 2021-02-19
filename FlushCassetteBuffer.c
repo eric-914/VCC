@@ -4,8 +4,7 @@
 //--CASSETTE--//
 
 #include "WavtoCas.h"
-
-extern void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
+#include "UpdateTapeCounter.h"
 
 void FlushCassetteBuffer(unsigned char* buffer, unsigned int length)
 {

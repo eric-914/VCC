@@ -1,8 +1,7 @@
 #include "AudioState.h"
 
 #include "UpdateSoundBar.h"
-
-extern int GetFreeBlockCount(void);
+#include "GetFreeBlockCount.h"
 
 void FlushAudioBuffer(unsigned int* aBuffer, unsigned short length)
 {

@@ -1,6 +1,5 @@
 #include "cocostate.h"
-
-extern unsigned char GetCasSample(void); /* mc6821.c */
+#include "GetCasSample.h"
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassOut(void)

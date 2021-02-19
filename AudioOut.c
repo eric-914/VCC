@@ -1,6 +1,6 @@
 #include "cocostate.h"
 
-extern unsigned int GetDACSample(void); /* mc6821.c */
+#include "GetDACSample.h"
 
 extern "C" {
   __declspec(dllexport) void __cdecl AudioOut(void)
