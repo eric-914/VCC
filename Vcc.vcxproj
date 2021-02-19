@@ -175,6 +175,7 @@
     <ClCompile Include="AudioState.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
+    <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="hd6309vector.c" />
     <ClCompile Include="mc6809_CalculateEA.c" />
     <ClCompile Include="CalculateFPS.c" />
@@ -397,6 +398,7 @@
     <ClInclude Include="AudioState.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
+    <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="hd6309vector.h" />
     <ClInclude Include="mc6809_CalculateEA.h" />
     <ClInclude Include="CalculateFPS.h" />
