@@ -5,7 +5,7 @@
 #include "MemWrite8.h"
 #include "MemRead16.h"
 
-void cpu_firq(void)
+void MC609_cpu_firq(void)
 {
   MC6809State* mc6809State = GetMC6809State();
 
@@ -26,7 +26,7 @@ void cpu_firq(void)
   mc6809State->PendingInterrupts &= 253;
 }
 
-void cpu_irq(void)
+void MC609_cpu_irq(void)
 {
   MC6809State* mc6809State = GetMC6809State();
 
@@ -55,7 +55,7 @@ void cpu_irq(void)
   mc6809State->PendingInterrupts &= 254;
 }
 
-void cpu_nmi(void)
+void MC609_cpu_nmi(void)
 {
   MC6809State* mc6809State = GetMC6809State();
 

@@ -18,11 +18,6 @@ This file is part of VCC (Virtual Color Computer).
     along with VCC (Virtual Color Computer).  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void HD6309Init(void);
 int  HD6309Exec(int);
-void HD6309Reset(void);
-void HD6309AssertInterrupt(unsigned char, unsigned char);
-void HD6309DeAssertInterrupt(unsigned char);// 4 nmi 2 firq 1 irq
-void HD6309ForcePC(unsigned short);
 
 #endif

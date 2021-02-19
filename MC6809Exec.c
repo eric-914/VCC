@@ -35,17 +35,17 @@ int MC6809Exec(int cycleFor)
     if (mc6809State->PendingInterrupts)
     {
       if (mc6809State->PendingInterrupts & 4) {
-        cpu_nmi();
+        MC609_cpu_nmi();
       }
 
       if (mc6809State->PendingInterrupts & 2) {
-        cpu_firq();
+        MC609_cpu_firq();
       }
 
       if (mc6809State->PendingInterrupts & 1)
       {
         if (mc6809State->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
-          cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
+          MC609_cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
         }
         else {				// The IRQ is asserted.
           mc6809State->IRQWaiter -= 1;
