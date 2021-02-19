@@ -32,9 +32,6 @@ This file is part of VCC (Virtual Color Computer).
 #include "MemRead32.h"
 #include "MemWrite32.h"
 
-static HD6309State* hd63096State = GetHD6309State();
-static HD6309IntState* hd63096IntState = GetHD6309IntState();
-
 unsigned short hd6309_CalculateEA(unsigned char);
 void InvalidInsHandler(void);
 void DivbyZero(void);
@@ -57,6 +54,9 @@ void Page_3(void);
 void HD6309Init(void)
 {	//Call this first or RESET will core!
   // reg pointers for TFR and EXG and LEA ops
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   hd63096State->xfreg16[0] = &D_REG;
   hd63096State->xfreg16[1] = &X_REG;
   hd63096State->xfreg16[2] = &Y_REG;
@@ -153,6 +153,8 @@ void HD6309Init(void)
 
 void HD6309Reset(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   for (char index = 0; index <= 6; index++) {		//Set all register to 0 except V
     PXF(index) = 0;
   }
@@ -191,6 +193,9 @@ void HD6309Reset(void)
 
 int HD6309Exec(int cycleFor)
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   hd63096State->CycleCounter = 0;
   hd63096State->gCycleFor = cycleFor;
 
@@ -229,16 +234,23 @@ int HD6309Exec(int cycleFor)
 
 void Page_2(void) //10
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   JmpVec2[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
 }
 
 void Page_3(void) //11
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   JmpVec3[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
 }
 
 void cpu_firq(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   if (!CC_F)
   {
     hd63096State->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
@@ -294,6 +306,9 @@ void cpu_firq(void)
 
 void cpu_irq(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   if (hd63096State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
     return;
   }
@@ -330,6 +345,9 @@ void cpu_irq(void)
 
 void cpu_nmi(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   CC_E = 1;
 
   MemWrite8(PC_L, --S_REG);
@@ -364,6 +382,8 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
   static unsigned short int ea = 0;
   static signed char byte = 0;
   static unsigned char reg;
+
+  HD6309State* hd63096State = GetHD6309State();
 
   reg = ((postbyte >> 5) & 3) + 1;
 
@@ -703,6 +723,8 @@ unsigned short hd6309_CalculateEA(unsigned char postbyte)
 
 void setcc(unsigned char bincc)
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   hd63096State->ccbits = bincc;
 
   CC_E = !!(bincc & (1 << E));
@@ -718,6 +740,8 @@ void setcc(unsigned char bincc)
 unsigned char getcc(void)
 {
   unsigned char bincc = 0;
+
+  HD6309State* hd63096State = GetHD6309State();
 
 #define TST(_CC, _F) if (_CC) { bincc |= (1 << _F); }
 
@@ -735,6 +759,9 @@ unsigned char getcc(void)
 
 void setmd(unsigned char binmd)
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   MD_NATIVE6309 = !!(binmd & (1 << NATIVE6309));
   MD_FIRQMODE = !!(binmd & (1 << FIRQMODE));
   MD_UNDEFINED2 = !!(binmd & (1 << MD_UNDEF2));
@@ -754,6 +781,8 @@ unsigned char getmd(void)
 {
   unsigned char binmd = 0;
 
+  HD6309State* hd63096State = GetHD6309State();
+
 #define TSM(_MD, _F) if (_MD) { binmd |= (1 << _F); } //--Can't use the same macro name
 
   TSM(MD_NATIVE6309, NATIVE6309);
@@ -770,6 +799,9 @@ unsigned char getmd(void)
 
 void HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nmi 2 firq 1 irq
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   hd63096State->SyncWaiting = 0;
   hd63096IntState->PendingInterrupts |= (1 << (interrupt - 1));
   hd63096IntState->IRQWaiter = waiter;
@@ -777,12 +809,17 @@ void HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter)// 4 nm
 
 void HD6309DeAssertInterrupt(unsigned char interrupt)// 4 nmi 2 firq 1 irq
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   hd63096IntState->PendingInterrupts &= ~(1 << (interrupt - 1));
   hd63096State->InInterrupt = 0;
 }
 
 void InvalidInsHandler(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   MD_ILLEGAL = 1;
   hd63096State->mdbits = getmd();
 
@@ -791,6 +828,8 @@ void InvalidInsHandler(void)
 
 void DivbyZero(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   MD_ZERODIV = 1;
   hd63096State->mdbits = getmd();
 
@@ -799,6 +838,8 @@ void DivbyZero(void)
 
 void ErrorVector(void)
 {
+  HD6309State* hd63096State = GetHD6309State();
+
   CC_E = 1;
 
   MemWrite8(PC_L, --S_REG);
@@ -834,6 +875,8 @@ unsigned char GetSorceReg(unsigned char tmp)
   unsigned char dest = tmp & 15;
   unsigned char translate[] = { 0,0 };
 
+  HD6309State* hd63096State = GetHD6309State();
+
   if ((source & 8) == (dest & 8)) { //like size registers
     return(source);
   }
@@ -843,6 +886,9 @@ unsigned char GetSorceReg(unsigned char tmp)
 
 void HD6309ForcePC(unsigned short address)
 {
+  HD6309State* hd63096State = GetHD6309State();
+  HD6309IntState* hd63096IntState = GetHD6309IntState();
+
   PC_REG = address;
 
   hd63096IntState->PendingInterrupts = 0;
