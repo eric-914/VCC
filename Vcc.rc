@@ -89,27 +89,27 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_COCO3               ICON                    "resources\\icon1.ico"
+IDI_COCO3               ICON                    "_resources\\icon1.ico"
 
-IDI_BINFILE             ICON                    "resources\\binfile.ico"
+IDI_BINFILE             ICON                    "_resources\\binfile.ico"
 
-IDI_CART                ICON                    "resources\\progpack.ico"
+IDI_CART                ICON                    "_resources\\progpack.ico"
 
-IDI_MOTO                ICON                    "resources\\moto.ico"
+IDI_MOTO                ICON                    "_resources\\moto.ico"
 
-IDI_HITACHI2            ICON                    "resources\\hitachi.ico"
+IDI_HITACHI2            ICON                    "_resources\\hitachi.ico"
 
-IDI_RGB                 ICON                    "resources\\rgb.ico"
+IDI_RGB                 ICON                    "_resources\\rgb.ico"
 
-IDI_COMPOSITE           ICON                    "resources\\composite.ico"
+IDI_COMPOSITE           ICON                    "_resources\\composite.ico"
 
-IDI_AUDIO               ICON                    "resources\\ico00004.ico"
+IDI_AUDIO               ICON                    "_resources\\ico00004.ico"
 
-IDI_KEYBOARD            ICON                    "resources\\Keyboard.ico"
+IDI_KEYBOARD            ICON                    "_resources\\Keyboard.ico"
 
-IDI_JOYSTICK            ICON                    "resources\\joystick.ico"
+IDI_JOYSTICK            ICON                    "_resources\\joystick.ico"
 
-IDI_MOUSE               ICON                    "resources\\mouse.ico"
+IDI_MOUSE               ICON                    "_resources\\mouse.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -654,13 +654,13 @@ END
 // Bitmap
 //
 
-IDB_NOMUTE              BITMAP                  "resources\\speaker1.bmp"
+IDB_NOMUTE              BITMAP                  "_resources\\speaker1.bmp"
 
-IDB_MUTE                BITMAP                  "resources\\speaker2.bmp"
+IDB_MUTE                BITMAP                  "_resources\\speaker2.bmp"
 
-IDB_VCC                 BITMAP                  "resources\\vcc.bmp"
+IDB_VCC                 BITMAP                  "_resources\\vcc.bmp"
 
-IDB_3GUYS               BITMAP                  "resources\\3guys.bmp"
+IDB_3GUYS               BITMAP                  "_resources\\3guys.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -668,7 +668,7 @@ IDB_3GUYS               BITMAP                  "resources\\3guys.bmp"
 // Cursor
 //
 
-IDC_NONE                CURSOR                  "resources\\cursor1.cur"
+IDC_NONE                CURSOR                  "_resources\\cursor1.cur"
 
 
 /////////////////////////////////////////////////////////////////////////////
