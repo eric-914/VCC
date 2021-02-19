@@ -1,5 +1,5 @@
-#include "hd6309state.h"
-#include "hd6309intstate.h"
+#include "library/hd6309state.h"
+#include "library/hd6309intstate.h"
 
 void HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter) // 4 nmi 2 firq 1 irq
 {

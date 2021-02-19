@@ -1,6 +1,6 @@
 #include <string>
 
-#include "clipboardstate.h"
+#include "library/clipboardstate.h"
 #include "library/graphicsstate.h"
 
 #include "SetClipboard.h"

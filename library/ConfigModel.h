@@ -1,6 +1,4 @@
-#ifndef __CONFIGDEF_H__
-
-#define __CONFIGDEF_H__
+#pragma once
 
 #include <windows.h>
 
@@ -34,5 +32,3 @@ typedef struct {
   char CassPath[MAX_PATH];
   char COCO3ROMPath[MAX_PATH];
 } ConfigModel;
-
-#endif

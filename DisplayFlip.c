@@ -1,7 +1,6 @@
 #include <windows.h>
 
-#include "directdrawstate.h"
-
+#include "library/directdrawstate.h"
 #include "library/systemstate.h"
 
 void DisplayFlip(SystemState* systemState)	// Double buffering flip

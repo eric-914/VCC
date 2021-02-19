@@ -1,10 +1,9 @@
-#include "configdef.h"
-
 #include "library/di.version.h"
-
 #include <dinput.h>
 
 #include "configstate.h"
+
+#include "library/configdef.h"
 
 void BuildTransDisp2ScanTable()
 {

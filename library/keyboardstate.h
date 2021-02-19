@@ -1,6 +1,6 @@
 #pragma once
 
-#include "library/keyboarddef.h"
+#include "keyboarddef.h"
 
 typedef struct {
   /** track all keyboard scan codes state (up/down) */

@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).

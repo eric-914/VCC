@@ -1,5 +1,5 @@
-#include "hd6309defs.h"
-#include "hd6309state.h"
+#include "library/hd6309defs.h"
+#include "library/hd6309state.h"
 
 void setcc(unsigned char bincc)
 {

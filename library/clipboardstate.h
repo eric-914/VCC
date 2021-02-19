@@ -4,7 +4,7 @@ using namespace std;
 
 #include <string>
 
-#include "library/ConfigModel.h"
+#include "ConfigModel.h"
 
 typedef struct
 {

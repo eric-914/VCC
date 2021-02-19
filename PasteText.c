@@ -1,6 +1,6 @@
 #include <string>
 
-#include "clipboardstate.h"
+#include "library/clipboardstate.h"
 #include "ConfigAccessors.h"
 #include "GetClipboardText.h"
 #include "vccKeyboardBuildRuntimeTable.h"

@@ -1,8 +1,8 @@
-#include "directdrawdef.h"
+#include "library/directdrawdef.h"
 #include <ddraw.h>
 #include <commctrl.h>	// Windows common controls
 
-#include "directdrawstate.h"
+#include "library/directdrawstate.h"
 #include "resource.h"
 
 #include "ConfigAccessors.h"

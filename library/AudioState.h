@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <dsound.h>
 
-#include "library/audiodef.h"
+#include "SndCardList.h"
 
 typedef struct {
   HRESULT hr;

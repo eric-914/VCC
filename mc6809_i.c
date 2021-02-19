@@ -1,5 +1,5 @@
-#include "mc6809defs.h"
-#include "mc6809state.h"
+#include "library/mc6809defs.h"
+#include "library/mc6809state.h"
 #include "mc6809_cc.h"
 
 #include "MemWrite8.h"

@@ -1,6 +1,6 @@
 #include <string>
 
-#include "clipboardstate.h"
+#include "library/clipboardstate.h"
 
 bool SetClipboard(string sendout) {
   const char* clipout = sendout.c_str();

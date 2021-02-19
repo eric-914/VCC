@@ -1,4 +1,4 @@
-#include "mc6809state.h"
+#include "library/mc6809state.h"
 
 void MC6809DeAssertInterrupt(unsigned char interrupt) // 4 nmi 2 firq 1 irq
 {

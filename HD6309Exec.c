@@ -1,5 +1,5 @@
-#include "hd6309state.h"
-#include "hd6309intstate.h"
+#include "library/hd6309state.h"
+#include "library/hd6309intstate.h"
 #include "hd6309_i.h"
 #include "hd6309opcodes.h"
 #include "HD6309Handlers.h"

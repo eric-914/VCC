@@ -2,9 +2,9 @@
 
 #include <afxwin.h>
 
-#include "directdrawstate.h"
-
 #include "resource.h"
+
+#include "library/directdrawstate.h"
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {

@@ -1,6 +1,6 @@
-#include "hd6309defs.h"
-#include "hd6309state.h"
-#include "hd6309intstate.h"
+#include "library/hd6309defs.h"
+#include "library/hd6309state.h"
+#include "library/hd6309intstate.h"
 
 #include "hd6309_cc.h"
 

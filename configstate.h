@@ -2,9 +2,9 @@
 
 #include <richedit.h>
 
-#include "configdef.h"
+#include "library/configdef.h"
 
-#include "library/audiodef.h"
+#include "library/SndCardList.h"
 #include "library/ConfigModel.h"
 #include "library/defines.h"
 #include "library/joystickdef.h"

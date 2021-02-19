@@ -1,6 +1,6 @@
 #include <Windows.h>
 
-#include "AudioState.h"
+#include "library/AudioState.h"
 #include "SetAudioRate.h"
 
 #include "library/defines.h"

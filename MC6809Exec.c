@@ -1,5 +1,6 @@
-#include "mc6809defs.h"
-#include "mc6809state.h"
+#include "library/mc6809defs.h"
+#include "library/mc6809state.h"
+
 #include "mc6809_i.h"
 #include "mc6809_cc.h"
 

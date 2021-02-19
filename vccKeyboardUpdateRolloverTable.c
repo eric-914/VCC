@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include "keyboardstate.h"
+#include "library/keyboardstate.h"
 
 void vccKeyboardUpdateRolloverTable()
 {

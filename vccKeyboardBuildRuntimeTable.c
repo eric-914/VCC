@@ -4,12 +4,11 @@
 #include <assert.h>
 #include <dinput.h>
 
-#include "keyboardstate.h"
-
 #include "KeyTransCompare.h"
 
 #include "library/keyboarddef.h"
 #include "library/keyboardlayout.h"
+#include "library/keyboardstate.h"
 
 /*
   Rebuilds the run-time keyboard translation lookup table based on the

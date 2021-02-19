@@ -1,8 +1,7 @@
 #include <windows.h>
 #include <ddraw.h>
 
-#include "directdrawstate.h"
-
+#include "library/directdrawstate.h"
 #include "library/systemstate.h"
 
 POINT GetCurrentWindowSize() {

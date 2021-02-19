@@ -1,5 +1,5 @@
-#ifndef __HD6309DEFS_H__
-#define __HD6309DEFS_H__
+#pragma once
+
 /*
 Copyright 2015 by Joseph Forgione
 This file is part of VCC (Virtual Color Computer).
@@ -549,5 +549,3 @@ This file is part of VCC (Virtual Color Computer).
 #define M3130	21
 #define M42   22
 #define M53   23
-
-#endif

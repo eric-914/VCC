@@ -1,5 +1,5 @@
-#include "mc6809defs.h"
-#include "mc6809state.h"
+#include "library/mc6809defs.h"
+#include "library/mc6809state.h"
 
 void mc6809_setcc(unsigned char bincc)
 {

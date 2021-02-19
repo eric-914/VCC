@@ -1,9 +1,9 @@
-#include "keyboardstate.h"
 #include "GetMuxState.h"
 #include "DACState.h"
 #include "JoystickAccessors.h"
 
 #include "library/joystickstate.h"
+#include "library/keyboardstate.h"
 
 /*
   Get CoCo 'scan' code

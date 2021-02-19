@@ -176,16 +176,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\fileops\fileops.c" />
+    <ClCompile Include="AudioState.c" />
     <ClCompile Include="cassettestate.c" />
+    <ClCompile Include="clipboardstate.c" />
     <ClCompile Include="commandline.c" />
     <ClCompile Include="cpudef.c" />
+    <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="graphicsstate.c" />
+    <ClCompile Include="hd6309intstate.c" />
+    <ClCompile Include="hd6309state.c" />
     <ClCompile Include="joystickinput.c" />
     <ClCompile Include="joystickstate.c" />
     <ClCompile Include="keyboardlayout.c" />
+    <ClCompile Include="keyboardstate.c" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
+    <ClCompile Include="mc6809state.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
     <ClCompile Include="tcc1014graphics-24.c" />
     <ClCompile Include="tcc1014graphics-32.c" />
@@ -194,6 +201,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audiodef.h" />
+    <ClInclude Include="AudioState.h" />
+    <ClInclude Include="clipboardstate.h" />
+    <ClInclude Include="configdef.h" />
+    <ClInclude Include="directdrawdef.h" />
+    <ClInclude Include="directdrawstate.h" />
+    <ClInclude Include="hd6309defs.h" />
+    <ClInclude Include="hd6309intstate.h" />
+    <ClInclude Include="hd6309state.h" />
+    <ClInclude Include="keyboardstate.h" />
+    <ClInclude Include="mc6809defs.h" />
+    <ClInclude Include="mc6809state.h" />
+    <ClInclude Include="SndCardList.h" />
     <ClInclude Include="cassettedef.h" />
     <ClInclude Include="cassettestate.h" />
     <ClInclude Include="cc2font.h" />

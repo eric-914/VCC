@@ -3,7 +3,6 @@
 #include <windows.h>
 #include <dinput.h>
 
-#include "keyboardstate.h"
 #include "KeyboardAccessors.h"
 #include "JoystickAccessors.h"
 #include "vccKeyboardUpdateRolloverTable.h"
@@ -11,6 +10,7 @@
 
 #include "library/joystickstate.h"
 #include "library/keyboarddef.h"
+#include "library/keyboardstate.h"
 #include "library/xDebug.h"
 
 /*

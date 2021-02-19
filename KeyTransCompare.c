@@ -2,8 +2,7 @@
 
 #include <dinput.h>
 
-#include "keyboardstate.h"
-
+#include "library/keyboardstate.h"
 #include "library/keyboarddef.h"
 
 /**

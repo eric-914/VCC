@@ -2,7 +2,7 @@
 
 #include <ddraw.h>
 
-#include "library/defines.h"
+#include "defines.h"
 
 typedef struct {
   //Global Variables for Direct Draw functions

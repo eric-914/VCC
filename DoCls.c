@@ -1,8 +1,7 @@
-#include "directdrawstate.h"
-
 #include "LockScreen.h"
 #include "UnlockScreen.h"
 
+#include "library/directdrawstate.h"
 #include "library/systemstate.h"
 
 void DoCls(SystemState* systemState)

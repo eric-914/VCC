@@ -1,9 +1,3 @@
-#ifndef __AUDIODEF_H__
-#define __AUDIODEF_H__
+#pragma once
 
-typedef struct CardList {
-  char CardName[64];
-  _GUID* Guid;
-} SndCardList;
-
-#endif
+#define MAXCARDS	12
