@@ -2,7 +2,7 @@
 
 #include "CreateDDWindow.h"
 #include "RefreshDynamicMenu.h"
-#include "AudioAccessors.h"
+#include "library/AudioAccessors.h"
 #include "InvalidateBorder.h "
 
 void FullScreenToggle(WNDPROC WndProc)

@@ -8,7 +8,7 @@
 #include "UnlockScreen.h"
 #include "CPUCycle.h"
 #include "SetBorderChange.h"
-#include "RegistersAccessors.h"
+#include "library/RegistersAccessors.h"
 #include "irq_fs.h"
 
 #include "library/graphicsstate.h"

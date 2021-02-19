@@ -4,7 +4,7 @@
 #include "ConfigAccessors.h"
 #include "GetClipboardText.h"
 #include "vccKeyboardBuildRuntimeTable.h"
-#include "KeyboardAccessors.h"
+#include "library/KeyboardAccessors.h"
 
 #include "library/keyboarddef.h"
 #include "library/graphicsstate.h"

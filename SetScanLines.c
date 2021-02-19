@@ -1,6 +1,6 @@
 #include "library/vccstate.h"
 
-#include "DirectDrawAccessors.h"
+#include "library/DirectDrawAccessors.h"
 
 #include "library/systemstate.h"
 #include "library/graphicsstate.h"

@@ -1,6 +1,6 @@
 #include "library/registersstate.h"
 
-#include "MmuAccessors.h"
+#include "library/MmuAccessors.h"
 #include "SetGimeVdgOffset.h"
 #include "SetGimeVdgMode.h"
 #include "SetCPUMultiplayerFlag.h"

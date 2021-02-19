@@ -5,7 +5,7 @@
 #include "SetGimeVres.h"
 #include "SetGimeBorderColor.h"
 #include "SetDistoRamBank.h"
-#include "MmuAccessors.h"
+#include "library/MmuAccessors.h"
 #include "SetGimeHorzOffset.h"
 #include "SetVerticalOffsetRegister.h"
 #include "SetInit0.h"

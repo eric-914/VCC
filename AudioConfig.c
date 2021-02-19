@@ -4,7 +4,7 @@
 #include "configstate.h"
 #include "resource.h"
 
-#include "AudioAccessors.h"
+#include "library/AudioAccessors.h"
 
 LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

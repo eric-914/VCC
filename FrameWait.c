@@ -2,7 +2,7 @@
 
 #include "PurgeAuxBuffer.h"
 #include "GetFreeBlockCount.h"
-#include "AudioAccessors.h"
+#include "library/AudioAccessors.h"
 
 #include "library/defines.h"
 

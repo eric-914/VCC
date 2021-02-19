@@ -3,10 +3,10 @@
 #include <windows.h>
 #include <dinput.h>
 
-#include "KeyboardAccessors.h"
-#include "JoystickAccessors.h"
+#include "library/KeyboardAccessors.h"
+#include "library/JoystickAccessors.h"
 #include "vccKeyboardUpdateRolloverTable.h"
-#include "RegistersAccessors.h"
+#include "library/RegistersAccessors.h"
 
 #include "library/joystickstate.h"
 #include "library/keyboarddef.h"

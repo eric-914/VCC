@@ -14,7 +14,7 @@
 #include "DoCls.h"
 #include "RenderFrame.h"
 #include "FrameWait.h"
-#include "DirectDrawAccessors.h"
+#include "library/DirectDrawAccessors.h"
 #include "library/PakInterfaceAccessors.h"
 #include "EndRender.h"
 #include "Static.h"

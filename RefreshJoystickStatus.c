@@ -3,7 +3,7 @@
 #include "library/joystickstate.h"
 #include "library/joystickinput.h"
 
-#include "JoystickAccessors.h"
+#include "library/JoystickAccessors.h"
 
 void RefreshJoystickStatus(void)
 {

@@ -1,6 +1,6 @@
 #include "library/mmustate.h"
 
-#include "MmuAccessors.h"
+#include "library/MmuAccessors.h"
 #include "SetVideoBank.h"
 
 void SetDistoRamBank(unsigned char data)

@@ -1,7 +1,7 @@
 #include "library/mc6809defs.h"
 #include "library/mc6809state.h"
 
-#include "MmuAccessors.h"
+#include "library/MmuAccessors.h"
 #include "MemRead16.h"
 
 void MC6809Reset(void)

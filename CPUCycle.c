@@ -8,10 +8,10 @@
 #include "ClipboardEmpty.h"
 #include "GetCurrentKeyMap.h"
 #include "vccKeyboardBuildRuntimeTable.h"
-#include "KeyboardAccessors.h"
+#include "library/KeyboardAccessors.h"
 #include "library/PakInterfaceAccessors.h"
 #include "vccKeyboardHandleKey.h"
-#include "RegistersAccessors.h"
+#include "library/RegistersAccessors.h"
 #include "SetSpeedThrottle.h"
 #include "irq_hs.h"
 

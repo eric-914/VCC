@@ -3,7 +3,7 @@
 #include "hd6309_md.h"
 
 #include "MemRead16.h"
-#include "MmuAccessors.h"
+#include "library/MmuAccessors.h"
 
 void HD6309Reset(void)
 {

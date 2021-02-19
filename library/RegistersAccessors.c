@@ -1,9 +1,10 @@
-#include "library/registersstate.h"
+#include "registersstate.h"
 
-#include "library/cpudef.h"
-#include "library/defines.h"
+#include "cpudef.h"
+#include "defines.h"
 
-unsigned char GimeRead(unsigned char port)
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl GimeRead(unsigned char port)
 {
   static unsigned char temp;
 
@@ -31,8 +32,10 @@ unsigned char GimeRead(unsigned char port)
     return(registersState->GimeRegisters[port]);
   }
 }
+}
 
-void GimeAssertKeyboardInterrupt(void)
+extern "C" {
+  __declspec(dllexport) void __cdecl GimeAssertKeyboardInterrupt(void)
 {
   RegistersState* registersState = GetRegistersState();
 
@@ -49,8 +52,10 @@ void GimeAssertKeyboardInterrupt(void)
     registersState->LastIrq = registersState->LastIrq | 2;
   }
 }
+}
 
-void GimeAssertVertInterrupt(void)
+extern "C" {
+  __declspec(dllexport) void __cdecl GimeAssertVertInterrupt(void)
 {
   RegistersState* registersState = GetRegistersState();
 
@@ -67,8 +72,10 @@ void GimeAssertVertInterrupt(void)
     registersState->LastIrq = registersState->LastIrq | 8;
   }
 }
+}
 
-void GimeAssertTimerInterrupt(void)
+extern "C" {
+  __declspec(dllexport) void __cdecl GimeAssertTimerInterrupt(void)
 {
   RegistersState* registersState = GetRegistersState();
 
@@ -85,8 +92,10 @@ void GimeAssertTimerInterrupt(void)
     registersState->LastIrq = registersState->LastIrq | 32;
   }
 }
+}
 
-void GimeAssertHorzInterrupt(void)
+extern "C" {
+  __declspec(dllexport) void __cdecl GimeAssertHorzInterrupt(void)
 {
   RegistersState* registersState = GetRegistersState();
 
@@ -102,4 +111,5 @@ void GimeAssertHorzInterrupt(void)
 
     registersState->LastIrq = registersState->LastIrq | 16;
   }
+}
 }

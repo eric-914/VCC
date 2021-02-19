@@ -176,6 +176,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\fileops\fileops.c" />
+    <ClCompile Include="AudioAccessors.c" />
     <ClCompile Include="AudioOut.c" />
     <ClCompile Include="AudioState.c" />
     <ClCompile Include="cassettestate.c" />
@@ -183,23 +184,28 @@
     <ClCompile Include="cocostate.c" />
     <ClCompile Include="commandline.c" />
     <ClCompile Include="cpudef.c" />
+    <ClCompile Include="DirectDrawAccessors.c" />
     <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="GetDACSample.c" />
     <ClCompile Include="graphicsstate.c" />
     <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="hd6309state.c" />
+    <ClCompile Include="JoystickAccessors.c" />
     <ClCompile Include="joystickinput.c" />
     <ClCompile Include="joystickstate.c" />
+    <ClCompile Include="KeyboardAccessors.c" />
     <ClCompile Include="keyboardlayout.c" />
     <ClCompile Include="keyboardstate.c" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809state.c" />
     <ClCompile Include="mc6821state.c" />
+    <ClCompile Include="MmuAccessors.c" />
     <ClCompile Include="mmustate.c" />
     <ClCompile Include="PakInterfaceAccessors.c" />
     <ClCompile Include="pakinterfacestate.c" />
+    <ClCompile Include="RegistersAccessors.c" />
     <ClCompile Include="registersstate.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
     <ClCompile Include="tcc1014graphics-24.c" />
@@ -210,27 +216,33 @@
     <ClCompile Include="xDebug.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AudioAccessors.h" />
     <ClInclude Include="audiodef.h" />
     <ClInclude Include="AudioOut.h" />
     <ClInclude Include="AudioState.h" />
     <ClInclude Include="clipboardstate.h" />
     <ClInclude Include="cocostate.h" />
     <ClInclude Include="configdef.h" />
+    <ClInclude Include="DirectDrawAccessors.h" />
     <ClInclude Include="directdrawdef.h" />
     <ClInclude Include="directdrawstate.h" />
     <ClInclude Include="GetDACSample.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="hd6309state.h" />
+    <ClInclude Include="JoystickAccessors.h" />
+    <ClInclude Include="KeyboardAccessors.h" />
     <ClInclude Include="keyboardstate.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6809state.h" />
     <ClInclude Include="mc6821def.h" />
     <ClInclude Include="mc6821state.h" />
+    <ClInclude Include="MmuAccessors.h" />
     <ClInclude Include="mmustate.h" />
     <ClInclude Include="PakInterfaceAccessors.h" />
     <ClInclude Include="pakinterfacedef.h" />
     <ClInclude Include="pakinterfacestate.h" />
+    <ClInclude Include="RegistersAccessors.h" />
     <ClInclude Include="registersstate.h" />
     <ClInclude Include="SndCardList.h" />
     <ClInclude Include="cassettedef.h" />

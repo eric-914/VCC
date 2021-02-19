@@ -1,7 +1,7 @@
 #include "configstate.h"
 
 #include "library/PakInterfaceAccessors.h"
-#include "DirectDrawAccessors.h"
+#include "library/DirectDrawAccessors.h"
 
 #include "library/joystickstate.h"
 #include "library/fileoperations.h"

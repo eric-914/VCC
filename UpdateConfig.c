@@ -10,7 +10,7 @@
 #include "SetPaletteType.h"
 #include "SetScanLines.h"
 #include "Reboot.h"
-#include "DirectDrawAccessors.h"
+#include "library/DirectDrawAccessors.h"
 #include "SetCartAutoStart.h"
 
 #include "library/systemstate.h"

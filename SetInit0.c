@@ -1,7 +1,7 @@
 #include "library/registersstate.h"
 
 #include "SetCompatMode.h"
-#include "MmuAccessors.h"
+#include "library/MmuAccessors.h"
 
 void SetInit0(unsigned char data)
 {

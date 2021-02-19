@@ -1,4 +1,4 @@
-#include "DirectDrawAccessors.h"
+#include "library/DirectDrawAccessors.h"
 
 #include "library/directdrawstate.h"
 #include "library/systemstate.h"

@@ -19,7 +19,7 @@
 #include "UpdateConfig.h"
 #include "SoundInit.h"
 #include "vccKeyboardBuildRuntimeTable.h"
-#include "JoystickAccessors.h"
+#include "library/JoystickAccessors.h"
 
 #include "library/keyboarddef.h"
 #include "library/joystickstate.h"
