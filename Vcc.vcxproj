@@ -183,7 +183,6 @@
     <ClCompile Include="HD6309Init.c" />
     <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="HD6309Reset.c" />
-    <ClCompile Include="hd6309vector.c" />
     <ClCompile Include="hd6309_CalculateEA.c" />
     <ClCompile Include="hd6309_cc.c" />
     <ClCompile Include="hd6309_i.c" />
@@ -416,7 +415,6 @@
     <ClInclude Include="HD6309Init.h" />
     <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="HD6309Reset.h" />
-    <ClInclude Include="hd6309vector.h" />
     <ClInclude Include="hd6309_CalculateEA.h" />
     <ClInclude Include="hd6309_cc.h" />
     <ClInclude Include="hd6309_i.h" />
