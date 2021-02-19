@@ -33,6 +33,6 @@ typedef struct {
   char FloppyPath[MAX_PATH];
   char CassPath[MAX_PATH];
   char COCO3ROMPath[MAX_PATH];
-} STRConfig;
+} ConfigModel;
 
 #endif

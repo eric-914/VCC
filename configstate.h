@@ -5,7 +5,7 @@
 #include "configdef.h"
 
 #include "library/audiodef.h"
-#include "library/STRConfig.h"
+#include "library/ConfigModel.h"
 #include "library/defines.h"
 #include "library/joystickdef.h"
 
@@ -32,8 +32,8 @@ typedef struct
   unsigned int LeftJoystickEmulation[3];
   unsigned int RightJoystickEmulation[3];
 
-  STRConfig CurrentConfig;
-  STRConfig TempConfig;
+  ConfigModel CurrentConfig;
+  ConfigModel TempConfig;
 
   TCHAR AppDataPath[MAX_PATH];
 

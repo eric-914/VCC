@@ -4,7 +4,7 @@ using namespace std;
 
 #include <string>
 
-#include "library/STRConfig.h"
+#include "library/ConfigModel.h"
 
 typedef struct
 {
@@ -13,7 +13,7 @@ typedef struct
   int CurrentKeyMap;
 
   string ClipboardText;
-  STRConfig ClipConfig;
+  ConfigModel ClipConfig;
 } ClipboardState;
 
 extern "C" __declspec(dllexport) ClipboardState * __cdecl GetClipboardState();
