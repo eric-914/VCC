@@ -1,6 +1,6 @@
-#include "cocostate.h"
+#include "library/cocostate.h"
 #include "SetCassetteSample.h"
-#include "GetDACSample.h"
+#include "library/GetDACSample.h"
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassIn(void)

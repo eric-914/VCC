@@ -1,6 +1,6 @@
 #include "library/vccstate.h"
 
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "SetClockSpeed.h"
 #include "MmuInit.h"
 

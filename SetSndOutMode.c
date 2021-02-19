@@ -1,7 +1,7 @@
-#include "cocostate.h"
+#include "library/cocostate.h"
 
 #include "FlushCassetteBuffer.h"
-#include "AudioOut.h"
+#include "library/AudioOut.h"
 #include "SetAudioRate.h"
 #include "CassIn.h"
 #include "CassOut.h"

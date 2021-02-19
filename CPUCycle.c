@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "cocostate.h"
+#include "library/cocostate.h"
 #include "library/mc6821def.h"
 
 #include "PopClipboard.h"
@@ -9,7 +9,7 @@
 #include "GetCurrentKeyMap.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "KeyboardAccessors.h"
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "vccKeyboardHandleKey.h"
 #include "RegistersAccessors.h"
 #include "SetSpeedThrottle.h"

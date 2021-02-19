@@ -1,6 +1,6 @@
 #include "configstate.h"
 
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "DirectDrawAccessors.h"
 
 #include "library/joystickstate.h"

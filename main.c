@@ -27,7 +27,7 @@
 #include "LoadConfig.h"
 #include "LoadIniFile.h"
 #include "MainConfig.h"
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "PasteBASIC.h"
 #include "PasteBASICWithNew.h"
 #include "PasteText.h"

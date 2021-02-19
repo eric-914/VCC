@@ -1,4 +1,4 @@
-#include "cocostate.h"
+#include "library/cocostate.h"
 
 #include "FlushCassetteBuffer.h"
 #include "LoadCassetteBuffer.h"

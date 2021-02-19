@@ -3,7 +3,7 @@
 #include "library/pakinterfacestate.h"
 
 #include "ConfigAccessors.h"
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "load_ext_rom.h"
 
 #include "library/cpudef.h"

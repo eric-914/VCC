@@ -15,7 +15,7 @@
 #include "RenderFrame.h"
 #include "FrameWait.h"
 #include "DirectDrawAccessors.h"
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "EndRender.h"
 #include "Static.h"
 

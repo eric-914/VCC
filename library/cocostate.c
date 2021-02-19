@@ -20,11 +20,11 @@ This file is part of VCC (Virtual Color Computer).
 
 #include "AudioOut.h" //--TROUBLE!
 
-#include "library/defines.h"
-#include "library/tcc1014graphics-8.h"
-#include "library/tcc1014graphics-16.h"
-#include "library/tcc1014graphics-24.h"
-#include "library/tcc1014graphics-32.h"
+#include "defines.h"
+#include "tcc1014graphics-8.h"
+#include "tcc1014graphics-16.h"
+#include "tcc1014graphics-24.h"
+#include "tcc1014graphics-32.h"
 
 const double SoundInterrupt = 0;
 const double PicosToSoundSample = SoundInterrupt;

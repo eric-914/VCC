@@ -1,6 +1,6 @@
 #include "library/vccstate.h"
 
-#include "PakInterfaceAccessors.h"
+#include "library/PakInterfaceAccessors.h"
 #include "CopyRom.h"
 #include "MmuReset.h"
 #include "GimeReset.h"

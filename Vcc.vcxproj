@@ -171,10 +171,8 @@
     <ClCompile Include="AssertCart.c" />
     <ClCompile Include="AudioAccessors.c" />
     <ClCompile Include="AudioConfig.c" />
-    <ClCompile Include="AudioOut.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
-    <ClCompile Include="cocostate.cpp" />
     <ClCompile Include="configstate.c" />
     <ClCompile Include="HD6309AssertInterrupt.c" />
     <ClCompile Include="HD6309DeAssertInterrupt.c" />
@@ -229,7 +227,6 @@
     <ClCompile Include="GetCasSample.c" />
     <ClCompile Include="GetClipboardText.c" />
     <ClCompile Include="GetCurrentKeyMap.c" />
-    <ClCompile Include="GetDACSample.c" />
     <ClCompile Include="GetFreeBlockCount.c" />
     <ClCompile Include="GetKeyName.c" />
     <ClCompile Include="GetMuxState.c" />
@@ -278,7 +275,6 @@
     <ClCompile Include="Motor.c" />
     <ClCompile Include="MountTape.c" />
     <ClCompile Include="OpenPrintFile.c" />
-    <ClCompile Include="PakInterfaceAccessors.c" />
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
@@ -389,10 +385,8 @@
     <ClInclude Include="AssertCart.h" />
     <ClInclude Include="AudioAccessors.h" />
     <ClInclude Include="AudioConfig.h" />
-    <ClInclude Include="AudioOut.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
-    <ClInclude Include="cocostate.h" />
     <ClInclude Include="configstate.h" />
     <ClInclude Include="HD6309AssertInterrupt.h" />
     <ClInclude Include="HD6309DeAssertInterrupt.h" />
@@ -447,7 +441,6 @@
     <ClInclude Include="GetCasSample.h" />
     <ClInclude Include="GetClipboardText.h" />
     <ClInclude Include="GetCurrentKeyMap.h" />
-    <ClInclude Include="GetDACSample.h" />
     <ClInclude Include="GetFreeBlockCount.h" />
     <ClInclude Include="GetKeyName.h" />
     <ClInclude Include="GetMuxState.h" />
@@ -495,7 +488,6 @@
     <ClInclude Include="Motor.h" />
     <ClInclude Include="MountTape.h" />
     <ClInclude Include="OpenPrintFile.h" />
-    <ClInclude Include="PakInterfaceAccessors.h" />
     <ClInclude Include="PasteBASIC.h" />
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />
