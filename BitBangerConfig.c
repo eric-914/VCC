@@ -2,7 +2,7 @@
 
 #include "configstate.h"
 #include "resource.h"
-#include "vccstate.h"
+#include "library/vccstate.h"
 
 #include "SelectFile.h"
 #include "ClosePrintFile.h"

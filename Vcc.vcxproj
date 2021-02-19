@@ -275,7 +275,6 @@
     <ClCompile Include="MmuAccessors.c" />
     <ClCompile Include="MmuInit.c" />
     <ClCompile Include="MmuReset.c" />
-    <ClCompile Include="mmustate.c" />
     <ClCompile Include="Motor.c" />
     <ClCompile Include="MountTape.c" />
     <ClCompile Include="OpenPrintFile.c" />
@@ -300,7 +299,6 @@
     <ClCompile Include="RefreshDynamicMenu.c" />
     <ClCompile Include="RefreshJoystickStatus.c" />
     <ClCompile Include="RegistersAccessors.c" />
-    <ClCompile Include="registersstate.c" />
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="ResetAudio.c" />
     <ClCompile Include="SAMRead.c" />
@@ -364,7 +362,6 @@
     <ClCompile Include="Static.c" />
     <ClCompile Include="SyncFileBuffer.c" />
     <ClCompile Include="TapeConfig.c" />
-    <ClCompile Include="throttlestate.c" />
     <ClCompile Include="TranslateDisp2Scan.c" />
     <ClCompile Include="TranslateScan2Disp.c" />
     <ClCompile Include="UnloadDll.c" />
@@ -378,7 +375,6 @@
     <ClCompile Include="vccKeyboardGetScan.c" />
     <ClCompile Include="vccKeyboardHandleKey.c" />
     <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
-    <ClCompile Include="vccstate.c" />
     <ClCompile Include="VDG_Mode.c" />
     <ClCompile Include="WavtoCas.c" />
     <ClCompile Include="WriteIniFile.c" />
@@ -496,7 +492,6 @@
     <ClInclude Include="MmuAccessors.h" />
     <ClInclude Include="MmuInit.h" />
     <ClInclude Include="MmuReset.h" />
-    <ClInclude Include="mmustate.h" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="MountTape.h" />
     <ClInclude Include="OpenPrintFile.h" />
@@ -521,7 +516,6 @@
     <ClInclude Include="RefreshDynamicMenu.h" />
     <ClInclude Include="RefreshJoystickStatus.h" />
     <ClInclude Include="RegistersAccessors.h" />
-    <ClInclude Include="registersstate.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="ResetAudio.h" />
     <ClInclude Include="resource.h" />
@@ -586,7 +580,6 @@
     <ClInclude Include="Static.h" />
     <ClInclude Include="SyncFileBuffer.h" />
     <ClInclude Include="TapeConfig.h" />
-    <ClInclude Include="throttlestate.h" />
     <ClInclude Include="TranslateDisp2Scan.h" />
     <ClInclude Include="TranslateScan2Disp.h" />
     <ClInclude Include="UnloadDll.h" />
@@ -596,12 +589,10 @@
     <ClInclude Include="UpdateConfig.h" />
     <ClInclude Include="UpdateSoundBar.h" />
     <ClInclude Include="UpdateTapeCounter.h" />
-    <ClInclude Include="vccdef.h" />
     <ClInclude Include="vccKeyboardBuildRuntimeTable.h" />
     <ClInclude Include="vccKeyboardGetScan.h" />
     <ClInclude Include="vccKeyboardHandleKey.h" />
     <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
-    <ClInclude Include="vccstate.h" />
     <ClInclude Include="VDG_Mode.h" />
     <ClInclude Include="WavtoCas.h" />
     <ClInclude Include="WriteIniFile.h" />

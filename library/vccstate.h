@@ -2,9 +2,9 @@
 
 #include <Windows.h>
 
-#include "library/commandline.h"
-#include "library/defines.h"
-#include "library/systemstate.h"
+#include "commandline.h"
+#include "defines.h"
+#include "systemstate.h"
 
 typedef struct
 {

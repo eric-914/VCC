@@ -1,7 +1,7 @@
 #include "vccdef.h"
 #include "vccstate.h"
 
-#include "library/defines.h"
+#include "defines.h"
 
 const char CpuName[20] = "CPUNAME";
 const char AppName[MAX_LOADSTRING] = "";

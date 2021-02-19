@@ -194,11 +194,15 @@
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809state.c" />
     <ClCompile Include="mc6821state.c" />
+    <ClCompile Include="mmustate.c" />
     <ClCompile Include="pakinterfacestate.c" />
+    <ClCompile Include="registersstate.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
     <ClCompile Include="tcc1014graphics-24.c" />
     <ClCompile Include="tcc1014graphics-32.c" />
     <ClCompile Include="tcc1014graphics-8.c" />
+    <ClCompile Include="throttlestate.c" />
+    <ClCompile Include="vccstate.c" />
     <ClCompile Include="xDebug.c" />
   </ItemGroup>
   <ItemGroup>
@@ -216,8 +220,10 @@
     <ClInclude Include="mc6809state.h" />
     <ClInclude Include="mc6821def.h" />
     <ClInclude Include="mc6821state.h" />
+    <ClInclude Include="mmustate.h" />
     <ClInclude Include="pakinterfacedef.h" />
     <ClInclude Include="pakinterfacestate.h" />
+    <ClInclude Include="registersstate.h" />
     <ClInclude Include="SndCardList.h" />
     <ClInclude Include="cassettedef.h" />
     <ClInclude Include="cassettestate.h" />
@@ -244,6 +250,9 @@
     <ClInclude Include="tcc1014graphics-24.h" />
     <ClInclude Include="tcc1014graphics-32.h" />
     <ClInclude Include="tcc1014graphics-8.h" />
+    <ClInclude Include="throttlestate.h" />
+    <ClInclude Include="vccdef.h" />
+    <ClInclude Include="vccstate.h" />
     <ClInclude Include="xDebug.h" />
   </ItemGroup>
   <ItemGroup>

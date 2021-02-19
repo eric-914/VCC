@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "mmustate.h"
+#include "library/mmustate.h"
 #include "CopyRom.h"
 #include "MmuReset.h"
 

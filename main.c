@@ -4,8 +4,8 @@
 #include <process.h>
 #include <dinput.h>
 
-#include "vccdef.h"
-#include "vccstate.h"
+#include "library/vccdef.h"
+#include "library/vccstate.h"
 #include "resource.h"
 #include "library/pakinterfacestate.h"
 

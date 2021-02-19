@@ -1,7 +1,7 @@
 #include <string>
 
 #include "library/pakinterfacestate.h"
-#include "vccstate.h"
+#include "library/vccstate.h"
 
 #include "RefreshDynamicMenu.h"
 

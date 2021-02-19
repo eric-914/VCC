@@ -1,4 +1,4 @@
-#include "vccstate.h"
+#include "library/vccstate.h"
 
 // Save last two key down events
 void SaveLastTwoKeyDownEvents(unsigned char kb_char, unsigned char oemScan) {

@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "mmustate.h"
+#include "library/mmustate.h"
 
 unsigned short GetMem(long address) {
   MmuState* mmuState = GetMmuState();

@@ -1,6 +1,6 @@
 #include <process.h>
 
-#include "vccstate.h"
+#include "library/vccstate.h"
 #include "CartLoad.h"
 
 void LoadPack(void)

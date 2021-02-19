@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "vccstate.h"
+#include "library/vccstate.h"
 #include "resource.h"
 
 // Mesage handler for the About box.
