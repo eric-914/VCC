@@ -87,44 +87,6 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 233, 379
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "About"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
-BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,181,363,50,14
-    LTEXT           "Copyright 2015 By",IDC_STATIC,19,132,61,8
-    LTEXT           "Joseph Forgione",IDC_STATIC,19,143,53,8
-    CONTROL         108,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,4,3,217,45
-    CONTROL         156,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE,12,53,77,57,WS_EX_DLGMODALFRAME
-    LTEXT           "Another classic computer canceled before it's time!",IDC_STATIC,12,115,81,19
-    LTEXT           "F11 = Fullscreen Toggle",IDC_STATIC,108,134,77,8
-    GROUPBOX        "Keyboard Special keys",IDC_STATIC,104,51,110,96,BS_CENTER
-    LTEXT           "F3 = Decrease Overclock",IDC_STATIC,108,62,100,8
-    LTEXT           "F10 = Fullscreen Status Toggle",IDC_STATIC,108,125,99,8
-    LTEXT           "F9 = Hard Reset (Power Cycle)",IDC_STATIC,108,116,98,8
-    LTEXT           "F4 = Increase Overclock",IDC_STATIC,108,71,100,8
-    LTEXT           "F6 = RGB/Composite Toggle",IDC_STATIC,108,89,92,8
-    LTEXT           "F5 = Soft Reset",IDC_STATIC,108,80,50,8
-    LTEXT           "F7 = NA",IDC_STATIC,108,98,27,8
-    LTEXT           "F8 = Throttle Toggle",IDC_STATIC,108,107,65,8
-    CTEXT           "VCC (Virtual Color Computer) is free software: you can redistribute",IDC_STATIC,7,232,209,11
-    CTEXT           "it and/or modify it under the terms of the GNU General Public License",IDC_STATIC,7,243,224,11
-    CTEXT           "as published by the Free Software Foundation, either version 3 of the",IDC_STATIC,7,254,223,8
-    CTEXT           "License, or (at your option) any later version.",IDC_STATIC,37,265,159,8
-    CTEXT           "VCC (Virtual Color Computer) is distributed in the hope that it will ",IDC_STATIC,9,278,207,8
-    CTEXT           "be useful, but WITHOUT ANY WARRANTY; without even the implied warranty",IDC_STATIC,5,289,223,8
-    CTEXT           "of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",IDC_STATIC,5,300,226,8
-    CTEXT           "See the GNU General Public License for more details.",IDC_STATIC,31,311,174,8
-    CTEXT           "You should have received a copy of the GNU General Public License",IDC_STATIC,5,326,219,8
-    CTEXT           "Rebased to more ""modern"" compilers by Gary Coulbourne",IDC_STATIC,1,182,230,8
-    CTEXT           "VCC Repository and Release Packages maintained by Bill Pierce",IDC_STATIC,9,173,206,8
-    CTEXT           "Some code from OVCC by Walter Zambotti",IDC_STATIC,28,212,175,12,SS_CENTERIMAGE
-    CTEXT           "Adapted to VS2015 and Minor Bug Fixes by Wes Gale",IDC_STATIC,23,183,178,10
-    CTEXT           "Bug fixes and Enhancements by Bill Pierce, James Ross, Peter Westberg, James Rye, EJ Jaquay, && Trey Tomes",IDC_STATIC,19,194,193,20
-    CTEXT           "along with VCC (Virtual Color Computer). If not, see http://www.gnu.org/licenses/.",IDC_STATIC,31,337,174,18
-END
-
 IDD_TCONFIG DIALOGEX 0, 0, 397, 213
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Vcc Options"
@@ -491,14 +453,6 @@ END
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO
 BEGIN
-    IDD_ABOUTBOX, DIALOG
-    BEGIN
-        LEFTMARGIN, 1
-        RIGHTMARGIN, 231
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 377
-    END
-
     IDD_TCONFIG, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -602,11 +556,6 @@ BEGIN
 END
 
 IDD_KEYMAPED AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-IDD_ABOUTBOX AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

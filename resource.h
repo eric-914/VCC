@@ -4,7 +4,6 @@
 //
 #define IDAPPLY                         3
 #define IDR_MENU                        101
-#define IDD_ABOUTBOX                    104
 #define IDD_CONFIG                      105
 #define IDD_DISKS                       106
 #define IDB_BENDER                      111
