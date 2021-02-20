@@ -6,7 +6,7 @@
 
 #include "library/vccdef.h"
 #include "library/vccstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 #include "library/pakinterfacestate.h"
 
 #include "About.h"

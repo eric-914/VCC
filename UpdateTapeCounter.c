@@ -2,7 +2,7 @@
 #include <string>
 
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 #include "GetTapeName.h"
 

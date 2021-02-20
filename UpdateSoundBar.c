@@ -1,7 +1,7 @@
 #include <ShlObj.h>
 
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 void UpdateSoundBar(unsigned short left, unsigned short right)
 {

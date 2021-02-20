@@ -3,7 +3,7 @@
 #include <commctrl.h>	// Windows common controls
 
 #include "library/directdrawstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 #include "ConfigAccessors.h"
 

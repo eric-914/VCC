@@ -1,5 +1,5 @@
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 #include "library/cassettedef.h"
 

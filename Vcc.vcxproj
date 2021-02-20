@@ -579,9 +579,6 @@
     <ClInclude Include="WritePrintMon.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Vcc.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">
       <Project>{f4dc9499-4ff1-4a56-83dd-6499062972aa}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -632,6 +629,9 @@
     <Image Include="_resources\speaker1.bmp" />
     <Image Include="_resources\speaker2.bmp" />
     <Image Include="_resources\vcc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Vcc.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

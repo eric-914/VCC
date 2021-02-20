@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #include "library/vccstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 // Mesage handler for the About box.
 LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

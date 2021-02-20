@@ -2,7 +2,7 @@
 #include <ShlObj.h>
 
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 #include "library/systemstate.h"
 

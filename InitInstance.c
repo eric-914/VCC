@@ -2,7 +2,7 @@
 
 #include <afxwin.h>
 
-#include "resource.h"
+#include "resources/resource.h"
 
 #include "library/directdrawstate.h"
 
