@@ -1,4 +1,4 @@
-#include "configstate.h"
+#include "library/configstate.h"
 
 #include "library/PakInterfaceAccessors.h"
 #include "library/DirectDrawAccessors.h"

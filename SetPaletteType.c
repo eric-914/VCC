@@ -1,7 +1,7 @@
 #include "library/graphicsstate.h"
 
 #include "SetGimeBorderColor.h"
-#include "ConfigAccessors.h"
+#include "library/ConfigAccessors.h"
 
 void SetPaletteType() {
   int borderColor = GetGraphicsState()->CC3BorderColor;

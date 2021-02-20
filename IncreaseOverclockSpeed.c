@@ -1,7 +1,7 @@
 #include <string>
 #include <ShlObj.h>
 
-#include "configstate.h"
+#include "library/configstate.h"
 #include "resources/resource.h"
 
 #include "library/systemstate.h"

@@ -183,6 +183,8 @@
     <ClCompile Include="clipboardstate.c" />
     <ClCompile Include="cocostate.c" />
     <ClCompile Include="commandline.c" />
+    <ClCompile Include="ConfigAccessors.c" />
+    <ClCompile Include="configstate.c" />
     <ClCompile Include="cpudef.c" />
     <ClCompile Include="DirectDrawAccessors.c" />
     <ClCompile Include="directdrawstate.c" />
@@ -205,6 +207,7 @@
     <ClCompile Include="mmustate.c" />
     <ClCompile Include="PakInterfaceAccessors.c" />
     <ClCompile Include="pakinterfacestate.c" />
+    <ClCompile Include="ProfileAccessors.c" />
     <ClCompile Include="RegistersAccessors.c" />
     <ClCompile Include="registersstate.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
@@ -222,7 +225,9 @@
     <ClInclude Include="AudioState.h" />
     <ClInclude Include="clipboardstate.h" />
     <ClInclude Include="cocostate.h" />
+    <ClInclude Include="ConfigAccessors.h" />
     <ClInclude Include="configdef.h" />
+    <ClInclude Include="configstate.h" />
     <ClInclude Include="DirectDrawAccessors.h" />
     <ClInclude Include="directdrawdef.h" />
     <ClInclude Include="directdrawstate.h" />
@@ -242,6 +247,7 @@
     <ClInclude Include="PakInterfaceAccessors.h" />
     <ClInclude Include="pakinterfacedef.h" />
     <ClInclude Include="pakinterfacestate.h" />
+    <ClInclude Include="ProfileAccessors.h" />
     <ClInclude Include="RegistersAccessors.h" />
     <ClInclude Include="registersstate.h" />
     <ClInclude Include="SndCardList.h" />

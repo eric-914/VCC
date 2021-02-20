@@ -1,4 +1,4 @@
-#include "configstate.h"
+#include "library/configstate.h"
 
 #include "library/joystickstate.h"
 #include "library/joystickinput.h"

@@ -1,6 +1,6 @@
 #include "library/vccstate.h"
 
-#include "ConfigAccessors.h"
+#include "library/ConfigAccessors.h"
 #include "WriteIniFile.h"
 
 void SaveConfig(void) {

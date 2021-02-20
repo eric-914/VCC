@@ -5,7 +5,7 @@
 #include "library/directdrawstate.h"
 #include "resources/resource.h"
 
-#include "ConfigAccessors.h"
+#include "library/ConfigAccessors.h"
 
 #include "library/systemstate.h"
 

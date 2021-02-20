@@ -11,7 +11,7 @@
 
 #include "About.h"
 #include "library/AudioAccessors.h"
-#include "ConfigAccessors.h"
+#include "library/ConfigAccessors.h"
 #include "CopyText.h"
 #include "CreateDDWindow.h"
 #include "DecreaseOverclockSpeed.h"

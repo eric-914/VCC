@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <string>
 
-#include "configstate.h"
+#include "library/configstate.h"
 #include "resources/resource.h"
 
 #include "GetTapeName.h"

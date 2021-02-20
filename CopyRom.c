@@ -1,8 +1,8 @@
 #include <windows.h>
 
-#include "ProfileAccessors.h"
+#include "library/ProfileAccessors.h"
 #include "LoadInternalRom.h"
-#include "ConfigAccessors.h"
+#include "library/ConfigAccessors.h"
 
 #include "library/fileoperations.h"
 

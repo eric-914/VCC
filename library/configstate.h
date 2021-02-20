@@ -2,12 +2,12 @@
 
 #include <richedit.h>
 
-#include "library/configdef.h"
+#include "configdef.h"
 
-#include "library/SndCardList.h"
-#include "library/ConfigModel.h"
-#include "library/defines.h"
-#include "library/joystickdef.h"
+#include "SndCardList.h"
+#include "ConfigModel.h"
+#include "defines.h"
+#include "joystickdef.h"
 
 typedef struct
 {

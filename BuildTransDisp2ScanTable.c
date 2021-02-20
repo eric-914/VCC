@@ -1,7 +1,7 @@
 #include "library/di.version.h"
 #include <dinput.h>
 
-#include "configstate.h"
+#include "library/configstate.h"
 
 #include "library/configdef.h"
 

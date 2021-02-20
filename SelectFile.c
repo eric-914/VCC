@@ -2,8 +2,8 @@ using namespace std;
 
 #include <string>
 
-#include "configstate.h"
-#include "ProfileAccessors.h"
+#include "library/configstate.h"
+#include "library/ProfileAccessors.h"
 #include "OpenPrintFile.h"
 
 #include "library/systemstate.h"

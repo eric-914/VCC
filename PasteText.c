@@ -1,7 +1,7 @@
 #include <string>
 
 #include "library/clipboardstate.h"
-#include "ConfigAccessors.h"
+#include "library/ConfigAccessors.h"
 #include "GetClipboardText.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "library/KeyboardAccessors.h"
@@ -32,7 +32,7 @@ void PasteText() {
 
   //This sets the keyboard to Natural,
   //but we need to read it first so we can set it back
-  clipboardState->CurrentKeyMap = GetKeyboardLayout();
+  clipboardState->CurrentKeyMap = GetCurrentKeyboardLayout();
 
   vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 

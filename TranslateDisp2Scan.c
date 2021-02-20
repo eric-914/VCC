@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include "configstate.h"
+#include "library/configstate.h"
 
 unsigned char TranslateDisp2Scan(LRESULT x)
 {

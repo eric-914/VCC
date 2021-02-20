@@ -1,7 +1,7 @@
 #include "configstate.h"
-#include "resources/resource.h"
+#include "../resources/resource.h"
 
-#include "library/cassettedef.h"
+#include "cassettedef.h"
 
 #define SIZEOF(x)  (sizeof(x) / sizeof((x)[0]))
 

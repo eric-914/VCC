@@ -172,7 +172,6 @@
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="BuildTransDisp2ScanTable.c" />
-    <ClCompile Include="configstate.c" />
     <ClCompile Include="HD6309AssertInterrupt.c" />
     <ClCompile Include="HD6309DeAssertInterrupt.c" />
     <ClCompile Include="HD6309Exec.c" />
@@ -202,7 +201,6 @@
     <ClCompile Include="ClosePrintFile.c" />
     <ClCompile Include="CloseTapeFile.c" />
     <ClCompile Include="CocoReset.c" />
-    <ClCompile Include="ConfigAccessors.c" />
     <ClCompile Include="CopyRom.c" />
     <ClCompile Include="CopyText.c" />
     <ClCompile Include="CpuConfig.c" />
@@ -282,7 +280,6 @@
     <ClCompile Include="PopClipboard.c" />
     <ClCompile Include="port_read.c" />
     <ClCompile Include="port_write.c" />
-    <ClCompile Include="ProfileAccessors.c" />
     <ClCompile Include="PurgeAuxBuffer.c" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="ReadIniFile.c" />
@@ -380,7 +377,6 @@
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="BuildTransDisp2ScanTable.h" />
-    <ClInclude Include="configstate.h" />
     <ClInclude Include="HD6309AssertInterrupt.h" />
     <ClInclude Include="HD6309DeAssertInterrupt.h" />
     <ClInclude Include="HD6309Exec.h" />
@@ -410,7 +406,6 @@
     <ClInclude Include="ClosePrintFile.h" />
     <ClInclude Include="CloseTapeFile.h" />
     <ClInclude Include="CocoReset.h" />
-    <ClInclude Include="ConfigAccessors.h" />
     <ClInclude Include="CopyRom.h" />
     <ClInclude Include="CopyText.h" />
     <ClInclude Include="CpuConfig.h" />
@@ -489,7 +484,6 @@
     <ClInclude Include="PopClipboard.h" />
     <ClInclude Include="port_read.h" />
     <ClInclude Include="port_write.h" />
-    <ClInclude Include="ProfileAccessors.h" />
     <ClInclude Include="PurgeAuxBuffer.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="ReadIniFile.h" />

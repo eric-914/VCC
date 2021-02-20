@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "configstate.h"
+#include "library/configstate.h"
 #include "resources/resource.h"
 
 LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
