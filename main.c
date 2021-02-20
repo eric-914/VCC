@@ -58,7 +58,6 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
   VccState* vccState = GetVccState();
 
-  vccState->EmuState.WindowInstance = hInstance;
   vccState->EmuState.Resources = hResources;
 
   //LoadString(hInstance, IDS_APP_TITLE, vccState->AppName, MAX_LOADSTRING);
@@ -93,7 +92,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     exit(0);
   }
 
-  //NOTE: Sound is lost if this is done before CreateDDWindow
+  //NOTE: Sound is lost if this isn't done after CreateDDWindow
   LoadConfig(&(vccState->EmuState), vccState->CmdArg);			//Loads the default config file Vcc.ini from the exec directory
 
   Cls(0, &(vccState->EmuState));
@@ -206,13 +205,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (wmId)
     {
     case IDM_HELP_ABOUT:
-      DialogBox(vccState->EmuState.WindowInstance, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+      DialogBox(vccState->EmuState.Resources, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
       break;
 
     case ID_CONFIGURE_OPTIONS:
 #ifdef CONFIG_DIALOG_MODAL
       // open config dialog modally
-      DialogBox(EmuState.WindowInstance, (LPCTSTR)IDD_TCONFIG, hWnd, (DLGPROC)Config);
+      DialogBox(vccState->EmuState.Resources, (LPCTSTR)IDD_TCONFIG, hWnd, (DLGPROC)Config);
 #else
 
       // open config dialog if not already open
@@ -220,7 +219,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       // while emulator is still running (assumed)
       if (vccState->EmuState.ConfigDialog == NULL)
       {
-        vccState->EmuState.ConfigDialog = CreateDialog(vccState->EmuState.WindowInstance, (LPCTSTR)IDD_TCONFIG, vccState->EmuState.WindowHandle, (DLGPROC)MainConfig);
+        vccState->EmuState.ConfigDialog = CreateDialog(vccState->EmuState.Resources, (LPCTSTR)IDD_TCONFIG, vccState->EmuState.WindowHandle, (DLGPROC)MainConfig);
 
         // open modeless
         ShowWindow(vccState->EmuState.ConfigDialog, SW_SHOWNORMAL);

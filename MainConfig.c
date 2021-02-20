@@ -42,22 +42,22 @@ LRESULT CALLBACK MainConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
     InitCommonControls();
 
     configState->TempConfig = configState->CurrentConfig;
-    configState->CpuIcons[0] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_MOTO);
-    configState->CpuIcons[1] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_HITACHI2);
-    configState->MonIcons[0] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_COMPOSITE);
-    configState->MonIcons[1] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_RGB);
+    configState->CpuIcons[0] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_MOTO);
+    configState->CpuIcons[1] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_HITACHI2);
+    configState->MonIcons[0] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_COMPOSITE);
+    configState->MonIcons[1] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_RGB);
 
     hWndTabDialog = GetDlgItem(hDlg, IDC_CONFIGTAB); //get handle of Tabbed Dialog
 
     //get handles to all the sub panels in the control
-    configState->hWndConfig[0] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_AUDIO), hWndTabDialog, (DLGPROC)AudioConfig);
-    configState->hWndConfig[1] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_CPU), hWndTabDialog, (DLGPROC)CpuConfig);
-    configState->hWndConfig[2] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_DISPLAY), hWndTabDialog, (DLGPROC)DisplayConfig);
-    configState->hWndConfig[3] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_INPUT), hWndTabDialog, (DLGPROC)InputConfig);
-    configState->hWndConfig[4] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_JOYSTICK), hWndTabDialog, (DLGPROC)JoyStickConfig);
-    configState->hWndConfig[5] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_MISC), hWndTabDialog, (DLGPROC)MiscConfig);
-    configState->hWndConfig[6] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_CASSETTE), hWndTabDialog, (DLGPROC)TapeConfig);
-    configState->hWndConfig[7] = CreateDialog(vccState->EmuState.WindowInstance, MAKEINTRESOURCE(IDD_BITBANGER), hWndTabDialog, (DLGPROC)BitBangerConfig);
+    configState->hWndConfig[0] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_AUDIO), hWndTabDialog, (DLGPROC)AudioConfig);
+    configState->hWndConfig[1] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_CPU), hWndTabDialog, (DLGPROC)CpuConfig);
+    configState->hWndConfig[2] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_DISPLAY), hWndTabDialog, (DLGPROC)DisplayConfig);
+    configState->hWndConfig[3] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_INPUT), hWndTabDialog, (DLGPROC)InputConfig);
+    configState->hWndConfig[4] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_JOYSTICK), hWndTabDialog, (DLGPROC)JoyStickConfig);
+    configState->hWndConfig[5] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_MISC), hWndTabDialog, (DLGPROC)MiscConfig);
+    configState->hWndConfig[6] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_CASSETTE), hWndTabDialog, (DLGPROC)TapeConfig);
+    configState->hWndConfig[7] = CreateDialog(vccState->EmuState.Resources, MAKEINTRESOURCE(IDD_BITBANGER), hWndTabDialog, (DLGPROC)BitBangerConfig);
 
     //Set the title text for all tabs
     for (tabCount = 0; tabCount < TABS; tabCount++)

@@ -26,10 +26,10 @@ LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
   switch (message)
   {
   case WM_INITDIALOG:
-    configState->JoystickIcons[0] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_KEYBOARD);
-    configState->JoystickIcons[1] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_MOUSE);
-    configState->JoystickIcons[2] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_AUDIO);
-    configState->JoystickIcons[3] = LoadIcon(vccState->EmuState.WindowInstance, (LPCTSTR)IDI_JOYSTICK);
+    configState->JoystickIcons[0] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_KEYBOARD);
+    configState->JoystickIcons[1] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_MOUSE);
+    configState->JoystickIcons[2] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_AUDIO);
+    configState->JoystickIcons[3] = LoadIcon(vccState->EmuState.Resources, (LPCTSTR)IDI_JOYSTICK);
 
     for (unsigned char temp = 0; temp < 68; temp++)
     {

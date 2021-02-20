@@ -55,8 +55,8 @@ bool CreateDDWindow(SystemState* systemState, WNDPROC WndProc)
   ddState->Wcex.cbClsExtra = 0;
   ddState->Wcex.cbWndExtra = 0;
   ddState->Wcex.hInstance = ddState->hInstance;
-  ddState->Wcex.hIcon = LoadIcon(ddState->hInstance, (LPCTSTR)IDI_COCO3);
-  ddState->Wcex.hIconSm = LoadIcon(ddState->hInstance, (LPCTSTR)IDI_COCO3); //LoadIcon(ddState->Wcex.hInstance, (LPCTSTR)IDI_COCO3);
+  ddState->Wcex.hIcon = LoadIcon(systemState->Resources, (LPCTSTR)IDI_COCO3);
+  ddState->Wcex.hIconSm = LoadIcon(systemState->Resources, (LPCTSTR)IDI_COCO3);
   ddState->Wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
   ddState->Wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
   ddState->Wcex.lpszMenuName = (LPCSTR)IDR_MENU;
@@ -65,7 +65,7 @@ bool CreateDDWindow(SystemState* systemState, WNDPROC WndProc)
   if (systemState->FullScreen)
   {
     ddState->Wcex.lpszMenuName = NULL;	//Fullscreen has no Menu Bar and no Mouse pointer
-    ddState->Wcex.hCursor = LoadCursor(ddState->hInstance, MAKEINTRESOURCE(IDC_NONE));
+    ddState->Wcex.hCursor = LoadCursor(systemState->Resources, MAKEINTRESOURCE(IDC_NONE));
   }
 
   if (!RegisterClassEx(&(ddState->Wcex))) {
