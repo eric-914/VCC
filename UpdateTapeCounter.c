@@ -4,9 +4,7 @@
 #include "library/configstate.h"
 #include "resources/resource.h"
 
-#include "GetTapeName.h"
-
-#include "library/cassettedef.h"
+#include "library/Cassette.h"
 #include "library/fileoperations.h"
 
 void UpdateTapeCounter(unsigned int counter, unsigned char tapeMode)

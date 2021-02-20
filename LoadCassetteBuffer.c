@@ -1,11 +1,9 @@
-#include "library/cassettedef.h"
-#include "library/cassettestate.h"
+#include "library/Cassette.h"
 #include "library/defines.h"
 
 //--CASSETTE--//
 
 #include "UpdateTapeCounter.h"
-#include "CastoWav.h"
 
 void LoadCassetteBuffer(unsigned char* cassBuffer)
 {

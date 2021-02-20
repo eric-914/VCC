@@ -1,10 +1,8 @@
-#include "library/cassettedef.h"
-#include "library/cassettestate.h"
+#include "library/Cassette.h"
 
 //--CASSETTE--//
 
 #include "SetSndOutMode.h"
-#include "SyncFileBuffer.h"
 
 void Motor(unsigned char state)
 {

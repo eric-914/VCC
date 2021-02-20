@@ -4,13 +4,10 @@
 #include "library/configstate.h"
 #include "resources/resource.h"
 
-#include "GetTapeCounter.h"
-#include "GetTapeName.h"
 #include "SetTapeMode.h"
 #include "SetTapeCounter.h"
-#include "LoadTape.h"
 
-#include "library/cassettedef.h"
+#include "library/Cassette.h"
 
 LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

@@ -1,11 +1,8 @@
-#include "library/cassettedef.h"
-#include "library/cassettestate.h"
+#include "library/Cassette.h"
 
 //--CASSETTE--//
 
-#include "LoadTape.h"
 #include "Motor.h"
-#include "CloseTapeFile.h"
 #include "UpdateTapeCounter.h"
 
 void SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog

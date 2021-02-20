@@ -1,9 +1,7 @@
-#include "library/cassettedef.h"
-#include "library/cassettestate.h"
+#include "library/Cassette.h"
 
 //--CASSETTE--//
 
-#include "WavtoCas.h"
 #include "UpdateTapeCounter.h"
 
 void FlushCassetteBuffer(unsigned char* buffer, unsigned int length)

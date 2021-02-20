@@ -178,7 +178,7 @@
     <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="Audio.c" />
     <ClCompile Include="AudioOut.c" />
-    <ClCompile Include="cassettestate.c" />
+    <ClCompile Include="Cassette.c" />
     <ClCompile Include="clipboardstate.c" />
     <ClCompile Include="cocostate.c" />
     <ClCompile Include="commandline.c" />
@@ -220,6 +220,7 @@
   <ItemGroup>
     <ClInclude Include="Audio.h" />
     <ClInclude Include="AudioOut.h" />
+    <ClInclude Include="Cassette.h" />
     <ClInclude Include="clipboardstate.h" />
     <ClInclude Include="cocostate.h" />
     <ClInclude Include="ConfigAccessors.h" />
@@ -249,8 +250,6 @@
     <ClInclude Include="RegistersAccessors.h" />
     <ClInclude Include="registersstate.h" />
     <ClInclude Include="SoundCardList.h" />
-    <ClInclude Include="cassettedef.h" />
-    <ClInclude Include="cassettestate.h" />
     <ClInclude Include="cc2font.h" />
     <ClInclude Include="cc3font.h" />
     <ClInclude Include="di.version.h" />
