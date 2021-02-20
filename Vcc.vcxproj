@@ -498,7 +498,6 @@
     <ClInclude Include="RefreshJoystickStatus.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="ResetAudio.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="SAMRead.h" />
     <ClInclude Include="SAMWrite.h" />
     <ClInclude Include="SaveConfig.h" />
@@ -629,9 +628,6 @@
     <Image Include="_resources\speaker1.bmp" />
     <Image Include="_resources\speaker2.bmp" />
     <Image Include="_resources\vcc.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Vcc.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -57,15 +57,16 @@ bool CreateDDWindow(SystemState* systemState, WNDPROC WndProc)
   ddState->Wcex.hInstance = ddState->hInstance;
   ddState->Wcex.hIcon = LoadIcon(systemState->Resources, (LPCTSTR)IDI_COCO3);
   ddState->Wcex.hIconSm = LoadIcon(systemState->Resources, (LPCTSTR)IDI_COCO3);
-  ddState->Wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
   ddState->Wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-  ddState->Wcex.lpszMenuName = (LPCSTR)IDR_MENU;
   ddState->Wcex.lpszClassName = ddState->AppNameText;
+  ddState->Wcex.lpszMenuName = NULL;	//Menu is set on WM_CREATE
 
-  if (systemState->FullScreen)
+  if (!systemState->FullScreen)
   {
-    ddState->Wcex.lpszMenuName = NULL;	//Fullscreen has no Menu Bar and no Mouse pointer
-    ddState->Wcex.hCursor = LoadCursor(systemState->Resources, MAKEINTRESOURCE(IDC_NONE));
+    ddState->Wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+  }
+  else {
+    ddState->Wcex.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(IDC_NONE));
   }
 
   if (!RegisterClassEx(&(ddState->Wcex))) {

@@ -175,6 +175,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   switch (message)
   {
+  case WM_CREATE:
+    if (!vccState->EmuState.FullScreen) {
+      SetMenu(hWnd, LoadMenu(vccState->EmuState.Resources, MAKEINTRESOURCE(IDR_MENU)));
+    }
+    else {
+      SetMenu(hWnd, NULL);
+    }
+
+    break;
 
   case WM_SYSCOMMAND:
     //-------------------------------------------------------------
