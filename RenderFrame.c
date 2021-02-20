@@ -1,16 +1,15 @@
-#include "library/cocostate.h"
-
+#include "CPUCycle.h"
+#include "CalculateFPS.h"
+#include "FlushAudioBuffer.h"
 #include "FlushCassetteBuffer.h"
 #include "LoadCassetteBuffer.h"
-#include "FlushAudioBuffer.h"
-#include "CalculateFPS.h"
 #include "LockScreen.h"
-#include "UnlockScreen.h"
-#include "CPUCycle.h"
 #include "SetBorderChange.h"
-#include "library/RegistersAccessors.h"
+#include "UnlockScreen.h"
 #include "irq_fs.h"
 
+#include "library/CoCo.h"
+#include "library/RegistersAccessors.h"
 #include "library/graphicsstate.h"
 
 float RenderFrame(SystemState* systemState)

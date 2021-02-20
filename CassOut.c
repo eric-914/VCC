@@ -1,4 +1,4 @@
-#include "library/cocostate.h"
+#include "library/CoCo.h"
 #include "GetCasSample.h"
 
 extern "C" {

@@ -1,20 +1,19 @@
 #include <math.h>
 
-#include "library/cocostate.h"
-#include "library/mc6821def.h"
-#include "library/Clipboard.h"
-
-#include "vccKeyboardBuildRuntimeTable.h"
-#include "library/KeyboardAccessors.h"
-#include "library/PakInterfaceAccessors.h"
-#include "vccKeyboardHandleKey.h"
-#include "library/RegistersAccessors.h"
 #include "SetSpeedThrottle.h"
 #include "irq_hs.h"
+#include "vccKeyboardBuildRuntimeTable.h"
+#include "vccKeyboardHandleKey.h"
 
+#include "library/Clipboard.h"
+#include "library/CoCo.h"
+#include "library/KeyboardAccessors.h"
+#include "library/PakInterfaceAccessors.h"
+#include "library/RegistersAccessors.h"
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/keyboarddef.h"
+#include "library/mc6821def.h"
 
 /* _inline */ int CPUCycle(void)
 {

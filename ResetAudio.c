@@ -1,6 +1,6 @@
 #include "library/AudioState.h"
 
-#include "SetAudioRate.h"
+#include "library/Coco.h"
 
 void ResetAudio(void)
 {

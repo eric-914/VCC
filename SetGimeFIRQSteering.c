@@ -1,9 +1,7 @@
 #include "library/registersstate.h"
 
 #include "library/KeyboardAccessors.h"
-#include "SetVertInterruptState.h"
-#include "SetHorzInterruptState.h"
-#include "SetTimerInterruptState.h"
+#include "library/CoCo.h"
 
 void SetGimeFIRQSteering(unsigned char data) //93
 {

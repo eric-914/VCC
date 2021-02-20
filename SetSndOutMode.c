@@ -1,11 +1,8 @@
-#include "library/cocostate.h"
-
 #include "FlushCassetteBuffer.h"
-#include "library/AudioOut.h"
-#include "SetAudioRate.h"
 #include "CassIn.h"
 #include "CassOut.h"
 
+#include "library/CoCo.h"
 #include "library/defines.h"
 
 unsigned char SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2=Cassette In

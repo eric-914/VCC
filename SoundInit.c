@@ -1,7 +1,7 @@
 #include <Windows.h>
 
 #include "library/AudioState.h"
-#include "SetAudioRate.h"
+#include "library/Coco.h"
 
 #include "library/defines.h"
 

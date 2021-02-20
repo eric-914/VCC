@@ -1,6 +1,5 @@
 #include "library/graphicsstate.h"
-
-#include "SetLinesperScreen.h"
+#include "library/CoCo.h"
 
 void SetupDisplay(void)
 {

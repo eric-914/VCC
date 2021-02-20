@@ -1,5 +1,5 @@
 #include "library/MmuAccessors.h"
-#include "SetTimerClockRate.h"
+#include "library/CoCo.h"
 
 void SetInit1(unsigned char data)
 {

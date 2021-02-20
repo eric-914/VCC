@@ -1,7 +1,7 @@
 #include "library/vccstate.h"
 
 #include "library/PakInterfaceAccessors.h"
-#include "SetClockSpeed.h"
+#include "library/CoCo.h"
 #include "MmuInit.h"
 
 #include "HD6309Init.h"

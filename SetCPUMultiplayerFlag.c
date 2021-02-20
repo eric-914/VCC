@@ -1,6 +1,6 @@
 #include "library/vccstate.h"
 
-#include "SetClockSpeed.h"
+#include "library/Coco.h"
 
 void SetCPUMultiplayerFlag(unsigned char double_speed)
 {
