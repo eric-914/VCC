@@ -5,7 +5,7 @@
 const char RateList[4][7] = { "Mute", "11025", "22050", "44100" };
 const unsigned short iRateList[4] = { 0, 11025, 22050, 44100 };
 
-AudioState* InitializeInstance(AudioState* audio);
+AudioState* InitializeInstance(AudioState*);
 
 static AudioState* instance = InitializeInstance(new AudioState());
 

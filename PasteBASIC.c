@@ -1,4 +1,4 @@
-#include "library/clipboardstate.h"
+#include "library/Clipboard.h"
 
 #include "PasteText.h"
 

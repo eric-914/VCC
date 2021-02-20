@@ -2,11 +2,8 @@
 
 #include "library/cocostate.h"
 #include "library/mc6821def.h"
+#include "library/Clipboard.h"
 
-#include "PopClipboard.h"
-#include "PeekClipboard.h"
-#include "ClipboardEmpty.h"
-#include "GetCurrentKeyMap.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "library/KeyboardAccessors.h"
 #include "library/PakInterfaceAccessors.h"

@@ -196,7 +196,6 @@
     <ClCompile Include="MC6809Exec.c" />
     <ClCompile Include="MC6809ForcePC.c" />
     <ClCompile Include="mc6809_cc.c" />
-    <ClCompile Include="ClipboardEmpty.c" />
     <ClCompile Include="ClosePrintFile.c" />
     <ClCompile Include="CocoReset.c" />
     <ClCompile Include="CopyRom.c" />
@@ -219,8 +218,6 @@
     <ClCompile Include="FrameWait.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetCasSample.c" />
-    <ClCompile Include="GetClipboardText.c" />
-    <ClCompile Include="GetCurrentKeyMap.c" />
     <ClCompile Include="GetFreeBlockCount.c" />
     <ClCompile Include="GetKeyName.c" />
     <ClCompile Include="GetMuxState.c" />
@@ -265,13 +262,11 @@
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
-    <ClCompile Include="PeekClipboard.c" />
     <ClCompile Include="pia0_read.c" />
     <ClCompile Include="pia0_write.c" />
     <ClCompile Include="pia1_read.c" />
     <ClCompile Include="pia1_write.c" />
     <ClCompile Include="PiaReset.c" />
-    <ClCompile Include="PopClipboard.c" />
     <ClCompile Include="port_read.c" />
     <ClCompile Include="port_write.c" />
     <ClCompile Include="PurgeAuxBuffer.c" />
@@ -294,7 +289,6 @@
     <ClCompile Include="SetCart.c" />
     <ClCompile Include="SetCartAutoStart.c" />
     <ClCompile Include="SetCassetteSample.c" />
-    <ClCompile Include="SetClipboard.c" />
     <ClCompile Include="SetClockSpeed.c" />
     <ClCompile Include="SetCompatMode.c" />
     <ClCompile Include="SetCPUMultiplayer.c" />
@@ -393,7 +387,6 @@
     <ClInclude Include="MC6809Exec.h" />
     <ClInclude Include="MC6809ForcePC.h" />
     <ClInclude Include="mc6809_cc.h" />
-    <ClInclude Include="ClipboardEmpty.h" />
     <ClInclude Include="ClosePrintFile.h" />
     <ClInclude Include="CocoReset.h" />
     <ClInclude Include="CopyRom.h" />
@@ -416,8 +409,6 @@
     <ClInclude Include="FrameWait.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetCasSample.h" />
-    <ClInclude Include="GetClipboardText.h" />
-    <ClInclude Include="GetCurrentKeyMap.h" />
     <ClInclude Include="GetFreeBlockCount.h" />
     <ClInclude Include="GetKeyName.h" />
     <ClInclude Include="GetMuxState.h" />
@@ -461,13 +452,11 @@
     <ClInclude Include="PasteBASIC.h" />
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />
-    <ClInclude Include="PeekClipboard.h" />
     <ClInclude Include="pia0_read.h" />
     <ClInclude Include="pia0_write.h" />
     <ClInclude Include="pia1_read.h" />
     <ClInclude Include="pia1_write.h" />
     <ClInclude Include="PiaReset.h" />
-    <ClInclude Include="PopClipboard.h" />
     <ClInclude Include="port_read.h" />
     <ClInclude Include="port_write.h" />
     <ClInclude Include="PurgeAuxBuffer.h" />
@@ -490,7 +479,6 @@
     <ClInclude Include="SetCart.h" />
     <ClInclude Include="SetCartAutoStart.h" />
     <ClInclude Include="SetCassetteSample.h" />
-    <ClInclude Include="SetClipboard.h" />
     <ClInclude Include="SetClockSpeed.h" />
     <ClInclude Include="SetCompatMode.h" />
     <ClInclude Include="SetCPUMultiplayer.h" />

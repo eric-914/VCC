@@ -179,7 +179,7 @@
     <ClCompile Include="Audio.c" />
     <ClCompile Include="AudioOut.c" />
     <ClCompile Include="Cassette.c" />
-    <ClCompile Include="clipboardstate.c" />
+    <ClCompile Include="Clipboard.c" />
     <ClCompile Include="cocostate.c" />
     <ClCompile Include="commandline.c" />
     <ClCompile Include="ConfigAccessors.c" />
@@ -221,7 +221,7 @@
     <ClInclude Include="Audio.h" />
     <ClInclude Include="AudioOut.h" />
     <ClInclude Include="Cassette.h" />
-    <ClInclude Include="clipboardstate.h" />
+    <ClInclude Include="Clipboard.h" />
     <ClInclude Include="cocostate.h" />
     <ClInclude Include="ConfigAccessors.h" />
     <ClInclude Include="configdef.h" />

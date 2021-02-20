@@ -1,9 +1,8 @@
 #include <string>
 
-#include "library/clipboardstate.h"
+#include "library/Clipboard.h"
 #include "library/graphicsstate.h"
 
-#include "SetClipboard.h"
 #include "library/MmuAccessors.h"
 #include "MemRead8.h"
 
