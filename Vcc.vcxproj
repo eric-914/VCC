@@ -608,26 +608,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="COPYING" />
-    <None Include="_resources\coco3.rom" />
-    <None Include="_resources\cursor1.cur" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="_resources\3guys.bmp" />
-    <Image Include="_resources\binfile.ico" />
-    <Image Include="_resources\composite.ico" />
-    <Image Include="_resources\hitachi.ico" />
-    <Image Include="_resources\ico00004.ico" />
-    <Image Include="_resources\icon1.ico" />
-    <Image Include="_resources\joystick.ico" />
-    <Image Include="_resources\Keyboard.ico" />
-    <Image Include="_resources\moto.ico" />
-    <Image Include="_resources\mouse.ico" />
-    <Image Include="_resources\progpack.ico" />
-    <Image Include="_resources\rgb.ico" />
-    <Image Include="_resources\speaker.ico" />
-    <Image Include="_resources\speaker1.bmp" />
-    <Image Include="_resources\speaker2.bmp" />
-    <Image Include="_resources\vcc.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
