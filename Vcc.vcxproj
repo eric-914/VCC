@@ -171,7 +171,6 @@
     <ClCompile Include="AssertCart.c" />
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="BitBangerConfig.c" />
-    <ClCompile Include="BuildTransDisp2ScanTable.c" />
     <ClCompile Include="HD6309AssertInterrupt.c" />
     <ClCompile Include="HD6309DeAssertInterrupt.c" />
     <ClCompile Include="HD6309Exec.c" />
@@ -203,7 +202,6 @@
     <ClCompile Include="CPUCycle.c" />
     <ClCompile Include="CreateDDWindow.c" />
     <ClCompile Include="DACState.c" />
-    <ClCompile Include="DecreaseOverclockSpeed.c" />
     <ClCompile Include="DisplayConfig.c" />
     <ClCompile Include="DisplayFlip.c" />
     <ClCompile Include="DoCls.c" />
@@ -224,7 +222,6 @@
     <ClCompile Include="GimeReset.c" />
     <ClCompile Include="GimeWrite.c" />
     <ClCompile Include="HardReset.c" />
-    <ClCompile Include="IncreaseOverclockSpeed.c" />
     <ClCompile Include="InitInstance.c" />
     <ClCompile Include="InputConfig.c" />
     <ClCompile Include="InsertModule.c" />
@@ -326,21 +323,16 @@
     <ClCompile Include="StartRender.c" />
     <ClCompile Include="Static.c" />
     <ClCompile Include="TapeConfig.c" />
-    <ClCompile Include="TranslateDisp2Scan.c" />
-    <ClCompile Include="TranslateScan2Disp.c" />
     <ClCompile Include="UnloadDll.c" />
     <ClCompile Include="UnloadPack.c" />
     <ClCompile Include="UnlockScreen.c" />
     <ClCompile Include="UpdateBusPointer.c" />
     <ClCompile Include="UpdateConfig.c" />
-    <ClCompile Include="UpdateSoundBar.c" />
-    <ClCompile Include="UpdateTapeCounter.c" />
     <ClCompile Include="vccKeyboardBuildRuntimeTable.c" />
     <ClCompile Include="vccKeyboardGetScan.c" />
     <ClCompile Include="vccKeyboardHandleKey.c" />
     <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
     <ClCompile Include="VDG_Mode.c" />
-    <ClCompile Include="WriteIniFile.c" />
     <ClCompile Include="WritePrintMon.c" />
   </ItemGroup>
   <ItemGroup>
@@ -352,7 +344,6 @@
     <ClInclude Include="AssertCart.h" />
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="BitBangerConfig.h" />
-    <ClInclude Include="BuildTransDisp2ScanTable.h" />
     <ClInclude Include="HD6309AssertInterrupt.h" />
     <ClInclude Include="HD6309DeAssertInterrupt.h" />
     <ClInclude Include="HD6309Exec.h" />
@@ -384,7 +375,6 @@
     <ClInclude Include="CPUCycle.h" />
     <ClInclude Include="CreateDDWindow.h" />
     <ClInclude Include="DACState.h" />
-    <ClInclude Include="DecreaseOverclockSpeed.h" />
     <ClInclude Include="DisplayConfig.h" />
     <ClInclude Include="DisplayFlip.h" />
     <ClInclude Include="DoCls.h" />
@@ -405,7 +395,6 @@
     <ClInclude Include="GimeReset.h" />
     <ClInclude Include="GimeWrite.h" />
     <ClInclude Include="HardReset.h" />
-    <ClInclude Include="IncreaseOverclockSpeed.h" />
     <ClInclude Include="InitInstance.h" />
     <ClInclude Include="InputConfig.h" />
     <ClInclude Include="InsertModule.h" />
@@ -506,21 +495,16 @@
     <ClInclude Include="StartRender.h" />
     <ClInclude Include="Static.h" />
     <ClInclude Include="TapeConfig.h" />
-    <ClInclude Include="TranslateDisp2Scan.h" />
-    <ClInclude Include="TranslateScan2Disp.h" />
     <ClInclude Include="UnloadDll.h" />
     <ClInclude Include="UnloadPack.h" />
     <ClInclude Include="UnlockScreen.h" />
     <ClInclude Include="UpdateBusPointer.h" />
     <ClInclude Include="UpdateConfig.h" />
-    <ClInclude Include="UpdateSoundBar.h" />
-    <ClInclude Include="UpdateTapeCounter.h" />
     <ClInclude Include="vccKeyboardBuildRuntimeTable.h" />
     <ClInclude Include="vccKeyboardGetScan.h" />
     <ClInclude Include="vccKeyboardHandleKey.h" />
     <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
     <ClInclude Include="VDG_Mode.h" />
-    <ClInclude Include="WriteIniFile.h" />
     <ClInclude Include="WritePrintMon.h" />
   </ItemGroup>
   <ItemGroup>

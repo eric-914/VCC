@@ -1,6 +1,6 @@
 #include "library/AudioState.h"
 
-#include "UpdateSoundBar.h"
+#include "library/Config.h"
 #include "GetFreeBlockCount.h"
 
 void FlushAudioBuffer(unsigned int* aBuffer, unsigned short length)

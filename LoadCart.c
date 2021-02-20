@@ -4,7 +4,7 @@ using namespace std;
 
 #include "library/pakinterfacestate.h"
 
-#include "library/ConfigAccessors.h"
+#include "library/Config.h"
 #include "InsertModule.h"
 
 #include "library/systemstate.h"

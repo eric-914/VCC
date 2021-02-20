@@ -2,8 +2,7 @@ using namespace std;
 
 #include <string>
 
-#include "library/configstate.h"
-#include "library/ProfileAccessors.h"
+#include "library/Config.h"
 #include "OpenPrintFile.h"
 
 #include "library/systemstate.h"

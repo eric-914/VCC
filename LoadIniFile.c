@@ -1,7 +1,6 @@
 #include "library/vccstate.h"
+#include "library/Config.h"
 
-#include "library/ConfigAccessors.h"
-#include "WriteIniFile.h"
 #include "ReadIniFile.h"
 #include "UpdateConfig.h"
 

@@ -1,7 +1,6 @@
 #include "library/vccstate.h"
 
-#include "library/ConfigAccessors.h"
-#include "WriteIniFile.h"
+#include "library/Config.h"
 
 void SaveConfig(void) {
   OPENFILENAME ofn;

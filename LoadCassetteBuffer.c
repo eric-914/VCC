@@ -1,9 +1,6 @@
 #include "library/Cassette.h"
 #include "library/defines.h"
-
-//--CASSETTE--//
-
-#include "UpdateTapeCounter.h"
+#include "library/Config.h"
 
 void LoadCassetteBuffer(unsigned char* cassBuffer)
 {

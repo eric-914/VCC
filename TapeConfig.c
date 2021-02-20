@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <string>
 
-#include "library/configstate.h"
+#include "library/Config.h"
 #include "resources/resource.h"
 
 #include "SetTapeMode.h"

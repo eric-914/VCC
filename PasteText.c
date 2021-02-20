@@ -1,7 +1,7 @@
 #include <string>
 
 #include "library/Clipboard.h"
-#include "library/ConfigAccessors.h"
+#include "library/Config.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "library/KeyboardAccessors.h"
 

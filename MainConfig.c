@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <ShlObj.h>
 
-#include "library/configstate.h"
+#include "library/Config.h"
 #include "resources/resource.h"
 #include "library/vccstate.h"
 

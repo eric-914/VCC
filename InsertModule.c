@@ -2,7 +2,7 @@
 
 #include "library/pakinterfacestate.h"
 
-#include "library/ConfigAccessors.h"
+#include "library/Config.h"
 #include "library/PakInterfaceAccessors.h"
 #include "load_ext_rom.h"
 

@@ -2,12 +2,10 @@
 #include <direct.h>
 #include <ShlObj.h>
 
-#include "library/configstate.h"
+#include "library/Config.h"
 #include "resources/resource.h"
 
-#include "BuildTransDisp2ScanTable.h"
 #include "ReadIniFile.h"
-#include "WriteIniFile.h"
 #include "RefreshJoystickStatus.h"
 #include "UpdateConfig.h"
 #include "SoundInit.h"

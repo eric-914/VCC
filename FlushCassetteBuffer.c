@@ -1,8 +1,5 @@
 #include "library/Cassette.h"
-
-//--CASSETTE--//
-
-#include "UpdateTapeCounter.h"
+#include "library/Config.h"
 
 void FlushCassetteBuffer(unsigned char* buffer, unsigned int length)
 {

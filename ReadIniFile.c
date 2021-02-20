@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "library/configstate.h"
+#include "library/Config.h"
 
 #include "library/joystickstate.h"
 #include "library/keyboarddef.h"
@@ -8,7 +8,6 @@
 #include "library/fileoperations.h"
 
 #include "SetWindowSize.h"
-#include "library/ProfileAccessors.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "InsertModule.h"
 

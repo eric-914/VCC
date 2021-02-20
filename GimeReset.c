@@ -1,6 +1,6 @@
 #include "library/graphicsstate.h"
 
-#include "library/ConfigAccessors.h"
+#include "library/Config.h"
 #include "library/Coco.h"
 #include "ResetAudio.h"
 

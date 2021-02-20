@@ -1,9 +1,7 @@
 #include "library/Cassette.h"
-
-//--CASSETTE--//
+#include "library/Config.h"
 
 #include "Motor.h"
-#include "UpdateTapeCounter.h"
 
 void SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog
 {
