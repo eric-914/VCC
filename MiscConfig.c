@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 LRESULT CALLBACK MiscConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

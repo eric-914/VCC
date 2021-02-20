@@ -3,7 +3,7 @@
 #include <ShlObj.h>
 
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

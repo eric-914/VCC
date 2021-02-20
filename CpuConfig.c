@@ -3,7 +3,7 @@
 #include <ShlObj.h>
 
 #include "configstate.h"
-#include "resource.h"
+#include "resources/resource.h"
 
 LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
