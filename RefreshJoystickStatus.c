@@ -1,9 +1,5 @@
 #include "library/Config.h"
-
-#include "library/joystickstate.h"
-#include "library/joystickinput.h"
-
-#include "library/JoystickAccessors.h"
+#include "library/Joystick.h"
 
 void RefreshJoystickStatus(void)
 {

@@ -4,11 +4,10 @@
 #include <dinput.h>
 
 #include "library/KeyboardAccessors.h"
-#include "library/JoystickAccessors.h"
+#include "library/Joystick.h"
 #include "vccKeyboardUpdateRolloverTable.h"
 #include "library/RegistersAccessors.h"
 
-#include "library/joystickstate.h"
 #include "library/keyboarddef.h"
 #include "library/keyboardstate.h"
 #include "library/xDebug.h"

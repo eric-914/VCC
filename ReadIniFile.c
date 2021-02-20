@@ -2,7 +2,7 @@
 
 #include "library/Config.h"
 
-#include "library/joystickstate.h"
+#include "library/Joystick.h"
 #include "library/keyboarddef.h"
 #include "library/systemstate.h"
 #include "library/fileoperations.h"

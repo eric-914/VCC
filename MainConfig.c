@@ -19,10 +19,9 @@
 #include "UpdateConfig.h"
 #include "SoundInit.h"
 #include "vccKeyboardBuildRuntimeTable.h"
-#include "library/JoystickAccessors.h"
+#include "library/Joystick.h"
 
 #include "library/keyboarddef.h"
-#include "library/joystickstate.h"
 #include "library/systemstate.h"
 
 LRESULT CALLBACK MainConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

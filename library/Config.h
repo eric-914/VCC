@@ -5,7 +5,7 @@
 #include "SoundCardList.h"
 #include "ConfigModel.h"
 #include "defines.h"
-#include "joystickdef.h"
+#include "Joystick.h"
 #include "SystemState.h"
 
 #define SCAN_TRANS_COUNT	84

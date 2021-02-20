@@ -6,13 +6,13 @@
 
 #include "../resources/resource.h"
 #include "systemstate.h"
-#include "joystickstate.h"
 #include "fileoperations.h"
 #include "DirectDrawAccessors.h"
 #include "PakInterfaceAccessors.h"
 
 #include "Config.h"
 #include "Cassette.h"
+#include "Joystick.h"
 
 #include "macros.h"
 

@@ -190,9 +190,7 @@
     <ClCompile Include="graphicsstate.c" />
     <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="hd6309state.c" />
-    <ClCompile Include="JoystickAccessors.c" />
-    <ClCompile Include="joystickinput.c" />
-    <ClCompile Include="joystickstate.c" />
+    <ClCompile Include="Joystick.c" />
     <ClCompile Include="KeyboardAccessors.c" />
     <ClCompile Include="keyboardlayout.c" />
     <ClCompile Include="keyboardstate.c" />
@@ -227,7 +225,7 @@
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="hd6309state.h" />
-    <ClInclude Include="JoystickAccessors.h" />
+    <ClInclude Include="Joystick.h" />
     <ClInclude Include="KeyboardAccessors.h" />
     <ClInclude Include="keyboardstate.h" />
     <ClInclude Include="macros.h" />
@@ -253,9 +251,6 @@
     <ClInclude Include="defines.h" />
     <ClInclude Include="fileoperations.h" />
     <ClInclude Include="graphicsstate.h" />
-    <ClInclude Include="joystickdef.h" />
-    <ClInclude Include="joystickinput.h" />
-    <ClInclude Include="joystickstate.h" />
     <ClInclude Include="keyboarddef.h" />
     <ClInclude Include="keyboardlayout.h" />
     <ClInclude Include="library.h" />

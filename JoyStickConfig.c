@@ -6,8 +6,7 @@
 
 #include "GetKeyName.h"
 
-#include "library/joystickstate.h"
-#include "library/joystickinput.h"
+#include "library/Joystick.h"
 #include "library/systemstate.h"
 
 LRESULT CALLBACK JoyStickConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

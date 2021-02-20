@@ -33,7 +33,7 @@
 #include "library/CoCo.h"
 #include "library/Config.h"
 #include "library/DirectDrawAccessors.h"
-#include "library/JoystickAccessors.h"
+#include "library/Joystick.h"
 #include "library/PakInterfaceAccessors.h"
 #include "library/pakinterfacestate.h"
 #include "library/vccdef.h"

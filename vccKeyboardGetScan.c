@@ -1,8 +1,7 @@
 #include "GetMuxState.h"
 #include "DACState.h"
-#include "library/JoystickAccessors.h"
 
-#include "library/joystickstate.h"
+#include "library/Joystick.h"
 #include "library/keyboardstate.h"
 
 /*
