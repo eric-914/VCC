@@ -4,7 +4,7 @@
 
 #include "configdef.h"
 
-#include "SndCardList.h"
+#include "SoundCardList.h"
 #include "ConfigModel.h"
 #include "defines.h"
 #include "joystickdef.h"

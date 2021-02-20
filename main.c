@@ -10,7 +10,7 @@
 #include "library/pakinterfacestate.h"
 
 #include "About.h"
-#include "library/AudioAccessors.h"
+#include "library/Audio.h"
 #include "library/ConfigAccessors.h"
 #include "CopyText.h"
 #include "CreateDDWindow.h"

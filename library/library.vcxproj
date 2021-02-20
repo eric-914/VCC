@@ -176,9 +176,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\fileops\fileops.c" />
-    <ClCompile Include="AudioAccessors.c" />
+    <ClCompile Include="Audio.c" />
     <ClCompile Include="AudioOut.c" />
-    <ClCompile Include="AudioState.c" />
     <ClCompile Include="cassettestate.c" />
     <ClCompile Include="clipboardstate.c" />
     <ClCompile Include="cocostate.c" />
@@ -219,10 +218,8 @@
     <ClCompile Include="xDebug.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AudioAccessors.h" />
-    <ClInclude Include="audiodef.h" />
+    <ClInclude Include="Audio.h" />
     <ClInclude Include="AudioOut.h" />
-    <ClInclude Include="AudioState.h" />
     <ClInclude Include="clipboardstate.h" />
     <ClInclude Include="cocostate.h" />
     <ClInclude Include="ConfigAccessors.h" />
@@ -238,6 +235,7 @@
     <ClInclude Include="JoystickAccessors.h" />
     <ClInclude Include="KeyboardAccessors.h" />
     <ClInclude Include="keyboardstate.h" />
+    <ClInclude Include="macros.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6809state.h" />
     <ClInclude Include="mc6821def.h" />
@@ -250,7 +248,7 @@
     <ClInclude Include="ProfileAccessors.h" />
     <ClInclude Include="RegistersAccessors.h" />
     <ClInclude Include="registersstate.h" />
-    <ClInclude Include="SndCardList.h" />
+    <ClInclude Include="SoundCardList.h" />
     <ClInclude Include="cassettedef.h" />
     <ClInclude Include="cassettestate.h" />
     <ClInclude Include="cc2font.h" />
@@ -271,7 +269,7 @@
     <ClInclude Include="library.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="systemstate.h" />
+    <ClInclude Include="SystemState.h" />
     <ClInclude Include="tcc1014graphics-16.h" />
     <ClInclude Include="tcc1014graphics-24.h" />
     <ClInclude Include="tcc1014graphics-32.h" />

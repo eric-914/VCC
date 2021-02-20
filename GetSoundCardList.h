@@ -1,5 +1,5 @@
 #pragma once
 
-#include "library/SndCardList.h"
+#include "library/SoundCardList.h"
 
 int GetSoundCardList(SndCardList* list);

@@ -1,7 +1,6 @@
 #include <windows.h>
 
-#include "library/audiodef.h"
-#include "library/AudioState.h"
+#include "library/Audio.h"
 
 BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext)
 {

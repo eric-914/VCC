@@ -21,6 +21,7 @@ This file is part of VCC (Virtual Color Computer).
 
 // Declare global variables defined by GetCmdLineArgs
 #define CL_MAX_PATH 256
+
 struct CmdLineArguments {
   char QLoadFile[CL_MAX_PATH];
   char IniFile[CL_MAX_PATH];

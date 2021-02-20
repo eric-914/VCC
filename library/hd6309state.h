@@ -7,7 +7,7 @@ typedef union
   {
     unsigned char lsb, msb;
   } B;
-} CpuRegister;
+} HD6309CpuRegister;
 
 typedef union
 {
@@ -20,11 +20,11 @@ typedef union
   {
     unsigned char mswlsb, mswmsb, lswlsb, lswmsb;	//Might be backwards
   } Byte;
-} WideRegister;
+} HD6309WideRegister;
 
 typedef struct {
-  CpuRegister pc, x, y, u, s, dp, v, z;
-  WideRegister q;
+  HD6309CpuRegister pc, x, y, u, s, dp, v, z;
+  HD6309WideRegister q;
 
   unsigned char cc[8];
   unsigned char ccbits;

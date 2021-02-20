@@ -7,10 +7,10 @@ typedef union
   {
     unsigned char lsb, msb;
   } B;
-} CpuRegister;
+} MC6809CpuRegister;
 
 typedef struct {
-  CpuRegister pc, x, y, u, s, dp, d;
+  MC6809CpuRegister pc, x, y, u, s, dp, d;
 
   unsigned char ccbits;
   unsigned int cc[8];
