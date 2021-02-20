@@ -54,6 +54,8 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
   char temp2[MAX_PATH] = " Running on ";
   unsigned threadID;
 
+  HMODULE hResources = LoadLibrary("..\\resources\\resources.dll");
+
   VccState* vccState = GetVccState();
 
   vccState->EmuState.WindowInstance = hInstance;
