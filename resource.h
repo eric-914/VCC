@@ -2,26 +2,13 @@
 // Microsoft Visual C++ generated include file.
 // Used by Vcc.rc
 //
-#define IDS_APP_TITLE                   1
-#define IDS_CATNUMBER                   2
 #define IDAPPLY                         3
 #define IDR_MENU                        101
-#define IDI_COCO3                       103
 #define IDD_ABOUTBOX                    104
 #define IDD_CONFIG                      105
 #define IDD_DISKS                       106
-#define IDB_VCC                         108
-#define IDI_BINFILE                     110
 #define IDB_BENDER                      111
-#define IDI_CART                        112
-#define IDC_NONE                        113
-#define IDI_MOTO                        114
-#define IDI_HITACHI2                    116
-#define IDI_COMPOSITE                   117
-#define IDI_RGB                         118
 #define IDC_CURSOR1                     120
-#define IDB_NOMUTE                      128
-#define IDB_MUTE                        130
 #define IDD_KEYBOARD                    134
 #define IDD_TCONFIG                     135
 #define IDD_DISPLAY                     136
@@ -29,12 +16,7 @@
 #define IDD_AUDIO                       138
 #define IDD_INPUT                       139
 #define IDD_JOYSTICK                    141
-#define IDI_AUDIO                       146
-#define IDI_KEYBOARD                    148
-#define IDI_JOYSTICK                    149
-#define IDI_MOUSE                       150
 #define IDD_MISC                        154
-#define IDB_3GUYS                       156
 #define IDD_CASSETTE                    157
 #define IDD_NEWTAPE                     158
 #define IDD_BITBANGER                   159
