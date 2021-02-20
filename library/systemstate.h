@@ -7,6 +7,7 @@ typedef struct
   HWND			WindowHandle;
   HWND			ConfigDialog;
   HINSTANCE		WindowInstance;
+  HINSTANCE		Resources;
   unsigned char* RamBuffer;
   unsigned short* WRamBuffer;
   unsigned char	RamSize;

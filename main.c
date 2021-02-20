@@ -59,8 +59,9 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
   VccState* vccState = GetVccState();
 
   vccState->EmuState.WindowInstance = hInstance;
+  vccState->EmuState.Resources = hResources;
 
-  LoadString(hInstance, IDS_APP_TITLE, vccState->AppName, MAX_LOADSTRING);
+  //LoadString(hInstance, IDS_APP_TITLE, vccState->AppName, MAX_LOADSTRING);
 
   GetCmdLineArgs(lpCmdLine, &(vccState->CmdArg)); //Parse command line
 
@@ -83,8 +84,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
   vccState->EmuState.WindowSize.x = 640;
   vccState->EmuState.WindowSize.y = 480;
 
-  LoadConfig(&(vccState->EmuState), vccState->CmdArg);
-  InitInstance(hInstance, nCmdShow);
+  InitInstance(hInstance, hResources, nCmdShow);
 
   if (!CreateDDWindow(&(vccState->EmuState), WndProc))
   {
@@ -93,10 +93,12 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     exit(0);
   }
 
+  //NOTE: Sound is lost if this is done before CreateDDWindow
+  LoadConfig(&(vccState->EmuState), vccState->CmdArg);			//Loads the default config file Vcc.ini from the exec directory
+
   Cls(0, &(vccState->EmuState));
   DynamicMenuCallback(&(vccState->EmuState), "", 0, 0);
   DynamicMenuCallback(&(vccState->EmuState), "", 1, 0);
-  LoadConfig(&(vccState->EmuState), vccState->CmdArg);			//Loads the default config file Vcc.ini from the exec directory
 
   vccState->EmuState.ResetPending = 2;
 

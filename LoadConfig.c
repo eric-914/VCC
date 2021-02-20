@@ -27,7 +27,7 @@ void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 
   BuildTransDisp2ScanTable();
 
-  LoadString(NULL, IDS_APP_TITLE, configState->AppName, MAX_LOADSTRING);
+  LoadString(systemState->Resources, IDS_APP_TITLE, configState->AppName, MAX_LOADSTRING);
   GetModuleFileName(NULL, configState->ExecDirectory, MAX_PATH);
 
   FilePathRemoveFileSpec(configState->ExecDirectory);

@@ -6,7 +6,7 @@
 
 #include "library/directdrawstate.h"
 
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitInstance(HINSTANCE hInstance, HINSTANCE hResources, int nCmdShow)
 {
   DirectDrawState* ddState = GetDirectDrawState();
 
@@ -15,8 +15,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
   AfxInitRichEdit();
 
-  LoadString(hInstance, IDS_APP_TITLE, ddState->TitleBarText, MAX_LOADSTRING);
-  LoadString(hInstance, IDS_APP_TITLE, ddState->AppNameText, MAX_LOADSTRING);
+  LoadString(hResources, IDS_APP_TITLE, ddState->TitleBarText, MAX_LOADSTRING);
+  LoadString(hResources, IDS_APP_TITLE, ddState->AppNameText, MAX_LOADSTRING);
 
   return TRUE;
 }

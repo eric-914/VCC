@@ -2,4 +2,4 @@
 
 #include <windows.h>
 
-BOOL InitInstance(HINSTANCE, int);
+BOOL InitInstance(HINSTANCE, HINSTANCE, int);
