@@ -6,8 +6,6 @@
 #include "library/VCC.h"
 #include "library/systemstate.h"
 
-#include "SelectFile.h"
-
 LRESULT CALLBACK BitBangerConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();

@@ -91,3 +91,6 @@ extern "C" __declspec(dllexport) unsigned char __cdecl WriteIniFile(void);
 extern "C" __declspec(dllexport) void __cdecl IncreaseOverclockSpeed(SystemState* systemState);
 extern "C" __declspec(dllexport) void __cdecl UpdateSoundBar(unsigned short left, unsigned short right);
 extern "C" __declspec(dllexport) unsigned char __cdecl TranslateScan2Display(int x);
+
+extern "C" __declspec(dllexport) void __cdecl RefreshJoystickStatus(void);
+extern "C" __declspec(dllexport) int __cdecl SelectFile(SystemState* systemState, char* filename);

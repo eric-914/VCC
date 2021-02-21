@@ -10,7 +10,6 @@
 #include "library/Audio.h"
 
 #include "ReadIniFile.h"
-#include "RefreshJoystickStatus.h"
 #include "UpdateConfig.h"
 #include "GetSoundCardList.h"
 #include "SoundInit.h"

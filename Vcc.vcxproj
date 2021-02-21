@@ -192,7 +192,6 @@
     <ClCompile Include="CopyRom.c" />
     <ClCompile Include="CopyText.c" />
     <ClCompile Include="CpuConfig.c" />
-    <ClCompile Include="CPUCycle.c" />
     <ClCompile Include="CreateDDWindow.c" />
     <ClCompile Include="DisplayConfig.c" />
     <ClCompile Include="DisplayFlip.c" />
@@ -202,7 +201,6 @@
     <ClCompile Include="DynamicMenuCallback.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
-    <ClCompile Include="GetKeyName.c" />
     <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="GimeReset.c" />
     <ClCompile Include="GimeWrite.c" />
@@ -242,11 +240,9 @@
     <ClCompile Include="quickload.c" />
     <ClCompile Include="ReadIniFile.c" />
     <ClCompile Include="RefreshDynamicMenu.c" />
-    <ClCompile Include="RefreshJoystickStatus.c" />
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="SAMRead.c" />
     <ClCompile Include="SAMWrite.c" />
-    <ClCompile Include="SelectFile.c" />
     <ClCompile Include="SendSavedKeyEvents.c" />
     <ClCompile Include="SetDistoRamBank.c" />
     <ClCompile Include="SetGimeFIRQSteering.c" />
@@ -258,7 +254,6 @@
     <ClCompile Include="SetScanLines.c" />
     <ClCompile Include="SetTimerLSB.c" />
     <ClCompile Include="SetTimerMSB.c" />
-    <ClCompile Include="SetWindowSize.c" />
     <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
     <ClCompile Include="Static.c" />
@@ -299,7 +294,6 @@
     <ClInclude Include="CopyRom.h" />
     <ClInclude Include="CopyText.h" />
     <ClInclude Include="CpuConfig.h" />
-    <ClInclude Include="CPUCycle.h" />
     <ClInclude Include="CreateDDWindow.h" />
     <ClInclude Include="DisplayConfig.h" />
     <ClInclude Include="DisplayFlip.h" />
@@ -309,7 +303,6 @@
     <ClInclude Include="DynamicMenuCallback.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
-    <ClInclude Include="GetKeyName.h" />
     <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="GimeReset.h" />
     <ClInclude Include="GimeWrite.h" />
@@ -348,11 +341,9 @@
     <ClInclude Include="quickload.h" />
     <ClInclude Include="ReadIniFile.h" />
     <ClInclude Include="RefreshDynamicMenu.h" />
-    <ClInclude Include="RefreshJoystickStatus.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="SAMRead.h" />
     <ClInclude Include="SAMWrite.h" />
-    <ClInclude Include="SelectFile.h" />
     <ClInclude Include="SendSavedKeyEvents.h" />
     <ClInclude Include="SetDistoRamBank.h" />
     <ClInclude Include="SetGimeFIRQSteering.h" />
@@ -364,7 +355,6 @@
     <ClInclude Include="SetScanLines.h" />
     <ClInclude Include="SetTimerLSB.h" />
     <ClInclude Include="SetTimerMSB.h" />
-    <ClInclude Include="SetWindowSize.h" />
     <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />
     <ClInclude Include="Static.h" />

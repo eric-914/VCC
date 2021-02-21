@@ -9,8 +9,6 @@
 #include "library/systemstate.h"
 #include "library/Audio.h"
 
-#include "RefreshJoystickStatus.h"
-
 #include "AudioConfig.h"
 #include "BitBangerConfig.h"
 #include "CpuConfig.h"

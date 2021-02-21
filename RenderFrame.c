@@ -6,7 +6,6 @@
 #include "library/RegistersAccessors.h"
 #include "library/Graphics.h"
 
-#include "CPUCycle.h"
 #include "LockScreen.h"
 #include "UnlockScreen.h"
 
