@@ -1,4 +1,4 @@
-#include "library/vccstate.h"
+#include "library/VCC.h"
 
 #include "CreateDDWindow.h"
 #include "RefreshDynamicMenu.h"

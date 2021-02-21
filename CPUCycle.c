@@ -1,6 +1,5 @@
 #include <math.h>
 
-#include "SetSpeedThrottle.h"
 #include "vccKeyboardBuildRuntimeTable.h"
 #include "vccKeyboardHandleKey.h"
 
@@ -13,6 +12,7 @@
 #include "library/defines.h"
 #include "library/keyboarddef.h"
 #include "library/MC6821.h"
+#include "library/VCC.h"
 
 /* _inline */ int CPUCycle(void)
 {

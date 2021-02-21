@@ -21,11 +21,8 @@
 #include "PasteBASIC.h"
 #include "PasteBASICWithNew.h"
 #include "PasteText.h"
-#include "SaveConfig.h"
-#include "SaveLastTwoKeyDownEvents.h"
 #include "SendSavedKeyEvents.h"
 #include "SetMonitorType.h"
-#include "SetSpeedThrottle.h"
 #include "UnloadDll.h"
 #include "vccKeyboardHandleKey.h"
 
@@ -36,8 +33,7 @@
 #include "library/Joystick.h"
 #include "library/PakInterfaceAccessors.h"
 #include "library/pakinterfacestate.h"
-#include "library/vccdef.h"
-#include "library/vccstate.h"
+#include "library/VCC.h"
 #include "library/fileoperations.h"
 #include "library/graphicsstate.h"
 

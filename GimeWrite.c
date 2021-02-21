@@ -1,6 +1,7 @@
 #include "library/registersstate.h"
+#include "library/graphicsstate.h"
+#include "library/VCC.h"
 
-#include "SetTurboMode.h"
 #include "SetGimeVmode.h"
 #include "SetGimeVres.h"
 #include "SetGimeBorderColor.h"
@@ -15,7 +16,6 @@
 #include "SetTimerMSB.h"
 #include "SetTimerLSB.h"
 
-#include "library/graphicsstate.h"
 
 void GimeWrite(unsigned char port, unsigned char data)
 {

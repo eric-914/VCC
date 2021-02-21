@@ -1,4 +1,4 @@
-#include "library/vccstate.h"
+#include "library/VCC.h"
 #include "library/Config.h"
 
 #include "ReadIniFile.h"

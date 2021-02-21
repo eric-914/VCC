@@ -3,7 +3,7 @@
 #include "resources/resource.h"
 #include "library/Config.h"
 #include "library/MC6821.h"
-#include "library/vccstate.h"
+#include "library/VCC.h"
 #include "library/systemstate.h"
 
 #include "SelectFile.h"

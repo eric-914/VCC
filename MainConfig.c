@@ -3,7 +3,7 @@
 
 #include "resources/resource.h"
 #include "library/Config.h"
-#include "library/vccstate.h"
+#include "library/VCC.h"
 #include "library/Joystick.h"
 #include "library/keyboarddef.h"
 #include "library/systemstate.h"

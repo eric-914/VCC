@@ -1,4 +1,4 @@
-#include "library/vccstate.h"
+#include "library/VCC.h"
 #include "library/PakInterfaceAccessors.h"
 #include "library/CoCo.h"
 #include "library/MC6821.h"

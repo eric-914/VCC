@@ -2,7 +2,7 @@
 
 #include "library/Config.h"
 #include "resources/resource.h"
-#include "library/vccstate.h"
+#include "library/VCC.h"
 
 #include "GetKeyName.h"
 

@@ -2,17 +2,11 @@
 #include "library/DirectDrawAccessors.h"
 #include "library/MC6821.h"
 #include "library/systemstate.h"
+#include "library/VCC.h"
 
-#include "SetAutoStart.h"
-#include "SetCpuType.h"
-#include "SetRamSize.h"
-#include "SetCPUMultiplayer.h"
-#include "SetFrameSkip.h"
-#include "SetSpeedThrottle.h"
 #include "SetMonitorType.h"
 #include "SetPaletteType.h"
 #include "SetScanLines.h"
-#include "Reboot.h"
 
 void UpdateConfig(SystemState* systemState)
 {

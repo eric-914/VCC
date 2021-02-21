@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "library/vccdef.h"
-#include "library/vccstate.h"
+#include "library/VCC.h"
 
 #include "CalibrateThrottle.h"
 #include "quickload.h"
