@@ -1,6 +1,5 @@
 #include "library/registersstate.h"
-
-#include "library/MmuAccessors.h"
+#include "library/MMU.h"
 
 void MC6883Reset()
 {

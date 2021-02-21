@@ -3,42 +3,6 @@
 #include "MMU.h"
 
 extern "C" {
-  __declspec(dllexport) unsigned short __cdecl GetMem(long address) {
-    MmuState* mmuState = GetMmuState();
-
-    return(mmuState->Memory[address]);
-  }
-}
-
-extern "C" {
-  __declspec(dllexport) unsigned char* __cdecl GetInternalRomPointer(void)
-  {
-    MmuState* mmuState = GetMmuState();
-
-    return(mmuState->InternalRomBuffer);
-  }
-}
-
-extern "C" {
-  __declspec(dllexport) void __cdecl SetMmuEnabled(unsigned char usingmmu)
-  {
-    MmuState* mmuState = GetMmuState();
-
-    mmuState->MmuEnabled = usingmmu;
-    mmuState->MmuState = (!mmuState->MmuEnabled) << 1 | mmuState->MmuTask;
-  }
-}
-
-extern "C" {
-  __declspec(dllexport) void __cdecl SetMmuPrefix(unsigned char data)
-  {
-    MmuState* mmuState = GetMmuState();
-
-    mmuState->MmuPrefix = (data & 3) << 8;
-  }
-}
-
-extern "C" {
   __declspec(dllexport) void __cdecl SetMmuRegister(unsigned char Register, unsigned char data)
   {
     unsigned char BankRegister, Task;

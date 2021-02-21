@@ -2,8 +2,8 @@
 
 #include "library/Clipboard.h"
 #include "library/Graphics.h"
+#include "library/MMU.h"
 
-#include "library/MmuAccessors.h"
 #include "MemRead8.h"
 
 void CopyText() {
