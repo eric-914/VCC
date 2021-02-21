@@ -3,19 +3,16 @@
 #include <stdint.h>
 
 #include "library/VCC.h"
+#include "library/Throttle.h"
 
-#include "CalibrateThrottle.h"
 #include "quickload.h"
-#include "StartRender.h"
 #include "HardReset.h"
 #include "SoftReset.h"
 #include "UpdateConfig.h"
 #include "DoCls.h"
 #include "RenderFrame.h"
-#include "FrameWait.h"
 #include "library/DirectDrawAccessors.h"
 #include "library/PakInterfaceAccessors.h"
-#include "EndRender.h"
 #include "Static.h"
 
 unsigned __stdcall EmuLoop(void* dummy)
@@ -26,7 +23,11 @@ unsigned __stdcall EmuLoop(void* dummy)
 
   VccState* vccState = GetVccState();
 
+  //NOTE: This function isn't working in library.dll
+  timeBeginPeriod(1);	//Needed to get max resolution from the timer normally its 10Ms
   CalibrateThrottle();
+  timeEndPeriod(1);
+
   Sleep(30);
   SetEvent(hEvent);
 

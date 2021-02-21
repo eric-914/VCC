@@ -1,9 +1,9 @@
-#include "LockScreen.h"
-#include "UnlockScreen.h"
-#include "CalculateFPS.h"
-
+#include "library/Throttle.h"
 #include "library/directdrawstate.h"
 #include "library/systemstate.h"
+
+#include "LockScreen.h"
+#include "UnlockScreen.h"
 
 float Static(SystemState* systemState)
 {

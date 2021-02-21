@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include "Audio.h"
+
 typedef struct
 {
   _LARGE_INTEGER StartTime;
@@ -18,3 +20,9 @@ typedef struct
 } ThrottleState;
 
 extern "C" __declspec(dllexport) ThrottleState* __cdecl GetThrottleState();
+
+extern "C" __declspec(dllexport) float __cdecl CalculateFPS(void);
+extern "C" __declspec(dllexport) void __cdecl CalibrateThrottle(void);
+extern "C" __declspec(dllexport) void __cdecl EndRender(unsigned char skip);
+extern "C" __declspec(dllexport) void __cdecl FrameWait(void);
+extern "C" __declspec(dllexport) void __cdecl StartRender(void);

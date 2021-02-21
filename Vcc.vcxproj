@@ -182,8 +182,6 @@
     <ClCompile Include="hd6309_i.c" />
     <ClCompile Include="hd6309_md.c" />
     <ClCompile Include="mc6809_CalculateEA.c" />
-    <ClCompile Include="CalculateFPS.c" />
-    <ClCompile Include="CalibrateThrottle.c" />
     <ClCompile Include="CartLoad.c" />
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
@@ -205,8 +203,6 @@
     <ClCompile Include="DynamicMenuActivated.c" />
     <ClCompile Include="DynamicMenuCallback.c" />
     <ClCompile Include="EmuLoop.c" />
-    <ClCompile Include="EndRender.c" />
-    <ClCompile Include="FrameWait.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetKeyName.c" />
     <ClCompile Include="GetSoundCardList.c" />
@@ -287,7 +283,6 @@
     <ClCompile Include="SetWindowSize.c" />
     <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
-    <ClCompile Include="StartRender.c" />
     <ClCompile Include="Static.c" />
     <ClCompile Include="TapeConfig.c" />
     <ClCompile Include="UnloadDll.c" />
@@ -320,8 +315,6 @@
     <ClInclude Include="hd6309_i.h" />
     <ClInclude Include="hd6309_md.h" />
     <ClInclude Include="mc6809_CalculateEA.h" />
-    <ClInclude Include="CalculateFPS.h" />
-    <ClInclude Include="CalibrateThrottle.h" />
     <ClInclude Include="CartLoad.h" />
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
@@ -343,8 +336,6 @@
     <ClInclude Include="DynamicMenuActivated.h" />
     <ClInclude Include="DynamicMenuCallback.h" />
     <ClInclude Include="EmuLoop.h" />
-    <ClInclude Include="EndRender.h" />
-    <ClInclude Include="FrameWait.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetKeyName.h" />
     <ClInclude Include="GetSoundCardList.h" />
@@ -424,7 +415,6 @@
     <ClInclude Include="SetWindowSize.h" />
     <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />
-    <ClInclude Include="StartRender.h" />
     <ClInclude Include="Static.h" />
     <ClInclude Include="TapeConfig.h" />
     <ClInclude Include="UnloadDll.h" />
