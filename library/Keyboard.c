@@ -7,7 +7,7 @@
 #include "Joystick.h"
 #include "MC6821.h"
 
-#include "RegistersAccessors.h"
+#include "Registers.h"
 #include "xDebug.h"
 
 KeyboardState* InitializeInstance(KeyboardState*);

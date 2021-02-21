@@ -1,9 +1,8 @@
-#include "library/registersstate.h"
+#include "library/Registers.h"
 #include "library/Graphics.h"
 #include "library/VCC.h"
 #include "library/MMU.h"
 
-#include "SetDistoRamBank.h"
 #include "SetInit0.h"
 #include "SetInit1.h"
 #include "SetGimeIRQSteering.h"

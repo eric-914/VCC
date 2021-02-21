@@ -3,7 +3,7 @@
 #include "library/Cassette.h"
 #include "library/MC6821.h"
 #include "library/Throttle.h"
-#include "library/RegistersAccessors.h"
+#include "library/Registers.h"
 #include "library/Graphics.h"
 
 #include "LockScreen.h"

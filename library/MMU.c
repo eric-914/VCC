@@ -1,7 +1,8 @@
 #include <windows.h>
-//#include <stdio.h>
+#include <stdio.h>
 
 #include "MMU.h"
+#include "Graphics.h"
 
 #include "macros.h"
 
@@ -197,5 +198,89 @@ extern "C" {
     mmuState->MapType = type;
 
     UpdateMmuArray();
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl MmuReset(void)
+  {
+    unsigned int index1 = 0, index2 = 0;
+
+    MmuState* mmuState = GetMmuState();
+
+    mmuState->MmuTask = 0;
+    mmuState->MmuEnabled = 0;
+    mmuState->RamVectors = 0;
+    mmuState->MmuState = 0;
+    mmuState->RomMap = 0;
+    mmuState->MapType = 0;
+    mmuState->MmuPrefix = 0;
+
+    for (index1 = 0;index1 < 8;index1++) {
+      for (index2 = 0;index2 < 4;index2++) {
+        mmuState->MmuRegisters[index2][index1] = index1 + mmuState->StateSwitch[mmuState->CurrentRamConfig];
+      }
+    }
+
+    for (index1 = 0;index1 < 1024;index1++)
+    {
+      mmuState->MemPages[index1] = mmuState->Memory + ((index1 & mmuState->RamMask[mmuState->CurrentRamConfig]) * 0x2000);
+      mmuState->MemPageOffsets[index1] = 1;
+    }
+
+    SetRomMap(0);
+    SetMapType(0);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SetDistoRamBank(unsigned char data)
+  {
+    MmuState* mmuState = GetMmuState();
+
+    switch (mmuState->CurrentRamConfig)
+    {
+    case 0:	// 128K
+      return;
+      break;
+
+    case 1:	//512K
+      return;
+      break;
+
+    case 2:	//2048K
+      SetVideoBank(data & 3);
+      SetMmuPrefix(0);
+
+      return;
+
+    case 3:	//8192K	//No Can 3 
+      SetVideoBank(data & 0x0F);
+      SetMmuPrefix((data & 0x30) >> 4);
+
+      return;
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) int __cdecl LoadInternalRom(char* filename)
+  {
+    unsigned short index = 0;
+    FILE* rom_handle = fopen(filename, "rb");
+
+    MmuState* mmuState = GetMmuState();
+
+    if (rom_handle == NULL) {
+      return(0);
+    }
+
+    while ((feof(rom_handle) == 0) && (index < 0x8000)) {
+      mmuState->InternalRomBuffer[index++] = fgetc(rom_handle);
+    }
+
+    fclose(rom_handle);
+
+    return(index);
   }
 }

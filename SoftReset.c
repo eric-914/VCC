@@ -2,9 +2,9 @@
 #include "library/MC6821.h"
 #include "library/cpudef.h"
 #include "library/PAKInterface.h"
+#include "library/MMU.h"
 
 #include "CopyRom.h"
-#include "MmuReset.h"
 #include "GimeReset.h"
 #include "MC6883Reset.h"
 

@@ -17,7 +17,7 @@
 #include "cpudef.h"
 
 #include "PAKInterface.h"
-#include "RegistersAccessors.h"
+#include "Registers.h"
 
 CoCoState* InitializeInstance(CoCoState*);
 

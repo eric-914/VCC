@@ -4,7 +4,6 @@
 #include "library/Graphics.h"
 
 #include "CopyRom.h"
-#include "MmuReset.h"
 
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *
