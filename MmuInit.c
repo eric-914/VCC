@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "library/mmustate.h"
+#include "library/MMU.h"
 #include "library/Graphics.h"
 
 #include "CopyRom.h"

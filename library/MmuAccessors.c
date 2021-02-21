@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#include "mmustate.h"
+#include "MMU.h"
 
 extern "C" {
   __declspec(dllexport) unsigned short __cdecl GetMem(long address) {

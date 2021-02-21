@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 
-#include "library/mmustate.h"
+#include "library/MMU.h"
 
 int LoadInternalRom(TCHAR filename[MAX_PATH])
 {
