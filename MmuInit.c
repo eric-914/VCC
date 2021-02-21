@@ -1,10 +1,10 @@
 #include <windows.h>
 
 #include "library/mmustate.h"
+#include "library/Graphics.h"
+
 #include "CopyRom.h"
 #include "MmuReset.h"
-
-#include "library/graphicsstate.h"
 
 /*****************************************************************************************
 * MmuInit Initilize and allocate memory for RAM Internal and External ROM Images.        *

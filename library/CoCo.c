@@ -2,7 +2,7 @@
 
 #include "defines.h"
 
-#include "graphicsstate.h"
+#include "Graphics.h"
 #include "tcc1014graphics-8.h"
 #include "tcc1014graphics-16.h"
 #include "tcc1014graphics-24.h"

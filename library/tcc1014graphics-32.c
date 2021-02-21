@@ -20,7 +20,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "cc3font.h"
 
 #include "defines.h"
-#include "graphicsstate.h"
+#include "Graphics.h"
 #include "systemstate.h"
 
 extern "C" {

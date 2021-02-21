@@ -1,9 +1,7 @@
 #include "library/registersstate.h"
 #include "library/VCC.h"
 #include "library/MmuAccessors.h"
-
-#include "SetGimeVdgOffset.h"
-#include "SetGimeVdgMode.h"
+#include "library/Graphics.h"
 
 void SAMWrite(unsigned char data, unsigned char port)
 {

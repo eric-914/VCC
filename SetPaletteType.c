@@ -1,6 +1,4 @@
-#include "library/graphicsstate.h"
-
-#include "SetGimeBorderColor.h"
+#include "library/Graphics.h"
 #include "library/Config.h"
 
 void SetPaletteType() {

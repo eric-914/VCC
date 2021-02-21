@@ -3,7 +3,7 @@
 #include "library/DirectDrawAccessors.h"
 
 #include "library/systemstate.h"
-#include "library/graphicsstate.h"
+#include "library/Graphics.h"
 
 unsigned char SetScanLines(SystemState* systemState, unsigned char lines)
 {

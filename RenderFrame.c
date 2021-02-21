@@ -1,15 +1,14 @@
-#include "CPUCycle.h"
-#include "LockScreen.h"
-#include "SetBorderChange.h"
-#include "UnlockScreen.h"
-
 #include "library/Audio.h"
 #include "library/CoCo.h"
 #include "library/Cassette.h"
 #include "library/MC6821.h"
 #include "library/Throttle.h"
 #include "library/RegistersAccessors.h"
-#include "library/graphicsstate.h"
+#include "library/Graphics.h"
+
+#include "CPUCycle.h"
+#include "LockScreen.h"
+#include "UnlockScreen.h"
 
 float RenderFrame(SystemState* systemState)
 {

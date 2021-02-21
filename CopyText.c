@@ -1,7 +1,7 @@
 #include <string>
 
 #include "library/Clipboard.h"
-#include "library/graphicsstate.h"
+#include "library/Graphics.h"
 
 #include "library/MmuAccessors.h"
 #include "MemRead8.h"

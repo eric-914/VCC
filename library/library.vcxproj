@@ -186,7 +186,7 @@
     <ClCompile Include="DirectDrawAccessors.c" />
     <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="fileoperations.c" />
-    <ClCompile Include="graphicsstate.c" />
+    <ClCompile Include="Graphics.c" />
     <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="hd6309state.c" />
     <ClCompile Include="Joystick.c" />
@@ -219,6 +219,7 @@
     <ClInclude Include="DirectDrawAccessors.h" />
     <ClInclude Include="directdrawdef.h" />
     <ClInclude Include="directdrawstate.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="hd6309state.h" />
@@ -245,7 +246,6 @@
     <ClInclude Include="cpudef.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="fileoperations.h" />
-    <ClInclude Include="graphicsstate.h" />
     <ClInclude Include="keyboardlayout.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="logger.h" />

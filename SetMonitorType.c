@@ -1,8 +1,6 @@
 #include "library/VCC.h"
 
-#include "library/graphicsstate.h"
-
-#include "SetGimeBorderColor.h"
+#include "library/Graphics.h"
 
 unsigned char SetMonitorType(unsigned char type)
 {

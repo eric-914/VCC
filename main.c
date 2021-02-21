@@ -16,7 +16,7 @@
 #include "library/PakInterfaceAccessors.h"
 #include "library/VCC.h"
 #include "library/fileoperations.h"
-#include "library/graphicsstate.h"
+#include "library/Graphics.h"
 #include "library/pakinterfacestate.h"
 
 #include "About.h"
@@ -27,7 +27,6 @@
 #include "EmuLoop.h"
 #include "FullScreenToggle.h"
 #include "InitInstance.h"
-#include "InvalidateBorder.h "
 #include "LoadConfig.h"
 #include "LoadIniFile.h"
 #include "MainConfig.h"

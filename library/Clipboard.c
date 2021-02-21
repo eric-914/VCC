@@ -1,7 +1,7 @@
 #include "Clipboard.h"
 #include "Config.h"
 #include "Keyboard.h"
-#include "graphicsstate.h"
+#include "Graphics.h"
 
 ClipboardState* InitializeInstance(ClipboardState*);
 

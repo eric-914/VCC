@@ -1,6 +1,6 @@
 #include "library/registersstate.h"
 
-#include "SetCompatMode.h"
+#include "library/Graphics.h"
 #include "library/MmuAccessors.h"
 
 void SetInit0(unsigned char data)
