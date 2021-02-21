@@ -176,3 +176,14 @@ extern "C" {
     mmuState->MmuState = (!mmuState->MmuEnabled) << 1 | mmuState->MmuTask;
   }
 }
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SetRomMap(unsigned char data)
+  {
+    MmuState* mmuState = GetMmuState();
+
+    mmuState->RomMap = (data & 3);
+
+    UpdateMmuArray();
+  }
+}
