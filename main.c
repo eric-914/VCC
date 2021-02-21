@@ -7,6 +7,7 @@
 #include "resources/resource.h"
 
 #include "library/Audio.h"
+#include "library/Clipboard.h"
 #include "library/CoCo.h"
 #include "library/Config.h"
 #include "library/DirectDrawAccessors.h"
@@ -30,13 +31,9 @@
 #include "LoadConfig.h"
 #include "LoadIniFile.h"
 #include "MainConfig.h"
-#include "PasteBASIC.h"
-#include "PasteBASICWithNew.h"
-#include "PasteText.h"
 #include "SendSavedKeyEvents.h"
 #include "SetMonitorType.h"
 #include "UnloadDll.h"
-
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

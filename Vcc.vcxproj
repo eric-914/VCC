@@ -234,9 +234,6 @@
     <ClCompile Include="MiscConfig.c" />
     <ClCompile Include="MmuInit.c" />
     <ClCompile Include="MmuReset.c" />
-    <ClCompile Include="PasteBASIC.c" />
-    <ClCompile Include="PasteBASICWithNew.c" />
-    <ClCompile Include="PasteText.c" />
     <ClCompile Include="pia0_read.c" />
     <ClCompile Include="pia0_write.c" />
     <ClCompile Include="pia1_read.c" />
@@ -356,9 +353,6 @@
     <ClInclude Include="MiscConfig.h" />
     <ClInclude Include="MmuInit.h" />
     <ClInclude Include="MmuReset.h" />
-    <ClInclude Include="PasteBASIC.h" />
-    <ClInclude Include="PasteBASICWithNew.h" />
-    <ClInclude Include="PasteText.h" />
     <ClInclude Include="pia0_read.h" />
     <ClInclude Include="pia0_write.h" />
     <ClInclude Include="pia1_read.h" />

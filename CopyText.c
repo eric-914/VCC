@@ -155,5 +155,5 @@ void CopyText() {
     }
   }
 
-  bool succ = SetClipboard(out);
+  bool succ = SetClipboard(out.c_str());
 }
