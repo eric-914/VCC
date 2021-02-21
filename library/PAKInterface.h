@@ -104,3 +104,7 @@ extern "C" __declspec(dllexport) unsigned short __cdecl PakAudioSample(void);
 
 extern "C" __declspec(dllexport) void __cdecl RefreshDynamicMenu(SystemState* systemState);
 extern "C" __declspec(dllexport) void __cdecl DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, int type);
+extern "C" __declspec(dllexport) void __cdecl UnloadDll(SystemState* systemState);
+extern "C" __declspec(dllexport) int __cdecl LoadROMPack(SystemState* systemState, char filename[MAX_PATH]);
+extern "C" __declspec(dllexport) void __cdecl UnloadPack(SystemState* systemState);
+extern "C" __declspec(dllexport) void __cdecl UpdateBusPointer(void);

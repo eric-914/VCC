@@ -7,12 +7,18 @@
 #include "library/defines.h"
 #include "library/fileoperations.h"
 #include "library/systemstate.h"
+#include "library/VCC.h"
 
-#include "load_ext_rom.h"
-#include "UnloadDll.h"
-#include "DynamicMenuCallback.h"
 #include "MemRead8.h"
 #include "MemWrite8.h"
+
+/*
+* TODO: This exists because this is what the different plugins expect, but it requires the EmuState
+*/
+void DynamicMenuCallback(char* menuName, int menuId, int type)
+{
+  DynamicMenuCallback(&(GetVccState()->EmuState), menuName, menuId, type);
+}
 
 int InsertModule(SystemState* systemState, char* modulePath)
 {
@@ -35,7 +41,7 @@ int InsertModule(SystemState* systemState, char* modulePath)
   case 2:		//File is a ROM image
     UnloadDll(systemState);
     
-    load_ext_rom(systemState, modulePath);
+    LoadROMPack(systemState, modulePath);
 
     strncpy(pakInterfaceState->Modname, modulePath, MAX_PATH);
 

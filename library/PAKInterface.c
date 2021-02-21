@@ -2,7 +2,9 @@
 
 #include "PAKInterface.h"
 #include "VCC.h"
+#include "MC6821.h"
 #include "systemstate.h"
+#include "cpudef.h"
 
 PakInterfaceState* InitializeInstance(PakInterfaceState*);
 
@@ -335,6 +337,129 @@ extern "C" {
       pakInterfaceState->MenuIndex++;
 
       break;
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl UnloadDll(SystemState* systemState)
+  {
+    PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
+
+    if ((pakInterfaceState->DialogOpen == true) && (systemState->EmulationRunning == 1))
+    {
+      MessageBox(0, "Close Configuration Dialog before unloading", "Ok", 0);
+
+      return;
+    }
+
+    pakInterfaceState->GetModuleName = NULL;
+    pakInterfaceState->ConfigModule = NULL;
+    pakInterfaceState->PakPortWrite = NULL;
+    pakInterfaceState->PakPortRead = NULL;
+    pakInterfaceState->SetInterruptCallPointer = NULL;
+    pakInterfaceState->DmaMemPointer = NULL;
+    pakInterfaceState->HeartBeat = NULL;
+    pakInterfaceState->PakMemWrite8 = NULL;
+    pakInterfaceState->PakMemRead8 = NULL;
+    pakInterfaceState->ModuleStatus = NULL;
+    pakInterfaceState->ModuleAudioSample = NULL;
+    pakInterfaceState->ModuleReset = NULL;
+
+    if (pakInterfaceState->hInstLib != NULL) {
+      FreeLibrary(pakInterfaceState->hInstLib);
+    }
+
+    pakInterfaceState->hInstLib = NULL;
+
+    DynamicMenuCallback(systemState, "", 0, 0); //Refresh Menus
+    DynamicMenuCallback(systemState, "", 1, 0);
+  }
+}
+
+/**
+Load a ROM pack
+return total bytes loaded, or 0 on failure
+*/
+extern "C" {
+  __declspec(dllexport) int __cdecl LoadROMPack(SystemState* systemState, char filename[MAX_PATH])
+  {
+    constexpr size_t PAK_MAX_MEM = 0x40000;
+
+    PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
+
+    // If there is an existing ROM, ditch it
+    if (pakInterfaceState->ExternalRomBuffer != nullptr) {
+      free(pakInterfaceState->ExternalRomBuffer);
+    }
+
+    // Allocate memory for the ROM
+    pakInterfaceState->ExternalRomBuffer = (uint8_t*)malloc(PAK_MAX_MEM);
+
+    // If memory was unable to be allocated, fail
+    if (pakInterfaceState->ExternalRomBuffer == nullptr) {
+      MessageBox(0, "cant allocate ram", "Ok", 0);
+
+      return 0;
+    }
+
+    // Open the ROM file, fail if unable to
+    FILE* rom_handle = fopen(filename, "rb");
+
+    if (rom_handle == nullptr) return 0;
+
+    // Load the file, one byte at a time.. (TODO: Get size and read entire block)
+    int index = 0;
+
+    while ((feof(rom_handle) == 0) && (index < PAK_MAX_MEM)) {
+      pakInterfaceState->ExternalRomBuffer[index++] = fgetc(rom_handle);
+    }
+
+    fclose(rom_handle);
+
+    UnloadDll(systemState);
+
+    pakInterfaceState->BankedCartOffset = 0;
+    pakInterfaceState->RomPackLoaded = true;
+
+    return index;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl UnloadPack(SystemState* systemState)
+  {
+    PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
+
+    UnloadDll(systemState);
+
+    strcpy(pakInterfaceState->DllPath, "");
+    strcpy(pakInterfaceState->Modname, "Blank");
+
+    pakInterfaceState->RomPackLoaded = false;
+
+    SetCart(0);
+
+    if (pakInterfaceState->ExternalRomBuffer != nullptr) {
+      free(pakInterfaceState->ExternalRomBuffer);
+    }
+
+    pakInterfaceState->ExternalRomBuffer = nullptr;
+
+    systemState->ResetPending = 2;
+
+    DynamicMenuCallback(systemState, "", 0, 0); //Refresh Menus
+    DynamicMenuCallback(systemState, "", 1, 0);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl UpdateBusPointer(void)
+  {
+    PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
+
+    if (pakInterfaceState->SetInterruptCallPointer != NULL) {
+      pakInterfaceState->SetInterruptCallPointer(GetCPU()->CPUAssertInterrupt);
     }
   }
 }

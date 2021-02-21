@@ -22,7 +22,6 @@
 #include "CopyText.h"
 #include "CreateDDWindow.h"
 #include "DynamicMenuActivated.h"
-#include "DynamicMenuCallback.h"
 #include "EmuLoop.h"
 #include "FullScreenToggle.h"
 #include "InitInstance.h"
@@ -31,7 +30,6 @@
 #include "MainConfig.h"
 #include "SendSavedKeyEvents.h"
 #include "SetMonitorType.h"
-#include "UnloadDll.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

@@ -198,7 +198,6 @@
     <ClCompile Include="DoCls.c" />
     <ClCompile Include="DSEnumCallback.c" />
     <ClCompile Include="DynamicMenuActivated.c" />
-    <ClCompile Include="DynamicMenuCallback.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetSoundCardList.c" />
@@ -214,7 +213,6 @@
     <ClCompile Include="LoadIniFile.c" />
     <ClCompile Include="LoadInternalRom.c" />
     <ClCompile Include="LoadPack.c" />
-    <ClCompile Include="load_ext_rom.c" />
     <ClCompile Include="LockScreen.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
@@ -257,10 +255,7 @@
     <ClCompile Include="SoundInit.c" />
     <ClCompile Include="Static.c" />
     <ClCompile Include="TapeConfig.c" />
-    <ClCompile Include="UnloadDll.c" />
-    <ClCompile Include="UnloadPack.c" />
     <ClCompile Include="UnlockScreen.c" />
-    <ClCompile Include="UpdateBusPointer.c" />
     <ClCompile Include="UpdateConfig.c" />
   </ItemGroup>
   <ItemGroup>
@@ -299,7 +294,6 @@
     <ClInclude Include="DoCls.h" />
     <ClInclude Include="DSEnumCallback.h" />
     <ClInclude Include="DynamicMenuActivated.h" />
-    <ClInclude Include="DynamicMenuCallback.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetSoundCardList.h" />
@@ -315,7 +309,6 @@
     <ClInclude Include="LoadIniFile.h" />
     <ClInclude Include="LoadInternalRom.h" />
     <ClInclude Include="LoadPack.h" />
-    <ClInclude Include="load_ext_rom.h" />
     <ClInclude Include="LockScreen.h" />
     <ClInclude Include="MainConfig.h" />
     <ClInclude Include="MC6809Init.h" />
@@ -357,10 +350,7 @@
     <ClInclude Include="SoundInit.h" />
     <ClInclude Include="Static.h" />
     <ClInclude Include="TapeConfig.h" />
-    <ClInclude Include="UnloadDll.h" />
-    <ClInclude Include="UnloadPack.h" />
     <ClInclude Include="UnlockScreen.h" />
-    <ClInclude Include="UpdateBusPointer.h" />
     <ClInclude Include="UpdateConfig.h" />
   </ItemGroup>
   <ItemGroup>

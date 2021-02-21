@@ -1,7 +1,6 @@
 #include "library/PAKInterface.h"
 #include "library/systemstate.h"
 
-#include "UnloadPack.h"
 #include "LoadPack.h"
 
 void DynamicMenuActivated(SystemState* systemState, unsigned char menuItem)

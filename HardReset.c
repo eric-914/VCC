@@ -22,7 +22,6 @@
 #include "MmuInit.h"
 
 #include "GimeReset.h"
-#include "UpdateBusPointer.h"
 
 void HardReset(SystemState* const systemState)
 {
