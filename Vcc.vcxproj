@@ -212,7 +212,6 @@
     <ClCompile Include="InsertModule.c" />
     <ClCompile Include="InvalidateBorder.c" />
     <ClCompile Include="JoyStickConfig.c" />
-    <ClCompile Include="KeyTransCompare.c" />
     <ClCompile Include="LoadCart.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadIniFile.c" />
@@ -285,10 +284,6 @@
     <ClCompile Include="UnlockScreen.c" />
     <ClCompile Include="UpdateBusPointer.c" />
     <ClCompile Include="UpdateConfig.c" />
-    <ClCompile Include="vccKeyboardBuildRuntimeTable.c" />
-    <ClCompile Include="vccKeyboardGetScan.c" />
-    <ClCompile Include="vccKeyboardHandleKey.c" />
-    <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -340,7 +335,6 @@
     <ClInclude Include="InsertModule.h" />
     <ClInclude Include="InvalidateBorder.h" />
     <ClInclude Include="JoyStickConfig.h" />
-    <ClInclude Include="KeyTransCompare.h" />
     <ClInclude Include="LoadCart.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadIniFile.h" />
@@ -412,10 +406,6 @@
     <ClInclude Include="UnlockScreen.h" />
     <ClInclude Include="UpdateBusPointer.h" />
     <ClInclude Include="UpdateConfig.h" />
-    <ClInclude Include="vccKeyboardBuildRuntimeTable.h" />
-    <ClInclude Include="vccKeyboardGetScan.h" />
-    <ClInclude Include="vccKeyboardHandleKey.h" />
-    <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">

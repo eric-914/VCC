@@ -5,7 +5,7 @@
 #include "library/Config.h"
 #include "library/VCC.h"
 #include "library/Joystick.h"
-#include "library/keyboarddef.h"
+#include "library/Keyboard.h"
 #include "library/systemstate.h"
 #include "library/Audio.h"
 
@@ -21,7 +21,6 @@
 #include "MiscConfig.h"
 #include "TapeConfig.h"
 #include "UpdateConfig.h"
-#include "vccKeyboardBuildRuntimeTable.h"
 #include "SoundInit.h"
 
 LRESULT CALLBACK MainConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

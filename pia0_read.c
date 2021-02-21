@@ -1,6 +1,5 @@
 #include "library/MC6821.h"
-
-#include "vccKeyboardGetScan.h"
+#include "library/Keyboard.h"
 
 // Shift Row Col
 unsigned char pia0_read(unsigned char port)

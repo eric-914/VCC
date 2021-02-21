@@ -6,6 +6,18 @@
 
 #include "resources/resource.h"
 
+#include "library/Audio.h"
+#include "library/CoCo.h"
+#include "library/Config.h"
+#include "library/DirectDrawAccessors.h"
+#include "library/Joystick.h"
+#include "library/Keyboard.h"
+#include "library/PakInterfaceAccessors.h"
+#include "library/VCC.h"
+#include "library/fileoperations.h"
+#include "library/graphicsstate.h"
+#include "library/pakinterfacestate.h"
+
 #include "About.h"
 #include "CopyText.h"
 #include "CreateDDWindow.h"
@@ -24,18 +36,7 @@
 #include "SendSavedKeyEvents.h"
 #include "SetMonitorType.h"
 #include "UnloadDll.h"
-#include "vccKeyboardHandleKey.h"
 
-#include "library/Audio.h"
-#include "library/CoCo.h"
-#include "library/Config.h"
-#include "library/DirectDrawAccessors.h"
-#include "library/Joystick.h"
-#include "library/PakInterfaceAccessors.h"
-#include "library/pakinterfacestate.h"
-#include "library/VCC.h"
-#include "library/fileoperations.h"
-#include "library/graphicsstate.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

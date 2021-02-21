@@ -1,6 +1,6 @@
 #include "library/registersstate.h"
 
-#include "library/KeyboardAccessors.h"
+#include "library/Keyboard.h"
 #include "library/CoCo.h"
 
 void SetGimeFIRQSteering(unsigned char data) //93

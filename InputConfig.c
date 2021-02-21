@@ -3,7 +3,7 @@
 #include "library/Config.h"
 #include "resources/resource.h"
 
-#include "library/keyboarddef.h"
+#include "library/Keyboard.h"
 
 LRESULT CALLBACK InputConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

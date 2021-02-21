@@ -20,7 +20,7 @@
 */
 /*****************************************************************************/
 
-#include "keyboarddef.h"
+#include "Keyboard.h"
 
 extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsCoCo(void);
 extern "C" __declspec(dllexport) keytranslationentry_t* __cdecl GetKeyTranslationsNatural(void);

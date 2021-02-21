@@ -1,16 +1,12 @@
 #include <math.h>
 
-#include "vccKeyboardBuildRuntimeTable.h"
-#include "vccKeyboardHandleKey.h"
-
 #include "library/Clipboard.h"
 #include "library/CoCo.h"
-#include "library/KeyboardAccessors.h"
+#include "library/Keyboard.h"
 #include "library/PakInterfaceAccessors.h"
 #include "library/RegistersAccessors.h"
 #include "library/cpudef.h"
 #include "library/defines.h"
-#include "library/keyboarddef.h"
 #include "library/MC6821.h"
 #include "library/VCC.h"
 

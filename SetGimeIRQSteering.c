@@ -1,6 +1,6 @@
 #include "library/registersstate.h"
 
-#include "library/KeyboardAccessors.h"
+#include "library/Keyboard.h"
 #include "library/CoCo.h"
 
 void SetGimeIRQSteering(unsigned char data) //92

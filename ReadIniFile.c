@@ -3,12 +3,11 @@
 #include "library/Config.h"
 
 #include "library/Joystick.h"
-#include "library/keyboarddef.h"
+#include "library/Keyboard.h"
 #include "library/systemstate.h"
 #include "library/fileoperations.h"
 
 #include "SetWindowSize.h"
-#include "vccKeyboardBuildRuntimeTable.h"
 #include "InsertModule.h"
 
 unsigned char ReadIniFile(SystemState* systemState)

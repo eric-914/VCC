@@ -2,10 +2,7 @@
 
 #include "library/Clipboard.h"
 #include "library/Config.h"
-#include "vccKeyboardBuildRuntimeTable.h"
-#include "library/KeyboardAccessors.h"
-
-#include "library/keyboarddef.h"
+#include "library/Keyboard.h"
 #include "library/graphicsstate.h"
 
 string GetClipboardText()

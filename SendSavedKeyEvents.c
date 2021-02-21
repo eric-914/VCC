@@ -1,6 +1,5 @@
 #include "library/VCC.h"
-
-#include "vccKeyboardHandleKey.h"
+#include "library/Keyboard.h"
 
 // Send key up events to keyboard handler for saved keys
 void SendSavedKeyEvents() {
