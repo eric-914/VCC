@@ -54,3 +54,6 @@ extern "C" __declspec(dllexport) void __cdecl WavtoCas(unsigned char* waveBuffer
 extern "C" __declspec(dllexport) void __cdecl FlushCassetteBuffer(unsigned char* buffer, unsigned int length);
 extern "C" __declspec(dllexport) void __cdecl LoadCassetteBuffer(unsigned char* cassBuffer);
 extern "C" __declspec(dllexport) void __cdecl SetTapeCounter(unsigned int count);
+
+extern "C" __declspec(dllexport) void __cdecl Motor(unsigned char state);
+extern "C" __declspec(dllexport) void __cdecl SetTapeMode(unsigned char mode);

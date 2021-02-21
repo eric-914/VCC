@@ -6,6 +6,7 @@
 #include "macros.h"
 
 #include "Config.h"
+#include "CoCo.h"
 
 const unsigned char One[21] = { 0x80, 0xA8, 0xC8, 0xE8, 0xE8, 0xF8, 0xF8, 0xE8, 0xC8, 0xA8, 0x78, 0x50, 0x50, 0x30, 0x10, 0x00, 0x00, 0x10, 0x30, 0x30, 0x50 };
 const unsigned char Zero[40] = { 0x80, 0x90, 0xA8, 0xB8, 0xC8, 0xD8, 0xE8, 0xE8, 0xF0, 0xF8, 0xF8, 0xF8, 0xF0, 0xE8, 0xD8, 0xC8, 0xB8, 0xA8, 0x90, 0x78, 0x78, 0x68, 0x50, 0x40, 0x30, 0x20, 0x10, 0x08, 0x00, 0x00, 0x00, 0x08, 0x10, 0x10, 0x20, 0x30, 0x40, 0x50, 0x68, 0x68 };
@@ -466,6 +467,111 @@ extern "C" {
 
     if (cassetteState->TapeOffset > cassetteState->TotalSize) {
       cassetteState->TotalSize = cassetteState->TapeOffset;
+    }
+
+    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl Motor(unsigned char state)
+  {
+    CassetteState* cassetteState = GetCassetteState();
+
+    cassetteState->MotorState = state;
+
+    switch (cassetteState->MotorState)
+    {
+    case 0:
+      SetSndOutMode(0);
+
+      switch (cassetteState->TapeMode)
+      {
+      case STOP:
+        break;
+
+      case PLAY:
+        cassetteState->Quiet = 30;
+        cassetteState->TempIndex = 0;
+        break;
+
+      case REC:
+        SyncFileBuffer();
+        break;
+
+      case EJECT:
+        break;
+      }
+      break;	//MOTOROFF
+
+    case 1:
+      switch (cassetteState->TapeMode)
+      {
+      case STOP:
+        SetSndOutMode(0);
+        break;
+
+      case PLAY:
+        SetSndOutMode(2);
+        break;
+
+      case REC:
+        SetSndOutMode(1);
+        break;
+
+      case EJECT:
+        SetSndOutMode(0);
+      }
+
+      break;	//MOTORON	
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog
+  {
+    CassetteState* cassetteState = GetCassetteState();
+
+    cassetteState->TapeMode = mode;
+
+    switch (cassetteState->TapeMode)
+    {
+    case STOP:
+      break;
+
+    case PLAY:
+      if (cassetteState->TapeHandle == NULL) {
+        if (!LoadTape()) {
+          cassetteState->TapeMode = STOP;
+        }
+        else {
+          cassetteState->TapeMode = mode;
+        }
+      }
+
+      if (cassetteState->MotorState) {
+        Motor(1);
+      }
+
+      break;
+
+    case REC:
+      if (cassetteState->TapeHandle == NULL) {
+        if (!LoadTape()) {
+          cassetteState->TapeMode = STOP;
+        }
+        else {
+          cassetteState->TapeMode = mode;
+        }
+      }
+      break;
+
+    case EJECT:
+      CloseTapeFile();
+      strcpy(cassetteState->TapeFileName, "EMPTY");
+
+      break;
     }
 
     UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);

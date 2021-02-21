@@ -1,7 +1,7 @@
 #include "library/MC6821.h"
+#include "library/Cassette.h"
 
 #include "SetGimeVdgMode2.h"
-#include "Motor.h"
 
 void pia1_write(unsigned char data, unsigned char port)
 {

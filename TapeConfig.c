@@ -5,8 +5,6 @@
 #include "library/Config.h"
 #include "library/Cassette.h"
 
-#include "SetTapeMode.h"
-
 LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();

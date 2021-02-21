@@ -183,8 +183,6 @@
     <ClCompile Include="hd6309_md.c" />
     <ClCompile Include="mc6809_CalculateEA.c" />
     <ClCompile Include="CartLoad.c" />
-    <ClCompile Include="CassIn.c" />
-    <ClCompile Include="CassOut.c" />
     <ClCompile Include="hd6309opcodes.c" />
     <ClCompile Include="MC6809AssertInterrupt.c" />
     <ClCompile Include="MC6809DeAssertInterrupt.c" />
@@ -237,7 +235,6 @@
     <ClCompile Include="MiscConfig.c" />
     <ClCompile Include="MmuInit.c" />
     <ClCompile Include="MmuReset.c" />
-    <ClCompile Include="Motor.c" />
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
@@ -273,8 +270,6 @@
     <ClCompile Include="SetMonitorType.c" />
     <ClCompile Include="SetPaletteType.c" />
     <ClCompile Include="SetScanLines.c" />
-    <ClCompile Include="SetSndOutMode.c" />
-    <ClCompile Include="SetTapeMode.c" />
     <ClCompile Include="SetTimerLSB.c" />
     <ClCompile Include="SetTimerMSB.c" />
     <ClCompile Include="SetupDisplay.c" />
@@ -316,8 +311,6 @@
     <ClInclude Include="hd6309_md.h" />
     <ClInclude Include="mc6809_CalculateEA.h" />
     <ClInclude Include="CartLoad.h" />
-    <ClInclude Include="CassIn.h" />
-    <ClInclude Include="CassOut.h" />
     <ClInclude Include="hd6309opcodes.h" />
     <ClInclude Include="MC6809AssertInterrupt.h" />
     <ClInclude Include="MC6809DeAssertInterrupt.h" />
@@ -369,7 +362,6 @@
     <ClInclude Include="MiscConfig.h" />
     <ClInclude Include="MmuInit.h" />
     <ClInclude Include="MmuReset.h" />
-    <ClInclude Include="Motor.h" />
     <ClInclude Include="PasteBASIC.h" />
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />
@@ -405,8 +397,6 @@
     <ClInclude Include="SetMonitorType.h" />
     <ClInclude Include="SetPaletteType.h" />
     <ClInclude Include="SetScanLines.h" />
-    <ClInclude Include="SetSndOutMode.h" />
-    <ClInclude Include="SetTapeMode.h" />
     <ClInclude Include="SetTimerLSB.h" />
     <ClInclude Include="SetTimerMSB.h" />
     <ClInclude Include="SetupDisplay.h" />
