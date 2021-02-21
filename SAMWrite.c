@@ -1,6 +1,6 @@
 #include "library/registersstate.h"
 #include "library/VCC.h"
-#include "library/MmuAccessors.h"
+#include "library/MMU.h"
 #include "library/Graphics.h"
 
 void SAMWrite(unsigned char data, unsigned char port)

@@ -1,3 +1,4 @@
+#include <windows.h>
 //#include <stdio.h>
 
 #include "MMU.h"
@@ -183,6 +184,17 @@ extern "C" {
     MmuState* mmuState = GetMmuState();
 
     mmuState->RomMap = (data & 3);
+
+    UpdateMmuArray();
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SetMapType(unsigned char type)
+  {
+    MmuState* mmuState = GetMmuState();
+
+    mmuState->MapType = type;
 
     UpdateMmuArray();
   }

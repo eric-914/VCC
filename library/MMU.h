@@ -1,7 +1,5 @@
 #pragma once
 
-#include <windows.h>
-
 typedef struct {
   unsigned char MmuState;	// Composite variable handles MmuTask and MmuEnabled
   unsigned char* MemPages[1024];
@@ -40,3 +38,4 @@ extern "C" __declspec(dllexport) void __cdecl SetVectors(unsigned char data);
 extern "C" __declspec(dllexport) void __cdecl SetMmuRegister(unsigned char, unsigned char);
 extern "C" __declspec(dllexport) void __cdecl SetMmuTask(unsigned char task);
 extern "C" __declspec(dllexport) void __cdecl SetRomMap(unsigned char data);
+extern "C" __declspec(dllexport) void __cdecl SetMapType(unsigned char type);

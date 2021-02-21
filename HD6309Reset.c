@@ -1,9 +1,9 @@
 #include "library/hd6309defs.h"
 #include "library/hd6309state.h"
-#include "hd6309_md.h"
+#include "library/MMU.h"
 
+#include "hd6309_md.h"
 #include "MemRead16.h"
-#include "library/MmuAccessors.h"
 
 void HD6309Reset(void)
 {
