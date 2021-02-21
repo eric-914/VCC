@@ -97,22 +97,20 @@ extern "C" {
     unsigned long writeCursor = 0, playCursor = 0;
     long retVal = 0, maxSize = 0;
 
-    AudioState* audioState = GetAudioState();
-
-    if ((!audioState->InitPassed) || (audioState->AudioPause)) {
+    if ((!instance->InitPassed) || (instance->AudioPause)) {
       return(AUDIOBUFFERS);
     }
 
-    retVal = audioState->lpdsbuffer1->GetCurrentPosition(&playCursor, &writeCursor);
+    retVal = instance->lpdsbuffer1->GetCurrentPosition(&playCursor, &writeCursor);
 
-    if (audioState->BuffOffset <= playCursor) {
-      maxSize = playCursor - audioState->BuffOffset;
+    if (instance->BuffOffset <= playCursor) {
+      maxSize = playCursor - instance->BuffOffset;
     }
     else {
-      maxSize = audioState->SndBuffLength - audioState->BuffOffset + playCursor;
+      maxSize = instance->SndBuffLength - instance->BuffOffset + playCursor;
     }
 
-    return(maxSize / audioState->BlockSize);
+    return(maxSize / instance->BlockSize);
   }
 }
 
@@ -123,99 +121,93 @@ extern "C" {
     unsigned char flag = 0;
     unsigned char* Abuffer2 = (unsigned char*)aBuffer;
 
-    AudioState* audioState = GetAudioState();
-
     leftAverage = aBuffer[0] >> 16;
     rightAverage = aBuffer[0] & 0xFFFF;
 
     UpdateSoundBar(leftAverage, rightAverage);
 
-    if ((!audioState->InitPassed) || (audioState->AudioPause)) {
+    if ((!instance->InitPassed) || (instance->AudioPause)) {
       return;
     }
 
     if (GetFreeBlockCount() <= 0)	//this should only kick in when frame skipping or unthrottled
     {
-      memcpy(audioState->AuxBuffer[audioState->AuxBufferPointer], Abuffer2, length);	//Saving buffer to aux stack
+      memcpy(instance->AuxBuffer[instance->AuxBufferPointer], Abuffer2, length);	//Saving buffer to aux stack
 
-      audioState->AuxBufferPointer++;		//and chase your own tail
-      audioState->AuxBufferPointer %= 5;	//At this point we are so far behind we may as well drop the buffer
+      instance->AuxBufferPointer++;		//and chase your own tail
+      instance->AuxBufferPointer %= 5;	//At this point we are so far behind we may as well drop the buffer
 
       return;
     }
 
-    audioState->hr = audioState->lpdsbuffer1->Lock(audioState->BuffOffset, length, &(audioState->SndPointer1), &(audioState->SndLength1), &(audioState->SndPointer2), &(audioState->SndLength2), 0);
+    instance->hr = instance->lpdsbuffer1->Lock(instance->BuffOffset, length, &(instance->SndPointer1), &(instance->SndLength1), &(instance->SndPointer2), &(instance->SndLength2), 0);
 
-    if (audioState->hr != DS_OK) {
+    if (instance->hr != DS_OK) {
       return;
     }
 
-    memcpy(audioState->SndPointer1, Abuffer2, audioState->SndLength1);	// copy first section of circular buffer
+    memcpy(instance->SndPointer1, Abuffer2, instance->SndLength1);	// copy first section of circular buffer
 
-    if (audioState->SndPointer2 != NULL) { // copy last section of circular buffer if wrapped
-      memcpy(audioState->SndPointer2, Abuffer2 + audioState->SndLength1, audioState->SndLength2);
+    if (instance->SndPointer2 != NULL) { // copy last section of circular buffer if wrapped
+      memcpy(instance->SndPointer2, Abuffer2 + instance->SndLength1, instance->SndLength2);
     }
 
-    audioState->hr = audioState->lpdsbuffer1->Unlock(audioState->SndPointer1, audioState->SndLength1, audioState->SndPointer2, audioState->SndLength2);// unlock the buffer
+    instance->hr = instance->lpdsbuffer1->Unlock(instance->SndPointer1, instance->SndLength1, instance->SndPointer2, instance->SndLength2);// unlock the buffer
 
-    audioState->BuffOffset = (audioState->BuffOffset + length) % audioState->SndBuffLength;	//Where to write next
+    instance->BuffOffset = (instance->BuffOffset + length) % instance->SndBuffLength;	//Where to write next
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl PurgeAuxBuffer(void)
   {
-    AudioState* audioState = GetAudioState();
-
-    if ((!audioState->InitPassed) || (audioState->AudioPause)) {
+    if ((!instance->InitPassed) || (instance->AudioPause)) {
       return;
     }
 
     return; //TODO: Why?
 
-    audioState->AuxBufferPointer--;			//Normally points to next free block Point to last used block
+    instance->AuxBufferPointer--;			//Normally points to next free block Point to last used block
 
-    if (audioState->AuxBufferPointer >= 0)	//zero is a valid data block
+    if (instance->AuxBufferPointer >= 0)	//zero is a valid data block
     {
       while ((GetFreeBlockCount() <= 0)) {};
 
-      audioState->hr = audioState->lpdsbuffer1->Lock(audioState->BuffOffset, audioState->BlockSize, &(audioState->SndPointer1), &(audioState->SndLength1), &(audioState->SndPointer2), &(audioState->SndLength2), 0);
+      instance->hr = instance->lpdsbuffer1->Lock(instance->BuffOffset, instance->BlockSize, &(instance->SndPointer1), &(instance->SndLength1), &(instance->SndPointer2), &(instance->SndLength2), 0);
 
-      if (audioState->hr != DS_OK) {
+      if (instance->hr != DS_OK) {
         return;
       }
 
-      memcpy(audioState->SndPointer1, audioState->AuxBuffer[audioState->AuxBufferPointer], audioState->SndLength1);
+      memcpy(instance->SndPointer1, instance->AuxBuffer[instance->AuxBufferPointer], instance->SndLength1);
 
-      if (audioState->SndPointer2 != NULL) {
-        memcpy(audioState->SndPointer2, (audioState->AuxBuffer[audioState->AuxBufferPointer] + (audioState->SndLength1 >> 2)), audioState->SndLength2);
+      if (instance->SndPointer2 != NULL) {
+        memcpy(instance->SndPointer2, (instance->AuxBuffer[instance->AuxBufferPointer] + (instance->SndLength1 >> 2)), instance->SndLength2);
       }
 
-      audioState->BuffOffset = (audioState->BuffOffset + audioState->BlockSize) % audioState->SndBuffLength;
+      instance->BuffOffset = (instance->BuffOffset + instance->BlockSize) % instance->SndBuffLength;
 
-      audioState->hr = audioState->lpdsbuffer1->Unlock(audioState->SndPointer1, audioState->SndLength1, audioState->SndPointer2, audioState->SndLength2);
+      instance->hr = instance->lpdsbuffer1->Unlock(instance->SndPointer1, instance->SndLength1, instance->SndPointer2, instance->SndLength2);
 
-      audioState->AuxBufferPointer--;
+      instance->AuxBufferPointer--;
     }
 
-    audioState->AuxBufferPointer = 0;
+    instance->AuxBufferPointer = 0;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl ResetAudio(void)
   {
-    AudioState* audioState = GetAudioState();
-
-    SetAudioRate(audioState->iRateList[audioState->CurrentRate]);
+    SetAudioRate(instance->iRateList[instance->CurrentRate]);
 
     //	SetAudioRate(44100);
-    if (audioState->InitPassed) {
-      audioState->lpdsbuffer1->SetCurrentPosition(0);
+    if (instance->InitPassed) {
+      instance->lpdsbuffer1->SetCurrentPosition(0);
     }
 
-    audioState->BuffOffset = 0;
-    audioState->AuxBufferPointer = 0;
+    instance->BuffOffset = 0;
+    instance->AuxBufferPointer = 0;
   }
 }
 

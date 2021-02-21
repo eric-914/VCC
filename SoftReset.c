@@ -1,13 +1,12 @@
 #include "library/vccstate.h"
-
+#include "library/MC6821.h"
+#include "library/cpudef.h"
 #include "library/PakInterfaceAccessors.h"
+
 #include "CopyRom.h"
 #include "MmuReset.h"
 #include "GimeReset.h"
-#include "PiaReset.h"
 #include "MC6883Reset.h"
-
-#include "library/cpudef.h"
 
 void SoftReset(void)
 {

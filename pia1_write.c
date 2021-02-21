@@ -1,9 +1,7 @@
-#include "library/mc6821state.h"
+#include "library/MC6821.h"
 
 #include "SetGimeVdgMode2.h"
 #include "Motor.h"
-#include "GetMuxState.h"
-#include "CaptureBit.h"
 
 void pia1_write(unsigned char data, unsigned char port)
 {

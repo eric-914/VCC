@@ -1,9 +1,10 @@
-#include "FlushCassetteBuffer.h"
+#include "library/defines.h"
+
+#include "library/Cassette.h"
+#include "library/CoCo.h"
+
 #include "CassIn.h"
 #include "CassOut.h"
-
-#include "library/CoCo.h"
-#include "library/defines.h"
 
 unsigned char SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
 {

@@ -1,4 +1,7 @@
 #include "library/Config.h"
+#include "library/DirectDrawAccessors.h"
+#include "library/MC6821.h"
+#include "library/systemstate.h"
 
 #include "SetAutoStart.h"
 #include "SetCpuType.h"
@@ -10,10 +13,6 @@
 #include "SetPaletteType.h"
 #include "SetScanLines.h"
 #include "Reboot.h"
-#include "library/DirectDrawAccessors.h"
-#include "SetCartAutoStart.h"
-
-#include "library/systemstate.h"
 
 void UpdateConfig(SystemState* systemState)
 {

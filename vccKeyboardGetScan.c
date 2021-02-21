@@ -1,8 +1,6 @@
-#include "GetMuxState.h"
-#include "DACState.h"
-
 #include "library/Joystick.h"
 #include "library/keyboardstate.h"
+#include "library/MC6821.h"
 
 /*
   Get CoCo 'scan' code

@@ -51,3 +51,6 @@ extern "C" __declspec(dllexport) void __cdecl CloseTapeFile(void);
 extern "C" __declspec(dllexport) int __cdecl MountTape(char* filename);
 extern "C" __declspec(dllexport) unsigned int __cdecl LoadTape(void);
 extern "C" __declspec(dllexport) void __cdecl WavtoCas(unsigned char* waveBuffer, unsigned int length);
+extern "C" __declspec(dllexport) void __cdecl FlushCassetteBuffer(unsigned char* buffer, unsigned int length);
+extern "C" __declspec(dllexport) void __cdecl LoadCassetteBuffer(unsigned char* cassBuffer);
+extern "C" __declspec(dllexport) void __cdecl SetTapeCounter(unsigned int count);

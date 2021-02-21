@@ -1,6 +1,5 @@
 #include "library/CoCo.h"
-#include "SetCassetteSample.h"
-#include "library/GetDACSample.h"
+#include "library/MC6821.h"
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassIn(void)

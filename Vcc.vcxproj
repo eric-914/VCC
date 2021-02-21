@@ -168,7 +168,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="About.c" />
-    <ClCompile Include="AssertCart.c" />
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="HD6309AssertInterrupt.c" />
@@ -185,7 +184,6 @@
     <ClCompile Include="mc6809_CalculateEA.c" />
     <ClCompile Include="CalculateFPS.c" />
     <ClCompile Include="CalibrateThrottle.c" />
-    <ClCompile Include="CaptureBit.c" />
     <ClCompile Include="CartLoad.c" />
     <ClCompile Include="CassIn.c" />
     <ClCompile Include="CassOut.c" />
@@ -195,13 +193,11 @@
     <ClCompile Include="MC6809Exec.c" />
     <ClCompile Include="MC6809ForcePC.c" />
     <ClCompile Include="mc6809_cc.c" />
-    <ClCompile Include="ClosePrintFile.c" />
     <ClCompile Include="CopyRom.c" />
     <ClCompile Include="CopyText.c" />
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CPUCycle.c" />
     <ClCompile Include="CreateDDWindow.c" />
-    <ClCompile Include="DACState.c" />
     <ClCompile Include="DisplayConfig.c" />
     <ClCompile Include="DisplayFlip.c" />
     <ClCompile Include="DoCls.c" />
@@ -210,12 +206,9 @@
     <ClCompile Include="DynamicMenuCallback.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="EndRender.c" />
-    <ClCompile Include="FlushCassetteBuffer.c" />
     <ClCompile Include="FrameWait.c" />
     <ClCompile Include="FullScreenToggle.c" />
-    <ClCompile Include="GetCasSample.c" />
     <ClCompile Include="GetKeyName.c" />
-    <ClCompile Include="GetMuxState.c" />
     <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="GimeReset.c" />
     <ClCompile Include="GimeWrite.c" />
@@ -224,12 +217,9 @@
     <ClCompile Include="InputConfig.c" />
     <ClCompile Include="InsertModule.c" />
     <ClCompile Include="InvalidateBorder.c" />
-    <ClCompile Include="irq_fs.c" />
-    <ClCompile Include="irq_hs.c" />
     <ClCompile Include="JoyStickConfig.c" />
     <ClCompile Include="KeyTransCompare.c" />
     <ClCompile Include="LoadCart.c" />
-    <ClCompile Include="LoadCassetteBuffer.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadIniFile.c" />
     <ClCompile Include="LoadInternalRom.c" />
@@ -252,7 +242,6 @@
     <ClCompile Include="MmuInit.c" />
     <ClCompile Include="MmuReset.c" />
     <ClCompile Include="Motor.c" />
-    <ClCompile Include="OpenPrintFile.c" />
     <ClCompile Include="PasteBASIC.c" />
     <ClCompile Include="PasteBASICWithNew.c" />
     <ClCompile Include="PasteText.c" />
@@ -260,7 +249,6 @@
     <ClCompile Include="pia0_write.c" />
     <ClCompile Include="pia1_read.c" />
     <ClCompile Include="pia1_write.c" />
-    <ClCompile Include="PiaReset.c" />
     <ClCompile Include="port_read.c" />
     <ClCompile Include="port_write.c" />
     <ClCompile Include="quickload.c" />
@@ -277,9 +265,6 @@
     <ClCompile Include="SendSavedKeyEvents.c" />
     <ClCompile Include="SetAutoStart.c" />
     <ClCompile Include="SetBorderChange.c" />
-    <ClCompile Include="SetCart.c" />
-    <ClCompile Include="SetCartAutoStart.c" />
-    <ClCompile Include="SetCassetteSample.c" />
     <ClCompile Include="SetCompatMode.c" />
     <ClCompile Include="SetCPUMultiplayer.c" />
     <ClCompile Include="SetCPUMultiplayerFlag.c" />
@@ -298,14 +283,11 @@
     <ClCompile Include="SetInit0.c" />
     <ClCompile Include="SetInit1.c" />
     <ClCompile Include="SetMonitorType.c" />
-    <ClCompile Include="SetMonState.c" />
     <ClCompile Include="SetPaletteType.c" />
     <ClCompile Include="SetRamSize.c" />
     <ClCompile Include="SetScanLines.c" />
-    <ClCompile Include="SetSerialParams.c" />
     <ClCompile Include="SetSndOutMode.c" />
     <ClCompile Include="SetSpeedThrottle.c" />
-    <ClCompile Include="SetTapeCounter.c" />
     <ClCompile Include="SetTapeMode.c" />
     <ClCompile Include="SetTimerLSB.c" />
     <ClCompile Include="SetTimerMSB.c" />
@@ -328,8 +310,6 @@
     <ClCompile Include="vccKeyboardGetScan.c" />
     <ClCompile Include="vccKeyboardHandleKey.c" />
     <ClCompile Include="vccKeyboardUpdateRolloverTable.c" />
-    <ClCompile Include="VDG_Mode.c" />
-    <ClCompile Include="WritePrintMon.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -337,7 +317,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="About.h" />
-    <ClInclude Include="AssertCart.h" />
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="HD6309AssertInterrupt.h" />
@@ -354,7 +333,6 @@
     <ClInclude Include="mc6809_CalculateEA.h" />
     <ClInclude Include="CalculateFPS.h" />
     <ClInclude Include="CalibrateThrottle.h" />
-    <ClInclude Include="CaptureBit.h" />
     <ClInclude Include="CartLoad.h" />
     <ClInclude Include="CassIn.h" />
     <ClInclude Include="CassOut.h" />
@@ -364,13 +342,11 @@
     <ClInclude Include="MC6809Exec.h" />
     <ClInclude Include="MC6809ForcePC.h" />
     <ClInclude Include="mc6809_cc.h" />
-    <ClInclude Include="ClosePrintFile.h" />
     <ClInclude Include="CopyRom.h" />
     <ClInclude Include="CopyText.h" />
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CPUCycle.h" />
     <ClInclude Include="CreateDDWindow.h" />
-    <ClInclude Include="DACState.h" />
     <ClInclude Include="DisplayConfig.h" />
     <ClInclude Include="DisplayFlip.h" />
     <ClInclude Include="DoCls.h" />
@@ -379,12 +355,9 @@
     <ClInclude Include="DynamicMenuCallback.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="EndRender.h" />
-    <ClInclude Include="FlushCassetteBuffer.h" />
     <ClInclude Include="FrameWait.h" />
     <ClInclude Include="FullScreenToggle.h" />
-    <ClInclude Include="GetCasSample.h" />
     <ClInclude Include="GetKeyName.h" />
-    <ClInclude Include="GetMuxState.h" />
     <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="GimeReset.h" />
     <ClInclude Include="GimeWrite.h" />
@@ -393,12 +366,9 @@
     <ClInclude Include="InputConfig.h" />
     <ClInclude Include="InsertModule.h" />
     <ClInclude Include="InvalidateBorder.h" />
-    <ClInclude Include="irq_fs.h" />
-    <ClInclude Include="irq_hs.h" />
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="KeyTransCompare.h" />
     <ClInclude Include="LoadCart.h" />
-    <ClInclude Include="LoadCassetteBuffer.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadIniFile.h" />
     <ClInclude Include="LoadInternalRom.h" />
@@ -420,7 +390,6 @@
     <ClInclude Include="MmuInit.h" />
     <ClInclude Include="MmuReset.h" />
     <ClInclude Include="Motor.h" />
-    <ClInclude Include="OpenPrintFile.h" />
     <ClInclude Include="PasteBASIC.h" />
     <ClInclude Include="PasteBASICWithNew.h" />
     <ClInclude Include="PasteText.h" />
@@ -428,7 +397,6 @@
     <ClInclude Include="pia0_write.h" />
     <ClInclude Include="pia1_read.h" />
     <ClInclude Include="pia1_write.h" />
-    <ClInclude Include="PiaReset.h" />
     <ClInclude Include="port_read.h" />
     <ClInclude Include="port_write.h" />
     <ClInclude Include="quickload.h" />
@@ -445,9 +413,6 @@
     <ClInclude Include="SendSavedKeyEvents.h" />
     <ClInclude Include="SetAutoStart.h" />
     <ClInclude Include="SetBorderChange.h" />
-    <ClInclude Include="SetCart.h" />
-    <ClInclude Include="SetCartAutoStart.h" />
-    <ClInclude Include="SetCassetteSample.h" />
     <ClInclude Include="SetCompatMode.h" />
     <ClInclude Include="SetCPUMultiplayer.h" />
     <ClInclude Include="SetCPUMultiplayerFlag.h" />
@@ -466,14 +431,11 @@
     <ClInclude Include="SetInit0.h" />
     <ClInclude Include="SetInit1.h" />
     <ClInclude Include="SetMonitorType.h" />
-    <ClInclude Include="SetMonState.h" />
     <ClInclude Include="SetPaletteType.h" />
     <ClInclude Include="SetRamSize.h" />
     <ClInclude Include="SetScanLines.h" />
-    <ClInclude Include="SetSerialParams.h" />
     <ClInclude Include="SetSndOutMode.h" />
     <ClInclude Include="SetSpeedThrottle.h" />
-    <ClInclude Include="SetTapeCounter.h" />
     <ClInclude Include="SetTapeMode.h" />
     <ClInclude Include="SetTimerLSB.h" />
     <ClInclude Include="SetTimerMSB.h" />
@@ -496,8 +458,6 @@
     <ClInclude Include="vccKeyboardGetScan.h" />
     <ClInclude Include="vccKeyboardHandleKey.h" />
     <ClInclude Include="vccKeyboardUpdateRolloverTable.h" />
-    <ClInclude Include="VDG_Mode.h" />
-    <ClInclude Include="WritePrintMon.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">

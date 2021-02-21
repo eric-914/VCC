@@ -1,8 +1,8 @@
 #include "library/vccstate.h"
-
 #include "library/PakInterfaceAccessors.h"
 #include "library/CoCo.h"
-#include "MmuInit.h"
+#include "library/MC6821.h"
+#include "library/cpudef.h"
 
 #include "HD6309Init.h"
 #include "HD6309Exec.h"
@@ -19,12 +19,10 @@
 #include "MC6809ForcePC.h"
 
 #include "MC6883Reset.h"
+#include "MmuInit.h"
 
-#include "PiaReset.h"
 #include "GimeReset.h"
 #include "UpdateBusPointer.h"
-
-#include "library/cpudef.h"
 
 void HardReset(SystemState* const systemState)
 {

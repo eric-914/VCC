@@ -8,7 +8,7 @@
 #include "tcc1014graphics-24.h"
 #include "tcc1014graphics-32.h"
 
-#include "GetDACSample.h"
+#include "MC6821.h"
 
 CoCoState* InitializeInstance(CoCoState*);
 

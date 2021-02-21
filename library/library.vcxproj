@@ -186,7 +186,6 @@
     <ClCompile Include="DirectDrawAccessors.c" />
     <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="fileoperations.c" />
-    <ClCompile Include="GetDACSample.c" />
     <ClCompile Include="graphicsstate.c" />
     <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="hd6309state.c" />
@@ -197,7 +196,7 @@
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="mc6809state.c" />
-    <ClCompile Include="mc6821state.c" />
+    <ClCompile Include="MC6821.c" />
     <ClCompile Include="MmuAccessors.c" />
     <ClCompile Include="mmustate.c" />
     <ClCompile Include="PakInterfaceAccessors.c" />
@@ -221,7 +220,6 @@
     <ClInclude Include="DirectDrawAccessors.h" />
     <ClInclude Include="directdrawdef.h" />
     <ClInclude Include="directdrawstate.h" />
-    <ClInclude Include="GetDACSample.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="hd6309state.h" />
@@ -231,8 +229,7 @@
     <ClInclude Include="macros.h" />
     <ClInclude Include="mc6809defs.h" />
     <ClInclude Include="mc6809state.h" />
-    <ClInclude Include="mc6821def.h" />
-    <ClInclude Include="mc6821state.h" />
+    <ClInclude Include="MC6821.h" />
     <ClInclude Include="MmuAccessors.h" />
     <ClInclude Include="mmustate.h" />
     <ClInclude Include="PakInterfaceAccessors.h" />

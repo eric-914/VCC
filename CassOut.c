@@ -1,5 +1,5 @@
 #include "library/CoCo.h"
-#include "GetCasSample.h"
+#include "library/MC6821.h"
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassOut(void)

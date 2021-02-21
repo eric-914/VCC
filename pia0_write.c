@@ -1,4 +1,4 @@
-#include "library/mc6821state.h"
+#include "library/MC6821.h"
 
 void pia0_write(unsigned char data, unsigned char port)
 {

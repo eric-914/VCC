@@ -1,15 +1,12 @@
 #include <windows.h>
 
-#include "library/Config.h"
 #include "resources/resource.h"
+#include "library/Config.h"
+#include "library/MC6821.h"
 #include "library/vccstate.h"
+#include "library/systemstate.h"
 
 #include "SelectFile.h"
-#include "ClosePrintFile.h"
-#include "SetMonState.h"
-#include "SetSerialParams.h"
-
-#include "library/systemstate.h"
 
 LRESULT CALLBACK BitBangerConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

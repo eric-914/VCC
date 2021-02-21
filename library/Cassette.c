@@ -384,3 +384,90 @@ extern "C" {
     }
   }
 }
+
+extern "C" {
+  __declspec(dllexport) void __cdecl FlushCassetteBuffer(unsigned char* buffer, unsigned int length)
+  {
+    CassetteState* cassetteState = GetCassetteState();
+
+    if (cassetteState->TapeMode != REC) {
+      return;
+    }
+
+    switch (cassetteState->FileType)
+    {
+    case WAV:
+      SetFilePointer(cassetteState->TapeHandle, cassetteState->TapeOffset + 44, 0, FILE_BEGIN);
+      WriteFile(cassetteState->TapeHandle, buffer, length, &(cassetteState->BytesMoved), NULL);
+
+      if (length != cassetteState->BytesMoved) {
+        return;
+      }
+
+      cassetteState->TapeOffset += length;
+
+      if (cassetteState->TapeOffset > cassetteState->TotalSize) {
+        cassetteState->TotalSize = cassetteState->TapeOffset;
+      }
+
+      break;
+
+    case CAS:
+      WavtoCas(buffer, length);
+
+      break;
+    }
+
+    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl LoadCassetteBuffer(unsigned char* cassBuffer)
+  {
+    CassetteState* cassetteState = GetCassetteState();
+
+    unsigned long bytesMoved = 0;
+
+    if (cassetteState->TapeMode != PLAY) {
+      return;
+    }
+
+    switch (cassetteState->FileType)
+    {
+    case WAV:
+      SetFilePointer(cassetteState->TapeHandle, cassetteState->TapeOffset + 44, 0, FILE_BEGIN);
+      ReadFile(cassetteState->TapeHandle, cassBuffer, TAPEAUDIORATE / 60, &bytesMoved, NULL);
+
+      cassetteState->TapeOffset += bytesMoved;
+
+      if (cassetteState->TapeOffset > cassetteState->TotalSize) {
+        cassetteState->TapeOffset = cassetteState->TotalSize;
+      }
+
+      break;
+
+    case CAS:
+      CastoWav(cassBuffer, TAPEAUDIORATE / 60, &bytesMoved);
+
+      break;
+    }
+
+    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SetTapeCounter(unsigned int count)
+  {
+    CassetteState* cassetteState = GetCassetteState();
+
+    cassetteState->TapeOffset = count;
+
+    if (cassetteState->TapeOffset > cassetteState->TotalSize) {
+      cassetteState->TotalSize = cassetteState->TapeOffset;
+    }
+
+    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+  }
+}
