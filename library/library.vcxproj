@@ -198,8 +198,7 @@
     <ClCompile Include="MC6821.c" />
     <ClCompile Include="MmuAccessors.c" />
     <ClCompile Include="mmustate.c" />
-    <ClCompile Include="PakInterfaceAccessors.c" />
-    <ClCompile Include="pakinterfacestate.c" />
+    <ClCompile Include="PAKInterface.c" />
     <ClCompile Include="RegistersAccessors.c" />
     <ClCompile Include="registersstate.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
@@ -231,9 +230,7 @@
     <ClInclude Include="MC6821.h" />
     <ClInclude Include="MmuAccessors.h" />
     <ClInclude Include="mmustate.h" />
-    <ClInclude Include="PakInterfaceAccessors.h" />
-    <ClInclude Include="pakinterfacedef.h" />
-    <ClInclude Include="pakinterfacestate.h" />
+    <ClInclude Include="PAKInterface.h" />
     <ClInclude Include="RegistersAccessors.h" />
     <ClInclude Include="registersstate.h" />
     <ClInclude Include="SoundCardList.h" />

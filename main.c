@@ -13,11 +13,10 @@
 #include "library/DirectDrawAccessors.h"
 #include "library/Joystick.h"
 #include "library/Keyboard.h"
-#include "library/PakInterfaceAccessors.h"
+#include "library/PAKInterface.h"
 #include "library/VCC.h"
 #include "library/fileoperations.h"
 #include "library/Graphics.h"
-#include "library/pakinterfacestate.h"
 
 #include "About.h"
 #include "CopyText.h"

@@ -6,7 +6,7 @@
 #include "cpudef.h"
 #include "defines.h"
 
-#include "PakInterfaceAccessors.h"
+#include "PAKInterface.h"
 
 const unsigned char rega[4] = { 0,0,0,0 };
 const unsigned char regb[4] = { 0,0,0,0 };

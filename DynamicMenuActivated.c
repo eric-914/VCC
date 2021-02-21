@@ -1,9 +1,8 @@
-#include "library/pakinterfacestate.h"
+#include "library/PAKInterface.h"
+#include "library/systemstate.h"
 
 #include "UnloadPack.h"
 #include "LoadPack.h"
-
-#include "library/systemstate.h"
 
 void DynamicMenuActivated(SystemState* systemState, unsigned char menuItem)
 {

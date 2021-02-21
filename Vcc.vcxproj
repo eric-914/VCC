@@ -239,7 +239,6 @@
     <ClCompile Include="port_write.c" />
     <ClCompile Include="quickload.c" />
     <ClCompile Include="ReadIniFile.c" />
-    <ClCompile Include="RefreshDynamicMenu.c" />
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="SAMRead.c" />
     <ClCompile Include="SAMWrite.c" />
@@ -340,7 +339,6 @@
     <ClInclude Include="port_write.h" />
     <ClInclude Include="quickload.h" />
     <ClInclude Include="ReadIniFile.h" />
-    <ClInclude Include="RefreshDynamicMenu.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="SAMRead.h" />
     <ClInclude Include="SAMWrite.h" />

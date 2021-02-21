@@ -8,7 +8,7 @@
 #include "systemstate.h"
 #include "fileoperations.h"
 #include "DirectDrawAccessors.h"
-#include "PakInterfaceAccessors.h"
+#include "PAKInterface.h"
 
 #include "Config.h"
 #include "Cassette.h"

@@ -1,5 +1,5 @@
 #include "library/VCC.h"
-#include "library/PakInterfaceAccessors.h"
+#include "library/PAKInterface.h"
 #include "library/CoCo.h"
 #include "library/MC6821.h"
 #include "library/cpudef.h"

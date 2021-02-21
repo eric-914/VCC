@@ -2,8 +2,7 @@
 
 #include "library/Config.h"
 #include "library/MC6821.h"
-#include "library/pakinterfacestate.h"
-#include "library/PakInterfaceAccessors.h"
+#include "library/PAKInterface.h"
 #include "library/cpudef.h"
 #include "library/defines.h"
 #include "library/fileoperations.h"

@@ -1,7 +1,7 @@
 #include "library/VCC.h"
 #include "library/MC6821.h"
 #include "library/cpudef.h"
-#include "library/PakInterfaceAccessors.h"
+#include "library/PAKInterface.h"
 
 #include "CopyRom.h"
 #include "MmuReset.h"

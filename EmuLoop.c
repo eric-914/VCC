@@ -4,6 +4,8 @@
 
 #include "library/VCC.h"
 #include "library/Throttle.h"
+#include "library/DirectDrawAccessors.h"
+#include "library/PAKInterface.h"
 
 #include "quickload.h"
 #include "HardReset.h"
@@ -11,8 +13,6 @@
 #include "UpdateConfig.h"
 #include "DoCls.h"
 #include "RenderFrame.h"
-#include "library/DirectDrawAccessors.h"
-#include "library/PakInterfaceAccessors.h"
 #include "Static.h"
 
 unsigned __stdcall EmuLoop(void* dummy)

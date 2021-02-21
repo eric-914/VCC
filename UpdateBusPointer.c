@@ -1,7 +1,6 @@
 #include <windows.h>
 
-#include "library/pakinterfacestate.h"
-
+#include "library/PAKInterface.h"
 #include "library/cpudef.h"
 
 void UpdateBusPointer(void)

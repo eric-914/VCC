@@ -1,9 +1,9 @@
 #include "library/VCC.h"
 #include "library/Audio.h"
 #include "library/Graphics.h"
+#include "library/PAKInterface.h"
 
 #include "CreateDDWindow.h"
-#include "RefreshDynamicMenu.h"
 
 void FullScreenToggle(WNDPROC WndProc)
 {
