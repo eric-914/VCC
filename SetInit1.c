@@ -1,4 +1,4 @@
-#include "library/MmuAccessors.h"
+#include "library/Mmu.h"
 #include "library/CoCo.h"
 
 void SetInit1(unsigned char data)

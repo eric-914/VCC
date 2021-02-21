@@ -36,3 +36,6 @@ extern "C" __declspec(dllexport) unsigned char* __cdecl GetInternalRomPointer(vo
 extern "C" __declspec(dllexport) void __cdecl SetMmuEnabled(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl SetMmuPrefix(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl UpdateMmuArray(void);
+extern "C" __declspec(dllexport) void __cdecl SetVectors(unsigned char data);
+extern "C" __declspec(dllexport) void __cdecl SetMmuRegister(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetMmuTask(unsigned char task);
