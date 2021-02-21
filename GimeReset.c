@@ -2,7 +2,7 @@
 
 #include "library/Config.h"
 #include "library/Coco.h"
-#include "ResetAudio.h"
+#include "library/Audio.h"
 
 void GimeReset(void)
 {

@@ -2,18 +2,18 @@
 #include <direct.h>
 #include <ShlObj.h>
 
-#include "library/Config.h"
 #include "resources/resource.h"
+#include "library/Config.h"
+#include "library/commandline.h"
+#include "library/systemstate.h"
+#include "library/fileoperations.h"
+#include "library/Audio.h"
 
 #include "ReadIniFile.h"
 #include "RefreshJoystickStatus.h"
 #include "UpdateConfig.h"
-#include "SoundInit.h"
 #include "GetSoundCardList.h"
-
-#include "library/commandline.h"
-#include "library/systemstate.h"
-#include "library/fileoperations.h"
+#include "SoundInit.h"
 
 void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 {

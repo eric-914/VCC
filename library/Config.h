@@ -56,7 +56,7 @@ typedef struct
   char Tmodes[4][10];
   int NumberOfSoundCards;
 
-  SndCardList SoundCards[MAXCARDS];
+  SoundCardList SoundCards[MAXCARDS];
   HWND hWndConfig[TABS];
 
   unsigned char TranslateDisp2Scan[SCAN_TRANS_COUNT];

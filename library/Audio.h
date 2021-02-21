@@ -2,6 +2,7 @@
 
 #define MAXCARDS	12
 
+#include "di.version.h"
 #include <windows.h>
 #include <dsound.h>
 
@@ -42,7 +43,7 @@ typedef struct {
 
   WAVEFORMATEX pcmwf; //generic waveformat structure
 
-  SndCardList* Cards;
+  SoundCardList* Cards;
 
   unsigned short AuxBuffer[6][44100 / 60]; //Biggest block size possible
 
@@ -56,3 +57,7 @@ extern "C" __declspec(dllexport) unsigned short __cdecl GetSoundStatus(void);
 extern "C" __declspec(dllexport) unsigned char __cdecl PauseAudio(unsigned char pause);
 extern "C" __declspec(dllexport) const char* __cdecl GetRateList(unsigned char index);
 extern "C" __declspec(dllexport) int __cdecl SoundDeInit(void);
+extern "C" __declspec(dllexport) int __cdecl GetFreeBlockCount(void);
+extern "C" __declspec(dllexport) void __cdecl FlushAudioBuffer(unsigned int* aBuffer, unsigned short length);
+extern "C" __declspec(dllexport) void __cdecl PurgeAuxBuffer(void);
+extern "C" __declspec(dllexport) void __cdecl ResetAudio(void);

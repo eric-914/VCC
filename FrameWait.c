@@ -1,10 +1,7 @@
 #include "library/throttlestate.h"
-
-#include "PurgeAuxBuffer.h"
-#include "GetFreeBlockCount.h"
-#include "library/Audio.h"
-
 #include "library/defines.h"
+
+#include "library/Audio.h"
 
 void FrameWait(void)
 {

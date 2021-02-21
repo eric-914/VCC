@@ -1,9 +1,13 @@
 #include <windows.h>
 #include <ShlObj.h>
 
-#include "library/Config.h"
 #include "resources/resource.h"
+#include "library/Config.h"
 #include "library/vccstate.h"
+#include "library/Joystick.h"
+#include "library/keyboarddef.h"
+#include "library/systemstate.h"
+#include "library/Audio.h"
 
 #include "RefreshJoystickStatus.h"
 
@@ -17,12 +21,8 @@
 #include "MiscConfig.h"
 #include "TapeConfig.h"
 #include "UpdateConfig.h"
-#include "SoundInit.h"
 #include "vccKeyboardBuildRuntimeTable.h"
-#include "library/Joystick.h"
-
-#include "library/keyboarddef.h"
-#include "library/systemstate.h"
+#include "SoundInit.h"
 
 LRESULT CALLBACK MainConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

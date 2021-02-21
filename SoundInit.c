@@ -1,11 +1,9 @@
-#include <Windows.h>
-
-#include "library/AudioState.h"
+#include "library/Audio.h"
 #include "library/Coco.h"
 
 #include "library/defines.h"
 
-int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
+int SoundInit(HWND hWnd, _GUID* guid, unsigned short rate)
 {
   AudioState* audioState = GetAudioState();
 
@@ -51,7 +49,7 @@ int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
       return(1);
     }
 
-    audioState->hr = audioState->lpds->SetCooperativeLevel(main_window_handle, DSSCL_NORMAL); // set cooperation level normal DSSCL_EXCLUSIVE
+    audioState->hr = audioState->lpds->SetCooperativeLevel(hWnd, DSSCL_NORMAL); // set cooperation level normal DSSCL_EXCLUSIVE
 
     if (audioState->hr != DS_OK) {
       return(1);
@@ -108,4 +106,12 @@ int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate)
   SetAudioRate(audioState->iRateList[rate]);
 
   return(0);
+}
+
+void TestVCC()
+{
+  _GUID guid = _GUID();
+  LPDIRECTSOUND	lpds;
+
+  HRESULT result = DirectSoundCreate(&guid, &lpds, NULL);	// create a directsound object
 }

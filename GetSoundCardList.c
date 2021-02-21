@@ -1,8 +1,8 @@
-#include "library/AudioState.h"
+#include "library/Audio.h"
 
 #include "DSEnumCallback.h"
 
-int GetSoundCardList(SndCardList* list)
+int GetSoundCardList(SoundCardList* list)
 {
   AudioState* audioState = GetAudioState();
 

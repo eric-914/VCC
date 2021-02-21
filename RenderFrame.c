@@ -1,6 +1,5 @@
 #include "CPUCycle.h"
 #include "CalculateFPS.h"
-#include "FlushAudioBuffer.h"
 #include "FlushCassetteBuffer.h"
 #include "LoadCassetteBuffer.h"
 #include "LockScreen.h"
@@ -8,6 +7,7 @@
 #include "UnlockScreen.h"
 #include "irq_fs.h"
 
+#include "library/Audio.h"
 #include "library/CoCo.h"
 #include "library/RegistersAccessors.h"
 #include "library/graphicsstate.h"

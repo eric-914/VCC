@@ -2,4 +2,4 @@
 
 #include <Windows.h>
 
-int SoundInit(HWND main_window_handle, _GUID* guid, unsigned short rate);
+int SoundInit(HWND, _GUID*, unsigned short);
