@@ -73,6 +73,9 @@ void DivbyZero(void)
   ErrorVector();
 }
 
+void Page_2(void);
+void Page_3(void);
+
 void Neg_D(void)
 { //0
   temp16 = DPADDRESS(PC_REG++);
@@ -7059,11 +7062,13 @@ void(*JmpVec3[256])(void) = {
   InvalidInsHandler,		// FF
 };
 
-void Page_1(void) //10
-{
+//--Essentially Page_1()
+void HD6309ExecOpCode(int cycleFor, unsigned char opcode) {
   HD6309State* hd63096State = GetHD6309State();
 
-  JmpVec1[MemRead8(PC_REG++)](); // Execute instruction pointed to by PC_REG
+  hd63096State->gCycleFor = cycleFor;
+
+  JmpVec1[opcode](); // Execute instruction pointed to by PC_REG
 }
 
 void Page_2(void) //10

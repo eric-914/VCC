@@ -1,5 +1,3 @@
 #pragma once
 
-void Page_1(void);
-void Page_2(void);
-void Page_3(void);
+void HD6309ExecOpCode(int cycleFor, unsigned char opcode);

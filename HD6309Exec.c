@@ -1,6 +1,7 @@
 #include "library/MMU.h"
 #include "library/HD6309.h"
 
+#include "library/HD6309Macros.h"
 #include "hd6309opcodes.h"
 
 int HD6309Exec(int cycleFor)
@@ -8,7 +9,6 @@ int HD6309Exec(int cycleFor)
   HD6309State* hd63096State = GetHD6309State();
 
   hd63096State->CycleCounter = 0;
-  hd63096State->gCycleFor = cycleFor;
 
   while (hd63096State->CycleCounter < cycleFor) {
 
@@ -37,7 +37,7 @@ int HD6309Exec(int cycleFor)
       return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
     }
 
-    Page_1();
+    HD6309ExecOpCode(cycleFor, MemRead8(PC_REG++));
   }
 
   return(cycleFor - hd63096State->CycleCounter);
