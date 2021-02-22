@@ -188,6 +188,7 @@
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
+    <ClCompile Include="mc6809opcodes.c" />
     <ClCompile Include="MiscConfig.c" />
     <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
@@ -218,6 +219,7 @@
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="MainConfig.h" />
+    <ClInclude Include="mc6809opcodes.h" />
     <ClInclude Include="MiscConfig.h" />
     <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />
