@@ -5,6 +5,7 @@
 #include "Config.h"
 #include "Coco.h"
 #include "PAKInterface.h"
+#include "Keyboard.h"
 
 VccState* InitializeInstance(VccState*);
 
@@ -273,5 +274,59 @@ extern "C" {
     vccState->DialogOpen = true;
 
     _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
+  }
+}
+
+// LoadIniFile allows user to browse for an ini file and reloads the config from it.
+extern "C" {
+  __declspec(dllexport) void __cdecl LoadIniFile(void)
+  {
+    OPENFILENAME ofn;
+    char szFileName[MAX_PATH] = "";
+
+    VccState* vccState = GetVccState();
+
+    GetIniFilePath(szFileName); // EJJ load current ini file path
+
+    memset(&ofn, 0, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(OPENFILENAME);
+    ofn.hwndOwner = vccState->EmuState.WindowHandle;
+    ofn.lpstrFilter = "INI\0*.ini\0\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFile = szFileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.nMaxFileTitle = MAX_PATH;
+    ofn.lpstrFileTitle = NULL;
+    ofn.lpstrInitialDir = AppDirectory();
+    ofn.lpstrTitle = TEXT("Load Vcc Config File");
+    ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
+
+    if (GetOpenFileName(&ofn)) {
+      WriteIniFile();               // Flush current profile
+      SetIniFilePath(szFileName);   // Set new ini file path
+      ReadIniFile(&(vccState->EmuState));                // Load it
+      UpdateConfig(&(vccState->EmuState));
+
+      vccState->EmuState.ResetPending = 2;
+    }
+  }
+}
+
+// Send key up events to keyboard handler for saved keys
+extern "C" {
+  __declspec(dllexport) void __cdecl SendSavedKeyEvents() {
+    VccState* vccState = GetVccState();
+
+    if (vccState->SC_save1) {
+      vccKeyboardHandleKey(vccState->KB_save1, vccState->SC_save1, kEventKeyUp);
+    }
+
+    if (vccState->SC_save2) {
+      vccKeyboardHandleKey(vccState->KB_save2, vccState->SC_save2, kEventKeyUp);
+    }
+
+    vccState->SC_save1 = 0;
+    vccState->SC_save2 = 0;
   }
 }

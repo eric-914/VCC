@@ -24,9 +24,7 @@
 #include "FullScreenToggle.h"
 #include "InitInstance.h"
 #include "LoadConfig.h"
-#include "LoadIniFile.h"
 #include "MainConfig.h"
-#include "SendSavedKeyEvents.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

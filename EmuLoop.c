@@ -8,10 +8,10 @@
 #include "library/PAKInterface.h"
 #include "library/QuickLoad.h"
 #include "library/Config.h"
+#include "library/CoCo.h"
 
 #include "HardReset.h"
 #include "SoftReset.h"
-#include "RenderFrame.h"
 
 unsigned __stdcall EmuLoop(void* dummy)
 {

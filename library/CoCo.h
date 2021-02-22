@@ -73,3 +73,5 @@ extern "C" __declspec(dllexport) void __cdecl CassOut(void);
 extern "C" __declspec(dllexport) unsigned char __cdecl SetSndOutMode(unsigned char mode);
 
 extern "C" __declspec(dllexport) /* _inline */ int __cdecl CPUCycle(void);
+
+extern "C" __declspec(dllexport) float __cdecl RenderFrame(SystemState* systemState);

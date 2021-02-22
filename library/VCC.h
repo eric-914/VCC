@@ -62,3 +62,6 @@ extern "C" __declspec(dllexport) void __cdecl SetTurboMode(unsigned char data);
 
 extern "C" __declspec(dllexport) unsigned __cdecl CartLoad(void* dummy);
 extern "C" __declspec(dllexport) void __cdecl LoadPack(void);
+
+extern "C" __declspec(dllexport) void __cdecl LoadIniFile(void);
+extern "C" __declspec(dllexport) void __cdecl SendSavedKeyEvents();
