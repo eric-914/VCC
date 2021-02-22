@@ -618,4 +618,4 @@ extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_nmi(void);
 extern "C" __declspec(dllexport) unsigned short __cdecl hd6309_CalculateEA(unsigned char postbyte);
 
 extern "C" __declspec(dllexport) void __cdecl HD6309Init(void);
-
+extern "C" __declspec(dllexport) void __cdecl HD6309Reset(void);

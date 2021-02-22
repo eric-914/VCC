@@ -3,7 +3,6 @@
 
 #include "library/HD6309Macros.h"
 
-#include "HD6309Reset.h"
 #include "HD6309Handlers.h"
 
 static HD6309State* hd63096State = GetHD6309State();

@@ -357,3 +357,4 @@ extern "C" __declspec(dllexport) void __cdecl MC609_cpu_nmi(void);
 extern "C" __declspec(dllexport) /* _inline */ unsigned short __cdecl mc6809_CalculateEA(unsigned char postbyte);
 
 extern "C" __declspec(dllexport) void __cdecl MC6809Init(void);
+extern "C" __declspec(dllexport) void __cdecl MC6809Reset(void);

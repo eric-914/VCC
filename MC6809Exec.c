@@ -3,8 +3,6 @@
 
 #include "library/MC6809Macros.h"
 
-#include "MC6809Reset.h"
-
 int MC6809Exec(int cycleFor)
 {
   unsigned char opcode = 0;
