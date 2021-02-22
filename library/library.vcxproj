@@ -194,6 +194,7 @@
     <ClCompile Include="library.cpp" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="MC6809.c" />
+    <ClCompile Include="MC6809OpCodes.c" />
     <ClCompile Include="MC6821.c" />
     <ClCompile Include="MMU.c" />
     <ClCompile Include="PAKInterface.c" />
@@ -223,6 +224,7 @@
     <ClInclude Include="macros.h" />
     <ClInclude Include="MC6809.h" />
     <ClInclude Include="MC6809Macros.h" />
+    <ClInclude Include="MC6809OpCodes.h" />
     <ClInclude Include="MC6821.h" />
     <ClInclude Include="MMU.h" />
     <ClInclude Include="PAKInterface.h" />

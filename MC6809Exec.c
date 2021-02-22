@@ -2,7 +2,7 @@
 #include "library/MMU.h"
 
 #include "library/MC6809Macros.h"
-#include "mc6809opcodes.h"
+#include "library/MC6809OpCodes.h"
 
 int MC6809Exec(int cycleFor)
 {
