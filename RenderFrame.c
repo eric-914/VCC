@@ -5,9 +5,7 @@
 #include "library/Throttle.h"
 #include "library/Registers.h"
 #include "library/Graphics.h"
-
-#include "LockScreen.h"
-#include "UnlockScreen.h"
+#include "library/DirectDraw.h"
 
 float RenderFrame(SystemState* systemState)
 {

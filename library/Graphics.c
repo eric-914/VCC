@@ -3,6 +3,9 @@
 
 #include "Graphics.h"
 #include "CoCo.h"
+#include "VCC.h"
+#include "Config.h"
+#include "DirectDraw.h"
 
 #include "macros.h"
 
@@ -599,5 +602,57 @@ extern "C" {
     GetGraphicsState()->DistoOffset = data * (512 * 1024);
 
     SetupDisplay();
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl SetMonitorType(unsigned char type)
+  {
+    GraphicsState* gs = GetGraphicsState();
+
+    int borderColor = gs->CC3BorderColor;
+    SetGimeBorderColor(0);
+
+    if (type != QUERY)
+    {
+      gs->MonType = type & 1;
+
+      for (unsigned char palIndex = 0; palIndex < 16; palIndex++)
+      {
+        gs->Pallete16Bit[palIndex] = gs->PalleteLookup16[gs->MonType][gs->Pallete[palIndex]];
+        gs->Pallete32Bit[palIndex] = gs->PalleteLookup32[gs->MonType][gs->Pallete[palIndex]];
+        gs->Pallete8Bit[palIndex] = gs->PalleteLookup8[gs->MonType][gs->Pallete[palIndex]];
+      }
+    }
+
+    SetGimeBorderColor(borderColor);
+
+    return(gs->MonType);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SetPaletteType() {
+    int borderColor = GetGraphicsState()->CC3BorderColor;
+
+    SetGimeBorderColor(0);
+    MakeCMPpalette(GetPaletteType());
+    SetGimeBorderColor(borderColor);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl SetScanLines(SystemState* systemState, unsigned char lines)
+  {
+    if (lines != QUERY)
+    {
+      systemState->ScanLines = lines;
+
+      Cls(0, systemState);
+
+      GetGraphicsState()->BorderChange = 3;
+    }
+
+    return(0);
   }
 }

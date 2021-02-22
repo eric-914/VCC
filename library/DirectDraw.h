@@ -42,3 +42,9 @@ extern "C" __declspec(dllexport) void __cdecl Cls(unsigned int, SystemState*);
 extern "C" __declspec(dllexport) unsigned char __cdecl SetInfoBand(unsigned char);
 extern "C" __declspec(dllexport) unsigned char __cdecl SetResize(unsigned char);
 extern "C" __declspec(dllexport) unsigned char __cdecl SetAspect(unsigned char);
+
+extern "C" __declspec(dllexport) void __cdecl DisplayFlip(SystemState * systemState);
+extern "C" __declspec(dllexport) unsigned char __cdecl LockScreen(SystemState * systemState);
+extern "C" __declspec(dllexport) void __cdecl UnlockScreen(SystemState* systemState);
+extern "C" __declspec(dllexport) void __cdecl DoCls(SystemState* systemState);
+extern "C" __declspec(dllexport) float __cdecl Static(SystemState* systemState);

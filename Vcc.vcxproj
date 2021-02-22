@@ -192,8 +192,6 @@
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CreateDDWindow.c" />
     <ClCompile Include="DisplayConfig.c" />
-    <ClCompile Include="DisplayFlip.c" />
-    <ClCompile Include="DoCls.c" />
     <ClCompile Include="DSEnumCallback.c" />
     <ClCompile Include="DynamicMenuActivated.c" />
     <ClCompile Include="EmuLoop.c" />
@@ -209,7 +207,6 @@
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadIniFile.c" />
     <ClCompile Include="LoadPack.c" />
-    <ClCompile Include="LockScreen.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="MC6809Init.c" />
@@ -220,14 +217,9 @@
     <ClCompile Include="ReadIniFile.c" />
     <ClCompile Include="RenderFrame.c" />
     <ClCompile Include="SendSavedKeyEvents.c" />
-    <ClCompile Include="SetMonitorType.c" />
-    <ClCompile Include="SetPaletteType.c" />
-    <ClCompile Include="SetScanLines.c" />
     <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
-    <ClCompile Include="Static.c" />
     <ClCompile Include="TapeConfig.c" />
-    <ClCompile Include="UnlockScreen.c" />
     <ClCompile Include="UpdateConfig.c" />
   </ItemGroup>
   <ItemGroup>
@@ -260,8 +252,6 @@
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CreateDDWindow.h" />
     <ClInclude Include="DisplayConfig.h" />
-    <ClInclude Include="DisplayFlip.h" />
-    <ClInclude Include="DoCls.h" />
     <ClInclude Include="DSEnumCallback.h" />
     <ClInclude Include="DynamicMenuActivated.h" />
     <ClInclude Include="EmuLoop.h" />
@@ -277,7 +267,6 @@
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadIniFile.h" />
     <ClInclude Include="LoadPack.h" />
-    <ClInclude Include="LockScreen.h" />
     <ClInclude Include="MainConfig.h" />
     <ClInclude Include="MC6809Init.h" />
     <ClInclude Include="MC6809Reset.h" />
@@ -287,14 +276,9 @@
     <ClInclude Include="ReadIniFile.h" />
     <ClInclude Include="RenderFrame.h" />
     <ClInclude Include="SendSavedKeyEvents.h" />
-    <ClInclude Include="SetMonitorType.h" />
-    <ClInclude Include="SetPaletteType.h" />
-    <ClInclude Include="SetScanLines.h" />
     <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />
-    <ClInclude Include="Static.h" />
     <ClInclude Include="TapeConfig.h" />
-    <ClInclude Include="UnlockScreen.h" />
     <ClInclude Include="UpdateConfig.h" />
   </ItemGroup>
   <ItemGroup>

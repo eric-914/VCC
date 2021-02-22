@@ -28,7 +28,6 @@
 #include "LoadIniFile.h"
 #include "MainConfig.h"
 #include "SendSavedKeyEvents.h"
-#include "SetMonitorType.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

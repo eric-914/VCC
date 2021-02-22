@@ -3,10 +3,7 @@
 #include "library/MC6821.h"
 #include "library/systemstate.h"
 #include "library/VCC.h"
-
-#include "SetMonitorType.h"
-#include "SetPaletteType.h"
-#include "SetScanLines.h"
+#include "library/Graphics.h"
 
 void UpdateConfig(SystemState* systemState)
 {

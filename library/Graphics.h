@@ -1,5 +1,7 @@
 #pragma once
 
+#include "systemstate.h"
+
 typedef struct
 {
   unsigned char BlinkState;
@@ -90,3 +92,8 @@ extern "C" __declspec(dllexport) void __cdecl SetGimeVmode(unsigned char vmode);
 extern "C" __declspec(dllexport) void __cdecl SetGimeVres(unsigned char vres);
 extern "C" __declspec(dllexport) void __cdecl SetVerticalOffsetRegister(unsigned short voRegister);
 extern "C" __declspec(dllexport) void __cdecl SetVideoBank(unsigned char data);
+
+extern "C" __declspec(dllexport) unsigned char __cdecl SetMonitorType(unsigned char type);
+extern "C" __declspec(dllexport) void __cdecl SetPaletteType();
+extern "C" __declspec(dllexport) void __cdecl SetPaletteType();
+extern "C" __declspec(dllexport) unsigned char __cdecl SetScanLines(SystemState* systemState, unsigned char lines);
