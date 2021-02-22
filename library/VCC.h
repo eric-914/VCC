@@ -59,3 +59,6 @@ extern "C" __declspec(dllexport) unsigned char __cdecl SetFrameSkip(unsigned cha
 extern "C" __declspec(dllexport) unsigned char __cdecl SetRamSize(unsigned char size);
 extern "C" __declspec(dllexport) unsigned char __cdecl SetSpeedThrottle(unsigned char throttle);
 extern "C" __declspec(dllexport) void __cdecl SetTurboMode(unsigned char data);
+
+extern "C" __declspec(dllexport) unsigned __cdecl CartLoad(void* dummy);
+extern "C" __declspec(dllexport) void __cdecl LoadPack(void);

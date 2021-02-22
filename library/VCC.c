@@ -1,7 +1,10 @@
+#include <process.h>
+
 #include "VCC.h"
 
 #include "Config.h"
 #include "Coco.h"
+#include "PAKInterface.h"
 
 VccState* InitializeInstance(VccState*);
 
@@ -239,5 +242,36 @@ extern "C" {
     if (vccState->EmuState.DoubleSpeedFlag) {
       vccState->EmuState.CPUCurrentSpeed *= ((double)vccState->EmuState.DoubleSpeedMultiplyer * (double)vccState->EmuState.TurboSpeedFlag);
     }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned __cdecl CartLoad(void* dummy)
+  {
+    VccState* vccState = GetVccState();
+
+    LoadCart(&(vccState->EmuState));
+
+    vccState->EmuState.EmulationRunning = TRUE;
+    vccState->DialogOpen = false;
+
+    return(NULL);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl LoadPack(void)
+  {
+    unsigned threadID;
+
+    VccState* vccState = GetVccState();
+
+    if (vccState->DialogOpen) {
+      return;
+    }
+
+    vccState->DialogOpen = true;
+
+    _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
   }
 }

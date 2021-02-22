@@ -182,7 +182,6 @@
     <ClCompile Include="hd6309_i.c" />
     <ClCompile Include="hd6309_md.c" />
     <ClCompile Include="mc6809_CalculateEA.c" />
-    <ClCompile Include="CartLoad.c" />
     <ClCompile Include="hd6309opcodes.c" />
     <ClCompile Include="MC6809AssertInterrupt.c" />
     <ClCompile Include="MC6809DeAssertInterrupt.c" />
@@ -193,7 +192,6 @@
     <ClCompile Include="CreateDDWindow.c" />
     <ClCompile Include="DisplayConfig.c" />
     <ClCompile Include="DSEnumCallback.c" />
-    <ClCompile Include="DynamicMenuActivated.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetSoundCardList.c" />
@@ -204,7 +202,6 @@
     <ClCompile Include="JoyStickConfig.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadIniFile.c" />
-    <ClCompile Include="LoadPack.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="MC6809Init.c" />
@@ -238,7 +235,6 @@
     <ClInclude Include="hd6309_i.h" />
     <ClInclude Include="hd6309_md.h" />
     <ClInclude Include="mc6809_CalculateEA.h" />
-    <ClInclude Include="CartLoad.h" />
     <ClInclude Include="hd6309opcodes.h" />
     <ClInclude Include="MC6809AssertInterrupt.h" />
     <ClInclude Include="MC6809DeAssertInterrupt.h" />
@@ -249,7 +245,6 @@
     <ClInclude Include="CreateDDWindow.h" />
     <ClInclude Include="DisplayConfig.h" />
     <ClInclude Include="DSEnumCallback.h" />
-    <ClInclude Include="DynamicMenuActivated.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetSoundCardList.h" />
@@ -260,7 +255,6 @@
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadIniFile.h" />
-    <ClInclude Include="LoadPack.h" />
     <ClInclude Include="MainConfig.h" />
     <ClInclude Include="MC6809Init.h" />
     <ClInclude Include="MC6809Reset.h" />

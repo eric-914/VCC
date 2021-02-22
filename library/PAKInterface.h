@@ -111,3 +111,5 @@ extern "C" __declspec(dllexport) void __cdecl UpdateBusPointer(void);
 
 extern "C" __declspec(dllexport) int __cdecl InsertModule(SystemState* systemState, char* modulePath);
 extern "C" __declspec(dllexport) int __cdecl LoadCart(SystemState* systemState);
+
+extern "C" __declspec(dllexport) void __cdecl DynamicMenuActivated(SystemState* systemState, unsigned char menuItem);
