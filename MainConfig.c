@@ -18,7 +18,6 @@
 #include "LoadConfig.h"
 #include "MiscConfig.h"
 #include "TapeConfig.h"
-#include "UpdateConfig.h"
 #include "SoundInit.h"
 
 LRESULT CALLBACK MainConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

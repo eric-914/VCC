@@ -7,10 +7,10 @@
 #include "library/DirectDraw.h"
 #include "library/PAKInterface.h"
 #include "library/QuickLoad.h"
+#include "library/Config.h"
 
 #include "HardReset.h"
 #include "SoftReset.h"
-#include "UpdateConfig.h"
 #include "RenderFrame.h"
 
 unsigned __stdcall EmuLoop(void* dummy)

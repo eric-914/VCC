@@ -13,6 +13,8 @@
 #include "Cassette.h"
 #include "Joystick.h"
 #include "MC6821.h"
+#include "VCC.h"
+#include "Graphics.h"
 
 #include "systemstate.h"
 #include "fileoperations.h"
@@ -595,5 +597,31 @@ extern "C" {
     }
 
     return(0);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl UpdateConfig(SystemState* systemState)
+  {
+    ConfigState* configState = GetConfigState();
+
+    SetPaletteType();
+    SetResize(configState->CurrentConfig.Resize);
+    SetAspect(configState->CurrentConfig.Aspect);
+    SetScanLines(systemState, configState->CurrentConfig.ScanLines);
+    SetFrameSkip(configState->CurrentConfig.FrameSkip);
+    SetAutoStart(configState->CurrentConfig.AutoStart);
+    SetSpeedThrottle(configState->CurrentConfig.SpeedThrottle);
+    SetCPUMultiplayer(configState->CurrentConfig.CPUMultiplyer);
+    SetRamSize(configState->CurrentConfig.RamSize);
+    SetCpuType(configState->CurrentConfig.CpuType);
+    SetMonitorType(configState->CurrentConfig.MonitorType);
+    SetCartAutoStart(configState->CurrentConfig.CartAutoStart);
+
+    if (configState->CurrentConfig.RebootNow) {
+      Reboot();
+    }
+
+    configState->CurrentConfig.RebootNow = 0;
   }
 }

@@ -213,7 +213,6 @@
     <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
     <ClCompile Include="TapeConfig.c" />
-    <ClCompile Include="UpdateConfig.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -265,7 +264,6 @@
     <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />
     <ClInclude Include="TapeConfig.h" />
-    <ClInclude Include="UpdateConfig.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">
