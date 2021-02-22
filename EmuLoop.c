@@ -6,8 +6,8 @@
 #include "library/Throttle.h"
 #include "library/DirectDraw.h"
 #include "library/PAKInterface.h"
+#include "library/QuickLoad.h"
 
-#include "quickload.h"
 #include "HardReset.h"
 #include "SoftReset.h"
 #include "UpdateConfig.h"

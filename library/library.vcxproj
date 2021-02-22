@@ -198,6 +198,7 @@
     <ClCompile Include="MC6821.c" />
     <ClCompile Include="MMU.c" />
     <ClCompile Include="PAKInterface.c" />
+    <ClCompile Include="QuickLoad.c" />
     <ClCompile Include="Registers.c" />
     <ClCompile Include="tcc1014graphics-16.c" />
     <ClCompile Include="tcc1014graphics-24.c" />
@@ -227,6 +228,7 @@
     <ClInclude Include="MC6821.h" />
     <ClInclude Include="MMU.h" />
     <ClInclude Include="PAKInterface.h" />
+    <ClInclude Include="QuickLoad.h" />
     <ClInclude Include="Registers.h" />
     <ClInclude Include="SoundCardList.h" />
     <ClInclude Include="cc2font.h" />

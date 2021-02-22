@@ -94,3 +94,4 @@ extern "C" __declspec(dllexport) unsigned char __cdecl TranslateScan2Display(int
 
 extern "C" __declspec(dllexport) void __cdecl RefreshJoystickStatus(void);
 extern "C" __declspec(dllexport) int __cdecl SelectFile(SystemState* systemState, char* filename);
+extern "C" __declspec(dllexport) unsigned char __cdecl ReadIniFile(SystemState* systemState);

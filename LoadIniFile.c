@@ -1,7 +1,6 @@
 #include "library/VCC.h"
 #include "library/Config.h"
 
-#include "ReadIniFile.h"
 #include "UpdateConfig.h"
 
 // LoadIniFile allows user to browse for an ini file and reloads the config from it.
