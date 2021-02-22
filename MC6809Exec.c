@@ -4,7 +4,6 @@
 #include "library/MC6809Macros.h"
 
 #include "MC6809Reset.h"
-#include "mc6809_CalculateEA.h"
 
 int MC6809Exec(int cycleFor)
 {
