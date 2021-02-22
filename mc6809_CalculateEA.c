@@ -1,7 +1,5 @@
 #include "library/mc6809state.h"
-
-#include "MemRead8.h"
-#include "MemRead16.h"
+#include "library/MMU.h"
 
 /* _inline */ unsigned short mc6809_CalculateEA(unsigned char postbyte)
 {

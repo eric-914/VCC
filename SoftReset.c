@@ -5,7 +5,6 @@
 #include "library/MMU.h"
 #include "library/Registers.h"
 
-#include "CopyRom.h"
 #include "GimeReset.h"
 
 void SoftReset(void)

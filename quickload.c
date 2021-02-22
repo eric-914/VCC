@@ -22,8 +22,8 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/cpudef.h"
 #include "library/fileoperations.h"
 #include "library/systemstate.h"
+#include "library/MMU.h"
 
-#include "MemWrite8.h"
 #include "InsertModule.h"
 
 unsigned char QuickLoad(SystemState* systemState, char* binFileName)

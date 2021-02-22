@@ -8,9 +8,7 @@
 #include "library/fileoperations.h"
 #include "library/systemstate.h"
 #include "library/VCC.h"
-
-#include "MemRead8.h"
-#include "MemWrite8.h"
+#include "library/MMU.h"
 
 /*
 * TODO: This exists because this is what the different plugins expect, but it requires the EmuState

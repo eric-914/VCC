@@ -1,18 +1,12 @@
 #include "library/hd6309defs.h"
 #include "library/hd6309state.h"
+#include "library/MMU.h"
 
 #include "hd6309_cc.h"
 #include "hd6309_md.h"
 #include "hd6309_CalculateEA.h"
 #include "HD6309Reset.h"
 #include "HD6309Handlers.h"
-
-#include "MemRead8.h"
-#include "MemWrite8.h"
-#include "MemRead16.h"
-#include "MemWrite16.h"
-#include "MemRead32.h"
-#include "MemWrite32.h"
 
 static HD6309State* hd63096State = GetHD6309State();
 

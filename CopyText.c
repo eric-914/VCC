@@ -4,8 +4,6 @@
 #include "library/Graphics.h"
 #include "library/MMU.h"
 
-#include "MemRead8.h"
-
 void CopyText() {
   int idx;
   int tmp;

@@ -2,8 +2,9 @@
 #include "library/PAKInterface.h"
 #include "library/CoCo.h"
 #include "library/MC6821.h"
-#include "library/cpudef.h"
 #include "library/Registers.h"
+#include "library/MMU.h"
+#include "library/cpudef.h"
 
 #include "HD6309Init.h"
 #include "HD6309Exec.h"
@@ -18,8 +19,6 @@
 #include "MC6809AssertInterrupt.h"
 #include "MC6809DeAssertInterrupt.h"
 #include "MC6809ForcePC.h"
-
-#include "MmuInit.h"
 
 #include "GimeReset.h"
 

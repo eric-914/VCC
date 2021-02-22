@@ -1,11 +1,9 @@
 #include "library/hd6309defs.h"
 #include "library/hd6309state.h"
+#include "library/MMU.h"
 
 #include "hd6309_cc.h"
 #include "hd6309_md.h"
-
-#include "MemWrite8.h"
-#include "MemRead16.h"
 
 void ErrorVector(void);
 

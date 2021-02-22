@@ -1,11 +1,9 @@
 #include "library/hd6309defs.h"
 #include "library/hd6309state.h"
 #include "library/hd6309intstate.h"
+#include "library/MMU.h"
 
 #include "hd6309_cc.h"
-
-#include "MemWrite8.h"
-#include "MemRead16.h"
 
 void HD6309_cpu_firq(void)
 {

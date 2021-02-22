@@ -1,8 +1,6 @@
 #include "library/hd6309defs.h"
 #include "library/hd6309state.h"
-
-#include "MemRead8.h"
-#include "MemRead16.h"
+#include "library/MMU.h"
 
 unsigned short hd6309_CalculateEA(unsigned char postbyte)
 {

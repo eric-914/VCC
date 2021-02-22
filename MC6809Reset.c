@@ -2,7 +2,6 @@
 #include "library/mc6809state.h"
 
 #include "library/MMU.h"
-#include "MemRead16.h"
 
 void MC6809Reset(void)
 {

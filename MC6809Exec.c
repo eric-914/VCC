@@ -1,15 +1,12 @@
 #include "library/mc6809defs.h"
 #include "library/mc6809state.h"
+#include "library/MMU.h"
 
 #include "mc6809_i.h"
 #include "mc6809_cc.h"
 
 #include "MC6809Reset.h"
 #include "mc6809_CalculateEA.h"
-#include "MemRead8.h"
-#include "MemWrite8.h"
-#include "MemRead16.h"
-#include "MemWrite16.h"
 
 int MC6809Exec(int cycleFor)
 {

@@ -1,10 +1,10 @@
+#include "library/MMU.h"
 #include "library/hd6309state.h"
 #include "library/hd6309intstate.h"
+
 #include "hd6309_i.h"
 #include "hd6309opcodes.h"
 #include "HD6309Handlers.h"
-
-#include "MemRead8.h"
 
 void Page_2(void);
 void Page_3(void);

@@ -1,9 +1,8 @@
 #include "library/mc6809defs.h"
 #include "library/mc6809state.h"
-#include "mc6809_cc.h"
+#include "library/MMU.h"
 
-#include "MemWrite8.h"
-#include "MemRead16.h"
+#include "mc6809_cc.h"
 
 void MC609_cpu_firq(void)
 {
