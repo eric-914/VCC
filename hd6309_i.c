@@ -1,5 +1,4 @@
-#include "library/hd6309defs.h"
-#include "library/hd6309state.h"
+#include "library/HD6309.h"
 #include "library/hd6309intstate.h"
 #include "library/MMU.h"
 

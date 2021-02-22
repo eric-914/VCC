@@ -1,4 +1,4 @@
-#include "library/mc6809state.h"
+#include "library/MC6809.h"
 
 void MC6809ForcePC(unsigned short newPC)
 {

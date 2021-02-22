@@ -1,4 +1,4 @@
-#include "library/hd6309state.h"
+#include "library/HD6309.h"
 #include "library/hd6309intstate.h"
 
 void HD6309ForcePC(unsigned short address)

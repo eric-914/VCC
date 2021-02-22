@@ -1,4 +1,4 @@
-#include "library/mc6809state.h"
+#include "library/MC6809.h"
 #include "library/MMU.h"
 
 /* _inline */ unsigned short mc6809_CalculateEA(unsigned char postbyte)

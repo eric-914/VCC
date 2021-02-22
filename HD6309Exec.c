@@ -1,5 +1,5 @@
 #include "library/MMU.h"
-#include "library/hd6309state.h"
+#include "library/HD6309.h"
 #include "library/hd6309intstate.h"
 
 #include "hd6309_i.h"
