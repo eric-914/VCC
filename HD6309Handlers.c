@@ -4,7 +4,6 @@
 #include "library/HD6309Macros.h"
 
 #include "hd6309_cc.h"
-#include "hd6309_md.h"
 
 void ErrorVector(void);
 

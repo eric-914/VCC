@@ -4,7 +4,6 @@
 #include "library/HD6309Macros.h"
 
 #include "hd6309_cc.h"
-#include "hd6309_md.h"
 #include "hd6309_CalculateEA.h"
 #include "HD6309Reset.h"
 #include "HD6309Handlers.h"

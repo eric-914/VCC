@@ -179,7 +179,6 @@
     <ClCompile Include="hd6309_CalculateEA.c" />
     <ClCompile Include="hd6309_cc.c" />
     <ClCompile Include="hd6309_i.c" />
-    <ClCompile Include="hd6309_md.c" />
     <ClCompile Include="mc6809_CalculateEA.c" />
     <ClCompile Include="hd6309opcodes.c" />
     <ClCompile Include="MC6809AssertInterrupt.c" />
@@ -226,7 +225,6 @@
     <ClInclude Include="hd6309_CalculateEA.h" />
     <ClInclude Include="hd6309_cc.h" />
     <ClInclude Include="hd6309_i.h" />
-    <ClInclude Include="hd6309_md.h" />
     <ClInclude Include="mc6809_CalculateEA.h" />
     <ClInclude Include="hd6309opcodes.h" />
     <ClInclude Include="MC6809AssertInterrupt.h" />

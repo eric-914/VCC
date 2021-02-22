@@ -605,5 +605,8 @@ typedef struct {
 
 extern "C" __declspec(dllexport) HD6309State * __cdecl GetHD6309State();
 
+extern "C" __declspec(dllexport) void __cdecl setmd(unsigned char binmd);
+extern "C" __declspec(dllexport) unsigned char __cdecl getmd(void);
 
 extern "C" __declspec(dllexport) void __cdecl HD6309Init(void);
+
