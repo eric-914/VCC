@@ -177,7 +177,6 @@
     <ClCompile Include="HD6309Handlers.c" />
     <ClCompile Include="HD6309Reset.c" />
     <ClCompile Include="hd6309_CalculateEA.c" />
-    <ClCompile Include="hd6309_i.c" />
     <ClCompile Include="mc6809_CalculateEA.c" />
     <ClCompile Include="hd6309opcodes.c" />
     <ClCompile Include="MC6809AssertInterrupt.c" />
@@ -200,7 +199,6 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
     <ClCompile Include="MC6809Reset.c" />
-    <ClCompile Include="mc6809_i.c" />
     <ClCompile Include="MiscConfig.c" />
     <ClCompile Include="SoftReset.c" />
     <ClCompile Include="SoundInit.c" />
@@ -221,7 +219,6 @@
     <ClInclude Include="HD6309Handlers.h" />
     <ClInclude Include="HD6309Reset.h" />
     <ClInclude Include="hd6309_CalculateEA.h" />
-    <ClInclude Include="hd6309_i.h" />
     <ClInclude Include="mc6809_CalculateEA.h" />
     <ClInclude Include="hd6309opcodes.h" />
     <ClInclude Include="MC6809AssertInterrupt.h" />
@@ -243,7 +240,6 @@
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="MainConfig.h" />
     <ClInclude Include="MC6809Reset.h" />
-    <ClInclude Include="mc6809_i.h" />
     <ClInclude Include="MiscConfig.h" />
     <ClInclude Include="SoftReset.h" />
     <ClInclude Include="SoundInit.h" />

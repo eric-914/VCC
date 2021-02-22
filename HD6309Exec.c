@@ -3,7 +3,6 @@
 
 #include "library/HD6309Macros.h"
 
-#include "hd6309_i.h"
 #include "hd6309opcodes.h"
 #include "HD6309Handlers.h"
 

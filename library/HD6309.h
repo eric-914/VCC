@@ -611,5 +611,9 @@ extern "C" __declspec(dllexport) unsigned char __cdecl getcc(void);
 extern "C" __declspec(dllexport) void __cdecl setmd(unsigned char binmd);
 extern "C" __declspec(dllexport) unsigned char __cdecl getmd(void);
 
+extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_firq(void);
+extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_irq(void);
+extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_nmi(void);
+
 extern "C" __declspec(dllexport) void __cdecl HD6309Init(void);
 
