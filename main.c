@@ -19,7 +19,6 @@
 #include "library/Graphics.h"
 
 #include "About.h"
-#include "CopyText.h"
 #include "CreateDDWindow.h"
 #include "DynamicMenuActivated.h"
 #include "EmuLoop.h"

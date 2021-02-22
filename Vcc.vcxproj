@@ -189,7 +189,6 @@
     <ClCompile Include="MC6809Exec.c" />
     <ClCompile Include="MC6809ForcePC.c" />
     <ClCompile Include="mc6809_cc.c" />
-    <ClCompile Include="CopyText.c" />
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CreateDDWindow.c" />
     <ClCompile Include="DisplayConfig.c" />
@@ -258,7 +257,6 @@
     <ClInclude Include="MC6809Exec.h" />
     <ClInclude Include="MC6809ForcePC.h" />
     <ClInclude Include="mc6809_cc.h" />
-    <ClInclude Include="CopyText.h" />
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CreateDDWindow.h" />
     <ClInclude Include="DisplayConfig.h" />
