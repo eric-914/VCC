@@ -108,3 +108,6 @@ extern "C" __declspec(dllexport) void __cdecl UnloadDll(SystemState* systemState
 extern "C" __declspec(dllexport) int __cdecl LoadROMPack(SystemState* systemState, char filename[MAX_PATH]);
 extern "C" __declspec(dllexport) void __cdecl UnloadPack(SystemState* systemState);
 extern "C" __declspec(dllexport) void __cdecl UpdateBusPointer(void);
+
+extern "C" __declspec(dllexport) int __cdecl InsertModule(SystemState* systemState, char* modulePath);
+extern "C" __declspec(dllexport) int __cdecl LoadCart(SystemState* systemState);

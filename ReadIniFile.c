@@ -1,13 +1,11 @@
 #include <windows.h>
 
 #include "library/Config.h"
-
 #include "library/Joystick.h"
 #include "library/Keyboard.h"
+#include "library/PAKInterface.h"
 #include "library/systemstate.h"
 #include "library/fileoperations.h"
-
-#include "InsertModule.h"
 
 void SetWindowSize(POINT p) {
   int width = p.x + 16;

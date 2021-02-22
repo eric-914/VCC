@@ -1,10 +1,16 @@
 #include <iostream>
+#include <string>
 
 #include "PAKInterface.h"
 #include "VCC.h"
 #include "MC6821.h"
+#include "Config.h"
+#include "MMU.h"
 #include "systemstate.h"
 #include "cpudef.h"
+#include "fileoperations.h"
+
+using namespace std;
 
 PakInterfaceState* InitializeInstance(PakInterfaceState*);
 
@@ -461,5 +467,254 @@ extern "C" {
     if (pakInterfaceState->SetInterruptCallPointer != NULL) {
       pakInterfaceState->SetInterruptCallPointer(GetCPU()->CPUAssertInterrupt);
     }
+  }
+}
+
+/*
+* TODO: This exists because this is what the different plugins expect, but it requires the EmuState
+*/
+void DynamicMenuCallback(char* menuName, int menuId, int type)
+{
+  DynamicMenuCallback(&(GetVccState()->EmuState), menuName, menuId, type);
+}
+
+extern "C" {
+  __declspec(dllexport) int __cdecl InsertModule(SystemState* systemState, char* modulePath)
+  {
+    char catNumber[MAX_LOADSTRING] = "";
+    char temp[MAX_LOADSTRING] = "";
+    char text[1024] = "";
+    char ini[MAX_PATH] = "";
+    unsigned char fileType = 0;
+
+    PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
+
+    fileType = FileID(modulePath);
+
+    switch (fileType)
+    {
+    case 0:		//File doesn't exist
+      return(NOMODULE);
+      break;
+
+    case 2:		//File is a ROM image
+      UnloadDll(systemState);
+
+      LoadROMPack(systemState, modulePath);
+
+      strncpy(pakInterfaceState->Modname, modulePath, MAX_PATH);
+
+      FilePathStripPath(pakInterfaceState->Modname);
+
+      DynamicMenuCallback(systemState, "", 0, 0); //Refresh Menus
+      DynamicMenuCallback(systemState, "", 1, 0);
+
+      systemState->ResetPending = 2;
+
+      SetCart(1);
+
+      return(NOMODULE);
+
+    case 1:		//File is a DLL
+
+      UnloadDll(systemState);
+      pakInterfaceState->hInstLib = LoadLibrary(modulePath);
+
+      if (pakInterfaceState->hInstLib == NULL) {
+        return(NOMODULE);
+      }
+
+      SetCart(0);
+
+      pakInterfaceState->GetModuleName = (GETNAME)GetProcAddress(pakInterfaceState->hInstLib, "ModuleName");
+      pakInterfaceState->ConfigModule = (CONFIGIT)GetProcAddress(pakInterfaceState->hInstLib, "ModuleConfig");
+      pakInterfaceState->PakPortWrite = (PACKPORTWRITE)GetProcAddress(pakInterfaceState->hInstLib, "PackPortWrite");
+      pakInterfaceState->PakPortRead = (PACKPORTREAD)GetProcAddress(pakInterfaceState->hInstLib, "PackPortRead");
+      pakInterfaceState->SetInterruptCallPointer = (SETINTERRUPTCALLPOINTER)GetProcAddress(pakInterfaceState->hInstLib, "AssertInterrupt");
+      pakInterfaceState->DmaMemPointer = (DMAMEMPOINTERS)GetProcAddress(pakInterfaceState->hInstLib, "MemPointers");
+      pakInterfaceState->HeartBeat = (HEARTBEAT)GetProcAddress(pakInterfaceState->hInstLib, "HeartBeat");
+      pakInterfaceState->PakMemWrite8 = (MEMWRITE8)GetProcAddress(pakInterfaceState->hInstLib, "PakMemWrite8");
+      pakInterfaceState->PakMemRead8 = (MEMREAD8)GetProcAddress(pakInterfaceState->hInstLib, "PakMemRead8");
+      pakInterfaceState->ModuleStatus = (MODULESTATUS)GetProcAddress(pakInterfaceState->hInstLib, "ModuleStatus");
+      pakInterfaceState->ModuleAudioSample = (MODULEAUDIOSAMPLE)GetProcAddress(pakInterfaceState->hInstLib, "ModuleAudioSample");
+      pakInterfaceState->ModuleReset = (MODULERESET)GetProcAddress(pakInterfaceState->hInstLib, "ModuleReset");
+      pakInterfaceState->SetIniPath = (SETINIPATH)GetProcAddress(pakInterfaceState->hInstLib, "SetIniPath");
+      pakInterfaceState->PakSetCart = (SETCARTPOINTER)GetProcAddress(pakInterfaceState->hInstLib, "SetCart");
+
+      if (pakInterfaceState->GetModuleName == NULL)
+      {
+        FreeLibrary(pakInterfaceState->hInstLib);
+
+        pakInterfaceState->hInstLib = NULL;
+
+        return(NOTVCC);
+      }
+
+      pakInterfaceState->BankedCartOffset = 0;
+
+      if (pakInterfaceState->DmaMemPointer != NULL) {
+        pakInterfaceState->DmaMemPointer(MemRead8, MemWrite8);
+      }
+
+      if (pakInterfaceState->SetInterruptCallPointer != NULL) {
+        pakInterfaceState->SetInterruptCallPointer(GetCPU()->CPUAssertInterrupt);
+      }
+
+      pakInterfaceState->GetModuleName(pakInterfaceState->Modname, catNumber, DynamicMenuCallback);  //Instantiate the menus from HERE!
+
+      sprintf(temp, "Configure %s", pakInterfaceState->Modname);
+
+      strcat(text, "Module Name: ");
+      strcat(text, pakInterfaceState->Modname);
+      strcat(text, "\n");
+
+      if (pakInterfaceState->ConfigModule != NULL)
+      {
+        pakInterfaceState->ModualParms |= 1;
+
+        strcat(text, "Has Configurable options\n");
+      }
+
+      if (pakInterfaceState->PakPortWrite != NULL)
+      {
+        pakInterfaceState->ModualParms |= 2;
+
+        strcat(text, "Is IO writable\n");
+      }
+
+      if (pakInterfaceState->PakPortRead != NULL)
+      {
+        pakInterfaceState->ModualParms |= 4;
+
+        strcat(text, "Is IO readable\n");
+      }
+
+      if (pakInterfaceState->SetInterruptCallPointer != NULL)
+      {
+        pakInterfaceState->ModualParms |= 8;
+
+        strcat(text, "Generates Interrupts\n");
+      }
+
+      if (pakInterfaceState->DmaMemPointer != NULL)
+      {
+        pakInterfaceState->ModualParms |= 16;
+
+        strcat(text, "Generates DMA Requests\n");
+      }
+
+      if (pakInterfaceState->HeartBeat != NULL)
+      {
+        pakInterfaceState->ModualParms |= 32;
+
+        strcat(text, "Needs Heartbeat\n");
+      }
+
+      if (pakInterfaceState->ModuleAudioSample != NULL)
+      {
+        pakInterfaceState->ModualParms |= 64;
+
+        strcat(text, "Analog Audio Outputs\n");
+      }
+
+      if (pakInterfaceState->PakMemWrite8 != NULL)
+      {
+        pakInterfaceState->ModualParms |= 128;
+
+        strcat(text, "Needs ChipSelect Write\n");
+      }
+
+      if (pakInterfaceState->PakMemRead8 != NULL)
+      {
+        pakInterfaceState->ModualParms |= 256;
+
+        strcat(text, "Needs ChipSelect Read\n");
+      }
+
+      if (pakInterfaceState->ModuleStatus != NULL)
+      {
+        pakInterfaceState->ModualParms |= 512;
+
+        strcat(text, "Returns Status\n");
+      }
+
+      if (pakInterfaceState->ModuleReset != NULL)
+      {
+        pakInterfaceState->ModualParms |= 1024;
+
+        strcat(text, "Needs Reset Notification\n");
+      }
+
+      if (pakInterfaceState->SetIniPath != NULL)
+      {
+        pakInterfaceState->ModualParms |= 2048;
+
+        GetIniFilePath(ini);
+
+        pakInterfaceState->SetIniPath(ini);
+      }
+
+      if (pakInterfaceState->PakSetCart != NULL)
+      {
+        pakInterfaceState->ModualParms |= 4096;
+
+        strcat(text, "Can Assert CART\n");
+
+        pakInterfaceState->PakSetCart(SetCart);
+      }
+
+      strcpy(pakInterfaceState->DllPath, modulePath);
+
+      systemState->ResetPending = 2;
+
+      return(0);
+    }
+
+    return(NOMODULE);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) int __cdecl LoadCart(SystemState* systemState)
+  {
+    OPENFILENAME ofn;
+    char szFileName[MAX_PATH] = "";
+    char temp[MAX_PATH];
+
+    PakInterfaceState* pakInterfaceState = GetPakInterfaceState();
+
+    GetIniFilePath(temp);
+
+    GetPrivateProfileString("DefaultPaths", "PakPath", "", pakInterfaceState->PakPath, MAX_PATH, temp);
+
+    memset(&ofn, 0, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(OPENFILENAME);
+    ofn.hwndOwner = systemState->WindowHandle;
+    ofn.lpstrFilter = "Program Packs\0*.ROM;*.ccc;*.DLL;*.pak\0\0";			// filter string
+    ofn.nFilterIndex = 1;							          // current filter index
+    ofn.lpstrFile = szFileName;				          // contains full path and filename on return
+    ofn.nMaxFile = MAX_PATH;					          // sizeof lpstrFile
+    ofn.lpstrFileTitle = NULL;						      // filename and extension only
+    ofn.nMaxFileTitle = MAX_PATH;					      // sizeof lpstrFileTitle
+    ofn.lpstrInitialDir = pakInterfaceState->PakPath;				      // initial directory
+    ofn.lpstrTitle = TEXT("Load Program Pack");	// title bar string
+    ofn.Flags = OFN_HIDEREADONLY;
+
+    if (GetOpenFileName(&ofn)) {
+      if (!InsertModule(systemState, szFileName)) {
+        string tmp = ofn.lpstrFile;
+        size_t idx = tmp.find_last_of("\\");
+        tmp = tmp.substr(0, idx);
+
+        strcpy(pakInterfaceState->PakPath, tmp.c_str());
+
+        WritePrivateProfileString("DefaultPaths", "PakPath", pakInterfaceState->PakPath, temp);
+
+        return(0);
+      }
+    }
+
+    return(1);
   }
 }

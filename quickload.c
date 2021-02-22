@@ -23,8 +23,7 @@ This file is part of VCC (Virtual Color Computer).
 #include "library/fileoperations.h"
 #include "library/systemstate.h"
 #include "library/MMU.h"
-
-#include "InsertModule.h"
+#include "library/PAKInterface.h"
 
 unsigned char QuickLoad(SystemState* systemState, char* binFileName)
 {

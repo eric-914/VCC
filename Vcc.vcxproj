@@ -201,9 +201,7 @@
     <ClCompile Include="HardReset.c" />
     <ClCompile Include="InitInstance.c" />
     <ClCompile Include="InputConfig.c" />
-    <ClCompile Include="InsertModule.c" />
     <ClCompile Include="JoyStickConfig.c" />
-    <ClCompile Include="LoadCart.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="LoadIniFile.c" />
     <ClCompile Include="LoadPack.c" />
@@ -261,9 +259,7 @@
     <ClInclude Include="HardReset.h" />
     <ClInclude Include="InitInstance.h" />
     <ClInclude Include="InputConfig.h" />
-    <ClInclude Include="InsertModule.h" />
     <ClInclude Include="JoyStickConfig.h" />
-    <ClInclude Include="LoadCart.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="LoadIniFile.h" />
     <ClInclude Include="LoadPack.h" />
