@@ -3,10 +3,10 @@
 #include "library/cpudef.h"
 #include "library/PAKInterface.h"
 #include "library/MMU.h"
+#include "library/Registers.h"
 
 #include "CopyRom.h"
 #include "GimeReset.h"
-#include "MC6883Reset.h"
 
 void SoftReset(void)
 {

@@ -3,6 +3,7 @@
 #include "library/CoCo.h"
 #include "library/MC6821.h"
 #include "library/cpudef.h"
+#include "library/Registers.h"
 
 #include "HD6309Init.h"
 #include "HD6309Exec.h"
@@ -18,7 +19,6 @@
 #include "MC6809DeAssertInterrupt.h"
 #include "MC6809ForcePC.h"
 
-#include "MC6883Reset.h"
 #include "MmuInit.h"
 
 #include "GimeReset.h"

@@ -1,7 +1,6 @@
 #include "library/PAKInterface.h"
+#include "library/Registers.h"
 
-#include "GimeWrite.h"
-#include "SAMWrite.h"
 #include "pia0_write.h"
 #include "pia1_write.h"
 
