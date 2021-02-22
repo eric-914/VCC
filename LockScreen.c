@@ -1,6 +1,6 @@
 #include "library/DirectDrawAccessors.h"
 
-#include "library/directdrawstate.h"
+#include "library/DirectDraw.h"
 #include "library/systemstate.h"
 
 unsigned char LockScreen(SystemState* systemState)

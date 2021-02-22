@@ -183,8 +183,8 @@
     <ClCompile Include="commandline.c" />
     <ClCompile Include="Config.c" />
     <ClCompile Include="cpudef.c" />
+    <ClCompile Include="DirectDraw.c" />
     <ClCompile Include="DirectDrawAccessors.c" />
-    <ClCompile Include="directdrawstate.c" />
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="Graphics.c" />
     <ClCompile Include="hd6309intstate.c" />
@@ -214,9 +214,8 @@
     <ClInclude Include="Clipboard.h" />
     <ClInclude Include="CoCo.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="DirectDrawAccessors.h" />
-    <ClInclude Include="directdrawdef.h" />
-    <ClInclude Include="directdrawstate.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="hd6309intstate.h" />

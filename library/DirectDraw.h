@@ -3,6 +3,9 @@
 #include <ddraw.h>
 
 #include "defines.h"
+#include "systemstate.h"
+
+#define NO_WARN_MBCS_MFC_DEPRECATION
 
 typedef struct {
   //Global Variables for Direct Draw functions
@@ -31,3 +34,11 @@ typedef struct {
 } DirectDrawState;
 
 extern "C" __declspec(dllexport) DirectDrawState * __cdecl GetDirectDrawState();
+
+extern "C" __declspec(dllexport) POINT __cdecl GetCurrentWindowSize();
+extern "C" __declspec(dllexport) void __cdecl CheckSurfaces();
+extern "C" __declspec(dllexport) void __cdecl SetStatusBarText(char*, SystemState*);
+extern "C" __declspec(dllexport) void __cdecl Cls(unsigned int, SystemState*);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetInfoBand(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetResize(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetAspect(unsigned char);

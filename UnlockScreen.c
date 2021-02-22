@@ -1,6 +1,6 @@
 #include "DisplayFlip.h"
 
-#include "library/directdrawstate.h"
+#include "library/DirectDraw.h"
 #include "library/systemstate.h"
 
 void UnlockScreen(SystemState* systemState)

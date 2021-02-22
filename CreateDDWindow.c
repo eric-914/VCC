@@ -1,12 +1,11 @@
-#include "library/directdrawdef.h"
+#include "library/di.version.h"
 #include <ddraw.h>
 #include <commctrl.h>	// Windows common controls
 
-#include "library/directdrawstate.h"
 #include "resources/resource.h"
 
+#include "library/DirectDraw.h"
 #include "library/Config.h"
-
 #include "library/systemstate.h"
 
 bool CreateDDWindow(SystemState* systemState, WNDPROC WndProc)

@@ -1,5 +1,5 @@
 #include "library/Config.h"
-#include "library/DirectDrawAccessors.h"
+#include "library/DirectDraw.h"
 #include "library/MC6821.h"
 #include "library/systemstate.h"
 #include "library/VCC.h"

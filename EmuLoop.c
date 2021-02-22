@@ -4,7 +4,7 @@
 
 #include "library/VCC.h"
 #include "library/Throttle.h"
-#include "library/DirectDrawAccessors.h"
+#include "library/DirectDraw.h"
 #include "library/PAKInterface.h"
 
 #include "quickload.h"

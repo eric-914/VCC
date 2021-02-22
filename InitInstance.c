@@ -4,7 +4,7 @@
 
 #include "resources/resource.h"
 
-#include "library/directdrawstate.h"
+#include "library/DirectDraw.h"
 
 BOOL InitInstance(HINSTANCE hInstance, HINSTANCE hResources, int nCmdShow)
 {

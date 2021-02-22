@@ -1,5 +1,5 @@
 #include "library/Throttle.h"
-#include "library/directdrawstate.h"
+#include "library/DirectDraw.h"
 #include "library/systemstate.h"
 
 #include "LockScreen.h"

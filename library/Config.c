@@ -7,7 +7,7 @@
 #include "../resources/resource.h"
 #include "systemstate.h"
 #include "fileoperations.h"
-#include "DirectDrawAccessors.h"
+#include "DirectDraw.h"
 #include "PAKInterface.h"
 
 #include "Config.h"

@@ -10,7 +10,7 @@
 #include "library/Clipboard.h"
 #include "library/CoCo.h"
 #include "library/Config.h"
-#include "library/DirectDrawAccessors.h"
+#include "library/DirectDraw.h"
 #include "library/Joystick.h"
 #include "library/Keyboard.h"
 #include "library/PAKInterface.h"

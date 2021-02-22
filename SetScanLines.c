@@ -1,9 +1,7 @@
 #include "library/VCC.h"
-
-#include "library/DirectDrawAccessors.h"
-
-#include "library/systemstate.h"
+#include "library/DirectDraw.h"
 #include "library/Graphics.h"
+#include "library/systemstate.h"
 
 unsigned char SetScanLines(SystemState* systemState, unsigned char lines)
 {
