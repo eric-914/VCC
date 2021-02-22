@@ -1,7 +1,7 @@
 #include "library/MMU.h"
 #include "library/HD6309.h"
 
-#include "HD6309Vectors.h"
+#include "hd6309opcodes.h"
 
 int HD6309Exec(int cycleFor)
 {
