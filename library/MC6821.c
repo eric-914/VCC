@@ -7,6 +7,9 @@
 #include "defines.h"
 
 #include "PAKInterface.h"
+#include "Keyboard.h"
+#include "Cassette.h"
+#include "Graphics.h"
 
 const unsigned char rega[4] = { 0,0,0,0 };
 const unsigned char regb[4] = { 0,0,0,0 };
@@ -412,6 +415,211 @@ extern "C" {
       }
 
       Byte = 0;
+    }
+  }
+}
+
+// Shift Row Col
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl pia0_read(unsigned char port)
+  {
+    unsigned char dda, ddb;
+
+    MC6821State* mc6821State = GetMC6821State();
+
+    dda = (mc6821State->rega[1] & 4);
+    ddb = (mc6821State->rega[3] & 4);
+
+    switch (port)
+    {
+    case 1:
+      return(mc6821State->rega[port]);
+
+    case 3:
+      return(mc6821State->rega[port]);
+
+    case 0:
+      if (dda)
+      {
+        mc6821State->rega[1] = (mc6821State->rega[1] & 63);
+
+        return (vccKeyboardGetScan(mc6821State->rega[2])); //Read
+      }
+      else {
+        return(mc6821State->rega_dd[port]);
+      }
+
+    case 2: //Write 
+      if (ddb)
+      {
+        mc6821State->rega[3] = (mc6821State->rega[3] & 63);
+
+        return(mc6821State->rega[port] & mc6821State->rega_dd[port]);
+      }
+      else {
+        return(mc6821State->rega_dd[port]);
+      }
+    }
+
+    return(0);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl pia0_write(unsigned char data, unsigned char port)
+  {
+    unsigned char dda, ddb;
+
+    MC6821State* mc6821State = GetMC6821State();
+
+    dda = (mc6821State->rega[1] & 4);
+    ddb = (mc6821State->rega[3] & 4);
+
+    switch (port)
+    {
+    case 0:
+      if (dda) {
+        mc6821State->rega[port] = data;
+      }
+      else {
+        mc6821State->rega_dd[port] = data;
+      }
+
+      return;
+
+    case 2:
+      if (ddb) {
+        mc6821State->rega[port] = data;
+      }
+      else {
+        mc6821State->rega_dd[port] = data;
+      }
+
+      return;
+
+    case 1:
+      mc6821State->rega[port] = (data & 0x3F);
+
+      return;
+
+    case 3:
+      mc6821State->rega[port] = (data & 0x3F);
+
+      return;
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl pia1_read(unsigned char port)
+  {
+    static unsigned int flag = 0, flag2 = 0;
+    unsigned char dda, ddb;
+
+    MC6821State* mc6821State = GetMC6821State();
+
+    port -= 0x20;
+    dda = (mc6821State->regb[1] & 4);
+    ddb = (mc6821State->regb[3] & 4);
+
+    switch (port)
+    {
+    case 1:
+      //	return(0);
+
+    case 3:
+      return(mc6821State->regb[port]);
+
+    case 2:
+      if (ddb)
+      {
+        mc6821State->regb[3] = (mc6821State->regb[3] & 63);
+
+        return(mc6821State->regb[port] & mc6821State->regb_dd[port]);
+      }
+      else {
+        return(mc6821State->regb_dd[port]);
+      }
+
+    case 0:
+      if (dda)
+      {
+        mc6821State->regb[1] = (mc6821State->regb[1] & 63); //Cass In
+        flag = mc6821State->regb[port]; //& regb_dd[port];
+
+        return(flag);
+      }
+      else {
+        return(mc6821State->regb_dd[port]);
+      }
+    }
+
+    return(0);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl pia1_write(unsigned char data, unsigned char port)
+  {
+    unsigned char dda, ddb;
+    static unsigned short LastSS = 0;
+
+    MC6821State* mc6821State = GetMC6821State();
+
+    port -= 0x20;
+
+    dda = (mc6821State->regb[1] & 4);
+    ddb = (mc6821State->regb[3] & 4);
+
+    switch (port)
+    {
+    case 0:
+      if (dda) {
+        mc6821State->regb[port] = data;
+
+        CaptureBit((mc6821State->regb[0] & 2) >> 1);
+
+        if (GetMuxState() == 0) {
+          if ((mc6821State->regb[3] & 8) != 0) { //==0 for cassette writes
+            mc6821State->Asample = (mc6821State->regb[0] & 0xFC) >> 1; //0 to 127
+          }
+          else {
+            mc6821State->Csample = (mc6821State->regb[0] & 0xFC);
+          }
+        }
+      }
+      else {
+        mc6821State->regb_dd[port] = data;
+      }
+
+      return;
+
+    case 2: //FF22
+      if (ddb)
+      {
+        mc6821State->regb[port] = (data & mc6821State->regb_dd[port]);
+
+        SetGimeVdgMode2((mc6821State->regb[2] & 248) >> 3);
+
+        mc6821State->Ssample = (mc6821State->regb[port] & 2) << 6;
+      }
+      else {
+        mc6821State->regb_dd[port] = data;
+      }
+
+      return;
+
+    case 1:
+      mc6821State->regb[port] = (data & 0x3F);
+
+      Motor((data & 8) >> 3);
+
+      return;
+
+    case 3:
+      mc6821State->regb[port] = (data & 0x3F);
+
+      return;
     }
   }
 }

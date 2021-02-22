@@ -47,3 +47,8 @@ extern "C" __declspec(dllexport) void __cdecl SetSerialParams(unsigned char text
 extern "C" __declspec(dllexport) unsigned char __cdecl VDG_Mode(void);
 extern "C" __declspec(dllexport) void __cdecl WritePrintMon(char* data);
 extern "C" __declspec(dllexport) void __cdecl CaptureBit(unsigned char sample);
+
+extern "C" __declspec(dllexport) unsigned char __cdecl pia0_read(unsigned char port);
+extern "C" __declspec(dllexport) void __cdecl pia0_write(unsigned char data, unsigned char port);
+extern "C" __declspec(dllexport) unsigned char __cdecl pia1_read(unsigned char port);
+extern "C" __declspec(dllexport) void __cdecl pia1_write(unsigned char data, unsigned char port);

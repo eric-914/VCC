@@ -1,8 +1,6 @@
 #include "library/PAKInterface.h"
 #include "library/Registers.h"
-
-#include "pia0_write.h"
-#include "pia1_write.h"
+#include "library/MC6821.h"
 
 void port_write(unsigned char data, unsigned short addr)
 {

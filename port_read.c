@@ -1,8 +1,6 @@
 #include "library/Registers.h"
 #include "library/PAKInterface.h"
-
-#include "pia0_read.h"
-#include "pia1_read.h"
+#include "library/MC6821.h"
 
 unsigned char port_read(unsigned short addr)
 {
