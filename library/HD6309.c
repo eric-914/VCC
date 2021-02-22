@@ -85,6 +85,89 @@ HD6309State* InitializeInstance(HD6309State* p) {
 }
 
 extern "C" {
+  __declspec(dllexport) void __cdecl setcc(unsigned char bincc)
+  {
+    HD6309State* hd63096State = GetHD6309State();
+
+    hd63096State->ccbits = bincc;
+
+    CC_E = !!(bincc & (1 << E));
+    CC_F = !!(bincc & (1 << F));
+    CC_H = !!(bincc & (1 << H));
+    CC_I = !!(bincc & (1 << I));
+    CC_N = !!(bincc & (1 << N));
+    CC_Z = !!(bincc & (1 << Z));
+    CC_V = !!(bincc & (1 << V));
+    CC_C = !!(bincc & (1 << C));
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl getcc(void)
+  {
+    unsigned char bincc = 0;
+
+    HD6309State* hd63096State = GetHD6309State();
+
+#define TST(_CC, _F) if (_CC) { bincc |= (1 << _F); }
+
+    TST(CC_E, E);
+    TST(CC_F, F);
+    TST(CC_H, H);
+    TST(CC_I, I);
+    TST(CC_N, N);
+    TST(CC_Z, Z);
+    TST(CC_V, V);
+    TST(CC_C, C);
+
+    return(bincc);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl setmd(unsigned char binmd)
+  {
+    HD6309State* hd63096State = instance;
+
+    MD_NATIVE6309 = !!(binmd & (1 << NATIVE6309));
+    MD_FIRQMODE = !!(binmd & (1 << FIRQMODE));
+    MD_UNDEFINED2 = !!(binmd & (1 << MD_UNDEF2));
+    MD_UNDEFINED3 = !!(binmd & (1 << MD_UNDEF3));
+    MD_UNDEFINED4 = !!(binmd & (1 << MD_UNDEF4));
+    MD_UNDEFINED5 = !!(binmd & (1 << MD_UNDEF5));
+    MD_ILLEGAL = !!(binmd & (1 << ILLEGAL));
+    MD_ZERODIV = !!(binmd & (1 << ZERODIV));
+
+    for (short i = 0; i < 24; i++)
+    {
+      *NatEmuCycles[i] = hd63096State->InsCycles[MD_NATIVE6309][i];
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) unsigned char __cdecl getmd(void)
+  {
+    unsigned char binmd = 0;
+
+    HD6309State* hd63096State = instance;
+
+#define TSM(_MD, _F) if (_MD) { binmd |= (1 << _F); } //--Can't use the same macro name
+
+    TSM(MD_NATIVE6309, NATIVE6309);
+    TSM(MD_FIRQMODE, FIRQMODE);
+    TSM(MD_UNDEFINED2, MD_UNDEF2);
+    TSM(MD_UNDEFINED3, MD_UNDEF3);
+    TSM(MD_UNDEFINED4, MD_UNDEF4);
+    TSM(MD_UNDEFINED5, MD_UNDEF5);
+    TSM(MD_ILLEGAL, ILLEGAL);
+    TSM(MD_ZERODIV, ZERODIV);
+
+    return(binmd);
+  }
+}
+
+extern "C" {
   __declspec(dllexport) void __cdecl HD6309Init(void)
   {	//Call this first or RESET will core!
     // reg pointers for TFR and EXG and LEA ops
@@ -182,48 +265,5 @@ extern "C" {
     hd63096State->InsCycles[1][M42] = 2;
     hd63096State->InsCycles[0][M53] = 5;	//5-3
     hd63096State->InsCycles[1][M53] = 3;
-  }
-}
-
-extern "C" {
-  __declspec(dllexport) void __cdecl setmd(unsigned char binmd)
-  {
-    HD6309State* hd63096State = instance;
-
-    MD_NATIVE6309 = !!(binmd & (1 << NATIVE6309));
-    MD_FIRQMODE = !!(binmd & (1 << FIRQMODE));
-    MD_UNDEFINED2 = !!(binmd & (1 << MD_UNDEF2));
-    MD_UNDEFINED3 = !!(binmd & (1 << MD_UNDEF3));
-    MD_UNDEFINED4 = !!(binmd & (1 << MD_UNDEF4));
-    MD_UNDEFINED5 = !!(binmd & (1 << MD_UNDEF5));
-    MD_ILLEGAL = !!(binmd & (1 << ILLEGAL));
-    MD_ZERODIV = !!(binmd & (1 << ZERODIV));
-
-    for (short i = 0; i < 24; i++)
-    {
-      *NatEmuCycles[i] = hd63096State->InsCycles[MD_NATIVE6309][i];
-    }
-  }
-}
-
-extern "C" {
-  __declspec(dllexport) unsigned char __cdecl getmd(void)
-  {
-    unsigned char binmd = 0;
-
-    HD6309State* hd63096State = instance;
-
-#define TSM(_MD, _F) if (_MD) { binmd |= (1 << _F); } //--Can't use the same macro name
-
-    TSM(MD_NATIVE6309, NATIVE6309);
-    TSM(MD_FIRQMODE, FIRQMODE);
-    TSM(MD_UNDEFINED2, MD_UNDEF2);
-    TSM(MD_UNDEFINED3, MD_UNDEF3);
-    TSM(MD_UNDEFINED4, MD_UNDEF4);
-    TSM(MD_UNDEFINED5, MD_UNDEF5);
-    TSM(MD_ILLEGAL, ILLEGAL);
-    TSM(MD_ZERODIV, ZERODIV);
-
-    return(binmd);
   }
 }

@@ -347,4 +347,7 @@ typedef struct {
 
 extern "C" __declspec(dllexport) MC6809State * __cdecl GetMC6809State();
 
+extern "C" __declspec(dllexport) void __cdecl mc6809_setcc(unsigned char bincc);
+extern "C" __declspec(dllexport) unsigned char __cdecl mc6809_getcc(void);
+
 extern "C" __declspec(dllexport) void __cdecl MC6809Init(void);

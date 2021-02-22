@@ -4,7 +4,6 @@
 #include "library/MC6809Macros.h"
 
 #include "mc6809_i.h"
-#include "mc6809_cc.h"
 
 #include "MC6809Reset.h"
 #include "mc6809_CalculateEA.h"

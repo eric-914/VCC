@@ -3,8 +3,6 @@
 
 #include "library/MC6809Macros.h"
 
-#include "mc6809_cc.h"
-
 void MC609_cpu_firq(void)
 {
   MC6809State* mc6809State = GetMC6809State();

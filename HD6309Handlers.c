@@ -3,8 +3,6 @@
 
 #include "library/HD6309Macros.h"
 
-#include "hd6309_cc.h"
-
 void ErrorVector(void);
 
 void InvalidInsHandler(void)

@@ -3,8 +3,6 @@
 
 #include "library/HD6309Macros.h"
 
-#include "hd6309_cc.h"
-
 void HD6309_cpu_firq(void)
 {
   HD6309State* hd63096State = GetHD6309State();
