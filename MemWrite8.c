@@ -1,6 +1,5 @@
 #include "library/MMU.h"
-
-#include "port_write.h"
+#include "library/IOBus.h"
 
 void MemWrite8(unsigned char data, unsigned short address)
 {

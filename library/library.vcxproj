@@ -189,6 +189,7 @@
     <ClCompile Include="Graphics.c" />
     <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="hd6309state.c" />
+    <ClCompile Include="IOBus.c" />
     <ClCompile Include="Joystick.c" />
     <ClCompile Include="Keyboard.c" />
     <ClCompile Include="keyboardlayout.c" />
@@ -220,6 +221,7 @@
     <ClInclude Include="hd6309defs.h" />
     <ClInclude Include="hd6309intstate.h" />
     <ClInclude Include="hd6309state.h" />
+    <ClInclude Include="IOBus.h" />
     <ClInclude Include="Joystick.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="macros.h" />
