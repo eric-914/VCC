@@ -1,5 +1,7 @@
 #include "library/MC6809.h"
 
+#include "library/MC6809Macros.h"
+
 void MC6809ForcePC(unsigned short newPC)
 {
   MC6809State* mc6809State = GetMC6809State();

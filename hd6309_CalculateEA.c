@@ -1,6 +1,8 @@
 #include "library/HD6309.h"
 #include "library/MMU.h"
 
+#include "library/HD6309Macros.h"
+
 unsigned short hd6309_CalculateEA(unsigned char postbyte)
 {
   static unsigned short int ea = 0;

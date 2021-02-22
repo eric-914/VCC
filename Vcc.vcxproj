@@ -175,7 +175,6 @@
     <ClCompile Include="HD6309Exec.c" />
     <ClCompile Include="HD6309ForcePC.c" />
     <ClCompile Include="HD6309Handlers.c" />
-    <ClCompile Include="HD6309Init.c" />
     <ClCompile Include="HD6309Reset.c" />
     <ClCompile Include="hd6309_CalculateEA.c" />
     <ClCompile Include="hd6309_cc.c" />
@@ -203,7 +202,6 @@
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="MainConfig.c" />
-    <ClCompile Include="MC6809Init.c" />
     <ClCompile Include="MC6809Reset.c" />
     <ClCompile Include="mc6809_i.c" />
     <ClCompile Include="MiscConfig.c" />
@@ -224,7 +222,6 @@
     <ClInclude Include="HD6309Exec.h" />
     <ClInclude Include="HD6309ForcePC.h" />
     <ClInclude Include="HD6309Handlers.h" />
-    <ClInclude Include="HD6309Init.h" />
     <ClInclude Include="HD6309Reset.h" />
     <ClInclude Include="hd6309_CalculateEA.h" />
     <ClInclude Include="hd6309_cc.h" />
@@ -251,7 +248,6 @@
     <ClInclude Include="JoyStickConfig.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="MainConfig.h" />
-    <ClInclude Include="MC6809Init.h" />
     <ClInclude Include="MC6809Reset.h" />
     <ClInclude Include="mc6809_i.h" />
     <ClInclude Include="MiscConfig.h" />

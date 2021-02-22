@@ -1,6 +1,8 @@
 #include "library/MC6809.h"
 #include "library/MMU.h"
 
+#include "library/MC6809Macros.h"
+
 #include "mc6809_cc.h"
 
 void MC609_cpu_firq(void)

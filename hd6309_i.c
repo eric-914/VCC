@@ -1,13 +1,13 @@
 #include "library/HD6309.h"
-#include "library/hd6309intstate.h"
 #include "library/MMU.h"
+
+#include "library/HD6309Macros.h"
 
 #include "hd6309_cc.h"
 
 void HD6309_cpu_firq(void)
 {
   HD6309State* hd63096State = GetHD6309State();
-  HD6309IntState* hd63096IntState = GetHD6309IntState();
 
   if (!CC_F)
   {
@@ -59,13 +59,12 @@ void HD6309_cpu_firq(void)
     }
   }
 
-  hd63096IntState->PendingInterrupts &= 253;
+  hd63096State->PendingInterrupts &= 253;
 }
 
 void HD6309_cpu_irq(void)
 {
   HD6309State* hd63096State = GetHD6309State();
-  HD6309IntState* hd63096IntState = GetHD6309IntState();
 
   if (hd63096State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
     return;
@@ -98,13 +97,12 @@ void HD6309_cpu_irq(void)
     CC_I = 1;
   }
 
-  hd63096IntState->PendingInterrupts &= 254;
+  hd63096State->PendingInterrupts &= 254;
 }
 
 void HD6309_cpu_nmi(void)
 {
   HD6309State* hd63096State = GetHD6309State();
-  HD6309IntState* hd63096IntState = GetHD6309IntState();
 
   CC_E = 1;
 
@@ -132,5 +130,5 @@ void HD6309_cpu_nmi(void)
   CC_F = 1;
   PC_REG = MemRead16(VNMI);
 
-  hd63096IntState->PendingInterrupts &= 251;
+  hd63096State->PendingInterrupts &= 251;
 }

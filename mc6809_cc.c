@@ -1,5 +1,7 @@
 #include "library/MC6809.h"
 
+#include "library/MC6809Macros.h"
+
 void mc6809_setcc(unsigned char bincc)
 {
   MC6809State* mc6809State = GetMC6809State();

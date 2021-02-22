@@ -6,14 +6,15 @@
 #include "library/MMU.h"
 #include "library/cpudef.h"
 
-#include "HD6309Init.h"
+#include "library/MC6809.h"
+#include "library/HD6309.h"
+
 #include "HD6309Exec.h"
 #include "HD6309Reset.h"
 #include "HD6309AssertInterrupt.h"
 #include "HD6309DeAssertInterrupt.h"
 #include "HD6309ForcePC.h"
 
-#include "MC6809Init.h"
 #include "MC6809Exec.h"
 #include "MC6809Reset.h"
 #include "MC6809AssertInterrupt.h"

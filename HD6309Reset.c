@@ -1,6 +1,8 @@
 #include "library/HD6309.h"
 #include "library/MMU.h"
 
+#include "library/HD6309Macros.h"
+
 #include "hd6309_md.h"
 
 void HD6309Reset(void)

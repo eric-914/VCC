@@ -1,5 +1,7 @@
 #include "library/HD6309.h"
 
+#include "library/HD6309Macros.h"
+
 void setcc(unsigned char bincc)
 {
   HD6309State* hd63096State = GetHD6309State();

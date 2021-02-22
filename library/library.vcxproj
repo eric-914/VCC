@@ -187,7 +187,6 @@
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="Graphics.c" />
     <ClCompile Include="HD6309.c" />
-    <ClCompile Include="hd6309intstate.c" />
     <ClCompile Include="IOBus.c" />
     <ClCompile Include="Joystick.c" />
     <ClCompile Include="Keyboard.c" />
@@ -217,12 +216,13 @@
     <ClInclude Include="DirectDraw.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="HD6309.h" />
-    <ClInclude Include="hd6309intstate.h" />
+    <ClInclude Include="HD6309Macros.h" />
     <ClInclude Include="IOBus.h" />
     <ClInclude Include="Joystick.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="macros.h" />
     <ClInclude Include="MC6809.h" />
+    <ClInclude Include="MC6809Macros.h" />
     <ClInclude Include="MC6821.h" />
     <ClInclude Include="MMU.h" />
     <ClInclude Include="PAKInterface.h" />

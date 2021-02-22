@@ -1,6 +1,8 @@
 #include "library/MC6809.h"
 #include "library/MMU.h"
 
+#include "library/MC6809Macros.h"
+
 /* _inline */ unsigned short mc6809_CalculateEA(unsigned char postbyte)
 {
   static unsigned short int ea = 0;

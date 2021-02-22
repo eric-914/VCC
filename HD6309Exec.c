@@ -1,6 +1,7 @@
 #include "library/MMU.h"
 #include "library/HD6309.h"
-#include "library/hd6309intstate.h"
+
+#include "library/HD6309Macros.h"
 
 #include "hd6309_i.h"
 #include "hd6309opcodes.h"
@@ -789,30 +790,29 @@ void(*JmpVec3[256])(void) = {
 int HD6309Exec(int cycleFor)
 {
   HD6309State* hd63096State = GetHD6309State();
-  HD6309IntState* hd63096IntState = GetHD6309IntState();
 
   hd63096State->CycleCounter = 0;
   hd63096State->gCycleFor = cycleFor;
 
   while (hd63096State->CycleCounter < cycleFor) {
 
-    if (hd63096IntState->PendingInterrupts)
+    if (hd63096State->PendingInterrupts)
     {
-      if (hd63096IntState->PendingInterrupts & 4) {
+      if (hd63096State->PendingInterrupts & 4) {
         HD6309_cpu_nmi();
       }
 
-      if (hd63096IntState->PendingInterrupts & 2) {
+      if (hd63096State->PendingInterrupts & 2) {
         HD6309_cpu_firq();
       }
 
-      if (hd63096IntState->PendingInterrupts & 1)
+      if (hd63096State->PendingInterrupts & 1)
       {
-        if (hd63096IntState->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
+        if (hd63096State->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
           HD6309_cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
         }
         else {				// The IRQ is asserted.
-          hd63096IntState->IRQWaiter -= 1;
+          hd63096State->IRQWaiter -= 1;
         }
       }
     }

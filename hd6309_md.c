@@ -1,5 +1,6 @@
 #include "library/HD6309.h"
-#include "library/hd6309intstate.h"
+
+#include "library/HD6309Macros.h"
 
 static HD6309State* hd63096State = GetHD6309State();
 
@@ -33,8 +34,6 @@ static unsigned char* NatEmuCycles[] =
 
 void setmd(unsigned char binmd)
 {
-  HD6309IntState* hd6309IntState = GetHD6309IntState();
-
   MD_NATIVE6309 = !!(binmd & (1 << NATIVE6309));
   MD_FIRQMODE = !!(binmd & (1 << FIRQMODE));
   MD_UNDEFINED2 = !!(binmd & (1 << MD_UNDEF2));
@@ -46,7 +45,7 @@ void setmd(unsigned char binmd)
 
   for (short i = 0; i < 24; i++)
   {
-    *NatEmuCycles[i] = hd6309IntState->InsCycles[MD_NATIVE6309][i];
+    *NatEmuCycles[i] = hd63096State->InsCycles[MD_NATIVE6309][i];
   }
 }
 
