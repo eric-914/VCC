@@ -358,3 +358,6 @@ extern "C" __declspec(dllexport) /* _inline */ unsigned short __cdecl mc6809_Cal
 
 extern "C" __declspec(dllexport) void __cdecl MC6809Init(void);
 extern "C" __declspec(dllexport) void __cdecl MC6809Reset(void);
+extern "C" __declspec(dllexport) void __cdecl MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter);
+extern "C" __declspec(dllexport) void __cdecl MC6809DeAssertInterrupt(unsigned char interrupt);
+extern "C" __declspec(dllexport) void __cdecl MC6809ForcePC(unsigned short newPC);

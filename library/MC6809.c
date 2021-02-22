@@ -439,3 +439,36 @@ extern "C" {
     SetMapType(0);
   }
 }
+
+extern "C" {
+  __declspec(dllexport) void __cdecl MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter) // 4 nmi 2 firq 1 irq
+  {
+    MC6809State* mc6809State = GetMC6809State();
+
+    mc6809State->SyncWaiting = 0;
+    mc6809State->PendingInterrupts |= (1 << (interrupt - 1));
+    mc6809State->IRQWaiter = waiter;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl MC6809DeAssertInterrupt(unsigned char interrupt) // 4 nmi 2 firq 1 irq
+  {
+    MC6809State* mc6809State = GetMC6809State();
+
+    mc6809State->PendingInterrupts &= ~(1 << (interrupt - 1));
+    mc6809State->InInterrupt = 0;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl MC6809ForcePC(unsigned short newPC)
+  {
+    MC6809State* mc6809State = GetMC6809State();
+
+    PC_REG = newPC;
+
+    mc6809State->PendingInterrupts = 0;
+    mc6809State->SyncWaiting = 0;
+  }
+}

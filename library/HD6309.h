@@ -619,3 +619,6 @@ extern "C" __declspec(dllexport) unsigned short __cdecl hd6309_CalculateEA(unsig
 
 extern "C" __declspec(dllexport) void __cdecl HD6309Init(void);
 extern "C" __declspec(dllexport) void __cdecl HD6309Reset(void);
+extern "C" __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter);
+extern "C" __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char interrupt);
+extern "C" __declspec(dllexport) void __cdecl HD6309ForcePC(unsigned short address);

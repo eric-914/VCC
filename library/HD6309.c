@@ -790,3 +790,36 @@ extern "C" {
     SetMapType(0);	//shouldn't be here
   }
 }
+
+extern "C" {
+  __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter) // 4 nmi 2 firq 1 irq
+  {
+    HD6309State* hd63096State = GetHD6309State();
+
+    hd63096State->SyncWaiting = 0;
+    hd63096State->PendingInterrupts |= (1 << (interrupt - 1));
+    hd63096State->IRQWaiter = waiter;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char interrupt) // 4 nmi 2 firq 1 irq
+  {
+    HD6309State* hd63096State = GetHD6309State();
+
+    hd63096State->PendingInterrupts &= ~(1 << (interrupt - 1));
+    hd63096State->InInterrupt = 0;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl HD6309ForcePC(unsigned short address)
+  {
+    HD6309State* hd63096State = GetHD6309State();
+
+    PC_REG = address;
+
+    hd63096State->PendingInterrupts = 0;
+    hd63096State->SyncWaiting = 0;
+  }
+}

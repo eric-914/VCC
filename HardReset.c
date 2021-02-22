@@ -10,14 +10,7 @@
 #include "library/HD6309.h"
 
 #include "HD6309Exec.h"
-#include "HD6309AssertInterrupt.h"
-#include "HD6309DeAssertInterrupt.h"
-#include "HD6309ForcePC.h"
-
 #include "MC6809Exec.h"
-#include "MC6809AssertInterrupt.h"
-#include "MC6809DeAssertInterrupt.h"
-#include "MC6809ForcePC.h"
 
 #include "GimeReset.h"
 
