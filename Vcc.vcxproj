@@ -167,9 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DialogBoxAboutCallback.c" />
     <ClCompile Include="CreateDDWindow.c" />
-    <ClCompile Include="DirectSoundEnumerateCallback.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetSoundCardList.c" />
@@ -184,9 +182,7 @@
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DialogBoxAboutCallback.h" />
     <ClInclude Include="CreateDDWindow.h" />
-    <ClInclude Include="DirectSoundEnumerateCallback.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetSoundCardList.h" />

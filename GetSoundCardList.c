@@ -1,6 +1,5 @@
 #include "library/Audio.h"
-
-#include "DirectSoundEnumerateCallback.h"
+#include "library/Callbacks.h"
 
 int GetSoundCardList(SoundCardList* list)
 {

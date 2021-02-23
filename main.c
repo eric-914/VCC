@@ -17,6 +17,7 @@
 #include "library/VCC.h"
 #include "library/fileoperations.h"
 #include "library/Graphics.h"
+#include "library/Callbacks.h"
 
 #include "CreateDDWindow.h"
 #include "EmuLoop.h"
@@ -24,7 +25,6 @@
 #include "InitInstance.h"
 #include "LoadConfig.h"
 #include "CreateMainConfigDialogCallback.h"
-#include "DialogBoxAboutCallback.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

@@ -702,3 +702,43 @@ extern "C" {
     return(0);
   }
 }
+
+// Mesage handler for the About box.
+extern "C" {
+  __declspec(dllexport) LRESULT CALLBACK __cdecl DialogBoxAboutCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+  {
+    VccState* vccState = GetVccState();
+
+    switch (message)
+    {
+    case WM_INITDIALOG:
+      SendDlgItemMessage(hDlg, IDC_TITLE, WM_SETTEXT, strlen(vccState->AppName), (LPARAM)(LPCSTR)(vccState->AppName));
+
+      return TRUE;
+
+    case WM_COMMAND:
+      if (LOWORD(wParam) == IDOK)
+      {
+        EndDialog(hDlg, LOWORD(wParam));
+
+        return TRUE;
+      }
+
+      break;
+    }
+
+    return FALSE;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) BOOL CALLBACK __cdecl DirectSoundEnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext)
+  {
+    AudioState* audioState = GetAudioState();
+
+    strncpy(audioState->Cards[audioState->CardCount].CardName, lpcstrDescription, 63);
+    audioState->Cards[audioState->CardCount++].Guid = lpGuid;
+
+    return (audioState->CardCount < MAXCARDS);
+  }
+}
