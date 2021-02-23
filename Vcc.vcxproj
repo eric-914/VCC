@@ -98,7 +98,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>nafxcwd.lib;libcmtd.lib;ddraw.lib;dxguid.lib;comctl32.lib;Winmm.lib;dsound.lib;odbc32.lib;odbccp32.lib;dinput8.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;ddraw.lib;dinput8.lib;dsound.lib;dxguid.lib;libcmtd.lib;nafxcwd.lib;odbc32.lib;odbccp32.lib;shlwapi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
       <IgnoreSpecificDefaultLibraries>nafxcwd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -170,12 +170,10 @@
     <ClCompile Include="CreateDirectDrawWindow.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
-    <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="InitBasicWindowInstance.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="CreateMainConfigDialogCallback.c" />
-    <ClCompile Include="SoundInit.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -185,11 +183,9 @@
     <ClInclude Include="CreateDirectDrawWindow.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
-    <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="InitBasicWindowInstance.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="CreateMainConfigDialogCallback.h" />
-    <ClInclude Include="SoundInit.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">

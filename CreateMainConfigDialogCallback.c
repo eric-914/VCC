@@ -11,7 +11,6 @@
 #include "library/Callbacks.h"
 
 #include "LoadConfig.h"
-#include "SoundInit.h"
 
 LRESULT CALLBACK CreateMainConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

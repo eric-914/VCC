@@ -9,9 +9,6 @@
 #include "library/fileoperations.h"
 #include "library/Audio.h"
 
-#include "GetSoundCardList.h"
-#include "SoundInit.h"
-
 void LoadConfig(SystemState* systemState, CmdLineArguments cmdArg)
 {
   HANDLE hr = NULL;

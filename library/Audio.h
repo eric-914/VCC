@@ -61,3 +61,6 @@ extern "C" __declspec(dllexport) int __cdecl GetFreeBlockCount(void);
 extern "C" __declspec(dllexport) void __cdecl FlushAudioBuffer(unsigned int* aBuffer, unsigned short length);
 extern "C" __declspec(dllexport) void __cdecl PurgeAuxBuffer(void);
 extern "C" __declspec(dllexport) void __cdecl ResetAudio(void);
+
+extern "C" __declspec(dllexport) int __cdecl GetSoundCardList(SoundCardList* list);
+extern "C" __declspec(dllexport) int __cdecl SoundInit(HWND hWnd, _GUID* guid, unsigned short rate);
