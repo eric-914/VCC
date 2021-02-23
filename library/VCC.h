@@ -70,3 +70,4 @@ extern "C" __declspec(dllexport) void __cdecl SoftReset(void);
 extern "C" __declspec(dllexport) void __cdecl HardReset(SystemState* const systemState);
 
 extern "C" __declspec(dllexport) void __cdecl EmuLoop();
+extern "C" __declspec(dllexport) unsigned __cdecl EmuLoopRun(void* dummy);

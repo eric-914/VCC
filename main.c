@@ -19,8 +19,6 @@
 #include "library/Graphics.h"
 #include "library/Callbacks.h"
 
-#include "EmuLoopRun.h"
-
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {

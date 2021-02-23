@@ -516,3 +516,22 @@ extern "C" {
     }
   }
 }
+
+extern "C" {
+  __declspec(dllexport) unsigned __cdecl EmuLoopRun(void* dummy)
+  {
+    HANDLE hEvent = (HANDLE)dummy;
+
+    //NOTE: This function isn't working in library.dll
+    timeBeginPeriod(1);	//Needed to get max resolution from the timer normally its 10Ms
+    CalibrateThrottle();
+    timeEndPeriod(1);
+
+    Sleep(30);
+    SetEvent(hEvent);
+
+    EmuLoop();
+
+    return(NULL);
+  }
+}
