@@ -2,7 +2,7 @@
 #include "library/HD6309.h"
 
 #include "library/HD6309Macros.h"
-#include "hd6309opcodes.h"
+#include "library/HD6309OpCodes.h"
 
 int HD6309Exec(int cycleFor)
 {

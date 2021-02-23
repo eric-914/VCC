@@ -1,7 +1,7 @@
-#include "library/HD6309.h"
-#include "library/MMU.h"
+#include "HD6309.h"
+#include "MMU.h"
 
-#include "library/HD6309Macros.h"
+#include "HD6309Macros.h"
 
 static HD6309State* hd63096State = GetHD6309State();
 
@@ -7063,12 +7063,14 @@ void(*JmpVec3[256])(void) = {
 };
 
 //--Essentially Page_1()
-void HD6309ExecOpCode(int cycleFor, unsigned char opcode) {
-  HD6309State* hd63096State = GetHD6309State();
+extern "C" {
+  __declspec(dllexport) void __cdecl HD6309ExecOpCode(int cycleFor, unsigned char opcode) {
+    HD6309State* hd63096State = GetHD6309State();
 
-  hd63096State->gCycleFor = cycleFor;
+    hd63096State->gCycleFor = cycleFor;
 
-  JmpVec1[opcode](); // Execute instruction pointed to by PC_REG
+    JmpVec1[opcode](); // Execute instruction pointed to by PC_REG
+  }
 }
 
 void Page_2(void) //10

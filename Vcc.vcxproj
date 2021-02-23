@@ -171,7 +171,6 @@
     <ClCompile Include="AudioConfig.c" />
     <ClCompile Include="BitBangerConfig.c" />
     <ClCompile Include="HD6309Exec.c" />
-    <ClCompile Include="hd6309opcodes.c" />
     <ClCompile Include="MC6809Exec.c" />
     <ClCompile Include="CpuConfig.c" />
     <ClCompile Include="CreateDDWindow.c" />
@@ -202,7 +201,6 @@
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="BitBangerConfig.h" />
     <ClInclude Include="HD6309Exec.h" />
-    <ClInclude Include="hd6309opcodes.h" />
     <ClInclude Include="MC6809Exec.h" />
     <ClInclude Include="CpuConfig.h" />
     <ClInclude Include="CreateDDWindow.h" />

@@ -187,6 +187,7 @@
     <ClCompile Include="fileoperations.c" />
     <ClCompile Include="Graphics.c" />
     <ClCompile Include="HD6309.c" />
+    <ClCompile Include="HD6309OpCodes.c" />
     <ClCompile Include="IOBus.c" />
     <ClCompile Include="Joystick.c" />
     <ClCompile Include="Keyboard.c" />
@@ -218,6 +219,7 @@
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="HD6309.h" />
     <ClInclude Include="HD6309Macros.h" />
+    <ClInclude Include="HD6309OpCodes.h" />
     <ClInclude Include="IOBus.h" />
     <ClInclude Include="Joystick.h" />
     <ClInclude Include="Keyboard.h" />
