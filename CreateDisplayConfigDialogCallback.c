@@ -5,7 +5,7 @@
 #include "library/Config.h"
 #include "resources/resource.h"
 
-LRESULT CALLBACK DisplayConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CreateDisplayConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   static bool isRGB;
 

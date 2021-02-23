@@ -5,7 +5,7 @@
 #include "library/Config.h"
 #include "resources/resource.h"
 
-LRESULT CALLBACK CpuConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CreateCpuConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();
 

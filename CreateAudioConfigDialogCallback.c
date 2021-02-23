@@ -6,7 +6,7 @@
 
 #include "library/Audio.h"
 
-LRESULT CALLBACK AudioConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CreateAudioConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();
 

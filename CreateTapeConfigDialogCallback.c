@@ -5,7 +5,7 @@
 #include "library/Config.h"
 #include "library/Cassette.h"
 
-LRESULT CALLBACK TapeConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CreateTapeConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();
 

@@ -168,24 +168,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="About.c" />
-    <ClCompile Include="AudioConfig.c" />
-    <ClCompile Include="BitBangerConfig.c" />
-    <ClCompile Include="CpuConfig.c" />
+    <ClCompile Include="CreateAudioConfigDialogCallback.c" />
+    <ClCompile Include="CreateBitBangerConfigDialogCallback.c" />
+    <ClCompile Include="CreateCpuConfigDialogCallback.c" />
     <ClCompile Include="CreateDDWindow.c" />
-    <ClCompile Include="DisplayConfig.c" />
-    <ClCompile Include="DSEnumCallback.c" />
+    <ClCompile Include="CreateDisplayConfigDialogCallback.c" />
+    <ClCompile Include="DirectSoundEnumerateCallback.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="InitInstance.c" />
-    <ClCompile Include="InputConfig.c" />
-    <ClCompile Include="JoyStickConfig.c" />
+    <ClCompile Include="CreateInputConfigDialogCallback.c" />
+    <ClCompile Include="CreateJoyStickConfigDialogCallback.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="MainConfig.c" />
-    <ClCompile Include="MiscConfig.c" />
+    <ClCompile Include="CreateMainConfigDialogCallback.c" />
+    <ClCompile Include="CreateMiscConfigDialogCallback.c" />
     <ClCompile Include="SoundInit.c" />
-    <ClCompile Include="TapeConfig.c" />
+    <ClCompile Include="CreateTapeConfigDialogCallback.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -193,23 +193,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="About.h" />
-    <ClInclude Include="AudioConfig.h" />
-    <ClInclude Include="BitBangerConfig.h" />
-    <ClInclude Include="CpuConfig.h" />
+    <ClInclude Include="CreateAudioConfigDialogCallback.h" />
+    <ClInclude Include="CreateBitBangerConfigDialogCallback.h" />
+    <ClInclude Include="CreateCpuConfigDialogCallback.h" />
     <ClInclude Include="CreateDDWindow.h" />
-    <ClInclude Include="DisplayConfig.h" />
-    <ClInclude Include="DSEnumCallback.h" />
+    <ClInclude Include="CreateDisplayConfigDialogCallback.h" />
+    <ClInclude Include="DirectSoundEnumerateCallback.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="InitInstance.h" />
-    <ClInclude Include="InputConfig.h" />
-    <ClInclude Include="JoyStickConfig.h" />
+    <ClInclude Include="CreateInputConfigDialogCallback.h" />
+    <ClInclude Include="CreateJoyStickConfigDialogCallback.h" />
     <ClInclude Include="LoadConfig.h" />
-    <ClInclude Include="MainConfig.h" />
-    <ClInclude Include="MiscConfig.h" />
+    <ClInclude Include="CreateMainConfigDialogCallback.h" />
+    <ClInclude Include="CreateMiscConfigDialogCallback.h" />
     <ClInclude Include="SoundInit.h" />
-    <ClInclude Include="TapeConfig.h" />
+    <ClInclude Include="CreateTapeConfigDialogCallback.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">

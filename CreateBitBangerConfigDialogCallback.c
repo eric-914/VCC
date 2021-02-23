@@ -6,7 +6,7 @@
 #include "library/VCC.h"
 #include "library/systemstate.h"
 
-LRESULT CALLBACK BitBangerConfig(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CreateBitBangerConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   ConfigState* configState = GetConfigState();
   VccState* vccState = GetVccState();

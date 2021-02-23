@@ -1,6 +1,6 @@
 #include "library/Audio.h"
 
-#include "DSEnumCallback.h"
+#include "DirectSoundEnumerateCallback.h"
 
 int GetSoundCardList(SoundCardList* list)
 {
@@ -9,7 +9,7 @@ int GetSoundCardList(SoundCardList* list)
   audioState->CardCount = 0;
   audioState->Cards = list;
 
-  DirectSoundEnumerate(DSEnumCallback, NULL);
+  DirectSoundEnumerate(DirectSoundEnumerateCallback, NULL);
 
   return(audioState->CardCount);
 }

@@ -24,7 +24,7 @@
 #include "FullScreenToggle.h"
 #include "InitInstance.h"
 #include "LoadConfig.h"
-#include "MainConfig.h"
+#include "CreateMainConfigDialogCallback.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -210,7 +210,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       // while emulator is still running (assumed)
       if (vccState->EmuState.ConfigDialog == NULL)
       {
-        vccState->EmuState.ConfigDialog = CreateDialog(vccState->EmuState.Resources, (LPCTSTR)IDD_TCONFIG, vccState->EmuState.WindowHandle, (DLGPROC)MainConfig);
+        vccState->EmuState.ConfigDialog = CreateDialog(vccState->EmuState.Resources, (LPCTSTR)IDD_TCONFIG, vccState->EmuState.WindowHandle, (DLGPROC)CreateMainConfigDialogCallback);
 
         // open modeless
         ShowWindow(vccState->EmuState.ConfigDialog, SW_SHOWNORMAL);
