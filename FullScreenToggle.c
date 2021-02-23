@@ -2,8 +2,7 @@
 #include "library/Audio.h"
 #include "library/Graphics.h"
 #include "library/PAKInterface.h"
-
-#include "CreateDirectDrawWindow.h"
+#include "library/DirectDraw.h"
 
 void FullScreenToggle(WNDPROC WndProc)
 {

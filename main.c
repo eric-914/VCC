@@ -19,7 +19,6 @@
 #include "library/Graphics.h"
 #include "library/Callbacks.h"
 
-#include "CreateDirectDrawWindow.h"
 #include "EmuLoop.h"
 #include "FullScreenToggle.h"
 #include "InitBasicWindowInstance.h"

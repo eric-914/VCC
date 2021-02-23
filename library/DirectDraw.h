@@ -48,3 +48,5 @@ extern "C" __declspec(dllexport) unsigned char __cdecl LockScreen(SystemState * 
 extern "C" __declspec(dllexport) void __cdecl UnlockScreen(SystemState* systemState);
 extern "C" __declspec(dllexport) void __cdecl DoCls(SystemState* systemState);
 extern "C" __declspec(dllexport) float __cdecl Static(SystemState* systemState);
+
+extern "C" __declspec(dllexport) bool __cdecl CreateDirectDrawWindow(SystemState* systemState, WNDPROC WndProc);
