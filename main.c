@@ -23,7 +23,6 @@
 #include "EmuLoop.h"
 #include "FullScreenToggle.h"
 #include "InitBasicWindowInstance.h"
-#include "CreateMainConfigDialogCallback.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

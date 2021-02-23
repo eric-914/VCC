@@ -14,3 +14,5 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK __cdecl CreateTapeConfigDialog
 extern "C" __declspec(dllexport) LRESULT CALLBACK __cdecl DialogBoxAboutCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 extern "C" __declspec(dllexport) BOOL CALLBACK __cdecl DirectSoundEnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+
+extern "C" __declspec(dllexport) LRESULT CALLBACK __cdecl CreateMainConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

@@ -172,7 +172,6 @@
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="InitBasicWindowInstance.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="CreateMainConfigDialogCallback.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -183,7 +182,6 @@
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="InitBasicWindowInstance.h" />
-    <ClInclude Include="CreateMainConfigDialogCallback.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">
