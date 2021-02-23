@@ -168,24 +168,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DialogBoxAboutCallback.c" />
-    <ClCompile Include="CreateAudioConfigDialogCallback.c" />
-    <ClCompile Include="CreateBitBangerConfigDialogCallback.c" />
-    <ClCompile Include="CreateCpuConfigDialogCallback.c" />
     <ClCompile Include="CreateDDWindow.c" />
-    <ClCompile Include="CreateDisplayConfigDialogCallback.c" />
     <ClCompile Include="DirectSoundEnumerateCallback.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetSoundCardList.c" />
     <ClCompile Include="InitInstance.c" />
-    <ClCompile Include="CreateInputConfigDialogCallback.c" />
-    <ClCompile Include="CreateJoyStickConfigDialogCallback.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="CreateMainConfigDialogCallback.c" />
-    <ClCompile Include="CreateMiscConfigDialogCallback.c" />
     <ClCompile Include="SoundInit.c" />
-    <ClCompile Include="CreateTapeConfigDialogCallback.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt" />
@@ -193,23 +185,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DialogBoxAboutCallback.h" />
-    <ClInclude Include="CreateAudioConfigDialogCallback.h" />
-    <ClInclude Include="CreateBitBangerConfigDialogCallback.h" />
-    <ClInclude Include="CreateCpuConfigDialogCallback.h" />
     <ClInclude Include="CreateDDWindow.h" />
-    <ClInclude Include="CreateDisplayConfigDialogCallback.h" />
     <ClInclude Include="DirectSoundEnumerateCallback.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetSoundCardList.h" />
     <ClInclude Include="InitInstance.h" />
-    <ClInclude Include="CreateInputConfigDialogCallback.h" />
-    <ClInclude Include="CreateJoyStickConfigDialogCallback.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="CreateMainConfigDialogCallback.h" />
-    <ClInclude Include="CreateMiscConfigDialogCallback.h" />
     <ClInclude Include="SoundInit.h" />
-    <ClInclude Include="CreateTapeConfigDialogCallback.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">

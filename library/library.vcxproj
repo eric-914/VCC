@@ -177,6 +177,7 @@
   <ItemGroup>
     <ClCompile Include="..\fileops\fileops.c" />
     <ClCompile Include="Audio.c" />
+    <ClCompile Include="Callbacks.c" />
     <ClCompile Include="Cassette.c" />
     <ClCompile Include="Clipboard.c" />
     <ClCompile Include="CoCo.c" />
@@ -211,6 +212,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio.h" />
+    <ClInclude Include="Callbacks.h" />
     <ClInclude Include="Cassette.h" />
     <ClInclude Include="Clipboard.h" />
     <ClInclude Include="CoCo.h" />

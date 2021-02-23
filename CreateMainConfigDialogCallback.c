@@ -8,18 +8,10 @@
 #include "library/Keyboard.h"
 #include "library/systemstate.h"
 #include "library/Audio.h"
+#include "library/Callbacks.h"
 
 #include "LoadConfig.h"
 #include "SoundInit.h"
-
-#include "CreateAudioConfigDialogCallback.h"
-#include "CreateBitBangerConfigDialogCallback.h"
-#include "CreateCpuConfigDialogCallback.h"
-#include "CreateDisplayConfigDialogCallback.h"
-#include "CreateInputConfigDialogCallback.h"
-#include "CreateJoyStickConfigDialogCallback.h"
-#include "CreateMiscConfigDialogCallback.h"
-#include "CreateTapeConfigDialogCallback.h"
 
 LRESULT CALLBACK CreateMainConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
