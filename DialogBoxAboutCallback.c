@@ -4,7 +4,7 @@
 #include "resources/resource.h"
 
 // Mesage handler for the About box.
-LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK DialogBoxAboutCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   VccState* vccState = GetVccState();
 

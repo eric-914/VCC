@@ -18,13 +18,13 @@
 #include "library/fileoperations.h"
 #include "library/Graphics.h"
 
-#include "About.h"
 #include "CreateDDWindow.h"
 #include "EmuLoop.h"
 #include "FullScreenToggle.h"
 #include "InitInstance.h"
 #include "LoadConfig.h"
 #include "CreateMainConfigDialogCallback.h"
+#include "DialogBoxAboutCallback.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -196,7 +196,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (wmId)
     {
     case IDM_HELP_ABOUT:
-      DialogBox(vccState->EmuState.Resources, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+      DialogBox(vccState->EmuState.Resources, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)DialogBoxAboutCallback);
       break;
 
     case ID_CONFIGURE_OPTIONS:

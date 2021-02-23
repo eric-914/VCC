@@ -167,7 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="About.c" />
+    <ClCompile Include="DialogBoxAboutCallback.c" />
     <ClCompile Include="CreateAudioConfigDialogCallback.c" />
     <ClCompile Include="CreateBitBangerConfigDialogCallback.c" />
     <ClCompile Include="CreateCpuConfigDialogCallback.c" />
@@ -192,7 +192,7 @@
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="About.h" />
+    <ClInclude Include="DialogBoxAboutCallback.h" />
     <ClInclude Include="CreateAudioConfigDialogCallback.h" />
     <ClInclude Include="CreateBitBangerConfigDialogCallback.h" />
     <ClInclude Include="CreateCpuConfigDialogCallback.h" />
