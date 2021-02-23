@@ -19,7 +19,7 @@
 #include "library/Graphics.h"
 #include "library/Callbacks.h"
 
-#include "EmuLoop.h"
+#include "EmuLoopRun.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -98,7 +98,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     return(0);
   }
 
-  vccState->hEMUThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoop, hEvent, 0, &threadID);
+  vccState->hEMUThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoopRun, hEvent, 0, &threadID);
 
   if (vccState->hEMUThread == NULL)
   {
