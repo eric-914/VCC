@@ -361,3 +361,4 @@ extern "C" __declspec(dllexport) void __cdecl MC6809Reset(void);
 extern "C" __declspec(dllexport) void __cdecl MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter);
 extern "C" __declspec(dllexport) void __cdecl MC6809DeAssertInterrupt(unsigned char interrupt);
 extern "C" __declspec(dllexport) void __cdecl MC6809ForcePC(unsigned short newPC);
+extern "C" __declspec(dllexport) int __cdecl MC6809Exec(int cycleFor);

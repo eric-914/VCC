@@ -9,9 +9,6 @@
 #include "library/MC6809.h"
 #include "library/HD6309.h"
 
-#include "HD6309Exec.h"
-#include "MC6809Exec.h"
-
 #include "GimeReset.h"
 
 void HardReset(SystemState* const systemState)

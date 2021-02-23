@@ -622,3 +622,4 @@ extern "C" __declspec(dllexport) void __cdecl HD6309Reset(void);
 extern "C" __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter);
 extern "C" __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char interrupt);
 extern "C" __declspec(dllexport) void __cdecl HD6309ForcePC(unsigned short address);
+extern "C" __declspec(dllexport) int __cdecl HD6309Exec(int cycleFor);
