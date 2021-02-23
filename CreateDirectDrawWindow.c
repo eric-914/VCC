@@ -8,7 +8,7 @@
 #include "library/Config.h"
 #include "library/systemstate.h"
 
-bool CreateDDWindow(SystemState* systemState, WNDPROC WndProc)
+bool CreateDirectDrawWindow(SystemState* systemState, WNDPROC WndProc)
 {
   HRESULT hr;
   DDSURFACEDESC ddsd;				// A structure to describe the surfaces we want

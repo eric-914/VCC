@@ -19,10 +19,10 @@
 #include "library/Graphics.h"
 #include "library/Callbacks.h"
 
-#include "CreateDDWindow.h"
+#include "CreateDirectDrawWindow.h"
 #include "EmuLoop.h"
 #include "FullScreenToggle.h"
-#include "InitInstance.h"
+#include "InitBasicWindowInstance.h"
 #include "LoadConfig.h"
 #include "CreateMainConfigDialogCallback.h"
 
@@ -67,7 +67,7 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
   InitInstance(hInstance, hResources, nCmdShow);
 
-  if (!CreateDDWindow(&(vccState->EmuState), WndProc))
+  if (!CreateDirectDrawWindow(&(vccState->EmuState), WndProc))
   {
     MessageBox(0, "Can't create primary Window", "Error", 0);
 

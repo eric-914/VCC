@@ -3,7 +3,7 @@
 #include "library/Graphics.h"
 #include "library/PAKInterface.h"
 
-#include "CreateDDWindow.h"
+#include "CreateDirectDrawWindow.h"
 
 void FullScreenToggle(WNDPROC WndProc)
 {
@@ -11,7 +11,7 @@ void FullScreenToggle(WNDPROC WndProc)
 
   PauseAudio(true);
 
-  if (!CreateDDWindow(&(vccState->EmuState), WndProc))
+  if (!CreateDirectDrawWindow(&(vccState->EmuState), WndProc))
   {
     MessageBox(0, "Can't rebuild primary Window", "Error", 0);
 

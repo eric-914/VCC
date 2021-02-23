@@ -167,11 +167,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CreateDDWindow.c" />
+    <ClCompile Include="CreateDirectDrawWindow.c" />
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="GetSoundCardList.c" />
-    <ClCompile Include="InitInstance.c" />
+    <ClCompile Include="InitBasicWindowInstance.c" />
     <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="CreateMainConfigDialogCallback.c" />
@@ -182,11 +182,11 @@
     <Text Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CreateDDWindow.h" />
+    <ClInclude Include="CreateDirectDrawWindow.h" />
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="GetSoundCardList.h" />
-    <ClInclude Include="InitInstance.h" />
+    <ClInclude Include="InitBasicWindowInstance.h" />
     <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="CreateMainConfigDialogCallback.h" />
     <ClInclude Include="SoundInit.h" />
