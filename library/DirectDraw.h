@@ -50,3 +50,5 @@ extern "C" __declspec(dllexport) void __cdecl DoCls(SystemState* systemState);
 extern "C" __declspec(dllexport) float __cdecl Static(SystemState* systemState);
 
 extern "C" __declspec(dllexport) bool __cdecl CreateDirectDrawWindow(SystemState* systemState, WNDPROC WndProc);
+extern "C" __declspec(dllexport) BOOL __cdecl InitInstance(HINSTANCE hInstance, HINSTANCE hResources, int nCmdShow);
+extern "C" __declspec(dllexport) void __cdecl FullScreenToggle(WNDPROC WndProc);

@@ -20,8 +20,6 @@
 #include "library/Callbacks.h"
 
 #include "EmuLoop.h"
-#include "FullScreenToggle.h"
-#include "InitBasicWindowInstance.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 

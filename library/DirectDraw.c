@@ -8,6 +8,9 @@
 #include "DirectDraw.h"
 #include "Throttle.h"
 #include "Config.h"
+#include "PAKInterface.h"
+#include "VCC.h"
+#include "Graphics.h"
 
 #include "systemstate.h"
 
@@ -753,5 +756,43 @@ extern "C" {
     }
 
     return TRUE;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) BOOL __cdecl InitInstance(HINSTANCE hInstance, HINSTANCE hResources, int nCmdShow)
+  {
+    DirectDrawState* ddState = GetDirectDrawState();
+
+    ddState->hInstance = hInstance;
+    ddState->CmdShow = nCmdShow;
+
+    LoadString(hResources, IDS_APP_TITLE, ddState->TitleBarText, MAX_LOADSTRING);
+    LoadString(hResources, IDS_APP_TITLE, ddState->AppNameText, MAX_LOADSTRING);
+
+    return TRUE;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl FullScreenToggle(WNDPROC WndProc)
+  {
+    VccState* vccState = GetVccState();
+
+    PauseAudio(true);
+
+    if (!CreateDirectDrawWindow(&(vccState->EmuState), WndProc))
+    {
+      MessageBox(0, "Can't rebuild primary Window", "Error", 0);
+
+      exit(0);
+    }
+
+    InvalidateBorder();
+    RefreshDynamicMenu(&(vccState->EmuState));
+
+    vccState->EmuState.ConfigDialog = NULL;
+
+    PauseAudio(false);
   }
 }

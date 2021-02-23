@@ -168,8 +168,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EmuLoop.c" />
-    <ClCompile Include="FullScreenToggle.c" />
-    <ClCompile Include="InitBasicWindowInstance.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
@@ -178,8 +176,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EmuLoop.h" />
-    <ClInclude Include="FullScreenToggle.h" />
-    <ClInclude Include="InitBasicWindowInstance.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">
