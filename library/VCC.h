@@ -65,3 +65,6 @@ extern "C" __declspec(dllexport) void __cdecl LoadPack(void);
 
 extern "C" __declspec(dllexport) void __cdecl LoadIniFile(void);
 extern "C" __declspec(dllexport) void __cdecl SendSavedKeyEvents();
+
+extern "C" __declspec(dllexport) void __cdecl SoftReset(void);
+extern "C" __declspec(dllexport) void __cdecl HardReset(SystemState* const systemState);

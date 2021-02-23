@@ -6,6 +6,14 @@
 #include "Coco.h"
 #include "PAKInterface.h"
 #include "Keyboard.h"
+#include "Graphics.h"
+#include "Audio.h"
+#include "MC6821.h"
+#include "MC6809.h"
+#include "HD6309.h"
+#include "Registers.h"
+#include "MMU.h"
+#include "cpudef.h"
 
 VccState* InitializeInstance(VccState*);
 
@@ -328,5 +336,87 @@ extern "C" {
 
     vccState->SC_save1 = 0;
     vccState->SC_save2 = 0;
+  }
+}
+
+void GimeReset(void)
+{
+  ResetGraphicsState();
+
+  MakeRGBPalette();
+  MakeCMPpalette(GetPaletteType());
+
+  CocoReset();
+  ResetAudio();
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl SoftReset(void)
+  {
+    VccState* vccState = GetVccState();
+
+    MC6883Reset();
+    PiaReset();
+
+    GetCPU()->CPUReset();
+
+    GimeReset();
+    MmuReset();
+    CopyRom();
+    ResetBus();
+
+    vccState->EmuState.TurboSpeedFlag = 1;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl HardReset(SystemState* const systemState)
+  {
+    VccState* vccState = GetVccState();
+
+    systemState->RamBuffer = MmuInit(systemState->RamSize);	//Allocate RAM/ROM & copy ROM Images from source
+    systemState->WRamBuffer = (unsigned short*)systemState->RamBuffer;
+
+    if (systemState->RamBuffer == NULL)
+    {
+      MessageBox(NULL, "Can't allocate enough RAM, Out of memory", "Error", 0);
+
+      exit(0);
+    }
+
+    CPU* cpu = GetCPU();
+
+    if (systemState->CpuType == 1)
+    {
+      cpu->CPUInit = HD6309Init;
+      cpu->CPUExec = HD6309Exec;
+      cpu->CPUReset = HD6309Reset;
+      cpu->CPUAssertInterrupt = HD6309AssertInterrupt;
+      cpu->CPUDeAssertInterrupt = HD6309DeAssertInterrupt;
+      cpu->CPUForcePC = HD6309ForcePC;
+    }
+    else
+    {
+      cpu->CPUInit = MC6809Init;
+      cpu->CPUExec = MC6809Exec;
+      cpu->CPUReset = MC6809Reset;
+      cpu->CPUAssertInterrupt = MC6809AssertInterrupt;
+      cpu->CPUDeAssertInterrupt = MC6809DeAssertInterrupt;
+      cpu->CPUForcePC = MC6809ForcePC;
+    }
+
+    PiaReset();
+    MC6883Reset();	//Captures interal rom pointer for CPU Interrupt Vectors
+
+    cpu->CPUInit();
+    cpu->CPUReset();		// Zero all CPU Registers and sets the PC to VRESET
+
+    GimeReset();
+    UpdateBusPointer();
+
+    vccState->EmuState.TurboSpeedFlag = 1;
+
+    ResetBus();
+    SetClockSpeed(1);
   }
 }

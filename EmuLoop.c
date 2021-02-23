@@ -10,9 +10,6 @@
 #include "library/Config.h"
 #include "library/CoCo.h"
 
-#include "HardReset.h"
-#include "SoftReset.h"
-
 unsigned __stdcall EmuLoop(void* dummy)
 {
   HANDLE hEvent = (HANDLE)dummy;
