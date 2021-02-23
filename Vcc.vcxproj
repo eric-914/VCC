@@ -171,7 +171,6 @@
     <ClCompile Include="EmuLoop.c" />
     <ClCompile Include="FullScreenToggle.c" />
     <ClCompile Include="InitBasicWindowInstance.c" />
-    <ClCompile Include="LoadConfig.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="CreateMainConfigDialogCallback.c" />
   </ItemGroup>
@@ -184,7 +183,6 @@
     <ClInclude Include="EmuLoop.h" />
     <ClInclude Include="FullScreenToggle.h" />
     <ClInclude Include="InitBasicWindowInstance.h" />
-    <ClInclude Include="LoadConfig.h" />
     <ClInclude Include="CreateMainConfigDialogCallback.h" />
   </ItemGroup>
   <ItemGroup>

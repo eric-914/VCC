@@ -10,8 +10,6 @@
 #include "library/Audio.h"
 #include "library/Callbacks.h"
 
-#include "LoadConfig.h"
-
 LRESULT CALLBACK CreateMainConfigDialogCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
   static char tabTitles[TABS][10] = { "Audio", "CPU", "Display", "Keyboard", "Joysticks", "Misc", "Tape", "BitBanger" };

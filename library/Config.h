@@ -8,6 +8,8 @@
 #include "Joystick.h"
 #include "SystemState.h"
 
+#include "commandline.h"
+
 #define SCAN_TRANS_COUNT	84
 #define TABS 8
 #define MAXCARDS 12
@@ -97,3 +99,5 @@ extern "C" __declspec(dllexport) int __cdecl SelectFile(SystemState* systemState
 extern "C" __declspec(dllexport) unsigned char __cdecl ReadIniFile(SystemState* systemState);
 
 extern "C" __declspec(dllexport) void __cdecl UpdateConfig(SystemState* systemState);
+
+extern "C" __declspec(dllexport) void __cdecl LoadConfig(SystemState* systemState, CmdLineArguments cmdArg);
