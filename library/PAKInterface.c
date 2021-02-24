@@ -475,7 +475,7 @@ extern "C" {
 */
 void DynamicMenuCallback(char* menuName, int menuId, int type)
 {
-  DynamicMenuCallback(&(GetVccState()->EmuState), menuName, menuId, type);
+  DynamicMenuCallback(&(GetVccState()->SystemState), menuName, menuId, type);
 }
 
 extern "C" {

@@ -25,7 +25,7 @@ extern "C" {
     // Added for Dynamic menu system
     if ((wmId >= ID_SDYNAMENU) && (wmId <= ID_EDYNAMENU))
     {
-      DynamicMenuActivated(&(vccState->EmuState), wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
+      DynamicMenuActivated(&(vccState->SystemState), wmId - ID_SDYNAMENU);	//Calls to the loaded DLL so it can do the right thing
       return;
     }
 

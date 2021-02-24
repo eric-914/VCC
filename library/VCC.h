@@ -17,7 +17,8 @@
 
 typedef struct
 {
-  HANDLE hEMUThread;  // Message handlers
+  HANDLE hEventThread;
+  HANDLE hEmuThread;  // Message handlers
 
   char CpuName[20];
   char AppName[MAX_LOADSTRING];
@@ -43,7 +44,7 @@ typedef struct
 
   struct CmdLineArguments CmdArg;
 
-  SystemState EmuState;
+  SystemState SystemState;
 } VccState;
 
 extern "C" __declspec(dllexport) VccState * __cdecl GetVccState();

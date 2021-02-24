@@ -13,23 +13,21 @@
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {
-  MSG  msg;
-  HANDLE hEvent;
-  HANDLE OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
-  char temp1[MAX_PATH] = "";
-  char temp2[MAX_PATH] = " Running on ";
-  unsigned threadID;
-
+HMODULE LoadResources() {
   HMODULE hResources = LoadLibrary("..\\resources\\resources.dll");
 
   VccState* vccState = GetVccState();
 
-  vccState->EmuState.Resources = hResources;
+  vccState->SystemState.Resources = hResources;
 
-  //LoadString(hInstance, IDS_APP_TITLE, vccState->AppName, MAX_LOADSTRING);
+  return hResources;
+}
 
-  GetCmdLineArgs(lpCmdLine, &(vccState->CmdArg)); //Parse command line
+void CheckQuickLoad() {
+  char temp1[MAX_PATH] = "";
+  char temp2[MAX_PATH] = " Running on ";
+
+  VccState* vccState = GetVccState();
 
   if (strlen(vccState->CmdArg.QLoadFile) != 0)
   {
@@ -46,59 +44,87 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     strcat(temp1, vccState->AppName);
     strcpy(vccState->AppName, temp1);
   }
+};
 
-  vccState->EmuState.WindowSize.x = 640;
-  vccState->EmuState.WindowSize.y = 480;
+HANDLE CreateEventHandle() {
+  HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-  InitInstance(hInstance, hResources, nCmdShow);
-
-  if (!CreateDirectDrawWindow(&(vccState->EmuState), WndProc))
+  if (hEvent == NULL)
   {
-    MessageBox(0, "Can't create primary Window", "Error", 0);
+    MessageBox(0, "Can't create event thread!!", "Error", 0);
 
     exit(0);
   }
 
-  //NOTE: Sound is lost if this isn't done after CreateDDWindow
-  LoadConfig(&(vccState->EmuState), vccState->CmdArg);			//Loads the default config file Vcc.ini from the exec directory
+  return hEvent;
+}
 
-  Cls(0, &(vccState->EmuState));
-  DynamicMenuCallback(&(vccState->EmuState), "", 0, 0);
-  DynamicMenuCallback(&(vccState->EmuState), "", 1, 0);
+void CreatePrimaryWindow() {
+  VccState* vccState = GetVccState();
 
-  vccState->EmuState.ResetPending = 2;
-
-  SetClockSpeed(1);	//Default clock speed .89 MHZ	
-
-  vccState->BinaryRunning = true;
-  vccState->EmuState.EmulationRunning = vccState->AutoStart;
-
-  if (strlen(vccState->CmdArg.QLoadFile) != 0)
+  if (!CreateDirectDrawWindow(&(vccState->SystemState), WndProc))
   {
-    vccState->Qflag = 255;
-    vccState->EmuState.EmulationRunning = 1;
+    MessageBox(0, "Can't create primary window", "Error", 0);
+
+    exit(0);
   }
+}
 
-  hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+HANDLE CreateThreadHandle(HANDLE hEvent) {
+  unsigned threadID;
 
-  if (hEvent == NULL)
-  {
-    MessageBox(0, "Can't create Thread!!", "Error", 0);
+  HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoopRun, hEvent, 0, &threadID);
 
-    return(0);
-  }
-
-  vccState->hEMUThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoopRun, hEvent, 0, &threadID);
-
-  if (vccState->hEMUThread == NULL)
+  if (hThread == NULL)
   {
     MessageBox(0, "Can't Start main Emulation Thread!", "Ok", 0);
 
-    return(0);
+    exit(0);
   }
 
-  WaitForSingleObject(hEvent, INFINITE);
-  SetThreadPriority(vccState->hEMUThread, THREAD_PRIORITY_NORMAL);
+  return hThread;
+}
+
+INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR lpCmdLine, _In_ INT nCmdShow) {
+  MSG  msg;
+  HANDLE OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
+  HMODULE hResources = LoadResources();
+
+  VccState* vccState = GetVccState();
+  CmdLineArguments* cmdArg = &(vccState->CmdArg);
+  SystemState* systemState = &(vccState->SystemState);
+
+  GetCmdLineArgs(lpCmdLine, cmdArg); //Parse command line
+
+  CheckQuickLoad();
+  InitInstance(hInstance, hResources, nCmdShow);
+
+  CreatePrimaryWindow();
+
+  //NOTE: Sound is lost if this isn't done after CreatePrimaryWindow();
+  LoadConfig(systemState, *cmdArg);			//Loads the default config file Vcc.ini from the exec directory
+
+  Cls(0, systemState);
+  DynamicMenuCallback(systemState, "", 0, 0);
+  DynamicMenuCallback(systemState, "", 1, 0);
+
+  SetClockSpeed(1);	//Default clock speed .89 MHZ	
+
+  (*systemState).ResetPending = 2;
+  (*systemState).EmulationRunning = vccState->AutoStart;
+  vccState->BinaryRunning = true;
+
+  if (strlen((*cmdArg).QLoadFile) != 0)
+  {
+    vccState->Qflag = 255;
+    vccState->SystemState.EmulationRunning = 1;
+  }
+
+  vccState->hEventThread = CreateEventHandle();
+  vccState->hEmuThread = CreateThreadHandle(vccState->hEventThread);
+
+  WaitForSingleObject(vccState->hEventThread, INFINITE);
+  SetThreadPriority(vccState->hEmuThread, THREAD_PRIORITY_NORMAL);
 
   while (vccState->BinaryRunning)
   {
@@ -116,10 +142,9 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     DispatchMessage(&msg);
   }
 
-  CloseHandle(hEvent);
-  CloseHandle(vccState->hEMUThread);
-  timeEndPeriod(1);
-  UnloadDll(&(vccState->EmuState));
+  CloseHandle(vccState->hEventThread);
+  CloseHandle(vccState->hEmuThread);
+  UnloadDll(systemState);
   SoundDeInit();
   WriteIniFile(); //Save Any changes to ini File
 

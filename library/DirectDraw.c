@@ -523,6 +523,15 @@ extern "C" {
     rc.top = 0;
     rc.left = 0;
 
+    //--Reset window size if too small
+    if (systemState->WindowSize.x < 10) {
+      systemState->WindowSize.x = 640;
+    }
+
+    if (systemState->WindowSize.y < 10) {
+      systemState->WindowSize.y = 480;
+    }
+
     if (GetRememberSize()) {
       POINT pp = GetIniWindowSize();
 
@@ -781,7 +790,7 @@ extern "C" {
 
     PauseAudio(true);
 
-    if (!CreateDirectDrawWindow(&(vccState->EmuState), WndProc))
+    if (!CreateDirectDrawWindow(&(vccState->SystemState), WndProc))
     {
       MessageBox(0, "Can't rebuild primary Window", "Error", 0);
 
@@ -789,9 +798,9 @@ extern "C" {
     }
 
     InvalidateBorder();
-    RefreshDynamicMenu(&(vccState->EmuState));
+    RefreshDynamicMenu(&(vccState->SystemState));
 
-    vccState->EmuState.ConfigDialog = NULL;
+    vccState->SystemState.ConfigDialog = NULL;
 
     PauseAudio(false);
   }
