@@ -19,6 +19,8 @@
 #include "Throttle.h"
 
 #include "cpudef.h"
+#include "fileoperations.h"
+#include "ProcessMessage.h"
 
 VccState* InitializeInstance(VccState*);
 
@@ -502,5 +504,169 @@ extern "C" {
     EmuLoop();
 
     return(NULL);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) HMODULE __cdecl LoadResources() {
+    HMODULE hResources = LoadLibrary("..\\resources\\resources.dll");
+
+    instance->SystemState.Resources = hResources;
+
+    return hResources;
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl CheckQuickLoad() {
+    char temp1[MAX_PATH] = "";
+    char temp2[MAX_PATH] = " Running on ";
+
+    if (strlen(instance->CmdArg.QLoadFile) != 0)
+    {
+      strcpy(instance->QuickLoadFile, instance->CmdArg.QLoadFile);
+      strcpy(temp1, instance->CmdArg.QLoadFile);
+
+      FilePathStripPath(temp1);
+
+      _strlwr(temp1);
+
+      temp1[0] = toupper(temp1[0]);
+
+      strcat(temp1, temp2);
+      strcat(temp1, instance->AppName);
+      strcpy(instance->AppName, temp1);
+    }
+  };
+}
+
+/*--------------------------------------------------------------------------*/
+// The Window Procedure
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  ProcessMessage(hWnd, message, wParam, lParam);
+
+  return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl CreatePrimaryWindow() {
+    if (!CreateDirectDrawWindow(&(instance->SystemState), WndProc))
+    {
+      MessageBox(0, "Can't create primary window", "Error", 0);
+
+      exit(0);
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void CheckScreenModeChange() {
+    if (instance->FlagEmuStop == TH_WAITING)		//Need to stop the EMU thread for screen mode change
+    {								                  //As it holds the Secondary screen buffer open while running
+      FullScreenToggle(WndProc);
+
+      instance->FlagEmuStop = TH_RUNNING;
+    }
+  }
+}
+
+HANDLE CreateEventHandle() {
+  HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+  if (hEvent == NULL)
+  {
+    MessageBox(0, "Can't create event thread!!", "Error", 0);
+
+    exit(0);
+  }
+
+  return hEvent;
+}
+
+HANDLE CreateThreadHandle(HANDLE hEvent) {
+  unsigned threadID;
+
+  HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &EmuLoopRun, hEvent, 0, &threadID);
+
+  if (hThread == NULL)
+  {
+    MessageBox(0, "Can't Start main Emulation Thread!", "Ok", 0);
+
+    exit(0);
+  }
+
+  return hThread;
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl VccStartup(HINSTANCE hInstance, PSTR lpCmdLine, INT nCmdShow) {
+    HANDLE OleInitialize(NULL); //Work around fixs app crashing in "Open file" system dialogs (related to Adobe acrobat 7+
+    HMODULE hResources = LoadResources();
+
+    CmdLineArguments* cmdArg = &(instance->CmdArg);
+    SystemState* systemState = &(instance->SystemState);
+
+    GetCmdLineArgs(lpCmdLine, cmdArg); //Parse command line
+
+    CheckQuickLoad();
+    InitInstance(hInstance, hResources, nCmdShow);
+
+    CreatePrimaryWindow();
+
+    //NOTE: Sound is lost if this isn't done after CreatePrimaryWindow();
+    LoadConfig(systemState, *cmdArg);			//Loads the default config file Vcc.ini from the exec directory
+
+    Cls(0, systemState);
+    DynamicMenuCallback(systemState, "", 0, 0);
+    DynamicMenuCallback(systemState, "", 1, 0);
+
+    SetClockSpeed(1);	//Default clock speed .89 MHZ	
+
+    (*systemState).ResetPending = 2;
+    (*systemState).EmulationRunning = instance->AutoStart;
+    instance->BinaryRunning = true;
+
+    if (strlen((*cmdArg).QLoadFile) != 0)
+    {
+      instance->Qflag = 255;
+      instance->SystemState.EmulationRunning = 1;
+    }
+
+    instance->hEventThread = CreateEventHandle();
+    instance->hEmuThread = CreateThreadHandle(instance->hEventThread);
+
+    WaitForSingleObject(instance->hEventThread, INFINITE);
+    SetThreadPriority(instance->hEmuThread, THREAD_PRIORITY_NORMAL);
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) void __cdecl VccRun() {
+
+    MSG* msg = &(instance->msg);
+
+    while (instance->BinaryRunning)
+    {
+      CheckScreenModeChange();
+
+      GetMessage(msg, NULL, 0, 0);		//Seems if the main loop stops polling for Messages the child threads stall
+
+      TranslateMessage(msg);
+
+      DispatchMessage(msg);
+    }
+  }
+}
+
+extern "C" {
+  __declspec(dllexport) INT __cdecl VccShutdown() {
+    CloseHandle(instance->hEventThread);
+    CloseHandle(instance->hEmuThread);
+    UnloadDll(&(instance->SystemState));
+    SoundDeInit();
+    WriteIniFile(); //Save Any changes to ini File
+
+    return (INT)(instance->msg.wParam);
   }
 }

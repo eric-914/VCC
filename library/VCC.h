@@ -71,3 +71,13 @@ extern "C" __declspec(dllexport) void __cdecl SendSavedKeyEvents();
 extern "C" __declspec(dllexport) void __cdecl SetCPUMultiplayerFlag(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl SetTurboMode(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl SoftReset();
+
+extern "C" __declspec(dllexport) HMODULE __cdecl LoadResources();
+extern "C" __declspec(dllexport) void __cdecl CheckQuickLoad();
+extern "C" __declspec(dllexport) void __cdecl CreatePrimaryWindow();
+extern "C" __declspec(dllexport) void CheckScreenModeChange();
+
+extern "C" __declspec(dllexport) void __cdecl VccStartup(HINSTANCE hInstance, PSTR lpCmdLine, INT nCmdShow);
+extern "C" __declspec(dllexport) void __cdecl VccRun();
+extern "C" __declspec(dllexport) INT __cdecl VccShutdown();
+
