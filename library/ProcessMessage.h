@@ -2,4 +2,4 @@
 
 #include <windows.h>
 
-extern "C" __declspec(dllexport) void __cdecl ProcessMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+extern "C" __declspec(dllexport) void __cdecl ProcessMessage(HWND, UINT, WPARAM, LPARAM);

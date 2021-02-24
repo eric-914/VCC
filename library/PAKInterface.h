@@ -91,25 +91,25 @@ typedef struct {
 
 extern "C" __declspec(dllexport) PakInterfaceState * __cdecl GetPakInterfaceState();
 
-extern "C" __declspec(dllexport) void __cdecl GetCurrentModule(char* defaultModule);
-extern "C" __declspec(dllexport) int __cdecl FileID(char* filename);
-extern "C" __declspec(dllexport) void __cdecl PakTimer(void);
-extern "C" __declspec(dllexport) void __cdecl ResetBus(void);
-extern "C" __declspec(dllexport) void __cdecl GetModuleStatus(SystemState* systemState);
-extern "C" __declspec(dllexport) unsigned char __cdecl PakPortRead(unsigned char port);
-extern "C" __declspec(dllexport) void __cdecl PakPortWrite(unsigned char port, unsigned char data);
-extern "C" __declspec(dllexport) unsigned char __cdecl PakMem8Read(unsigned short address);
-extern "C" __declspec(dllexport) void __cdecl PakMem8Write(unsigned char port, unsigned char data);
+extern "C" __declspec(dllexport) int __cdecl FileID(char*);
+extern "C" __declspec(dllexport) int __cdecl InsertModule(SystemState*, char*);
+extern "C" __declspec(dllexport) int __cdecl LoadCart(SystemState*);
+extern "C" __declspec(dllexport) int __cdecl LoadROMPack(SystemState*, char*);
+
+extern "C" __declspec(dllexport) unsigned char __cdecl PakMem8Read(unsigned short);
+extern "C" __declspec(dllexport) unsigned char __cdecl PakPortRead(unsigned char);
+
 extern "C" __declspec(dllexport) unsigned short __cdecl PakAudioSample(void);
 
-extern "C" __declspec(dllexport) void __cdecl RefreshDynamicMenu(SystemState* systemState);
-extern "C" __declspec(dllexport) void __cdecl DynamicMenuCallback(SystemState* systemState, char* menuName, int menuId, int type);
-extern "C" __declspec(dllexport) void __cdecl UnloadDll(SystemState* systemState);
-extern "C" __declspec(dllexport) int __cdecl LoadROMPack(SystemState* systemState, char filename[MAX_PATH]);
-extern "C" __declspec(dllexport) void __cdecl UnloadPack(SystemState* systemState);
-extern "C" __declspec(dllexport) void __cdecl UpdateBusPointer(void);
-
-extern "C" __declspec(dllexport) int __cdecl InsertModule(SystemState* systemState, char* modulePath);
-extern "C" __declspec(dllexport) int __cdecl LoadCart(SystemState* systemState);
-
-extern "C" __declspec(dllexport) void __cdecl DynamicMenuActivated(SystemState* systemState, unsigned char menuItem);
+extern "C" __declspec(dllexport) void __cdecl DynamicMenuActivated(SystemState*, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl DynamicMenuCallback(SystemState*, char*, int, int);
+extern "C" __declspec(dllexport) void __cdecl GetCurrentModule(char*);
+extern "C" __declspec(dllexport) void __cdecl GetModuleStatus(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl PakMem8Write(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl PakPortWrite(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl PakTimer();
+extern "C" __declspec(dllexport) void __cdecl RefreshDynamicMenu(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl ResetBus();
+extern "C" __declspec(dllexport) void __cdecl UnloadDll(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl UnloadPack(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl UpdateBusPointer();
