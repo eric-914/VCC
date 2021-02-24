@@ -44,7 +44,7 @@ void ErrorVector(void)
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
-  MemWrite8(getcc(), --S_REG);
+  MemWrite8(HD6309_getcc(), --S_REG);
 
   PC_REG = MemRead16(VTRAP);
 
@@ -54,7 +54,7 @@ void ErrorVector(void)
 void InvalidInsHandler(void)
 {
   MD_ILLEGAL = 1;
-  instance->mdbits = getmd();
+  instance->mdbits = HD6309_getmd();
 
   ErrorVector();
 }
@@ -63,7 +63,7 @@ void DivbyZero(void)
 {
   MD_ZERODIV = 1;
 
-  instance->mdbits = getmd();
+  instance->mdbits = HD6309_getmd();
 
   ErrorVector();
 }
@@ -452,7 +452,7 @@ void Addr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -462,7 +462,7 @@ void Addr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -478,7 +478,7 @@ void Addr(void)
 
     switch (Dest)
     {
-    case 2: 				setcc((unsigned char)temp16); break;
+    case 2: 				HD6309_setcc((unsigned char)temp16); break;
     case 4: case 5: break; // never assign to zero reg
     default: 				PUR(Dest) = (unsigned char)temp16; break;
     }
@@ -503,7 +503,7 @@ void Addr(void)
       switch (Source)
       {
       case 0: case 1: source16 = D_REG; break; // A & B Reg
-      case 2:	        source16 = (unsigned short)getcc(); break; // CC
+      case 2:	        source16 = (unsigned short)HD6309_getcc(); break; // CC
       case 3:	        source16 = (unsigned short)DP_REG; break; // DP
       case 4: case 5: source16 = 0; break; // Zero Reg
       case 6: case 7: source16 = W_REG; break; // E & F Reg
@@ -534,7 +534,7 @@ void Adcr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -544,7 +544,7 @@ void Adcr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -561,7 +561,7 @@ void Adcr(void)
     switch (Dest)
     {
     case 2:
-      setcc((unsigned char)temp16);
+      HD6309_setcc((unsigned char)temp16);
       break;
 
     case 4:
@@ -598,7 +598,7 @@ void Adcr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -641,7 +641,7 @@ void Subr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -651,7 +651,7 @@ void Subr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -667,7 +667,7 @@ void Subr(void)
     switch (Dest)
     {
     case 2:
-      setcc((unsigned char)temp16);
+      HD6309_setcc((unsigned char)temp16);
       break;
 
     case 4:
@@ -704,7 +704,7 @@ void Subr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -747,7 +747,7 @@ void Sbcr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -758,7 +758,7 @@ void Sbcr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -775,7 +775,7 @@ void Sbcr(void)
     switch (Dest)
     {
     case 2:
-      setcc((unsigned char)temp16);
+      HD6309_setcc((unsigned char)temp16);
       break;
 
     case 4:
@@ -812,7 +812,7 @@ void Sbcr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -855,7 +855,7 @@ void Andr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -866,7 +866,7 @@ void Andr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -883,7 +883,7 @@ void Andr(void)
     switch (Dest)
     {
     case 2:
-      setcc((unsigned char)temp8);
+      HD6309_setcc((unsigned char)temp8);
       break;
 
     case 4:
@@ -917,7 +917,7 @@ void Andr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -958,7 +958,7 @@ void Orr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -969,7 +969,7 @@ void Orr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -986,7 +986,7 @@ void Orr(void)
     switch (Dest)
     {
     case 2:
-      setcc((unsigned char)temp8);
+      HD6309_setcc((unsigned char)temp8);
       break;
 
     case 4:
@@ -1021,7 +1021,7 @@ void Orr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -1063,7 +1063,7 @@ void Eorr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -1074,7 +1074,7 @@ void Eorr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -1091,7 +1091,7 @@ void Eorr(void)
     switch (Dest)
     {
     case 2:
-      setcc((unsigned char)temp8);
+      HD6309_setcc((unsigned char)temp8);
       break;
 
     case 4:
@@ -1126,7 +1126,7 @@ void Eorr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -1168,7 +1168,7 @@ void Cmpr(void)
     Dest &= 7;
 
     if (Dest == 2) {
-      dest8 = getcc();
+      dest8 = HD6309_getcc();
     }
     else {
       dest8 = PUR(Dest);
@@ -1179,7 +1179,7 @@ void Cmpr(void)
       Source &= 7;
 
       if (Source == 2) {
-        source8 = getcc();
+        source8 = HD6309_getcc();
       }
       else {
         source8 = PUR(Source);
@@ -1218,7 +1218,7 @@ void Cmpr(void)
         break; // A & B Reg
 
       case 2:
-        source16 = (unsigned short)getcc();
+        source16 = (unsigned short)HD6309_getcc();
         break; // CC
 
       case 3:
@@ -1297,7 +1297,7 @@ void Swi2_I(void)
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
-  MemWrite8(getcc(), --S_REG);
+  MemWrite8(HD6309_getcc(), --S_REG);
   PC_REG = MemRead16(VSWI2);
   instance->CycleCounter += 20;
 }
@@ -2256,7 +2256,7 @@ void Band(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() & ~(1 << Dest));
+      HD6309_setcc(HD6309_getcc() & ~(1 << Dest));
       break;
     }
   }
@@ -2289,7 +2289,7 @@ void Biand(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() & ~(1 << Dest));
+      HD6309_setcc(HD6309_getcc() & ~(1 << Dest));
       break;
     }
   }
@@ -2322,7 +2322,7 @@ void Bor(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() | (1 << Dest));
+      HD6309_setcc(HD6309_getcc() | (1 << Dest));
       break;
     }
   }
@@ -2355,7 +2355,7 @@ void Bior(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() | (1 << Dest));
+      HD6309_setcc(HD6309_getcc() | (1 << Dest));
       break;
     }
   }
@@ -2388,7 +2388,7 @@ void Beor(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() ^ (1 << Dest));
+      HD6309_setcc(HD6309_getcc() ^ (1 << Dest));
       break;
     }
   }
@@ -2420,7 +2420,7 @@ void Bieor(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() ^ (1 << Dest));
+      HD6309_setcc(HD6309_getcc() ^ (1 << Dest));
       break;
     }
   }
@@ -2452,7 +2452,7 @@ void Ldbt(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() | (1 << Dest));
+      HD6309_setcc(HD6309_getcc() | (1 << Dest));
       break;
     }
   }
@@ -2466,7 +2466,7 @@ void Ldbt(void)
       break;
 
     case 2: // CC Reg
-      setcc(getcc() & ~(1 << Dest));
+      HD6309_setcc(HD6309_getcc() & ~(1 << Dest));
       break;
     }
   }
@@ -2497,7 +2497,7 @@ void Stbt(void)
     break;
 
   case 2: // CC Reg
-    postbyte = getcc();
+    postbyte = HD6309_getcc();
     break;
   }
 
@@ -2627,7 +2627,7 @@ void Tfm4(void)
 void Bitmd_M(void)
 { //113C  6309
   postbyte = MemRead8(PC_REG++) & 0xC0;
-  temp8 = getmd() & postbyte;
+  temp8 = HD6309_getmd() & postbyte;
   CC_Z = ZTEST(temp8);
 
   if (temp8 & 0x80) MD_ZERODIV = 0;
@@ -2639,7 +2639,7 @@ void Bitmd_M(void)
 void Ldmd_M(void)
 { //113D DONE 6309
   instance->mdbits = MemRead8(PC_REG++) & 0x03;
-  setmd(instance->mdbits);
+  HD6309_setmd(instance->mdbits);
   instance->CycleCounter += 5;
 }
 
@@ -2665,7 +2665,7 @@ void Swi3_I(void)
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
-  MemWrite8(getcc(), --S_REG);
+  MemWrite8(HD6309_getcc(), --S_REG);
   PC_REG = MemRead16(VSWI3);
   instance->CycleCounter += 20;
 }
@@ -3734,18 +3734,18 @@ void Daa_I(void)
 void Orcc_M(void)
 { //1A
   postbyte = MemRead8(PC_REG++);
-  temp8 = getcc();
+  temp8 = HD6309_getcc();
   temp8 = (temp8 | postbyte);
-  setcc(temp8);
+  HD6309_setcc(temp8);
   instance->CycleCounter += instance->NatEmuCycles32;
 }
 
 void Andcc_M(void)
 { //1C
   postbyte = MemRead8(PC_REG++);
-  temp8 = getcc();
+  temp8 = HD6309_getcc();
   temp8 = (temp8 & postbyte);
-  setcc(temp8);
+  HD6309_setcc(temp8);
   instance->CycleCounter += 3;
 }
 
@@ -3763,7 +3763,7 @@ void Exg_M(void)
   Source = postbyte >> 4;
   Dest = postbyte & 15;
 
-  instance->ccbits = getcc();
+  instance->ccbits = HD6309_getcc();
 
   if ((Source & 0x08) == (Dest & 0x08)) //Verify like size registers
   {
@@ -3822,7 +3822,7 @@ void Exg_M(void)
     }
   }
 
-  setcc(instance->ccbits);
+  HD6309_setcc(instance->ccbits);
   instance->CycleCounter += instance->NatEmuCycles85;
 }
 
@@ -3843,7 +3843,7 @@ void Tfr_M(void)
   }
   else
   {
-    instance->ccbits = getcc();
+    instance->ccbits = HD6309_getcc();
     Dest &= 7;
 
     if (Source < 8)
@@ -3865,7 +3865,7 @@ void Tfr_M(void)
     }
 
     O_REG = 0;
-    setcc(instance->ccbits);
+    HD6309_setcc(instance->ccbits);
   }
 
   instance->CycleCounter += instance->NatEmuCycles64;
@@ -4088,7 +4088,7 @@ void Pshs_M(void)
 
   if (postbyte & 0x01)
   {
-    MemWrite8(getcc(), --S_REG);
+    MemWrite8(HD6309_getcc(), --S_REG);
     instance->CycleCounter += 1;
   }
 
@@ -4101,7 +4101,7 @@ void Puls_M(void)
 
   if (postbyte & 0x01)
   {
-    setcc(MemRead8(S_REG++));
+    HD6309_setcc(MemRead8(S_REG++));
     instance->CycleCounter += 1;
   }
 
@@ -4206,7 +4206,7 @@ void Pshu_M(void)
 
   if (postbyte & 0x01)
   {
-    MemWrite8(getcc(), --U_REG);
+    MemWrite8(HD6309_getcc(), --U_REG);
     instance->CycleCounter += 1;
   }
 
@@ -4219,7 +4219,7 @@ void Pulu_M(void)
 
   if (postbyte & 0x01)
   {
-    setcc(MemRead8(U_REG++));
+    HD6309_setcc(MemRead8(U_REG++));
     instance->CycleCounter += 1;
   }
 
@@ -4287,7 +4287,7 @@ void Abx_I(void)
 
 void Rti_I(void)
 { //3B
-  setcc(MemRead8(S_REG++));
+  HD6309_setcc(MemRead8(S_REG++));
   instance->CycleCounter += 6;
   instance->InInterrupt = 0;
 
@@ -4320,9 +4320,9 @@ void Rti_I(void)
 void Cwai_I(void)
 { //3C
   postbyte = MemRead8(PC_REG++);
-  instance->ccbits = getcc();
+  instance->ccbits = HD6309_getcc();
   instance->ccbits = instance->ccbits & postbyte;
-  setcc(instance->ccbits);
+  HD6309_setcc(instance->ccbits);
   instance->CycleCounter = instance->gCycleFor;
   instance->SyncWaiting = 1;
 }
@@ -4362,7 +4362,7 @@ void Swi1_I(void)
 
   MemWrite8(B_REG, --S_REG);
   MemWrite8(A_REG, --S_REG);
-  MemWrite8(getcc(), --S_REG);
+  MemWrite8(HD6309_getcc(), --S_REG);
   PC_REG = MemRead16(VSWI);
   instance->CycleCounter += 19;
   CC_I = 1;
@@ -6022,7 +6022,7 @@ void Ldb_X(void)
 
 void Stb_X(void)
 { //E7
-  MemWrite8(B_REG, hd6309_CalculateEA(MemRead8(PC_REG++)));
+  MemWrite8(B_REG, HD6309_CalculateEA(MemRead8(PC_REG++)));
   CC_Z = ZTEST(B_REG);
   CC_N = NTEST8(B_REG);
   CC_V = 0;

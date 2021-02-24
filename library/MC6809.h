@@ -347,18 +347,17 @@ typedef struct {
 
 extern "C" __declspec(dllexport) MC6809State * __cdecl GetMC6809State();
 
-extern "C" __declspec(dllexport) void __cdecl mc6809_setcc(unsigned char bincc);
-extern "C" __declspec(dllexport) unsigned char __cdecl mc6809_getcc(void);
+extern "C" __declspec(dllexport) int __cdecl MC6809Exec(int);
 
-extern "C" __declspec(dllexport) void __cdecl MC609_cpu_firq(void);
-extern "C" __declspec(dllexport) void __cdecl MC609_cpu_irq(void);
-extern "C" __declspec(dllexport) void __cdecl MC609_cpu_nmi(void);
+extern "C" __declspec(dllexport) unsigned char __cdecl MC6809_getcc();
+extern "C" __declspec(dllexport) unsigned short __cdecl MC6809_CalculateEA(unsigned char);
 
-extern "C" __declspec(dllexport) /* _inline */ unsigned short __cdecl mc6809_CalculateEA(unsigned char postbyte);
-
-extern "C" __declspec(dllexport) void __cdecl MC6809Init(void);
-extern "C" __declspec(dllexport) void __cdecl MC6809Reset(void);
-extern "C" __declspec(dllexport) void __cdecl MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter);
-extern "C" __declspec(dllexport) void __cdecl MC6809DeAssertInterrupt(unsigned char interrupt);
-extern "C" __declspec(dllexport) void __cdecl MC6809ForcePC(unsigned short newPC);
-extern "C" __declspec(dllexport) int __cdecl MC6809Exec(int cycleFor);
+extern "C" __declspec(dllexport) void __cdecl MC6809AssertInterrupt(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl MC6809DeAssertInterrupt(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl MC6809ForcePC(unsigned short);
+extern "C" __declspec(dllexport) void __cdecl MC6809Init();
+extern "C" __declspec(dllexport) void __cdecl MC6809Reset();
+extern "C" __declspec(dllexport) void __cdecl MC6809_cpu_firq();
+extern "C" __declspec(dllexport) void __cdecl MC6809_cpu_irq();
+extern "C" __declspec(dllexport) void __cdecl MC6809_cpu_nmi();
+extern "C" __declspec(dllexport) void __cdecl mc6809_setcc(unsigned char);

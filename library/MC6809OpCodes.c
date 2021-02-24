@@ -3,6 +3,8 @@
 
 #include "MC6809Macros.h"
 
+static MC6809State* instance = GetMC6809State();
+
 extern "C" {
   __declspec(dllexport) void __cdecl MC6809ExecOpCode(int cycleFor, unsigned char opCode) {
     unsigned char msn, lsn;
@@ -18,10 +20,7 @@ extern "C" {
     signed char* spostbyte = (signed char*)&postbyte;
     signed short* spostword = (signed short*)&postword;
 
-    MC6809State* mc6809State = GetMC6809State();
-
     switch (opCode) {
-
     case NEG_D: //0
       temp16 = (DP_REG | MemRead8(PC_REG++));
       postbyte = MemRead8(temp16);
@@ -31,7 +30,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case COM_D:
@@ -43,7 +42,7 @@ extern "C" {
       CC_C = 1;
       CC_V = 0;
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case LSR_D: //S2
@@ -54,7 +53,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = 0;
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ROR_D: //S2
@@ -66,7 +65,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ASR_D: //7
@@ -77,7 +76,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ASL_D: //8
@@ -89,7 +88,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ROL_D:	//9
@@ -102,7 +101,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case DEC_D: //A
@@ -112,7 +111,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_V = temp8 == 0x7F;
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case INC_D: //C
@@ -122,7 +121,7 @@ extern "C" {
       CC_V = temp8 == 0x80;
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case TST_D: //D
@@ -130,12 +129,12 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case JMP_D:	//E
       PC_REG = ((DP_REG | MemRead8(PC_REG)));
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case CLR_D:	//F
@@ -144,7 +143,7 @@ extern "C" {
       CC_N = 0;
       CC_V = 0;
       CC_C = 0;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case Page2:
@@ -155,16 +154,16 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBRN_R: //1021
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBHI_R: //1022
@@ -172,11 +171,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBLS_R: //1023
@@ -184,11 +183,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBHS_R: //1024
@@ -196,11 +195,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case LBCS_R: //1025
@@ -208,11 +207,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBNE_R: //1026
@@ -220,11 +219,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBVC_R: //1028
@@ -232,11 +231,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBVS_R: //1029
@@ -244,11 +243,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBPL_R: //102A
@@ -256,11 +255,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBMI_R: //102B
@@ -268,11 +267,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBGE_R: //102C
@@ -280,11 +279,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBLT_R: //102D
@@ -292,11 +291,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBGT_R: //102E
@@ -304,11 +303,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LBLE_R:	//102F
@@ -316,11 +315,11 @@ extern "C" {
         {
           *spostword = MemRead16(PC_REG);
           PC_REG += *spostword;
-          mc6809State->CycleCounter += 1;
+          instance->CycleCounter += 1;
         }
 
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case SWI2_I: //103F
@@ -336,10 +335,10 @@ extern "C" {
         MemWrite8(DPA, --S_REG);
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
-        MemWrite8(mc6809_getcc(), --S_REG);
+        MemWrite8(MC6809_getcc(), --S_REG);
 
         PC_REG = MemRead16(VSWI2);
-        mc6809State->CycleCounter += 20;
+        instance->CycleCounter += 20;
         break;
 
       case CMPD_M: //1083
@@ -350,7 +349,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case CMPY_M: //108C
@@ -361,7 +360,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case LDY_M: //108E
@@ -370,7 +369,7 @@ extern "C" {
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case CMPD_D: //1093
@@ -380,7 +379,7 @@ extern "C" {
         CC_V = OTEST16(CC_C, postword, temp16, D_REG); //CC_C^((postword^temp16^D_REG)>>15);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case CMPY_D:	//109C
@@ -390,7 +389,7 @@ extern "C" {
         CC_V = OTEST16(CC_C, postword, temp16, Y_REG);//CC_C^((postword^temp16^Y_REG)>>15);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case LDY_D: //109E
@@ -398,7 +397,7 @@ extern "C" {
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case STY_D: //109F
@@ -406,43 +405,43 @@ extern "C" {
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case CMPD_X: //10A3
-        postword = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+        postword = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
         temp16 = D_REG - postword;
         CC_C = temp16 > D_REG;
         CC_V = OTEST16(CC_C, postword, temp16, D_REG);//CC_C^((postword^temp16^D_REG)>>15);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case CMPY_X: //10AC
-        postword = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+        postword = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
         temp16 = Y_REG - postword;
         CC_C = temp16 > Y_REG;
         CC_V = OTEST16(CC_C, postword, temp16, Y_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case LDY_X: //10AE
-        Y_REG = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+        Y_REG = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case STY_X: //10AF
-        MemWrite16(Y_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+        MemWrite16(Y_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
         CC_Z = ZTEST(Y_REG);
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case CMPD_E: //10B3
@@ -453,7 +452,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 8;
+        instance->CycleCounter += 8;
         break;
 
       case CMPY_E: //10BC
@@ -464,7 +463,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 8;
+        instance->CycleCounter += 8;
         break;
 
       case LDY_E: //10BE
@@ -473,7 +472,7 @@ extern "C" {
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
         PC_REG += 2;
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case STY_E: //10BF
@@ -482,7 +481,7 @@ extern "C" {
         CC_N = NTEST16(Y_REG);
         CC_V = 0;
         PC_REG += 2;
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case LDS_I:  //10CE
@@ -491,7 +490,7 @@ extern "C" {
         CC_N = NTEST16(S_REG);
         CC_V = 0;
         PC_REG += 2;
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case LDS_D: //10DE
@@ -499,7 +498,7 @@ extern "C" {
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case STS_D: //10DF
@@ -507,23 +506,23 @@ extern "C" {
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case LDS_X: //10EE
-        S_REG = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+        S_REG = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case STS_X: //10EF
-        MemWrite16(S_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+        MemWrite16(S_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
         CC_Z = ZTEST(S_REG);
         CC_N = NTEST16(S_REG);
         CC_V = 0;
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case LDS_E: //10FE
@@ -532,7 +531,7 @@ extern "C" {
         CC_N = NTEST16(S_REG);
         CC_V = 0;
         PC_REG += 2;
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case STS_E: //10FF
@@ -541,7 +540,7 @@ extern "C" {
         CC_N = NTEST16(S_REG);
         CC_V = 0;
         PC_REG += 2;
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       default:
@@ -566,10 +565,10 @@ extern "C" {
         MemWrite8(DPA, --S_REG);
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
-        MemWrite8(mc6809_getcc(), --S_REG);
+        MemWrite8(MC6809_getcc(), --S_REG);
 
         PC_REG = MemRead16(VSWI3);
-        mc6809State->CycleCounter += 20;
+        instance->CycleCounter += 20;
         break;
 
       case CMPU_M: //1183
@@ -580,7 +579,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case CMPS_M: //118C
@@ -591,7 +590,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         break;
 
       case CMPU_D: //1193
@@ -601,7 +600,7 @@ extern "C" {
         CC_V = OTEST16(CC_C, postword, temp16, U_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case CMPS_D: //119C
@@ -611,27 +610,27 @@ extern "C" {
         CC_V = OTEST16(CC_C, postword, temp16, S_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case CMPU_X: //11A3
-        postword = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+        postword = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
         temp16 = U_REG - postword;
         CC_C = temp16 > U_REG;
         CC_V = OTEST16(CC_C, postword, temp16, U_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case CMPS_X:  //11AC
-        postword = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+        postword = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
         temp16 = S_REG - postword;
         CC_C = temp16 > S_REG;
         CC_V = OTEST16(CC_C, postword, temp16, S_REG);
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case CMPU_E: //11B3
@@ -642,7 +641,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 8;
+        instance->CycleCounter += 8;
         break;
 
       case CMPS_E: //11BC
@@ -653,7 +652,7 @@ extern "C" {
         CC_N = NTEST16(temp16);
         CC_Z = ZTEST(temp16);
         PC_REG += 2;
-        mc6809State->CycleCounter += 8;
+        instance->CycleCounter += 8;
         break;
 
       default:
@@ -663,19 +662,19 @@ extern "C" {
       break;
 
     case NOP_I:	//12
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case SYNC_I: //13
-      mc6809State->CycleCounter = cycleFor;
-      mc6809State->SyncWaiting = 1;
+      instance->CycleCounter = cycleFor;
+      instance->SyncWaiting = 1;
       break;
 
     case LBRA_R: //16
       *spostword = MemRead16(PC_REG);
       PC_REG += 2;
       PC_REG += *spostword;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case	LBSR_R: //17
@@ -685,7 +684,7 @@ extern "C" {
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG += *spostword;
-      mc6809State->CycleCounter += 9;
+      instance->CycleCounter += 9;
       break;
 
     case DAA_I: //19
@@ -710,35 +709,35 @@ extern "C" {
       A_REG = temp16 & 0xFF;
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ORCC_M: //1A
       postbyte = MemRead8(PC_REG++);
-      temp8 = mc6809_getcc();
+      temp8 = MC6809_getcc();
       temp8 = (temp8 | postbyte);
       mc6809_setcc(temp8);
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case ANDCC_M: //1C
       postbyte = MemRead8(PC_REG++);
-      temp8 = mc6809_getcc();
+      temp8 = MC6809_getcc();
       temp8 = (temp8 & postbyte);
       mc6809_setcc(temp8);
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case SEX_I: //1D
       A_REG = 0 - (B_REG >> 7);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case EXG_M: //1E
       postbyte = MemRead8(PC_REG++);
-      mc6809State->ccbits = mc6809_getcc();
+      instance->ccbits = MC6809_getcc();
 
       if (((postbyte & 0x80) >> 4) == (postbyte & 0x08)) //Verify like size registers
       {
@@ -756,8 +755,8 @@ extern "C" {
         }
       }
 
-      mc6809_setcc(mc6809State->ccbits);
-      mc6809State->CycleCounter += 8;
+      mc6809_setcc(instance->ccbits);
+      instance->CycleCounter += 8;
       break;
 
     case TFR_M: //1F
@@ -784,7 +783,7 @@ extern "C" {
         else if (source <= 7)
         {
           //make sure the source is valud
-          if (mc6809State->xfreg16[source])
+          if (instance->xfreg16[source])
           {
             PXF(dest) = PXF(source);
           }
@@ -797,7 +796,7 @@ extern "C" {
       case 11:
       case 14:
       case 15:
-        mc6809State->ccbits = mc6809_getcc();
+        instance->ccbits = MC6809_getcc();
         PUR(dest & 7) = 0xFF;
 
         if ((source == 12) || (source == 13)) {
@@ -807,20 +806,20 @@ extern "C" {
           PUR(dest & 7) = PUR(source & 7);
         }
 
-        mc6809_setcc(mc6809State->ccbits);
+        mc6809_setcc(instance->ccbits);
         break;
       }
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case BRA_R: //20
       *spostbyte = MemRead8(PC_REG++);
       PC_REG += *spostbyte;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BRN_R: //21
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       PC_REG++;
       break;
 
@@ -830,7 +829,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BLS_R: //23
@@ -839,7 +838,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BHS_R: //24
@@ -848,7 +847,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BLO_R: //25
@@ -857,7 +856,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BNE_R: //26
@@ -866,7 +865,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BEQ_R: //27
@@ -875,7 +874,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BVC_R: //28
@@ -884,7 +883,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BVS_R: //29
@@ -893,7 +892,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BPL_R: //2A
@@ -902,7 +901,7 @@ extern "C" {
       }
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BMI_R: //2B
@@ -910,7 +909,7 @@ extern "C" {
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BGE_R: //2C
@@ -918,7 +917,7 @@ extern "C" {
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BLT_R: //2D
@@ -926,7 +925,7 @@ extern "C" {
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BGT_R: //2E
@@ -934,7 +933,7 @@ extern "C" {
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case BLE_R: //2F
@@ -942,29 +941,29 @@ extern "C" {
         PC_REG += (signed char)MemRead8(PC_REG);
 
       PC_REG++;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case LEAX_X: //30
-      X_REG = mc6809_CalculateEA(MemRead8(PC_REG++));
+      X_REG = MC6809_CalculateEA(MemRead8(PC_REG++));
       CC_Z = ZTEST(X_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LEAY_X: //31
-      Y_REG = mc6809_CalculateEA(MemRead8(PC_REG++));
+      Y_REG = MC6809_CalculateEA(MemRead8(PC_REG++));
       CC_Z = ZTEST(Y_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LEAS_X: //32
-      S_REG = mc6809_CalculateEA(MemRead8(PC_REG++));
-      mc6809State->CycleCounter += 4;
+      S_REG = MC6809_CalculateEA(MemRead8(PC_REG++));
+      instance->CycleCounter += 4;
       break;
 
     case LEAU_X: //33
-      U_REG = mc6809_CalculateEA(MemRead8(PC_REG++));
-      mc6809State->CycleCounter += 4;
+      U_REG = MC6809_CalculateEA(MemRead8(PC_REG++));
+      instance->CycleCounter += 4;
       break;
 
     case PSHS_M: //34
@@ -974,55 +973,55 @@ extern "C" {
       {
         MemWrite8(PC_L, --S_REG);
         MemWrite8(PC_H, --S_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
         MemWrite8(U_L, --S_REG);
         MemWrite8(U_H, --S_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         MemWrite8(Y_L, --S_REG);
         MemWrite8(Y_H, --S_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x10)
       {
         MemWrite8(X_L, --S_REG);
         MemWrite8(X_H, --S_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x08)
       {
         MemWrite8(DPA, --S_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
         MemWrite8(B_REG, --S_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
         MemWrite8(A_REG, --S_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x01)
       {
-        MemWrite8(mc6809_getcc(), --S_REG);
-        mc6809State->CycleCounter += 1;
+        MemWrite8(MC6809_getcc(), --S_REG);
+        instance->CycleCounter += 1;
       }
 
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case PULS_M: //35
@@ -1031,56 +1030,56 @@ extern "C" {
       if (postbyte & 0x01)
       {
         mc6809_setcc(MemRead8(S_REG++));
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
         A_REG = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
         B_REG = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x08)
       {
         DPA = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x10)
       {
         X_H = MemRead8(S_REG++);
         X_L = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         Y_H = MemRead8(S_REG++);
         Y_L = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
         U_H = MemRead8(S_REG++);
         U_L = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x80)
       {
         PC_H = MemRead8(S_REG++);
         PC_L = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case PSHU_M: //36
@@ -1090,55 +1089,55 @@ extern "C" {
       {
         MemWrite8(PC_L, --U_REG);
         MemWrite8(PC_H, --U_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
         MemWrite8(S_L, --U_REG);
         MemWrite8(S_H, --U_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         MemWrite8(Y_L, --U_REG);
         MemWrite8(Y_H, --U_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x10)
       {
         MemWrite8(X_L, --U_REG);
         MemWrite8(X_H, --U_REG);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x08)
       {
         MemWrite8(DPA, --U_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x04)
       {
         MemWrite8(B_REG, --U_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x02)
       {
         MemWrite8(A_REG, --U_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x01)
       {
-        MemWrite8(mc6809_getcc(), --U_REG);
-        mc6809State->CycleCounter += 1;
+        MemWrite8(MC6809_getcc(), --U_REG);
+        instance->CycleCounter += 1;
       }
 
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case PULU_M: //37
@@ -1147,71 +1146,71 @@ extern "C" {
       if (postbyte & 0x01)
       {
         mc6809_setcc(MemRead8(U_REG++));
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
       if (postbyte & 0x02)
       {
         A_REG = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
       if (postbyte & 0x04)
       {
         B_REG = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x08)
       {
         DPA = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
       }
 
       if (postbyte & 0x10)
       {
         X_H = MemRead8(U_REG++);
         X_L = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x20)
       {
         Y_H = MemRead8(U_REG++);
         Y_L = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x40)
       {
         S_H = MemRead8(U_REG++);
         S_L = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
       if (postbyte & 0x80)
       {
         PC_H = MemRead8(U_REG++);
         PC_L = MemRead8(U_REG++);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
       }
 
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case RTS_I: //39
       PC_H = MemRead8(S_REG++);
       PC_L = MemRead8(S_REG++);
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ABX_I: //3A
       X_REG = X_REG + B_REG;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case RTI_I: //3B
       mc6809_setcc(MemRead8(S_REG++));
-      mc6809State->CycleCounter += 6;
-      mc6809State->InInterrupt = 0;
+      instance->CycleCounter += 6;
+      instance->InInterrupt = 0;
 
       if (CC_E)
       {
@@ -1224,7 +1223,7 @@ extern "C" {
         Y_L = MemRead8(S_REG++);
         U_H = MemRead8(S_REG++);
         U_L = MemRead8(S_REG++);
-        mc6809State->CycleCounter += 9;
+        instance->CycleCounter += 9;
       }
 
       PC_H = MemRead8(S_REG++);
@@ -1234,19 +1233,19 @@ extern "C" {
     case CWAI_I: //3C
       postbyte = MemRead8(PC_REG++);
 
-      mc6809State->ccbits = mc6809_getcc();
-      mc6809State->ccbits = mc6809State->ccbits & postbyte;
-      mc6809_setcc(mc6809State->ccbits);
+      instance->ccbits = MC6809_getcc();
+      instance->ccbits = instance->ccbits & postbyte;
+      mc6809_setcc(instance->ccbits);
 
-      mc6809State->CycleCounter = cycleFor;
-      mc6809State->SyncWaiting = 1;
+      instance->CycleCounter = cycleFor;
+      instance->SyncWaiting = 1;
       break;
 
     case MUL_I: //3D
       D_REG = A_REG * B_REG;
       CC_C = B_REG > 0x7F;
       CC_Z = ZTEST(D_REG);
-      mc6809State->CycleCounter += 11;
+      instance->CycleCounter += 11;
       break;
 
     case RESET:	//Undocumented
@@ -1266,9 +1265,9 @@ extern "C" {
       MemWrite8(DPA, --S_REG);
       MemWrite8(B_REG, --S_REG);
       MemWrite8(A_REG, --S_REG);
-      MemWrite8(mc6809_getcc(), --S_REG);
+      MemWrite8(MC6809_getcc(), --S_REG);
       PC_REG = MemRead16(VSWI);
-      mc6809State->CycleCounter += 19;
+      instance->CycleCounter += 19;
       CC_I = 1;
       CC_F = 1;
       break;
@@ -1280,7 +1279,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       A_REG = temp8;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case COMA_I: //43
@@ -1289,7 +1288,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_C = 1;
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case LSRA_I: //44
@@ -1297,7 +1296,7 @@ extern "C" {
       A_REG = A_REG >> 1;
       CC_Z = ZTEST(A_REG);
       CC_N = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case RORA_I: //46
@@ -1306,7 +1305,7 @@ extern "C" {
       A_REG = (A_REG >> 1) | postbyte;
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ASRA_I: //47
@@ -1314,7 +1313,7 @@ extern "C" {
       A_REG = (A_REG & 0x80) | (A_REG >> 1);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ASLA_I: //48 JF
@@ -1323,7 +1322,7 @@ extern "C" {
       A_REG = A_REG << 1;
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ROLA_I: //49
@@ -1333,7 +1332,7 @@ extern "C" {
       A_REG = (A_REG << 1) | postbyte;
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case DECA_I: //4A
@@ -1341,7 +1340,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_V = A_REG == 0x7F;
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case INCA_I: //4C
@@ -1349,14 +1348,14 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_V = A_REG == 0x80;
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case TSTA_I: //4D
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case CLRA_I: //4F
@@ -1365,7 +1364,7 @@ extern "C" {
       CC_V = 0;
       CC_N = 0;
       CC_Z = 1;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case NEGB_I: //50
@@ -1375,7 +1374,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       B_REG = temp8;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case COMB_I: //53
@@ -1384,7 +1383,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_C = 1;
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case LSRB_I: //54
@@ -1392,7 +1391,7 @@ extern "C" {
       B_REG = B_REG >> 1;
       CC_Z = ZTEST(B_REG);
       CC_N = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case RORB_I: //56
@@ -1401,7 +1400,7 @@ extern "C" {
       B_REG = (B_REG >> 1) | postbyte;
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ASRB_I: //57
@@ -1409,7 +1408,7 @@ extern "C" {
       B_REG = (B_REG & 0x80) | (B_REG >> 1);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ASLB_I: //58
@@ -1418,7 +1417,7 @@ extern "C" {
       B_REG = B_REG << 1;
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ROLB_I: //59
@@ -1428,7 +1427,7 @@ extern "C" {
       B_REG = (B_REG << 1) | postbyte;
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case DECB_I: //5A
@@ -1436,7 +1435,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_V = B_REG == 0x7F;
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case INCB_I: //5C
@@ -1444,14 +1443,14 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_V = B_REG == 0x80;
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case TSTB_I: //5D
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case CLRB_I: //5F
@@ -1460,11 +1459,11 @@ extern "C" {
       CC_N = 0;
       CC_V = 0;
       CC_Z = 1;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case NEG_X: //60
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       postbyte = MemRead8(temp16);
       temp8 = 0 - postbyte;
       CC_C = temp8 > 0;
@@ -1472,11 +1471,11 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case COM_X: //63
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       temp8 = 0xFF - temp8;
       CC_Z = ZTEST(temp8);
@@ -1484,22 +1483,22 @@ extern "C" {
       CC_V = 0;
       CC_C = 1;
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case LSR_X: //64
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       CC_C = temp8 & 1;
       temp8 = temp8 >> 1;
       CC_Z = ZTEST(temp8);
       CC_N = 0;
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ROR_X: //66
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       postbyte = CC_C << 7;
       CC_C = (temp8 & 1);
@@ -1507,22 +1506,22 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ASR_X: //67
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       CC_C = temp8 & 1;
       temp8 = (temp8 & 0x80) | (temp8 >> 1);
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ASL_X: //68
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       CC_C = temp8 > 0x7F;
       CC_V = CC_C ^ ((temp8 & 0x40) >> 6);
@@ -1530,11 +1529,11 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ROL_X: //69
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       postbyte = CC_C;
       CC_C = temp8 > 0x7F;
@@ -1543,51 +1542,51 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case DEC_X: //6A
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       temp8--;
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       CC_V = (temp8 == 0x7F);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case INC_X: //6C
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       temp8 = MemRead8(temp16);
       temp8++;
       CC_V = (temp8 == 0x80);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case TST_X: //6D
-      temp8 = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      temp8 = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(temp8);
       CC_N = NTEST8(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case JMP_X: //6E
-      PC_REG = mc6809_CalculateEA(MemRead8(PC_REG++));
-      mc6809State->CycleCounter += 3;
+      PC_REG = MC6809_CalculateEA(MemRead8(PC_REG++));
+      instance->CycleCounter += 3;
       break;
 
     case CLR_X: //6F
-      MemWrite8(0, mc6809_CalculateEA(MemRead8(PC_REG++)));
+      MemWrite8(0, MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_C = 0;
       CC_N = 0;
       CC_V = 0;
       CC_Z = 1;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case NEG_E: //70
@@ -1600,7 +1599,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case COM_E: //73
@@ -1613,7 +1612,7 @@ extern "C" {
       CC_V = 0;
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case LSR_E:  //74
@@ -1625,7 +1624,7 @@ extern "C" {
       CC_N = 0;
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case ROR_E: //76
@@ -1638,7 +1637,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case ASR_E: //77
@@ -1650,7 +1649,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case ASL_E: //78
@@ -1663,7 +1662,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case ROL_E: //79
@@ -1677,7 +1676,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case DEC_E: //7A
@@ -1689,7 +1688,7 @@ extern "C" {
       CC_V = temp8 == 0x7F;
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case INC_E: //7C
@@ -1701,7 +1700,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       MemWrite8(temp8, temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case TST_E: //7D
@@ -1710,12 +1709,12 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case JMP_E: //7E
       PC_REG = MemRead16(PC_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CLR_E: //7F
@@ -1725,7 +1724,7 @@ extern "C" {
       CC_V = 0;
       CC_Z = 1;
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case SUBA_M: //80
@@ -1736,7 +1735,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case CMPA_M: //81
@@ -1746,7 +1745,7 @@ extern "C" {
       CC_V = OTEST8(CC_C, postbyte, temp8, A_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case SBCA_M:  //82
@@ -1757,7 +1756,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case SUBD_M: //83
@@ -1769,7 +1768,7 @@ extern "C" {
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ANDA_M: //84
@@ -1777,7 +1776,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case BITA_M: //85
@@ -1785,7 +1784,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case LDA_M: //86
@@ -1793,7 +1792,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case EORA_M: //88
@@ -1801,7 +1800,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ADCA_M: //89
@@ -1813,7 +1812,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ORA_M: //8A
@@ -1821,7 +1820,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ADDA_M: //8B
@@ -1833,7 +1832,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case CMPX_M: //8C
@@ -1844,7 +1843,7 @@ extern "C" {
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case BSR_R: //8D
@@ -1853,7 +1852,7 @@ extern "C" {
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG += *spostbyte;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case LDX_M: //8E
@@ -1862,7 +1861,7 @@ extern "C" {
       CC_N = NTEST16(X_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case SUBA_D: //90
@@ -1873,7 +1872,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CMPA_D: //91
@@ -1883,7 +1882,7 @@ extern "C" {
       CC_V = OTEST8(CC_C, postbyte, temp8, A_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case SBCA_D: //92
@@ -1894,7 +1893,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case SUBD_D: //93
@@ -1905,7 +1904,7 @@ extern "C" {
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ANDA_D: //94
@@ -1913,7 +1912,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case BITA_D: //95
@@ -1921,7 +1920,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LDA_D: //96
@@ -1929,7 +1928,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case STA_D: //97
@@ -1937,7 +1936,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case EORA_D: //98
@@ -1945,7 +1944,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADCA_D: //99
@@ -1957,7 +1956,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ORA_D: //9A
@@ -1965,7 +1964,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADDA_D: //9B
@@ -1977,7 +1976,7 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CMPX_D: //9C
@@ -1987,7 +1986,7 @@ extern "C" {
       CC_V = OTEST16(CC_C, postword, temp16, X_REG);
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case BSR_D: //9D
@@ -1996,7 +1995,7 @@ extern "C" {
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG = temp16;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case LDX_D: //9E
@@ -2004,7 +2003,7 @@ extern "C" {
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STX_D: //9F
@@ -2012,94 +2011,94 @@ extern "C" {
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SUBA_X: //A0
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = A_REG - postbyte;
       CC_C = (temp16 & 0x100) >> 8;
       CC_V = OTEST8(CC_C, postbyte, temp16, A_REG);
       A_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CMPA_X: //A1
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp8 = A_REG - postbyte;
       CC_C = temp8 > A_REG;
       CC_V = OTEST8(CC_C, postbyte, temp8, A_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case SBCA_X: //A2
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = A_REG - postbyte - CC_C;
       CC_C = (temp16 & 0x100) >> 8;
       CC_V = OTEST8(CC_C, postbyte, temp16, A_REG);
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case SUBD_X: //A3
-      temp16 = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      temp16 = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp32 = D_REG - temp16;
       CC_C = (temp32 & 0x10000) >> 16;
       CC_V = OTEST16(CC_C, temp32, temp16, D_REG);
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ANDA_X: //A4
-      A_REG = A_REG & MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      A_REG = A_REG & MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case BITA_X:  //A5
-      temp8 = A_REG & MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      temp8 = A_REG & MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LDA_X: //A6
-      A_REG = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      A_REG = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case STA_X: //A7
-      MemWrite8(A_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+      MemWrite8(A_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case EORA_X: //A8
-      A_REG = A_REG ^ MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      A_REG = A_REG ^ MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADCA_X: //A9
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = A_REG + postbyte + CC_C;
       CC_C = (temp16 & 0x100) >> 8;
       CC_V = OTEST8(CC_C, postbyte, temp16, A_REG);
@@ -2107,19 +2106,19 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ORA_X: //AA
-      A_REG = A_REG | MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      A_REG = A_REG | MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADDA_X: //AB
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = A_REG + postbyte;
       CC_C = (temp16 & 0x100) >> 8;
       CC_H = ((A_REG ^ postbyte ^ temp16) & 0x10) >> 4;
@@ -2127,42 +2126,42 @@ extern "C" {
       A_REG = (temp16 & 0xFF);
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CMPX_X: //AC
-      postword = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postword = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = X_REG - postword;
       CC_C = temp16 > X_REG;
       CC_V = OTEST16(CC_C, postword, temp16, X_REG);
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case BSR_X: //AD
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       S_REG--;
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG = temp16;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case LDX_X: //AE
-      X_REG = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      X_REG = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STX_X: //AF
-      MemWrite16(X_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+      MemWrite16(X_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(X_REG);
       CC_N = NTEST16(X_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SUBA_E: //B0
@@ -2174,7 +2173,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_N = NTEST8(A_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case	CMPA_E: //B1
@@ -2185,7 +2184,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SBCA_E: //B2
@@ -2197,7 +2196,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SUBD_E: //B3
@@ -2209,7 +2208,7 @@ extern "C" {
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case ANDA_E: //B4
@@ -2219,7 +2218,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case BITA_E: //B5
@@ -2228,7 +2227,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case LDA_E: //B6
@@ -2237,7 +2236,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STA_E: //B7
@@ -2246,7 +2245,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case EORA_E:  //B8
@@ -2255,7 +2254,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ADCA_E: //B9
@@ -2268,7 +2267,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ORA_E: //BA
@@ -2277,7 +2276,7 @@ extern "C" {
       CC_Z = ZTEST(A_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ADDA_E: //BB
@@ -2290,7 +2289,7 @@ extern "C" {
       CC_N = NTEST8(A_REG);
       CC_Z = ZTEST(A_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case CMPX_E: //BC
@@ -2301,7 +2300,7 @@ extern "C" {
       CC_N = NTEST16(temp16);
       CC_Z = ZTEST(temp16);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case BSR_E: //BD
@@ -2311,7 +2310,7 @@ extern "C" {
       MemWrite8(PC_L, S_REG--);
       MemWrite8(PC_H, S_REG);
       PC_REG = postword;
-      mc6809State->CycleCounter += 8;
+      instance->CycleCounter += 8;
       break;
 
     case LDX_E: //BE
@@ -2320,7 +2319,7 @@ extern "C" {
       CC_N = NTEST16(X_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case STX_E: //BF
@@ -2329,7 +2328,7 @@ extern "C" {
       CC_N = NTEST16(X_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case SUBB_M: //C0
@@ -2340,7 +2339,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case CMPB_M: //C1
@@ -2350,7 +2349,7 @@ extern "C" {
       CC_V = OTEST8(CC_C, postbyte, temp8, B_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case SBCB_M: //C3
@@ -2361,7 +2360,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ADDD_M: //C3
@@ -2373,7 +2372,7 @@ extern "C" {
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ANDB_M: //C4
@@ -2381,7 +2380,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case BITB_M: //C5
@@ -2389,7 +2388,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case LDB_M: //C6
@@ -2397,7 +2396,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case EORB_M: //C8
@@ -2405,7 +2404,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ADCB_M: //C9
@@ -2417,7 +2416,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ORB_M: //CA
@@ -2425,7 +2424,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case ADDB_M: //CB
@@ -2437,7 +2436,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 2;
+      instance->CycleCounter += 2;
       break;
 
     case LDD_M: //CC
@@ -2446,7 +2445,7 @@ extern "C" {
       CC_N = NTEST16(D_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case LDU_M: //CE
@@ -2455,7 +2454,7 @@ extern "C" {
       CC_N = NTEST16(U_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 3;
+      instance->CycleCounter += 3;
       break;
 
     case SUBB_D: //D0
@@ -2466,7 +2465,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CMPB_D: //D1
@@ -2476,7 +2475,7 @@ extern "C" {
       CC_V = OTEST8(CC_C, postbyte, temp8, B_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case SBCB_D: //D2
@@ -2487,7 +2486,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADDD_D: //D3
@@ -2498,7 +2497,7 @@ extern "C" {
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ANDB_D: //D4 
@@ -2506,7 +2505,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case BITB_D: //D5
@@ -2514,7 +2513,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LDB_D: //D6
@@ -2522,7 +2521,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case	STB_D: //D7
@@ -2530,7 +2529,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case EORB_D: //D8	
@@ -2538,7 +2537,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADCB_D: //D9
@@ -2550,7 +2549,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ORB_D: //DA
@@ -2558,7 +2557,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADDB_D: //DB
@@ -2570,7 +2569,7 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LDD_D: //DC
@@ -2578,7 +2577,7 @@ extern "C" {
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STD_D: //DD
@@ -2586,7 +2585,7 @@ extern "C" {
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case LDU_D: //DE
@@ -2594,7 +2593,7 @@ extern "C" {
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STU_D: //DF
@@ -2602,95 +2601,95 @@ extern "C" {
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SUBB_X: //E0
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = B_REG - postbyte;
       CC_C = (temp16 & 0x100) >> 8;
       CC_V = OTEST8(CC_C, postbyte, temp16, B_REG);
       B_REG = (temp16 & 0xFF);
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case CMPB_X: //E1
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp8 = B_REG - postbyte;
       CC_C = temp8 > B_REG;
       CC_V = OTEST8(CC_C, postbyte, temp8, B_REG);
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case SBCB_X: //E2
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = B_REG - postbyte - CC_C;
       CC_C = (temp16 & 0x100) >> 8;
       CC_V = OTEST8(CC_C, postbyte, temp16, B_REG);
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADDD_X: //E3 
-      temp16 = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      temp16 = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp32 = D_REG + temp16;
       CC_C = (temp32 & 0x10000) >> 16;
       CC_V = OTEST16(CC_C, temp32, temp16, D_REG);
       D_REG = (temp32 & 0xFFFF);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case ANDB_X: //E4
-      B_REG = B_REG & MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      B_REG = B_REG & MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case BITB_X: //E5 
-      temp8 = B_REG & MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      temp8 = B_REG & MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LDB_X: //E6
-      B_REG = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      B_REG = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case STB_X: //E7
-      MemWrite8(B_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+      MemWrite8(B_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case EORB_X: //E8
-      temp8 = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      temp8 = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       B_REG = B_REG ^ temp8;
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ADCB_X: //E9
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = B_REG + postbyte + CC_C;
       CC_C = (temp16 & 0x100) >> 8;
       CC_V = OTEST8(CC_C, postbyte, temp16, B_REG);
@@ -2698,20 +2697,20 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case ORB_X: //EA 
-      B_REG = B_REG | MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      B_REG = B_REG | MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
 
       break;
 
     case ADDB_X: //EB
-      postbyte = MemRead8(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      postbyte = MemRead8(MC6809_CalculateEA(MemRead8(PC_REG++)));
       temp16 = B_REG + postbyte;
       CC_C = (temp16 & 0x100) >> 8;
       CC_H = ((B_REG ^ postbyte ^ temp16) & 0x10) >> 4;
@@ -2719,40 +2718,40 @@ extern "C" {
       B_REG = (temp16 & 0xFF);
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
-      mc6809State->CycleCounter += 4;
+      instance->CycleCounter += 4;
       break;
 
     case LDD_X: //EC
-      temp16 = mc6809_CalculateEA(MemRead8(PC_REG++));
+      temp16 = MC6809_CalculateEA(MemRead8(PC_REG++));
       D_REG = MemRead16(temp16);
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STD_X: //ED
-      MemWrite16(D_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+      MemWrite16(D_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case LDU_X: //EE
-      U_REG = MemRead16(mc6809_CalculateEA(MemRead8(PC_REG++)));
+      U_REG = MemRead16(MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STU_X: //EF
-      MemWrite16(U_REG, mc6809_CalculateEA(MemRead8(PC_REG++)));
+      MemWrite16(U_REG, MC6809_CalculateEA(MemRead8(PC_REG++)));
       CC_Z = ZTEST(U_REG);
       CC_N = NTEST16(U_REG);
       CC_V = 0;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SUBB_E: //F0
@@ -2764,7 +2763,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_N = NTEST8(B_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case CMPB_E: //F1
@@ -2775,7 +2774,7 @@ extern "C" {
       CC_N = NTEST8(temp8);
       CC_Z = ZTEST(temp8);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case SBCB_E: //F2
@@ -2787,7 +2786,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ADDD_E: //F3
@@ -2799,7 +2798,7 @@ extern "C" {
       CC_Z = ZTEST(D_REG);
       CC_N = NTEST16(D_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 7;
+      instance->CycleCounter += 7;
       break;
 
     case ANDB_E:  //F4
@@ -2808,7 +2807,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case BITB_E: //F5
@@ -2817,7 +2816,7 @@ extern "C" {
       CC_Z = ZTEST(temp8);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case LDB_E: //F6
@@ -2826,7 +2825,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case STB_E: //F7 
@@ -2835,7 +2834,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case EORB_E: //F8
@@ -2844,7 +2843,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ADCB_E: //F9
@@ -2857,7 +2856,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ORB_E: //FA
@@ -2866,7 +2865,7 @@ extern "C" {
       CC_Z = ZTEST(B_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case ADDB_E: //FB
@@ -2879,7 +2878,7 @@ extern "C" {
       CC_N = NTEST8(B_REG);
       CC_Z = ZTEST(B_REG);
       PC_REG += 2;
-      mc6809State->CycleCounter += 5;
+      instance->CycleCounter += 5;
       break;
 
     case LDD_E: //FC
@@ -2888,7 +2887,7 @@ extern "C" {
       CC_N = NTEST16(D_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case STD_E: //FD
@@ -2897,7 +2896,7 @@ extern "C" {
       CC_N = NTEST16(D_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case LDU_E: //FE
@@ -2906,7 +2905,7 @@ extern "C" {
       CC_N = NTEST16(U_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     case STU_E: //FF
@@ -2915,7 +2914,7 @@ extern "C" {
       CC_N = NTEST16(U_REG);
       CC_V = 0;
       PC_REG += 2;
-      mc6809State->CycleCounter += 6;
+      instance->CycleCounter += 6;
       break;
 
     default:

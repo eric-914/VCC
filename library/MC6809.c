@@ -6,11 +6,19 @@
 
 MC6809State* InitializeInstance(MC6809State*);
 
-static MC6809State* instance; // = InitializeInstance(new MC6809State());
+//TODO: Startup doesn't initialize this instance in the expected order
+
+static MC6809State* GetInstance();
+
+static MC6809State* instance = GetInstance();
+
+MC6809State* GetInstance() {
+  return (instance ? instance : (instance = InitializeInstance(new MC6809State())));
+}
 
 extern "C" {
   __declspec(dllexport) MC6809State* __cdecl GetMC6809State() {
-    return (instance ? instance : (instance = InitializeInstance(new MC6809State())));
+    return GetInstance();
   }
 }
 
@@ -27,8 +35,6 @@ MC6809State* InitializeInstance(MC6809State* p) {
 extern "C" {
   __declspec(dllexport) void __cdecl mc6809_setcc(unsigned char bincc)
   {
-    MC6809State* mc6809State = GetMC6809State();
-
     CC_E = !!(bincc & (1 << E));
     CC_F = !!(bincc & (1 << F));
     CC_H = !!(bincc & (1 << H));
@@ -41,11 +47,9 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl mc6809_getcc(void)
+  __declspec(dllexport) unsigned char __cdecl MC6809_getcc(void)
   {
     unsigned char bincc = 0;
-
-    MC6809State* mc6809State = GetMC6809State();
 
 #define TST(_CC, _F) if (_CC) { bincc |= (1 << _F); }
 
@@ -63,34 +67,30 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl MC609_cpu_firq(void)
+  __declspec(dllexport) void __cdecl MC6809_cpu_firq(void)
   {
-    MC6809State* mc6809State = GetMC6809State();
-
     if (!CC_F)
     {
-      mc6809State->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
+      instance->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
       CC_E = 0; // Turn E flag off
 
       MemWrite8(PC_L, --S_REG);
       MemWrite8(PC_H, --S_REG);
-      MemWrite8(mc6809_getcc(), --S_REG);
+      MemWrite8(MC6809_getcc(), --S_REG);
 
       CC_I = 1;
       CC_F = 1;
       PC_REG = MemRead16(VFIRQ);
     }
 
-    mc6809State->PendingInterrupts &= 253;
+    instance->PendingInterrupts &= 253;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl MC609_cpu_irq(void)
+  __declspec(dllexport) void __cdecl MC6809_cpu_irq(void)
   {
-    MC6809State* mc6809State = GetMC6809State();
-
-    if (mc6809State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
+    if (instance->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
       return;
     }
 
@@ -107,20 +107,18 @@ extern "C" {
       MemWrite8(DPA, --S_REG);
       MemWrite8(B_REG, --S_REG);
       MemWrite8(A_REG, --S_REG);
-      MemWrite8(mc6809_getcc(), --S_REG);
+      MemWrite8(MC6809_getcc(), --S_REG);
       PC_REG = MemRead16(VIRQ);
       CC_I = 1;
     }
 
-    mc6809State->PendingInterrupts &= 254;
+    instance->PendingInterrupts &= 254;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl MC609_cpu_nmi(void)
+  __declspec(dllexport) void __cdecl MC6809_cpu_nmi(void)
   {
-    MC6809State* mc6809State = GetMC6809State();
-
     CC_E = 1;
 
     MemWrite8(PC_L, --S_REG);
@@ -134,24 +132,22 @@ extern "C" {
     MemWrite8(DPA, --S_REG);
     MemWrite8(B_REG, --S_REG);
     MemWrite8(A_REG, --S_REG);
-    MemWrite8(mc6809_getcc(), --S_REG);
+    MemWrite8(MC6809_getcc(), --S_REG);
 
     CC_I = 1;
     CC_F = 1;
     PC_REG = MemRead16(VNMI);
 
-    mc6809State->PendingInterrupts &= 251;
+    instance->PendingInterrupts &= 251;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) /* _inline */ unsigned short __cdecl mc6809_CalculateEA(unsigned char postbyte)
+  __declspec(dllexport) /* _inline */ unsigned short __cdecl MC6809_CalculateEA(unsigned char postbyte)
   {
     static unsigned short int ea = 0;
     static signed char byte = 0;
     static unsigned char reg;
-
-    MC6809State* mc6809State = GetMC6809State();
 
     reg = ((postbyte >> 5) & 3) + 1;
 
@@ -162,25 +158,25 @@ extern "C" {
       case 0:
         ea = PXF(reg);
         PXF(reg)++;
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
         break;
 
       case 1:
         ea = PXF(reg);
         PXF(reg) += 2;
-        mc6809State->CycleCounter += 3;
+        instance->CycleCounter += 3;
         break;
 
       case 2:
         PXF(reg) -= 1;
         ea = PXF(reg);
-        mc6809State->CycleCounter += 2;
+        instance->CycleCounter += 2;
         break;
 
       case 3:
         PXF(reg) -= 2;
         ea = PXF(reg);
-        mc6809State->CycleCounter += 3;
+        instance->CycleCounter += 3;
         break;
 
       case 4:
@@ -189,52 +185,52 @@ extern "C" {
 
       case 5:
         ea = PXF(reg) + ((signed char)B_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
         break;
 
       case 6:
         ea = PXF(reg) + ((signed char)A_REG);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
         break;
 
       case 7:
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
         break;
 
       case 8:
         ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
         break;
 
       case 9:
         ea = PXF(reg) + MemRead16(PC_REG);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         PC_REG += 2;
         break;
 
       case 10:
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
         break;
 
       case 11:
         ea = PXF(reg) + D_REG;
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 12:
         ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
-        mc6809State->CycleCounter += 1;
+        instance->CycleCounter += 1;
         PC_REG++;
         break;
 
       case 13: //MM
         ea = PC_REG + MemRead16(PC_REG) + 2;
-        mc6809State->CycleCounter += 5;
+        instance->CycleCounter += 5;
         PC_REG += 2;
         break;
 
       case 14:
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 15: //01111
@@ -281,90 +277,90 @@ extern "C" {
         ea = PXF(reg);
         PXF(reg) += 2;
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case 18: //10010
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case 19: //10011
         PXF(reg) -= 2;
         ea = PXF(reg);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 6;
+        instance->CycleCounter += 6;
         break;
 
       case 20: //10100
         ea = PXF(reg);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 3;
+        instance->CycleCounter += 3;
         break;
 
       case 21: //10101
         ea = PXF(reg) + ((signed char)B_REG);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 22: //10110
         ea = PXF(reg) + ((signed char)A_REG);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 23: //10111
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 24: //11000
         ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 25: //11001
         ea = PXF(reg) + MemRead16(PC_REG);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         PC_REG += 2;
         break;
 
       case 26: //11010
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         break;
 
       case 27: //11011
         ea = PXF(reg) + D_REG;
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case 28: //11100
         ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 4;
+        instance->CycleCounter += 4;
         PC_REG++;
         break;
 
       case 29: //11101
         ea = PC_REG + MemRead16(PC_REG) + 2;
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 8;
+        instance->CycleCounter += 8;
         PC_REG += 2;
         break;
 
       case 30: //11110
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 7;
+        instance->CycleCounter += 7;
         break;
 
       case 31: //11111
         ea = MemRead16(PC_REG);
         ea = MemRead16(ea);
-        mc6809State->CycleCounter += 8;
+        instance->CycleCounter += 8;
         PC_REG += 2;
         break;
       }
@@ -376,7 +372,7 @@ extern "C" {
       byte = byte / 8;
       ea = PXF(reg) + byte; //Was signed
 
-      mc6809State->CycleCounter += 1;
+      instance->CycleCounter += 1;
     }
 
     return(ea);
@@ -387,23 +383,21 @@ extern "C" {
   __declspec(dllexport) void __cdecl MC6809Init(void)
   {	//Call this first or RESET will core!
     // reg pointers for TFR and EXG and LEA ops
-    MC6809State* mc6809State = GetMC6809State();
+    instance->xfreg16[0] = &D_REG;
+    instance->xfreg16[1] = &X_REG;
+    instance->xfreg16[2] = &Y_REG;
+    instance->xfreg16[3] = &U_REG;
+    instance->xfreg16[4] = &S_REG;
+    instance->xfreg16[5] = &PC_REG;
 
-    mc6809State->xfreg16[0] = &D_REG;
-    mc6809State->xfreg16[1] = &X_REG;
-    mc6809State->xfreg16[2] = &Y_REG;
-    mc6809State->xfreg16[3] = &U_REG;
-    mc6809State->xfreg16[4] = &S_REG;
-    mc6809State->xfreg16[5] = &PC_REG;
-
-    mc6809State->ureg8[0] = (unsigned char*)(&A_REG);
-    mc6809State->ureg8[1] = (unsigned char*)(&B_REG);
-    mc6809State->ureg8[2] = (unsigned char*)(&(mc6809State->ccbits));
-    mc6809State->ureg8[3] = (unsigned char*)(&DPA);
-    mc6809State->ureg8[4] = (unsigned char*)(&DPA);
-    mc6809State->ureg8[5] = (unsigned char*)(&DPA);
-    mc6809State->ureg8[6] = (unsigned char*)(&DPA);
-    mc6809State->ureg8[7] = (unsigned char*)(&DPA);
+    instance->ureg8[0] = (unsigned char*)(&A_REG);
+    instance->ureg8[1] = (unsigned char*)(&B_REG);
+    instance->ureg8[2] = (unsigned char*)(&(instance->ccbits));
+    instance->ureg8[3] = (unsigned char*)(&DPA);
+    instance->ureg8[4] = (unsigned char*)(&DPA);
+    instance->ureg8[5] = (unsigned char*)(&DPA);
+    instance->ureg8[6] = (unsigned char*)(&DPA);
+    instance->ureg8[7] = (unsigned char*)(&DPA);
   }
 }
 
@@ -411,8 +405,6 @@ extern "C" {
   __declspec(dllexport) void __cdecl MC6809Reset(void)
   {
     char index;
-
-    MC6809State* mc6809State = GetMC6809State();
 
     for (index = 0; index <= 5; index++) {		//Set all register to 0 except V
       PXF(index) = 0;
@@ -433,7 +425,7 @@ extern "C" {
 
     DP_REG = 0;
 
-    mc6809State->SyncWaiting = 0;
+    instance->SyncWaiting = 0;
 
     PC_REG = MemRead16(VRESET);	//PC gets its reset vector
 
@@ -444,67 +436,59 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl MC6809AssertInterrupt(unsigned char interrupt, unsigned char waiter) // 4 nmi 2 firq 1 irq
   {
-    MC6809State* mc6809State = GetMC6809State();
-
-    mc6809State->SyncWaiting = 0;
-    mc6809State->PendingInterrupts |= (1 << (interrupt - 1));
-    mc6809State->IRQWaiter = waiter;
+    instance->SyncWaiting = 0;
+    instance->PendingInterrupts |= (1 << (interrupt - 1));
+    instance->IRQWaiter = waiter;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl MC6809DeAssertInterrupt(unsigned char interrupt) // 4 nmi 2 firq 1 irq
   {
-    MC6809State* mc6809State = GetMC6809State();
-
-    mc6809State->PendingInterrupts &= ~(1 << (interrupt - 1));
-    mc6809State->InInterrupt = 0;
+    instance->PendingInterrupts &= ~(1 << (interrupt - 1));
+    instance->InInterrupt = 0;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl MC6809ForcePC(unsigned short newPC)
   {
-    MC6809State* mc6809State = GetMC6809State();
-
     PC_REG = newPC;
 
-    mc6809State->PendingInterrupts = 0;
-    mc6809State->SyncWaiting = 0;
+    instance->PendingInterrupts = 0;
+    instance->SyncWaiting = 0;
   }
 }
 
 extern "C" {
   __declspec(dllexport) int __cdecl MC6809Exec(int cycleFor)
   {
-    MC6809State* mc6809State = GetMC6809State();
+    instance->CycleCounter = 0;
 
-    mc6809State->CycleCounter = 0;
+    while (instance->CycleCounter < cycleFor) {
 
-    while (mc6809State->CycleCounter < cycleFor) {
-
-      if (mc6809State->PendingInterrupts)
+      if (instance->PendingInterrupts)
       {
-        if (mc6809State->PendingInterrupts & 4) {
-          MC609_cpu_nmi();
+        if (instance->PendingInterrupts & 4) {
+          MC6809_cpu_nmi();
         }
 
-        if (mc6809State->PendingInterrupts & 2) {
-          MC609_cpu_firq();
+        if (instance->PendingInterrupts & 2) {
+          MC6809_cpu_firq();
         }
 
-        if (mc6809State->PendingInterrupts & 1)
+        if (instance->PendingInterrupts & 1)
         {
-          if (mc6809State->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
-            MC609_cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
+          if (instance->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
+            MC6809_cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
           }
           else {				// The IRQ is asserted.
-            mc6809State->IRQWaiter -= 1;
+            instance->IRQWaiter -= 1;
           }
         }
       }
 
-      if (mc6809State->SyncWaiting == 1) {
+      if (instance->SyncWaiting == 1) {
         return(0);
       }
 
@@ -513,6 +497,6 @@ extern "C" {
       MC6809ExecOpCode(cycleFor, opCode);
     }
 
-    return(cycleFor - mc6809State->CycleCounter);
+    return(cycleFor - instance->CycleCounter);
   }
 }

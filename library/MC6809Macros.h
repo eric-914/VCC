@@ -1,35 +1,36 @@
 #pragma once
 
-#define D_REG	(mc6809State->d.Reg)
-#define PC_REG (mc6809State->pc.Reg)
-#define X_REG	(mc6809State->x.Reg)
-#define Y_REG	(mc6809State->y.Reg)
-#define U_REG	(mc6809State->u.Reg)
-#define S_REG	(mc6809State->s.Reg)
-#define A_REG	(mc6809State->d.B.msb)
-#define B_REG	(mc6809State->d.B.lsb)
+#define D_REG	 (instance->d.Reg)
+#define PC_REG (instance->pc.Reg)
+#define X_REG	 (instance->x.Reg)
+#define Y_REG	 (instance->y.Reg)
+#define U_REG	 (instance->u.Reg)
+#define S_REG	 (instance->s.Reg)
+#define A_REG	 (instance->d.B.msb)
+#define B_REG	 (instance->d.B.lsb)
 
-#define DP_REG (mc6809State->dp.Reg)
-#define DPA (mc6809State->dp.B.msb)
-#define PC_H (mc6809State->pc.B.msb)
-#define PC_L (mc6809State->pc.B.lsb)
-#define U_H (mc6809State->u.B.msb)
-#define U_L (mc6809State->u.B.lsb)
-#define S_H (mc6809State->s.B.msb)
-#define S_L (mc6809State->s.B.lsb)
-#define X_H (mc6809State->x.B.msb)
-#define X_L (mc6809State->x.B.lsb)
-#define Y_H (mc6809State->y.B.msb)
-#define Y_L (mc6809State->y.B.lsb)
+#define DP_REG (instance->dp.Reg)
 
-#define CC_E mc6809State->cc[E]
-#define CC_F mc6809State->cc[F]
-#define CC_H mc6809State->cc[H]
-#define CC_I mc6809State->cc[I]
-#define CC_N mc6809State->cc[N]
-#define CC_Z mc6809State->cc[Z]
-#define CC_V mc6809State->cc[V]
-#define CC_C mc6809State->cc[C]
+#define DPA  (instance->dp.B.msb)
+#define PC_H (instance->pc.B.msb)
+#define PC_L (instance->pc.B.lsb)
+#define U_H  (instance->u.B.msb)
+#define U_L  (instance->u.B.lsb)
+#define S_H  (instance->s.B.msb)
+#define S_L  (instance->s.B.lsb)
+#define X_H  (instance->x.B.msb)
+#define X_L  (instance->x.B.lsb)
+#define Y_H  (instance->y.B.msb)
+#define Y_L  (instance->y.B.lsb)
 
-#define PUR(_I) (*(mc6809State->ureg8[_I]))
-#define PXF(_I) (*(mc6809State->xfreg16[_I]))
+#define CC_E instance->cc[E]
+#define CC_F instance->cc[F]
+#define CC_H instance->cc[H]
+#define CC_I instance->cc[I]
+#define CC_N instance->cc[N]
+#define CC_Z instance->cc[Z]
+#define CC_V instance->cc[V]
+#define CC_C instance->cc[C]
+
+#define PUR(_I) (*(instance->ureg8[_I]))
+#define PXF(_I) (*(instance->xfreg16[_I]))

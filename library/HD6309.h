@@ -505,7 +505,7 @@
 #define ZTEST(r) !r;
 
 #define IMMADDRESS(r) MemRead16(r)
-#define INDADDRESS(r) hd6309_CalculateEA(MemRead8(r))
+#define INDADDRESS(r) HD6309_CalculateEA(MemRead8(r))
 
 #define M65		0
 #define M64		1
@@ -607,9 +607,9 @@ extern "C" __declspec(dllexport) HD6309State * __cdecl GetHD6309State();
 
 extern "C" __declspec(dllexport) int __cdecl HD6309Exec(int);
 
-extern "C" __declspec(dllexport) unsigned char __cdecl getcc();
-extern "C" __declspec(dllexport) unsigned char __cdecl getmd();
-extern "C" __declspec(dllexport) unsigned short __cdecl hd6309_CalculateEA(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl HD6309_getcc();
+extern "C" __declspec(dllexport) unsigned char __cdecl HD6309_getmd();
+extern "C" __declspec(dllexport) unsigned short __cdecl HD6309_CalculateEA(unsigned char);
 
 extern "C" __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char, unsigned char);
 extern "C" __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char);
@@ -619,5 +619,5 @@ extern "C" __declspec(dllexport) void __cdecl HD6309Reset();
 extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_firq();
 extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_irq();
 extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_nmi();
-extern "C" __declspec(dllexport) void __cdecl setcc(unsigned char);
-extern "C" __declspec(dllexport) void __cdecl setmd(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl HD6309_setcc(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl HD6309_setmd(unsigned char);

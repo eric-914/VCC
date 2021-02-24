@@ -8,37 +8,9 @@ HD6309State* InitializeInstance(HD6309State*);
 
 //TODO: Startup doesn't initialize this instance in the expected order
 
-HD6309State* GetInstance();
+static HD6309State* GetInstance();
 
 static HD6309State* instance = GetInstance();
-
-static unsigned char* NatEmuCycles[] =
-{
-  &(instance->NatEmuCycles65),
-  &(instance->NatEmuCycles64),
-  &(instance->NatEmuCycles32),
-  &(instance->NatEmuCycles21),
-  &(instance->NatEmuCycles54),
-  &(instance->NatEmuCycles97),
-  &(instance->NatEmuCycles85),
-  &(instance->NatEmuCycles51),
-  &(instance->NatEmuCycles31),
-  &(instance->NatEmuCycles1110),
-  &(instance->NatEmuCycles76),
-  &(instance->NatEmuCycles75),
-  &(instance->NatEmuCycles43),
-  &(instance->NatEmuCycles87),
-  &(instance->NatEmuCycles86),
-  &(instance->NatEmuCycles98),
-  &(instance->NatEmuCycles2726),
-  &(instance->NatEmuCycles3635),
-  &(instance->NatEmuCycles3029),
-  &(instance->NatEmuCycles2827),
-  &(instance->NatEmuCycles3726),
-  &(instance->NatEmuCycles3130),
-  &(instance->NatEmuCycles42),
-  &(instance->NatEmuCycles53)
-};
 
 HD6309State* GetInstance() {
   return (instance ? instance : (instance = InitializeInstance(new HD6309State())));
@@ -86,8 +58,36 @@ HD6309State* InitializeInstance(HD6309State* p) {
   return p;
 }
 
+static unsigned char* NatEmuCycles[] =
+{
+  &(instance->NatEmuCycles65),
+  &(instance->NatEmuCycles64),
+  &(instance->NatEmuCycles32),
+  &(instance->NatEmuCycles21),
+  &(instance->NatEmuCycles54),
+  &(instance->NatEmuCycles97),
+  &(instance->NatEmuCycles85),
+  &(instance->NatEmuCycles51),
+  &(instance->NatEmuCycles31),
+  &(instance->NatEmuCycles1110),
+  &(instance->NatEmuCycles76),
+  &(instance->NatEmuCycles75),
+  &(instance->NatEmuCycles43),
+  &(instance->NatEmuCycles87),
+  &(instance->NatEmuCycles86),
+  &(instance->NatEmuCycles98),
+  &(instance->NatEmuCycles2726),
+  &(instance->NatEmuCycles3635),
+  &(instance->NatEmuCycles3029),
+  &(instance->NatEmuCycles2827),
+  &(instance->NatEmuCycles3726),
+  &(instance->NatEmuCycles3130),
+  &(instance->NatEmuCycles42),
+  &(instance->NatEmuCycles53)
+};
+
 extern "C" {
-  __declspec(dllexport) void __cdecl setcc(unsigned char bincc)
+  __declspec(dllexport) void __cdecl HD6309_setcc(unsigned char bincc)
   {
     instance->ccbits = bincc;
 
@@ -103,7 +103,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl getcc(void)
+  __declspec(dllexport) unsigned char __cdecl HD6309_getcc(void)
   {
     unsigned char bincc = 0;
 
@@ -123,7 +123,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl setmd(unsigned char binmd)
+  __declspec(dllexport) void __cdecl HD6309_setmd(unsigned char binmd)
   {
     MD_NATIVE6309 = !!(binmd & (1 << NATIVE6309));
     MD_FIRQMODE = !!(binmd & (1 << FIRQMODE));
@@ -142,7 +142,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl getmd(void)
+  __declspec(dllexport) unsigned char __cdecl HD6309_getmd(void)
   {
     unsigned char binmd = 0;
 
@@ -175,7 +175,7 @@ extern "C" {
 
         MemWrite8(PC_L, --S_REG);
         MemWrite8(PC_H, --S_REG);
-        MemWrite8(getcc(), --S_REG);
+        MemWrite8(HD6309_getcc(), --S_REG);
 
         CC_I = 1;
         CC_F = 1;
@@ -204,7 +204,7 @@ extern "C" {
 
         MemWrite8(B_REG, --S_REG);
         MemWrite8(A_REG, --S_REG);
-        MemWrite8(getcc(), --S_REG);
+        MemWrite8(HD6309_getcc(), --S_REG);
 
         CC_I = 1;
         CC_F = 1;
@@ -246,7 +246,7 @@ extern "C" {
 
       MemWrite8(B_REG, --S_REG);
       MemWrite8(A_REG, --S_REG);
-      MemWrite8(getcc(), --S_REG);
+      MemWrite8(HD6309_getcc(), --S_REG);
 
       PC_REG = MemRead16(VIRQ);
       CC_I = 1;
@@ -281,7 +281,7 @@ extern "C" {
 
     MemWrite8(B_REG, --S_REG);
     MemWrite8(A_REG, --S_REG);
-    MemWrite8(getcc(), --S_REG);
+    MemWrite8(HD6309_getcc(), --S_REG);
 
     CC_I = 1;
     CC_F = 1;
@@ -292,7 +292,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned short __cdecl hd6309_CalculateEA(unsigned char postbyte)
+  __declspec(dllexport) unsigned short __cdecl HD6309_CalculateEA(unsigned char postbyte)
   {
     static unsigned short int ea = 0;
     static signed char byte = 0;
@@ -763,7 +763,7 @@ extern "C" {
     MD_ILLEGAL = 0;
     MD_ZERODIV = 0;
 
-    instance->mdbits = getmd();
+    instance->mdbits = HD6309_getmd();
 
     instance->SyncWaiting = 0;
 
