@@ -157,8 +157,6 @@ extern "C"
 {
   __declspec(dllexport) void __cdecl SetJoystick(unsigned short x, unsigned short y)
   {
-    JoystickState* joystickState = GetJoystickState();
-
     if (x > 63) {
       x = 63;
     }
@@ -167,16 +165,16 @@ extern "C"
       y = 63;
     }
 
-    if (joystickState->Left.UseMouse == 1)
+    if (instance->Left.UseMouse == 1)
     {
-      joystickState->LeftStickX = x;
-      joystickState->LeftStickY = y;
+      instance->LeftStickX = x;
+      instance->LeftStickY = y;
     }
 
-    if (joystickState->Right.UseMouse == 1)
+    if (instance->Right.UseMouse == 1)
     {
-      joystickState->RightStickX = x;
-      joystickState->RightStickY = y;
+      instance->RightStickX = x;
+      instance->RightStickY = y;
     }
 
     return;
@@ -187,10 +185,8 @@ extern "C"
 {
   __declspec(dllexport) void __cdecl SetStickNumbers(unsigned char leftStickNumber, unsigned char rightStickNumber)
   {
-    JoystickState* joystickState = GetJoystickState();
-
-    joystickState->LeftStickNumber = leftStickNumber;
-    joystickState->RightStickNumber = rightStickNumber;
+    instance->LeftStickNumber = leftStickNumber;
+    instance->RightStickNumber = rightStickNumber;
   }
 }
 
@@ -200,42 +196,41 @@ extern "C"
   {
     DIJOYSTATE2 Stick1;
 
-    JoystickState* joystickState = GetJoystickState();
-
-    if (joystickState->Left.UseMouse == 3)
+    if (instance->Left.UseMouse == 3)
     {
-      JoyStickPoll(&Stick1, joystickState->LeftStickNumber);
-      joystickState->LeftStickX = (unsigned short)Stick1.lX >> 10;
-      joystickState->LeftStickY = (unsigned short)Stick1.lY >> 10;
-      joystickState->LeftButton1Status = Stick1.rgbButtons[0] >> 7;
-      joystickState->LeftButton2Status = Stick1.rgbButtons[1] >> 7;
+      JoyStickPoll(&Stick1, instance->LeftStickNumber);
+
+      instance->LeftStickX = (unsigned short)Stick1.lX >> 10;
+      instance->LeftStickY = (unsigned short)Stick1.lY >> 10;
+      instance->LeftButton1Status = Stick1.rgbButtons[0] >> 7;
+      instance->LeftButton2Status = Stick1.rgbButtons[1] >> 7;
     }
 
-    if (joystickState->Right.UseMouse == 3)
+    if (instance->Right.UseMouse == 3)
     {
-      JoyStickPoll(&Stick1, joystickState->RightStickNumber);
-      joystickState->RightStickX = (unsigned short)Stick1.lX >> 10;
-      joystickState->RightStickY = (unsigned short)Stick1.lY >> 10;
-      joystickState->RightButton1Status = Stick1.rgbButtons[0] >> 7;
-      joystickState->RightButton2Status = Stick1.rgbButtons[1] >> 7;
+      JoyStickPoll(&Stick1, instance->RightStickNumber);
+      instance->RightStickX = (unsigned short)Stick1.lX >> 10;
+      instance->RightStickY = (unsigned short)Stick1.lY >> 10;
+      instance->RightButton1Status = Stick1.rgbButtons[0] >> 7;
+      instance->RightButton2Status = Stick1.rgbButtons[1] >> 7;
     }
 
     switch (pot)
     {
     case 0:
-      return(joystickState->RightStickX);
+      return(instance->RightStickX);
       break;
 
     case 1:
-      return(joystickState->RightStickY);
+      return(instance->RightStickY);
       break;
 
     case 2:
-      return(joystickState->LeftStickX);
+      return(instance->LeftStickX);
       break;
 
     case 3:
-      return(joystickState->LeftStickY);
+      return(instance->LeftStickY);
       break;
     }
 
@@ -250,45 +245,43 @@ extern "C"
   {
     unsigned char buttonStatus = (side << 1) | state;
 
-    JoystickState* joystickState = GetJoystickState();
-
-    if (joystickState->Left.UseMouse == 1)
+    if (instance->Left.UseMouse == 1)
       switch (buttonStatus)
       {
       case 0:
-        joystickState->LeftButton1Status = 0;
+        instance->LeftButton1Status = 0;
         break;
 
       case 1:
-        joystickState->LeftButton1Status = 1;
+        instance->LeftButton1Status = 1;
         break;
 
       case 2:
-        joystickState->LeftButton2Status = 0;
+        instance->LeftButton2Status = 0;
         break;
 
       case 3:
-        joystickState->LeftButton2Status = 1;
+        instance->LeftButton2Status = 1;
         break;
       }
 
-    if (joystickState->Right.UseMouse == 1)
+    if (instance->Right.UseMouse == 1)
       switch (buttonStatus)
       {
       case 0:
-        joystickState->RightButton1Status = 0;
+        instance->RightButton1Status = 0;
         break;
 
       case 1:
-        joystickState->RightButton1Status = 1;
+        instance->RightButton1Status = 1;
         break;
 
       case 2:
-        joystickState->RightButton2Status = 0;
+        instance->RightButton2Status = 0;
         break;
 
       case 3:
-        joystickState->RightButton2Status = 1;
+        instance->RightButton2Status = 1;
         break;
       }
   }
@@ -300,165 +293,163 @@ extern "C"
   {
     char retValue = scanCode;
 
-    JoystickState* joystickState = GetJoystickState();
-
     switch (phase)
     {
     case 0:
-      if (joystickState->Left.UseMouse == 0)
+      if (instance->Left.UseMouse == 0)
       {
-        if (scanCode == joystickState->Left.Left)
+        if (scanCode == instance->Left.Left)
         {
-          joystickState->LeftStickX = 32;
+          instance->LeftStickX = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Right)
+        if (scanCode == instance->Left.Right)
         {
-          joystickState->LeftStickX = 32;
+          instance->LeftStickX = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Up)
+        if (scanCode == instance->Left.Up)
         {
-          joystickState->LeftStickY = 32;
+          instance->LeftStickY = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Down)
+        if (scanCode == instance->Left.Down)
         {
-          joystickState->LeftStickY = 32;
+          instance->LeftStickY = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Fire1)
+        if (scanCode == instance->Left.Fire1)
         {
-          joystickState->LeftButton1Status = 0;
+          instance->LeftButton1Status = 0;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Fire2)
+        if (scanCode == instance->Left.Fire2)
         {
-          joystickState->LeftButton2Status = 0;
+          instance->LeftButton2Status = 0;
           retValue = 0;
         }
       }
 
-      if (joystickState->Right.UseMouse == 0)
+      if (instance->Right.UseMouse == 0)
       {
-        if (scanCode == joystickState->Right.Left)
+        if (scanCode == instance->Right.Left)
         {
-          joystickState->RightStickX = 32;
+          instance->RightStickX = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Right)
+        if (scanCode == instance->Right.Right)
         {
-          joystickState->RightStickX = 32;
+          instance->RightStickX = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Up)
+        if (scanCode == instance->Right.Up)
         {
-          joystickState->RightStickY = 32;
+          instance->RightStickY = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Down)
+        if (scanCode == instance->Right.Down)
         {
-          joystickState->RightStickY = 32;
+          instance->RightStickY = 32;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Fire1)
+        if (scanCode == instance->Right.Fire1)
         {
-          joystickState->RightButton1Status = 0;
+          instance->RightButton1Status = 0;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Fire2)
+        if (scanCode == instance->Right.Fire2)
         {
-          joystickState->RightButton2Status = 0;
+          instance->RightButton2Status = 0;
           retValue = 0;
         }
       }
       break;
 
     case 1:
-      if (joystickState->Left.UseMouse == 0)
+      if (instance->Left.UseMouse == 0)
       {
-        if (scanCode == joystickState->Left.Left)
+        if (scanCode == instance->Left.Left)
         {
-          joystickState->LeftStickX = 0;
+          instance->LeftStickX = 0;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Right)
+        if (scanCode == instance->Left.Right)
         {
-          joystickState->LeftStickX = 63;
+          instance->LeftStickX = 63;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Up)
+        if (scanCode == instance->Left.Up)
         {
-          joystickState->LeftStickY = 0;
+          instance->LeftStickY = 0;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Down)
+        if (scanCode == instance->Left.Down)
         {
-          joystickState->LeftStickY = 63;
+          instance->LeftStickY = 63;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Fire1)
+        if (scanCode == instance->Left.Fire1)
         {
-          joystickState->LeftButton1Status = 1;
+          instance->LeftButton1Status = 1;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Left.Fire2)
+        if (scanCode == instance->Left.Fire2)
         {
-          joystickState->LeftButton2Status = 1;
+          instance->LeftButton2Status = 1;
           retValue = 0;
         }
       }
 
-      if (joystickState->Right.UseMouse == 0)
+      if (instance->Right.UseMouse == 0)
       {
-        if (scanCode == joystickState->Right.Left)
+        if (scanCode == instance->Right.Left)
         {
           retValue = 0;
-          joystickState->RightStickX = 0;
+          instance->RightStickX = 0;
         }
 
-        if (scanCode == joystickState->Right.Right)
+        if (scanCode == instance->Right.Right)
         {
-          joystickState->RightStickX = 63;
-          retValue = 0;
-        }
-
-        if (scanCode == joystickState->Right.Up)
-        {
-          joystickState->RightStickY = 0;
+          instance->RightStickX = 63;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Down)
+        if (scanCode == instance->Right.Up)
         {
-          joystickState->RightStickY = 63;
+          instance->RightStickY = 0;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Fire1)
+        if (scanCode == instance->Right.Down)
         {
-          joystickState->RightButton1Status = 1;
+          instance->RightStickY = 63;
           retValue = 0;
         }
 
-        if (scanCode == joystickState->Right.Fire2)
+        if (scanCode == instance->Right.Fire1)
         {
-          joystickState->RightButton2Status = 1;
+          instance->RightButton1Status = 1;
+          retValue = 0;
+        }
+
+        if (scanCode == instance->Right.Fire2)
+        {
+          instance->RightButton2Status = 1;
           retValue = 0;
         }
       }

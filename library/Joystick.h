@@ -37,16 +37,20 @@ typedef struct
   JoyStick Right;
 } JoystickState;
 
-extern "C" __declspec(dllexport) JoystickState* __cdecl GetJoystickState();
-
-extern "C" __declspec(dllexport) char* __cdecl GetStickName(int index);
+extern "C" __declspec(dllexport) JoystickState * __cdecl GetJoystickState();
 
 extern "C" __declspec(dllexport) HRESULT __cdecl JoyStickPoll(DIJOYSTATE2*, unsigned char);
-extern "C" __declspec(dllexport) int __cdecl EnumerateJoysticks(void);
+
 extern "C" __declspec(dllexport) bool __cdecl InitJoyStick(unsigned char);
 
-extern "C" __declspec(dllexport) void __cdecl SetJoystick(unsigned short x, unsigned short y);
-extern "C" __declspec(dllexport) void __cdecl SetStickNumbers(unsigned char leftStickNumber, unsigned char rightStickNumber);
-extern "C" __declspec(dllexport) unsigned short __cdecl get_pot_value(unsigned char pot);
-extern "C" __declspec(dllexport) void __cdecl SetButtonStatus(unsigned char side, unsigned char state);
-extern "C" __declspec(dllexport) char __cdecl SetMouseStatus(char scanCode, unsigned char phase);
+extern "C" __declspec(dllexport) char __cdecl SetMouseStatus(char, unsigned char);
+
+extern "C" __declspec(dllexport) char* __cdecl GetStickName(int);
+
+extern "C" __declspec(dllexport) int __cdecl EnumerateJoysticks();
+
+extern "C" __declspec(dllexport) unsigned short __cdecl get_pot_value(unsigned char);
+
+extern "C" __declspec(dllexport) void __cdecl SetButtonStatus(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetJoystick(unsigned short, unsigned short);
+extern "C" __declspec(dllexport) void __cdecl SetStickNumbers(unsigned char, unsigned char);

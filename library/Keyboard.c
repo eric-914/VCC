@@ -31,26 +31,26 @@ KeyboardState* InitializeInstance(KeyboardState* p) {
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl GimeGetKeyboardInterruptState()
   {
-    return GetKeyBoardState()->KeyboardInterruptEnabled;
+    return instance->KeyboardInterruptEnabled;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl GimeSetKeyboardInterruptState(unsigned char state)
   {
-    GetKeyBoardState()->KeyboardInterruptEnabled = !!state;
+    instance->KeyboardInterruptEnabled = !!state;
   }
 }
 
 extern "C" {
   __declspec(dllexport) bool __cdecl GetPaste() {
-    return GetKeyBoardState()->Pasting;
+    return instance->Pasting;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetPaste(bool flag) {
-    GetKeyBoardState()->Pasting = flag;
+    instance->Pasting = flag;
   }
 }
 
@@ -63,8 +63,6 @@ extern "C" {
     keytranslationentry_t* entry1 = (keytranslationentry_t*)e1;
     keytranslationentry_t* entry2 = (keytranslationentry_t*)e2;
     int result = 0;
-
-    KeyboardState* keyboardState = GetKeyBoardState();
 
     // empty listing push to end
     if (entry1->ScanCode1 == 0 && entry1->ScanCode2 == 0 && entry2->ScanCode1 != 0)
@@ -148,8 +146,6 @@ extern "C" {
     keytranslationentry_t* keyLayoutTable = NULL;
     keytranslationentry_t	keyTransEntry;
 
-    KeyboardState* keyboardState = GetKeyBoardState();
-
     assert(keyBoardLayout >= 0 && keyBoardLayout < kKBLayoutCount);
 
     switch (keyBoardLayout)
@@ -178,7 +174,7 @@ extern "C" {
     //XTRACE("Building run-time key table for layout # : %d - %s\n", keyBoardLayout, k_keyboardLayoutNames[keyBoardLayout]);
 
     // copy the selected keyboard layout to the run-time table
-    memset(keyboardState->KeyTransTable, 0, sizeof(keyboardState->KeyTransTable));
+    memset(instance->KeyTransTable, 0, sizeof(instance->KeyTransTable));
     index2 = 0;
 
     for (index1 = 0; ; index1++)
@@ -217,7 +213,7 @@ extern "C" {
         break;
       }
 
-      memcpy(&(keyboardState->KeyTransTable[index2++]), &keyTransEntry, sizeof(keytranslationentry_t));
+      memcpy(&(instance->KeyTransTable[index2++]), &keyTransEntry, sizeof(keytranslationentry_t));
 
       assert(index2 <= KBTABLE_ENTRY_COUNT && "keyboard layout table is longer than we can handle");
     }
@@ -229,7 +225,7 @@ extern "C" {
     // time a key is pressed, we want them to be in the correct 
     // order.
     //
-    qsort(keyboardState->KeyTransTable, KBTABLE_ENTRY_COUNT, sizeof(keytranslationentry_t), KeyTransCompare);
+    qsort(instance->KeyTransTable, KBTABLE_ENTRY_COUNT, sizeof(keytranslationentry_t), KeyTransCompare);
 
 #ifdef _DEBUG
     //
@@ -238,7 +234,7 @@ extern "C" {
     for (index1 = 0; index1 < KBTABLE_ENTRY_COUNT; index1++)
     {
       // check for null entry
-      if (keyboardState->KeyTransTable[index1].ScanCode1 == 0 && keyboardState->KeyTransTable[index1].ScanCode2 == 0)
+      if (instance->KeyTransTable[index1].ScanCode1 == 0 && instance->KeyTransTable[index1].ScanCode2 == 0)
       {
         // done
         break;
@@ -274,7 +270,6 @@ extern "C" {
     unsigned char mask = 1;
     unsigned char ret_val = 0;
 
-    KeyboardState* keyboardState = GetKeyBoardState();
     JoystickState* joystickState = GetJoystickState();
 
     temp = ~column; //Get column
@@ -283,7 +278,7 @@ extern "C" {
     {
       if ((temp & mask)) // Found an active column scan
       {
-        ret_val |= keyboardState->RolloverTable[x];
+        ret_val |= instance->RolloverTable[x];
       }
 
       mask = (mask << 1);
@@ -355,65 +350,63 @@ extern "C" {
   {
     unsigned char	lockOut = 0;
 
-    KeyboardState* keyboardState = GetKeyBoardState();
-
     // clear the rollover table
     for (int index = 0; index < 8; index++)
     {
-      keyboardState->RolloverTable[index] = 0;
+      instance->RolloverTable[index] = 0;
     }
 
     // set rollover table based on ScanTable key status
     for (int index = 0; index < KBTABLE_ENTRY_COUNT; index++)
     {
       // stop at last entry
-      if ((keyboardState->KeyTransTable[index].ScanCode1 == 0) && (keyboardState->KeyTransTable[index].ScanCode2 == 0))
+      if ((instance->KeyTransTable[index].ScanCode1 == 0) && (instance->KeyTransTable[index].ScanCode2 == 0))
       {
         break;
       }
 
-      if (lockOut != keyboardState->KeyTransTable[index].ScanCode1)
+      if (lockOut != instance->KeyTransTable[index].ScanCode1)
       {
         // Single input key 
-        if ((keyboardState->KeyTransTable[index].ScanCode1 != 0) && (keyboardState->KeyTransTable[index].ScanCode2 == 0))
+        if ((instance->KeyTransTable[index].ScanCode1 != 0) && (instance->KeyTransTable[index].ScanCode2 == 0))
         {
           // check if key pressed
-          if (keyboardState->ScanTable[keyboardState->KeyTransTable[index].ScanCode1] == KEY_DOWN)
+          if (instance->ScanTable[instance->KeyTransTable[index].ScanCode1] == KEY_DOWN)
           {
-            int col = keyboardState->KeyTransTable[index].Col1;
+            int col = instance->KeyTransTable[index].Col1;
 
             assert(col >= 0 && col < 8);
 
-            keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row1;
+            instance->RolloverTable[col] |= instance->KeyTransTable[index].Row1;
 
-            col = keyboardState->KeyTransTable[index].Col2;
+            col = instance->KeyTransTable[index].Col2;
 
             assert(col >= 0 && col < 8);
 
-            keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row2;
+            instance->RolloverTable[col] |= instance->KeyTransTable[index].Row2;
           }
         }
 
         // Double Input Key
-        if ((keyboardState->KeyTransTable[index].ScanCode1 != 0) && (keyboardState->KeyTransTable[index].ScanCode2 != 0))
+        if ((instance->KeyTransTable[index].ScanCode1 != 0) && (instance->KeyTransTable[index].ScanCode2 != 0))
         {
           // check if both keys pressed
-          if ((keyboardState->ScanTable[keyboardState->KeyTransTable[index].ScanCode1] == KEY_DOWN) && (keyboardState->ScanTable[keyboardState->KeyTransTable[index].ScanCode2] == KEY_DOWN))
+          if ((instance->ScanTable[instance->KeyTransTable[index].ScanCode1] == KEY_DOWN) && (instance->ScanTable[instance->KeyTransTable[index].ScanCode2] == KEY_DOWN))
           {
-            int col = keyboardState->KeyTransTable[index].Col1;
+            int col = instance->KeyTransTable[index].Col1;
 
             assert(col >= 0 && col < 8);
 
-            keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row1;
+            instance->RolloverTable[col] |= instance->KeyTransTable[index].Row1;
 
-            col = keyboardState->KeyTransTable[index].Col2;
+            col = instance->KeyTransTable[index].Col2;
 
             assert(col >= 0 && col < 8);
 
-            keyboardState->RolloverTable[col] |= keyboardState->KeyTransTable[index].Row2;
+            instance->RolloverTable[col] |= instance->KeyTransTable[index].Row2;
 
             // always SHIFT
-            lockOut = keyboardState->KeyTransTable[index].ScanCode1;
+            lockOut = instance->KeyTransTable[index].ScanCode1;
 
             break;
           }
@@ -437,12 +430,11 @@ extern "C" {
   {
     XTRACE("Key  : %c (%3d / 0x%02X)  Scan : %d / 0x%02X\n", key == 0 ? '0' : key, key == 0 ? '0' : key, key == 0 ? '0' : key, scanCode, scanCode);
 
-    KeyboardState* keyboardState = GetKeyBoardState();
     JoystickState* joystickState = GetJoystickState();
 
     //If requested, abort pasting operation.
     if (scanCode == 0x01 || scanCode == 0x43 || scanCode == 0x3F) {
-      keyboardState->Pasting = false;
+      instance->Pasting = false;
 
       OutputDebugString("ABORT PASTING!!!\n");
     }
@@ -481,7 +473,7 @@ extern "C" {
       }
 
       // track key is down
-      keyboardState->ScanTable[scanCode] = KEY_DOWN;
+      instance->ScanTable[scanCode] = KEY_DOWN;
 
       vccKeyboardUpdateRolloverTable();
 
@@ -500,7 +492,7 @@ extern "C" {
       }
 
       // reset key (released)
-      keyboardState->ScanTable[scanCode] = KEY_UP;
+      instance->ScanTable[scanCode] = KEY_UP;
 
       // TODO: verify this is accurate emulation
       // Clean out rollover table on shift release
@@ -508,7 +500,7 @@ extern "C" {
       {
         for (int Index = 0; Index < KBTABLE_ENTRY_COUNT; Index++)
         {
-          keyboardState->ScanTable[Index] = KEY_UP;
+          instance->ScanTable[Index] = KEY_UP;
         }
       }
 

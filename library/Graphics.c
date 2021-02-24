@@ -282,22 +282,20 @@ extern "C" {
         }
       }
 
-      GraphicsState* gs = GetGraphicsState();
-
       rr = (unsigned char)r;
       gg = (unsigned char)g;
       bb = (unsigned char)b;
-      gs->PalleteLookup32[0][index] = (rr << 16) | (gg << 8) | bb;
+      instance->PalleteLookup32[0][index] = (rr << 16) | (gg << 8) | bb;
 
       rr = rr >> 3;
       gg = gg >> 3;
       bb = bb >> 3;
-      gs->PalleteLookup16[0][index] = (rr << 11) | (gg << 6) | bb;
+      instance->PalleteLookup16[0][index] = (rr << 11) | (gg << 6) | bb;
 
       rr = rr >> 3;
       gg = gg >> 3;
       bb = bb >> 3;
-      gs->PalleteLookup8[0][index] = 0x80 | ((rr & 2) << 4) | ((gg & 2) << 3) | ((bb & 2) << 2) | ((rr & 1) << 2) | ((gg & 1) << 1) | (bb & 1);
+      instance->PalleteLookup8[0][index] = 0x80 | ((rr & 2) << 4) | ((gg & 2) << 3) | ((bb & 2) << 2) | ((rr & 1) << 2) | ((gg & 1) << 1) | (bb & 1);
     }
   }
 }
@@ -305,31 +303,27 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimePalette(unsigned char pallete, unsigned char color)
   {
-    GraphicsState* gs = GetGraphicsState();
-
     // Convert the 6bit rgbrgb value to rrrrrggggggbbbbb for the Real video hardware.
     //	unsigned char r,g,b;
-    gs->Pallete[pallete] = ((color & 63));
-    gs->Pallete8Bit[pallete] = gs->PalleteLookup8[gs->MonType][color & 63];
-    gs->Pallete16Bit[pallete] = gs->PalleteLookup16[gs->MonType][color & 63];
-    gs->Pallete32Bit[pallete] = gs->PalleteLookup32[gs->MonType][color & 63];
+    instance->Pallete[pallete] = ((color & 63));
+    instance->Pallete8Bit[pallete] = instance->PalleteLookup8[instance->MonType][color & 63];
+    instance->Pallete16Bit[pallete] = instance->PalleteLookup16[instance->MonType][color & 63];
+    instance->Pallete32Bit[pallete] = instance->PalleteLookup32[instance->MonType][color & 63];
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl InvalidateBorder(void)
   {
-    GetGraphicsState()->BorderChange = 5;
+    instance->BorderChange = 5;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetBorderChange(unsigned char data)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->BorderChange > 0) {
-      gs->BorderChange--;
+    if (instance->BorderChange > 0) {
+      instance->BorderChange--;
     }
   }
 }
@@ -347,88 +341,86 @@ extern "C" {
     static unsigned char CCPixelsperByte[4] = { 8,4,2,2 };
     static unsigned char ColorSet = 0, Temp1;
 
-    GraphicsState* gs = GetGraphicsState();
+    instance->ExtendedText = 1;
 
-    gs->ExtendedText = 1;
-
-    switch (gs->CompatMode)
+    switch (instance->CompatMode)
     {
     case 0:		//Color Computer 3 Mode
-      gs->NewStartofVidram = gs->VerticalOffsetRegister * 8;
-      gs->GraphicsMode = (gs->CC3Vmode & 128) >> 7;
-      gs->VresIndex = (gs->CC3Vres & 96) >> 5;
-      CC3LinesperRow[7] = gs->LinesperScreen;	// For 1 pixel high modes
-      gs->Bpp = gs->CC3Vres & 3;
-      gs->LinesperRow = CC3LinesperRow[gs->CC3Vmode & 7];
-      gs->BytesperRow = CC3BytesperRow[(gs->CC3Vres & 28) >> 2];
-      gs->PalleteIndex = 0;
+      instance->NewStartofVidram = instance->VerticalOffsetRegister * 8;
+      instance->GraphicsMode = (instance->CC3Vmode & 128) >> 7;
+      instance->VresIndex = (instance->CC3Vres & 96) >> 5;
+      CC3LinesperRow[7] = instance->LinesperScreen;	// For 1 pixel high modes
+      instance->Bpp = instance->CC3Vres & 3;
+      instance->LinesperRow = CC3LinesperRow[instance->CC3Vmode & 7];
+      instance->BytesperRow = CC3BytesperRow[(instance->CC3Vres & 28) >> 2];
+      instance->PalleteIndex = 0;
 
-      if (!gs->GraphicsMode)
+      if (!instance->GraphicsMode)
       {
-        if (gs->CC3Vres & 1) {
-          gs->ExtendedText = 2;
+        if (instance->CC3Vres & 1) {
+          instance->ExtendedText = 2;
         }
 
-        gs->Bpp = 0;
-        gs->BytesperRow = CC3BytesperTextRow[(gs->CC3Vres & 28) >> 2];
+        instance->Bpp = 0;
+        instance->BytesperRow = CC3BytesperTextRow[(instance->CC3Vres & 28) >> 2];
       }
 
       break;
 
     case 1:					//Color Computer 2 Mode
-      gs->CC3BorderColor = 0;	//Black for text modes
-      gs->BorderChange = 3;
-      gs->NewStartofVidram = (512 * gs->CC2Offset) + (gs->VerticalOffsetRegister & 0xE0FF) * 8;
-      gs->GraphicsMode = (gs->CC2VDGPiaMode & 16) >> 4; //PIA Set on graphics clear on text
-      gs->VresIndex = 0;
-      gs->LinesperRow = CC2LinesperRow[gs->CC2VDGMode];
+      instance->CC3BorderColor = 0;	//Black for text modes
+      instance->BorderChange = 3;
+      instance->NewStartofVidram = (512 * instance->CC2Offset) + (instance->VerticalOffsetRegister & 0xE0FF) * 8;
+      instance->GraphicsMode = (instance->CC2VDGPiaMode & 16) >> 4; //PIA Set on graphics clear on text
+      instance->VresIndex = 0;
+      instance->LinesperRow = CC2LinesperRow[instance->CC2VDGMode];
 
-      if (gs->GraphicsMode)
+      if (instance->GraphicsMode)
       {
-        ColorSet = (gs->CC2VDGPiaMode & 1);
+        ColorSet = (instance->CC2VDGPiaMode & 1);
 
         if (ColorSet == 0) {
-          gs->CC3BorderColor = 18; //18 Bright Green
+          instance->CC3BorderColor = 18; //18 Bright Green
         }
         else {
-          gs->CC3BorderColor = 63; //63 White 
+          instance->CC3BorderColor = 63; //63 White 
         }
 
-        gs->BorderChange = 3;
-        gs->Bpp = CC2Bpp[(gs->CC2VDGPiaMode & 15) >> 1];
-        gs->BytesperRow = CC2BytesperRow[(gs->CC2VDGPiaMode & 15) >> 1];
-        Temp1 = (gs->CC2VDGPiaMode & 1) << 1 | (gs->Bpp & 1);
-        gs->PalleteIndex = CC2PaletteSet[Temp1];
+        instance->BorderChange = 3;
+        instance->Bpp = CC2Bpp[(instance->CC2VDGPiaMode & 15) >> 1];
+        instance->BytesperRow = CC2BytesperRow[(instance->CC2VDGPiaMode & 15) >> 1];
+        Temp1 = (instance->CC2VDGPiaMode & 1) << 1 | (instance->Bpp & 1);
+        instance->PalleteIndex = CC2PaletteSet[Temp1];
       }
       else
       {	//Setup for 32x16 text Mode
-        gs->Bpp = 0;
-        gs->BytesperRow = 32;
-        gs->InvertAll = (gs->CC2VDGPiaMode & 4) >> 2;
-        gs->LowerCase = (gs->CC2VDGPiaMode & 2) >> 1;
-        ColorSet = (gs->CC2VDGPiaMode & 1);
-        Temp1 = ((ColorSet << 1) | gs->InvertAll);
+        instance->Bpp = 0;
+        instance->BytesperRow = 32;
+        instance->InvertAll = (instance->CC2VDGPiaMode & 4) >> 2;
+        instance->LowerCase = (instance->CC2VDGPiaMode & 2) >> 1;
+        ColorSet = (instance->CC2VDGPiaMode & 1);
+        Temp1 = ((ColorSet << 1) | instance->InvertAll);
 
         switch (Temp1)
         {
         case 0:
-          gs->TextFGPallete = 12;
-          gs->TextBGPallete = 13;
+          instance->TextFGPallete = 12;
+          instance->TextBGPallete = 13;
           break;
 
         case 1:
-          gs->TextFGPallete = 13;
-          gs->TextBGPallete = 12;
+          instance->TextFGPallete = 13;
+          instance->TextBGPallete = 12;
           break;
 
         case 2:
-          gs->TextFGPallete = 14;
-          gs->TextBGPallete = 15;
+          instance->TextFGPallete = 14;
+          instance->TextBGPallete = 15;
           break;
 
         case 3:
-          gs->TextFGPallete = 15;
-          gs->TextBGPallete = 14;
+          instance->TextFGPallete = 15;
+          instance->TextBGPallete = 14;
           break;
         }
       }
@@ -437,48 +429,46 @@ extern "C" {
     }
 
     //gs->ColorInvert = (gs->CC3Vmode & 32) >> 5;
-    gs->LinesperScreen = gs->Lpf[gs->VresIndex];
+    instance->LinesperScreen = instance->Lpf[instance->VresIndex];
 
-    SetLinesperScreen(gs->VresIndex);
+    SetLinesperScreen(instance->VresIndex);
 
-    gs->VertCenter = gs->VcenterTable[gs->VresIndex] - 4; //4 unrendered top lines
-    gs->PixelsperLine = gs->BytesperRow * CCPixelsperByte[gs->Bpp];
+    instance->VertCenter = instance->VcenterTable[instance->VresIndex] - 4; //4 unrendered top lines
+    instance->PixelsperLine = instance->BytesperRow * CCPixelsperByte[instance->Bpp];
 
-    if (gs->PixelsperLine % 40)
+    if (instance->PixelsperLine % 40)
     {
-      gs->Stretch = (512 / gs->PixelsperLine) - 1;
-      gs->HorzCenter = 64;
+      instance->Stretch = (512 / instance->PixelsperLine) - 1;
+      instance->HorzCenter = 64;
     }
     else
     {
-      gs->Stretch = (640 / gs->PixelsperLine) - 1;
-      gs->HorzCenter = 0;
+      instance->Stretch = (640 / instance->PixelsperLine) - 1;
+      instance->HorzCenter = 0;
     }
 
-    gs->VPitch = gs->BytesperRow;
+    instance->VPitch = instance->BytesperRow;
 
-    if (gs->HorzOffsetReg & 128) {
-      gs->VPitch = 256;
+    if (instance->HorzOffsetReg & 128) {
+      instance->VPitch = 256;
     }
 
-    gs->BorderColor8 = ((gs->CC3BorderColor & 63) | 128);
-    gs->BorderColor16 = gs->PalleteLookup16[gs->MonType][gs->CC3BorderColor & 63];
-    gs->BorderColor32 = gs->PalleteLookup32[gs->MonType][gs->CC3BorderColor & 63];
-    gs->NewStartofVidram = (gs->NewStartofVidram & gs->VidMask) + gs->DistoOffset; //DistoOffset for 2M configuration
-    gs->MasterMode = (gs->GraphicsMode << 7) | (gs->CompatMode << 6) | ((gs->Bpp & 3) << 4) | (gs->Stretch & 15);
+    instance->BorderColor8 = ((instance->CC3BorderColor & 63) | 128);
+    instance->BorderColor16 = instance->PalleteLookup16[instance->MonType][instance->CC3BorderColor & 63];
+    instance->BorderColor32 = instance->PalleteLookup32[instance->MonType][instance->CC3BorderColor & 63];
+    instance->NewStartofVidram = (instance->NewStartofVidram & instance->VidMask) + instance->DistoOffset; //DistoOffset for 2M configuration
+    instance->MasterMode = (instance->GraphicsMode << 7) | (instance->CompatMode << 6) | ((instance->Bpp & 3) << 4) | (instance->Stretch & 15);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetCompatMode(unsigned char mode)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CompatMode != mode)
+    if (instance->CompatMode != mode)
     {
-      gs->CompatMode = mode;
+      instance->CompatMode = mode;
       SetupDisplay();
-      gs->BorderChange = 3;
+      instance->BorderChange = 3;
     }
   }
 }
@@ -486,13 +476,11 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeBorderColor(unsigned char data)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CC3BorderColor != (data & 63))
+    if (instance->CC3BorderColor != (data & 63))
     {
-      gs->CC3BorderColor = data & 63;
+      instance->CC3BorderColor = data & 63;
       SetupDisplay();
-      gs->BorderChange = 3;
+      instance->BorderChange = 3;
     }
   }
 }
@@ -500,12 +488,10 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeHorzOffset(unsigned char data)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->HorzOffsetReg != data)
+    if (instance->HorzOffsetReg != data)
     {
-      gs->Hoffset = (data << 1);
-      gs->HorzOffsetReg = data;
+      instance->Hoffset = (data << 1);
+      instance->HorzOffsetReg = data;
       SetupDisplay();
     }
   }
@@ -514,13 +500,11 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeVdgMode(unsigned char vdgMode) //3 bits from SAM Registers
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CC2VDGMode != vdgMode)
+    if (instance->CC2VDGMode != vdgMode)
     {
-      gs->CC2VDGMode = vdgMode;
+      instance->CC2VDGMode = vdgMode;
       SetupDisplay();
-      gs->BorderChange = 3;
+      instance->BorderChange = 3;
     }
   }
 }
@@ -528,13 +512,11 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeVdgMode2(unsigned char vdgmode2) //5 bits from PIA Register
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CC2VDGPiaMode != vdgmode2)
+    if (instance->CC2VDGPiaMode != vdgmode2)
     {
-      gs->CC2VDGPiaMode = vdgmode2;
+      instance->CC2VDGPiaMode = vdgmode2;
       SetupDisplay();
-      gs->BorderChange = 3;
+      instance->BorderChange = 3;
     }
   }
 }
@@ -543,11 +525,9 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeVdgOffset(unsigned char offset)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CC2Offset != offset)
+    if (instance->CC2Offset != offset)
     {
-      gs->CC2Offset = offset;
+      instance->CC2Offset = offset;
       SetupDisplay();
     }
   }
@@ -556,13 +536,11 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeVmode(unsigned char vmode)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CC3Vmode != vmode)
+    if (instance->CC3Vmode != vmode)
     {
-      gs->CC3Vmode = vmode;
+      instance->CC3Vmode = vmode;
       SetupDisplay();
-      gs->BorderChange = 3;
+      instance->BorderChange = 3;
     }
   }
 }
@@ -570,13 +548,11 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeVres(unsigned char vres)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->CC3Vres != vres)
+    if (instance->CC3Vres != vres)
     {
-      gs->CC3Vres = vres;
+      instance->CC3Vres = vres;
       SetupDisplay();
-      gs->BorderChange = 3;
+      instance->BorderChange = 3;
     }
   }
 }
@@ -585,11 +561,9 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetVerticalOffsetRegister(unsigned short voRegister)
   {
-    GraphicsState* gs = GetGraphicsState();
-
-    if (gs->VerticalOffsetRegister != voRegister)
+    if (instance->VerticalOffsetRegister != voRegister)
     {
-      gs->VerticalOffsetRegister = voRegister;
+      instance->VerticalOffsetRegister = voRegister;
 
       SetupDisplay();
     }
@@ -599,7 +573,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetVideoBank(unsigned char data)
   {
-    GetGraphicsState()->DistoOffset = data * (512 * 1024);
+    instance->DistoOffset = data * (512 * 1024);
 
     SetupDisplay();
   }
@@ -608,32 +582,31 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetMonitorType(unsigned char type)
   {
-    GraphicsState* gs = GetGraphicsState();
+    int borderColor = instance->CC3BorderColor;
 
-    int borderColor = gs->CC3BorderColor;
     SetGimeBorderColor(0);
 
     if (type != QUERY)
     {
-      gs->MonType = type & 1;
+      instance->MonType = type & 1;
 
       for (unsigned char palIndex = 0; palIndex < 16; palIndex++)
       {
-        gs->Pallete16Bit[palIndex] = gs->PalleteLookup16[gs->MonType][gs->Pallete[palIndex]];
-        gs->Pallete32Bit[palIndex] = gs->PalleteLookup32[gs->MonType][gs->Pallete[palIndex]];
-        gs->Pallete8Bit[palIndex] = gs->PalleteLookup8[gs->MonType][gs->Pallete[palIndex]];
+        instance->Pallete16Bit[palIndex] = instance->PalleteLookup16[instance->MonType][instance->Pallete[palIndex]];
+        instance->Pallete32Bit[palIndex] = instance->PalleteLookup32[instance->MonType][instance->Pallete[palIndex]];
+        instance->Pallete8Bit[palIndex] = instance->PalleteLookup8[instance->MonType][instance->Pallete[palIndex]];
       }
     }
 
     SetGimeBorderColor(borderColor);
 
-    return(gs->MonType);
+    return(instance->MonType);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetPaletteType() {
-    int borderColor = GetGraphicsState()->CC3BorderColor;
+    int borderColor = instance->CC3BorderColor;
 
     SetGimeBorderColor(0);
     MakeCMPpalette(GetPaletteType());
@@ -650,7 +623,7 @@ extern "C" {
 
       Cls(0, systemState);
 
-      GetGraphicsState()->BorderChange = 3;
+      instance->BorderChange = 3;
     }
 
     return(0);

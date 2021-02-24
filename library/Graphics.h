@@ -70,30 +70,30 @@ typedef struct
   unsigned char  VcenterTable[4];
 } GraphicsState;
 
-extern "C" __declspec(dllexport) GraphicsState* __cdecl GetGraphicsState();
+extern "C" __declspec(dllexport) GraphicsState * __cdecl GetGraphicsState();
 
-extern "C" __declspec(dllexport) unsigned char __cdecl CheckState(unsigned char attributes);
-extern "C" __declspec(dllexport) void __cdecl FlipArtifacts();
-extern "C" __declspec(dllexport) void __cdecl ResetGraphicsState();
+extern "C" __declspec(dllexport) unsigned char __cdecl CheckState(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetMonitorType(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetScanLines(SystemState*, unsigned char);
+
 extern "C" __declspec(dllexport) void MakeRGBPalette(void);
-extern "C" __declspec(dllexport) void __cdecl MakeCMPpalette(int paletteType);
-extern "C" __declspec(dllexport) void __cdecl SetGimePalette(unsigned char palette, unsigned char color);
 
-extern "C" __declspec(dllexport) void __cdecl InvalidateBorder(void);
-extern "C" __declspec(dllexport) void __cdecl SetBorderChange(unsigned char data);
+extern "C" __declspec(dllexport) void __cdecl FlipArtifacts();
+extern "C" __declspec(dllexport) void __cdecl InvalidateBorder();
+extern "C" __declspec(dllexport) void __cdecl MakeCMPpalette(int);
+extern "C" __declspec(dllexport) void __cdecl ResetGraphicsState();
+extern "C" __declspec(dllexport) void __cdecl SetBorderChange(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetCompatMode(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeBorderColor(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeHorzOffset(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimePalette(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeVdgMode(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeVdgMode2(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeVdgOffset(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeVmode(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetGimeVres(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetPaletteType();
+extern "C" __declspec(dllexport) void __cdecl SetPaletteType();
+extern "C" __declspec(dllexport) void __cdecl SetVerticalOffsetRegister(unsigned short);
+extern "C" __declspec(dllexport) void __cdecl SetVideoBank(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl SetupDisplay(void);
-extern "C" __declspec(dllexport) void __cdecl SetCompatMode(unsigned char mode);
-extern "C" __declspec(dllexport) void __cdecl SetGimeBorderColor(unsigned char data);
-extern "C" __declspec(dllexport) void __cdecl SetGimeHorzOffset(unsigned char data);
-extern "C" __declspec(dllexport) void __cdecl SetGimeVdgMode(unsigned char vdgMode);
-extern "C" __declspec(dllexport) void __cdecl SetGimeVdgMode2(unsigned char vdgmode2);
-extern "C" __declspec(dllexport) void __cdecl SetGimeVdgOffset(unsigned char offset);
-extern "C" __declspec(dllexport) void __cdecl SetGimeVmode(unsigned char vmode);
-extern "C" __declspec(dllexport) void __cdecl SetGimeVres(unsigned char vres);
-extern "C" __declspec(dllexport) void __cdecl SetVerticalOffsetRegister(unsigned short voRegister);
-extern "C" __declspec(dllexport) void __cdecl SetVideoBank(unsigned char data);
-
-extern "C" __declspec(dllexport) unsigned char __cdecl SetMonitorType(unsigned char type);
-extern "C" __declspec(dllexport) void __cdecl SetPaletteType();
-extern "C" __declspec(dllexport) void __cdecl SetPaletteType();
-extern "C" __declspec(dllexport) unsigned char __cdecl SetScanLines(SystemState* systemState, unsigned char lines);
