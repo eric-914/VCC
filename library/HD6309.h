@@ -605,21 +605,19 @@ typedef struct {
 
 extern "C" __declspec(dllexport) HD6309State * __cdecl GetHD6309State();
 
-extern "C" __declspec(dllexport) void __cdecl setcc(unsigned char bincc);
-extern "C" __declspec(dllexport) unsigned char __cdecl getcc(void);
+extern "C" __declspec(dllexport) int __cdecl HD6309Exec(int);
 
-extern "C" __declspec(dllexport) void __cdecl setmd(unsigned char binmd);
-extern "C" __declspec(dllexport) unsigned char __cdecl getmd(void);
+extern "C" __declspec(dllexport) unsigned char __cdecl getcc();
+extern "C" __declspec(dllexport) unsigned char __cdecl getmd();
+extern "C" __declspec(dllexport) unsigned short __cdecl hd6309_CalculateEA(unsigned char);
 
-extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_firq(void);
-extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_irq(void);
-extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_nmi(void);
-
-extern "C" __declspec(dllexport) unsigned short __cdecl hd6309_CalculateEA(unsigned char postbyte);
-
-extern "C" __declspec(dllexport) void __cdecl HD6309Init(void);
-extern "C" __declspec(dllexport) void __cdecl HD6309Reset(void);
-extern "C" __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter);
-extern "C" __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char interrupt);
-extern "C" __declspec(dllexport) void __cdecl HD6309ForcePC(unsigned short address);
-extern "C" __declspec(dllexport) int __cdecl HD6309Exec(int cycleFor);
+extern "C" __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl HD6309ForcePC(unsigned short);
+extern "C" __declspec(dllexport) void __cdecl HD6309Init();
+extern "C" __declspec(dllexport) void __cdecl HD6309Reset();
+extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_firq();
+extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_irq();
+extern "C" __declspec(dllexport) void __cdecl HD6309_cpu_nmi();
+extern "C" __declspec(dllexport) void __cdecl setcc(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl setmd(unsigned char);

@@ -89,9 +89,7 @@ HD6309State* InitializeInstance(HD6309State* p) {
 extern "C" {
   __declspec(dllexport) void __cdecl setcc(unsigned char bincc)
   {
-    HD6309State* hd63096State = GetHD6309State();
-
-    hd63096State->ccbits = bincc;
+    instance->ccbits = bincc;
 
     CC_E = !!(bincc & (1 << E));
     CC_F = !!(bincc & (1 << F));
@@ -108,8 +106,6 @@ extern "C" {
   __declspec(dllexport) unsigned char __cdecl getcc(void)
   {
     unsigned char bincc = 0;
-
-    HD6309State* hd63096State = GetHD6309State();
 
 #define TST(_CC, _F) if (_CC) { bincc |= (1 << _F); }
 
@@ -129,8 +125,6 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl setmd(unsigned char binmd)
   {
-    HD6309State* hd63096State = instance;
-
     MD_NATIVE6309 = !!(binmd & (1 << NATIVE6309));
     MD_FIRQMODE = !!(binmd & (1 << FIRQMODE));
     MD_UNDEFINED2 = !!(binmd & (1 << MD_UNDEF2));
@@ -142,7 +136,7 @@ extern "C" {
 
     for (short i = 0; i < 24; i++)
     {
-      *NatEmuCycles[i] = hd63096State->InsCycles[MD_NATIVE6309][i];
+      *NatEmuCycles[i] = instance->InsCycles[MD_NATIVE6309][i];
     }
   }
 }
@@ -151,8 +145,6 @@ extern "C" {
   __declspec(dllexport) unsigned char __cdecl getmd(void)
   {
     unsigned char binmd = 0;
-
-    HD6309State* hd63096State = instance;
 
 #define TSM(_MD, _F) if (_MD) { binmd |= (1 << _F); } //--Can't use the same macro name
 
@@ -172,11 +164,9 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309_cpu_firq(void)
   {
-    HD6309State* hd63096State = GetHD6309State();
-
     if (!CC_F)
     {
-      hd63096State->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
+      instance->InInterrupt = 1; //Flag to indicate FIRQ has been asserted
 
       switch (MD_FIRQMODE)
       {
@@ -224,16 +214,14 @@ extern "C" {
       }
     }
 
-    hd63096State->PendingInterrupts &= 253;
+    instance->PendingInterrupts &= 253;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309_cpu_irq(void)
   {
-    HD6309State* hd63096State = GetHD6309State();
-
-    if (hd63096State->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
+    if (instance->InInterrupt == 1) { //If FIRQ is running postpone the IRQ
       return;
     }
 
@@ -264,14 +252,14 @@ extern "C" {
       CC_I = 1;
     }
 
-    hd63096State->PendingInterrupts &= 254;
+    instance->PendingInterrupts &= 254;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309_cpu_nmi(void)
   {
-    HD6309State* hd63096State = GetHD6309State();
+    HD6309State* instance = GetInstance();
 
     CC_E = 1;
 
@@ -299,7 +287,7 @@ extern "C" {
     CC_F = 1;
     PC_REG = MemRead16(VNMI);
 
-    hd63096State->PendingInterrupts &= 251;
+    instance->PendingInterrupts &= 251;
   }
 }
 
@@ -309,8 +297,6 @@ extern "C" {
     static unsigned short int ea = 0;
     static signed char byte = 0;
     static unsigned char reg;
-
-    HD6309State* hd63096State = GetHD6309State();
 
     reg = ((postbyte >> 5) & 3) + 1;
 
@@ -323,7 +309,7 @@ extern "C" {
 
         PXF(reg)++;
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
+        instance->CycleCounter += instance->NatEmuCycles21;
 
         break;
 
@@ -332,7 +318,7 @@ extern "C" {
 
         PXF(reg) += 2;
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
+        instance->CycleCounter += instance->NatEmuCycles32;
 
         break;
 
@@ -341,7 +327,7 @@ extern "C" {
 
         ea = PXF(reg);
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles21;
+        instance->CycleCounter += instance->NatEmuCycles21;
 
         break;
 
@@ -350,7 +336,7 @@ extern "C" {
 
         ea = PXF(reg);
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles32;
+        instance->CycleCounter += instance->NatEmuCycles32;
 
         break;
 
@@ -362,35 +348,35 @@ extern "C" {
       case 5: // B reg offset
         ea = PXF(reg) + ((signed char)B_REG);
 
-        hd63096State->CycleCounter += 1;
+        instance->CycleCounter += 1;
 
         break;
 
       case 6: // A reg offset
         ea = PXF(reg) + ((signed char)A_REG);
 
-        hd63096State->CycleCounter += 1;
+        instance->CycleCounter += 1;
 
         break;
 
       case 7: // E reg offset 
         ea = PXF(reg) + ((signed char)E_REG);
 
-        hd63096State->CycleCounter += 1;
+        instance->CycleCounter += 1;
 
         break;
 
       case 8: // 8 bit offset
         ea = PXF(reg) + (signed char)MemRead8(PC_REG++);
 
-        hd63096State->CycleCounter += 1;
+        instance->CycleCounter += 1;
 
         break;
 
       case 9: // 16 bit offset
         ea = PXF(reg) + IMMADDRESS(PC_REG);
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles43;
+        instance->CycleCounter += instance->NatEmuCycles43;
 
         PC_REG += 2;
 
@@ -399,21 +385,21 @@ extern "C" {
       case 10: // F reg offset
         ea = PXF(reg) + ((signed char)F_REG);
 
-        hd63096State->CycleCounter += 1;
+        instance->CycleCounter += 1;
 
         break;
 
       case 11: // D reg offset 
         ea = PXF(reg) + D_REG; //Changed to unsigned 03/14/2005 NG Was signed
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles42;
+        instance->CycleCounter += instance->NatEmuCycles42;
 
         break;
 
       case 12: // 8 bit PC relative
         ea = (signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1;
 
-        hd63096State->CycleCounter += 1;
+        instance->CycleCounter += 1;
 
         PC_REG++;
 
@@ -422,7 +408,7 @@ extern "C" {
       case 13: // 16 bit PC relative
         ea = PC_REG + IMMADDRESS(PC_REG) + 2;
 
-        hd63096State->CycleCounter += hd63096State->NatEmuCycles53;
+        instance->CycleCounter += instance->NatEmuCycles53;
 
         PC_REG += 2;
 
@@ -431,7 +417,7 @@ extern "C" {
       case 14: // W reg offset
         ea = PXF(reg) + W_REG;
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         break;
 
@@ -450,7 +436,7 @@ extern "C" {
 
           PC_REG += 2;
 
-          hd63096State->CycleCounter += 2;
+          instance->CycleCounter += 2;
 
           break;
 
@@ -459,7 +445,7 @@ extern "C" {
 
           W_REG += 2;
 
-          hd63096State->CycleCounter += 1;
+          instance->CycleCounter += 1;
 
           break;
 
@@ -468,7 +454,7 @@ extern "C" {
 
           ea = W_REG;
 
-          hd63096State->CycleCounter += 1;
+          instance->CycleCounter += 1;
 
           break;
         }
@@ -483,7 +469,7 @@ extern "C" {
         case 0: // Indirect no offset from W reg
           ea = MemRead16(W_REG);
 
-          hd63096State->CycleCounter += 3;
+          instance->CycleCounter += 3;
 
           break;
 
@@ -492,7 +478,7 @@ extern "C" {
 
           PC_REG += 2;
 
-          hd63096State->CycleCounter += 5;
+          instance->CycleCounter += 5;
 
           break;
 
@@ -501,7 +487,7 @@ extern "C" {
 
           W_REG += 2;
 
-          hd63096State->CycleCounter += 4;
+          instance->CycleCounter += 4;
 
           break;
 
@@ -510,7 +496,7 @@ extern "C" {
 
           ea = MemRead16(W_REG);
 
-          hd63096State->CycleCounter += 4;
+          instance->CycleCounter += 4;
 
           break;
         }
@@ -523,12 +509,12 @@ extern "C" {
 
         ea = MemRead16(ea);
 
-        hd63096State->CycleCounter += 6;
+        instance->CycleCounter += 6;
 
         break;
 
       case 18: // possibly illegal instruction
-        hd63096State->CycleCounter += 6;
+        instance->CycleCounter += 6;
 
         break;
 
@@ -537,49 +523,49 @@ extern "C" {
 
         ea = MemRead16(PXF(reg));
 
-        hd63096State->CycleCounter += 6;
+        instance->CycleCounter += 6;
 
         break;
 
       case 20: // Indirect no offset 
         ea = MemRead16(PXF(reg));
 
-        hd63096State->CycleCounter += 3;
+        instance->CycleCounter += 3;
 
         break;
 
       case 21: // Indirect B reg offset
         ea = MemRead16(PXF(reg) + ((signed char)B_REG));
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         break;
 
       case 22: // indirect A reg offset
         ea = MemRead16(PXF(reg) + ((signed char)A_REG));
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         break;
 
       case 23: // indirect E reg offset
         ea = MemRead16(PXF(reg) + ((signed char)E_REG));
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         break;
 
       case 24: // indirect 8 bit offset
         ea = MemRead16(PXF(reg) + (signed char)MemRead8(PC_REG++));
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         break;
 
       case 25: // indirect 16 bit offset
         ea = MemRead16(PXF(reg) + IMMADDRESS(PC_REG));
 
-        hd63096State->CycleCounter += 7;
+        instance->CycleCounter += 7;
 
         PC_REG += 2;
 
@@ -588,21 +574,21 @@ extern "C" {
       case 26: // indirect F reg offset
         ea = MemRead16(PXF(reg) + ((signed char)F_REG));
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         break;
 
       case 27: // indirect D reg offset
         ea = MemRead16(PXF(reg) + D_REG);
 
-        hd63096State->CycleCounter += 7;
+        instance->CycleCounter += 7;
 
         break;
 
       case 28: // indirect 8 bit PC relative
         ea = MemRead16((signed short)PC_REG + (signed char)MemRead8(PC_REG) + 1);
 
-        hd63096State->CycleCounter += 4;
+        instance->CycleCounter += 4;
 
         PC_REG++;
 
@@ -611,7 +597,7 @@ extern "C" {
       case 29: //indirect 16 bit PC relative
         ea = MemRead16(PC_REG + IMMADDRESS(PC_REG) + 2);
 
-        hd63096State->CycleCounter += 8;
+        instance->CycleCounter += 8;
 
         PC_REG += 2;
 
@@ -620,14 +606,14 @@ extern "C" {
       case 30: // indirect W reg offset
         ea = MemRead16(PXF(reg) + W_REG);
 
-        hd63096State->CycleCounter += 7;
+        instance->CycleCounter += 7;
 
         break;
 
       case 31: // extended indirect
         ea = MemRead16(IMMADDRESS(PC_REG));
 
-        hd63096State->CycleCounter += 8;
+        instance->CycleCounter += 8;
 
         PC_REG += 2;
 
@@ -642,7 +628,7 @@ extern "C" {
 
       ea = PXF(reg) + byte; //Was signed
 
-      hd63096State->CycleCounter += 1;
+      instance->CycleCounter += 1;
     }
 
     return(ea);
@@ -653,108 +639,104 @@ extern "C" {
   __declspec(dllexport) void __cdecl HD6309Init(void)
   {	//Call this first or RESET will core!
     // reg pointers for TFR and EXG and LEA ops
-    HD6309State* hd63096State = GetHD6309State();
+    instance->xfreg16[0] = &D_REG;
+    instance->xfreg16[1] = &X_REG;
+    instance->xfreg16[2] = &Y_REG;
+    instance->xfreg16[3] = &U_REG;
+    instance->xfreg16[4] = &S_REG;
+    instance->xfreg16[5] = &PC_REG;
+    instance->xfreg16[6] = &W_REG;
+    instance->xfreg16[7] = &V_REG;
 
-    hd63096State->xfreg16[0] = &D_REG;
-    hd63096State->xfreg16[1] = &X_REG;
-    hd63096State->xfreg16[2] = &Y_REG;
-    hd63096State->xfreg16[3] = &U_REG;
-    hd63096State->xfreg16[4] = &S_REG;
-    hd63096State->xfreg16[5] = &PC_REG;
-    hd63096State->xfreg16[6] = &W_REG;
-    hd63096State->xfreg16[7] = &V_REG;
+    instance->ureg8[0] = (unsigned char*)&A_REG;
+    instance->ureg8[1] = (unsigned char*)&B_REG;
+    instance->ureg8[2] = (unsigned char*)&(instance->ccbits);
+    instance->ureg8[3] = (unsigned char*)&DPA;
+    instance->ureg8[4] = (unsigned char*)&Z_H;
+    instance->ureg8[5] = (unsigned char*)&Z_L;
+    instance->ureg8[6] = (unsigned char*)&E_REG;
+    instance->ureg8[7] = (unsigned char*)&F_REG;
 
-    hd63096State->ureg8[0] = (unsigned char*)&A_REG;
-    hd63096State->ureg8[1] = (unsigned char*)&B_REG;
-    hd63096State->ureg8[2] = (unsigned char*)&(hd63096State->ccbits);
-    hd63096State->ureg8[3] = (unsigned char*)&DPA;
-    hd63096State->ureg8[4] = (unsigned char*)&Z_H;
-    hd63096State->ureg8[5] = (unsigned char*)&Z_L;
-    hd63096State->ureg8[6] = (unsigned char*)&E_REG;
-    hd63096State->ureg8[7] = (unsigned char*)&F_REG;
-
-    hd63096State->NatEmuCycles[0] = &(hd63096State->NatEmuCycles65);
-    hd63096State->NatEmuCycles[1] = &(hd63096State->NatEmuCycles64);
-    hd63096State->NatEmuCycles[2] = &(hd63096State->NatEmuCycles32);
-    hd63096State->NatEmuCycles[3] = &(hd63096State->NatEmuCycles21);
-    hd63096State->NatEmuCycles[4] = &(hd63096State->NatEmuCycles54);
-    hd63096State->NatEmuCycles[5] = &(hd63096State->NatEmuCycles97);
-    hd63096State->NatEmuCycles[6] = &(hd63096State->NatEmuCycles85);
-    hd63096State->NatEmuCycles[7] = &(hd63096State->NatEmuCycles51);
-    hd63096State->NatEmuCycles[8] = &(hd63096State->NatEmuCycles31);
-    hd63096State->NatEmuCycles[9] = &(hd63096State->NatEmuCycles1110);
-    hd63096State->NatEmuCycles[10] = &(hd63096State->NatEmuCycles76);
-    hd63096State->NatEmuCycles[11] = &(hd63096State->NatEmuCycles75);
-    hd63096State->NatEmuCycles[12] = &(hd63096State->NatEmuCycles43);
-    hd63096State->NatEmuCycles[13] = &(hd63096State->NatEmuCycles87);
-    hd63096State->NatEmuCycles[14] = &(hd63096State->NatEmuCycles86);
-    hd63096State->NatEmuCycles[15] = &(hd63096State->NatEmuCycles98);
-    hd63096State->NatEmuCycles[16] = &(hd63096State->NatEmuCycles2726);
-    hd63096State->NatEmuCycles[17] = &(hd63096State->NatEmuCycles3635);
-    hd63096State->NatEmuCycles[18] = &(hd63096State->NatEmuCycles3029);
-    hd63096State->NatEmuCycles[19] = &(hd63096State->NatEmuCycles2827);
-    hd63096State->NatEmuCycles[20] = &(hd63096State->NatEmuCycles3726);
-    hd63096State->NatEmuCycles[21] = &(hd63096State->NatEmuCycles3130);
-    hd63096State->NatEmuCycles[22] = &(hd63096State->NatEmuCycles42);
-    hd63096State->NatEmuCycles[23] = &(hd63096State->NatEmuCycles53);
+    instance->NatEmuCycles[0] = &(instance->NatEmuCycles65);
+    instance->NatEmuCycles[1] = &(instance->NatEmuCycles64);
+    instance->NatEmuCycles[2] = &(instance->NatEmuCycles32);
+    instance->NatEmuCycles[3] = &(instance->NatEmuCycles21);
+    instance->NatEmuCycles[4] = &(instance->NatEmuCycles54);
+    instance->NatEmuCycles[5] = &(instance->NatEmuCycles97);
+    instance->NatEmuCycles[6] = &(instance->NatEmuCycles85);
+    instance->NatEmuCycles[7] = &(instance->NatEmuCycles51);
+    instance->NatEmuCycles[8] = &(instance->NatEmuCycles31);
+    instance->NatEmuCycles[9] = &(instance->NatEmuCycles1110);
+    instance->NatEmuCycles[10] = &(instance->NatEmuCycles76);
+    instance->NatEmuCycles[11] = &(instance->NatEmuCycles75);
+    instance->NatEmuCycles[12] = &(instance->NatEmuCycles43);
+    instance->NatEmuCycles[13] = &(instance->NatEmuCycles87);
+    instance->NatEmuCycles[14] = &(instance->NatEmuCycles86);
+    instance->NatEmuCycles[15] = &(instance->NatEmuCycles98);
+    instance->NatEmuCycles[16] = &(instance->NatEmuCycles2726);
+    instance->NatEmuCycles[17] = &(instance->NatEmuCycles3635);
+    instance->NatEmuCycles[18] = &(instance->NatEmuCycles3029);
+    instance->NatEmuCycles[19] = &(instance->NatEmuCycles2827);
+    instance->NatEmuCycles[20] = &(instance->NatEmuCycles3726);
+    instance->NatEmuCycles[21] = &(instance->NatEmuCycles3130);
+    instance->NatEmuCycles[22] = &(instance->NatEmuCycles42);
+    instance->NatEmuCycles[23] = &(instance->NatEmuCycles53);
 
     //This handles the disparity between 6309 and 6809 Instruction timing
-    hd63096State->InsCycles[0][M65] = 6;	//6-5
-    hd63096State->InsCycles[1][M65] = 5;
-    hd63096State->InsCycles[0][M64] = 6;	//6-4
-    hd63096State->InsCycles[1][M64] = 4;
-    hd63096State->InsCycles[0][M32] = 3;	//3-2
-    hd63096State->InsCycles[1][M32] = 2;
-    hd63096State->InsCycles[0][M21] = 2;	//2-1
-    hd63096State->InsCycles[1][M21] = 1;
-    hd63096State->InsCycles[0][M54] = 5;	//5-4
-    hd63096State->InsCycles[1][M54] = 4;
-    hd63096State->InsCycles[0][M97] = 9;	//9-7
-    hd63096State->InsCycles[1][M97] = 7;
-    hd63096State->InsCycles[0][M85] = 8;	//8-5
-    hd63096State->InsCycles[1][M85] = 5;
-    hd63096State->InsCycles[0][M51] = 5;	//5-1
-    hd63096State->InsCycles[1][M51] = 1;
-    hd63096State->InsCycles[0][M31] = 3;	//3-1
-    hd63096State->InsCycles[1][M31] = 1;
-    hd63096State->InsCycles[0][M1110] = 11;	//11-10
-    hd63096State->InsCycles[1][M1110] = 10;
-    hd63096State->InsCycles[0][M76] = 7;	//7-6
-    hd63096State->InsCycles[1][M76] = 6;
-    hd63096State->InsCycles[0][M75] = 7;	//7-5
-    hd63096State->InsCycles[1][M75] = 5;
-    hd63096State->InsCycles[0][M43] = 4;	//4-3
-    hd63096State->InsCycles[1][M43] = 3;
-    hd63096State->InsCycles[0][M87] = 8;	//8-7
-    hd63096State->InsCycles[1][M87] = 7;
-    hd63096State->InsCycles[0][M86] = 8;	//8-6
-    hd63096State->InsCycles[1][M86] = 6;
-    hd63096State->InsCycles[0][M98] = 9;	//9-8
-    hd63096State->InsCycles[1][M98] = 8;
-    hd63096State->InsCycles[0][M2726] = 27;	//27-26
-    hd63096State->InsCycles[1][M2726] = 26;
-    hd63096State->InsCycles[0][M3635] = 36;	//36-25
-    hd63096State->InsCycles[1][M3635] = 35;
-    hd63096State->InsCycles[0][M3029] = 30;	//30-29
-    hd63096State->InsCycles[1][M3029] = 29;
-    hd63096State->InsCycles[0][M2827] = 28;	//28-27
-    hd63096State->InsCycles[1][M2827] = 27;
-    hd63096State->InsCycles[0][M3726] = 37;	//37-26
-    hd63096State->InsCycles[1][M3726] = 26;
-    hd63096State->InsCycles[0][M3130] = 31;	//31-30
-    hd63096State->InsCycles[1][M3130] = 30;
-    hd63096State->InsCycles[0][M42] = 4;	//4-2
-    hd63096State->InsCycles[1][M42] = 2;
-    hd63096State->InsCycles[0][M53] = 5;	//5-3
-    hd63096State->InsCycles[1][M53] = 3;
+    instance->InsCycles[0][M65] = 6;	//6-5
+    instance->InsCycles[1][M65] = 5;
+    instance->InsCycles[0][M64] = 6;	//6-4
+    instance->InsCycles[1][M64] = 4;
+    instance->InsCycles[0][M32] = 3;	//3-2
+    instance->InsCycles[1][M32] = 2;
+    instance->InsCycles[0][M21] = 2;	//2-1
+    instance->InsCycles[1][M21] = 1;
+    instance->InsCycles[0][M54] = 5;	//5-4
+    instance->InsCycles[1][M54] = 4;
+    instance->InsCycles[0][M97] = 9;	//9-7
+    instance->InsCycles[1][M97] = 7;
+    instance->InsCycles[0][M85] = 8;	//8-5
+    instance->InsCycles[1][M85] = 5;
+    instance->InsCycles[0][M51] = 5;	//5-1
+    instance->InsCycles[1][M51] = 1;
+    instance->InsCycles[0][M31] = 3;	//3-1
+    instance->InsCycles[1][M31] = 1;
+    instance->InsCycles[0][M1110] = 11;	//11-10
+    instance->InsCycles[1][M1110] = 10;
+    instance->InsCycles[0][M76] = 7;	//7-6
+    instance->InsCycles[1][M76] = 6;
+    instance->InsCycles[0][M75] = 7;	//7-5
+    instance->InsCycles[1][M75] = 5;
+    instance->InsCycles[0][M43] = 4;	//4-3
+    instance->InsCycles[1][M43] = 3;
+    instance->InsCycles[0][M87] = 8;	//8-7
+    instance->InsCycles[1][M87] = 7;
+    instance->InsCycles[0][M86] = 8;	//8-6
+    instance->InsCycles[1][M86] = 6;
+    instance->InsCycles[0][M98] = 9;	//9-8
+    instance->InsCycles[1][M98] = 8;
+    instance->InsCycles[0][M2726] = 27;	//27-26
+    instance->InsCycles[1][M2726] = 26;
+    instance->InsCycles[0][M3635] = 36;	//36-25
+    instance->InsCycles[1][M3635] = 35;
+    instance->InsCycles[0][M3029] = 30;	//30-29
+    instance->InsCycles[1][M3029] = 29;
+    instance->InsCycles[0][M2827] = 28;	//28-27
+    instance->InsCycles[1][M2827] = 27;
+    instance->InsCycles[0][M3726] = 37;	//37-26
+    instance->InsCycles[1][M3726] = 26;
+    instance->InsCycles[0][M3130] = 31;	//31-30
+    instance->InsCycles[1][M3130] = 30;
+    instance->InsCycles[0][M42] = 4;	//4-2
+    instance->InsCycles[1][M42] = 2;
+    instance->InsCycles[0][M53] = 5;	//5-3
+    instance->InsCycles[1][M53] = 3;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309Reset(void)
   {
-    HD6309State* hd63096State = GetHD6309State();
-
     for (char index = 0; index <= 6; index++) {		//Set all register to 0 except V
       PXF(index) = 0;
     }
@@ -781,9 +763,9 @@ extern "C" {
     MD_ILLEGAL = 0;
     MD_ZERODIV = 0;
 
-    hd63096State->mdbits = getmd();
+    instance->mdbits = getmd();
 
-    hd63096State->SyncWaiting = 0;
+    instance->SyncWaiting = 0;
 
     DP_REG = 0;
     PC_REG = MemRead16(VRESET);	//PC gets its reset vector
@@ -795,73 +777,65 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309AssertInterrupt(unsigned char interrupt, unsigned char waiter) // 4 nmi 2 firq 1 irq
   {
-    HD6309State* hd63096State = GetHD6309State();
-
-    hd63096State->SyncWaiting = 0;
-    hd63096State->PendingInterrupts |= (1 << (interrupt - 1));
-    hd63096State->IRQWaiter = waiter;
+    instance->SyncWaiting = 0;
+    instance->PendingInterrupts |= (1 << (interrupt - 1));
+    instance->IRQWaiter = waiter;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309DeAssertInterrupt(unsigned char interrupt) // 4 nmi 2 firq 1 irq
   {
-    HD6309State* hd63096State = GetHD6309State();
-
-    hd63096State->PendingInterrupts &= ~(1 << (interrupt - 1));
-    hd63096State->InInterrupt = 0;
+    instance->PendingInterrupts &= ~(1 << (interrupt - 1));
+    instance->InInterrupt = 0;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl HD6309ForcePC(unsigned short address)
   {
-    HD6309State* hd63096State = GetHD6309State();
-
     PC_REG = address;
 
-    hd63096State->PendingInterrupts = 0;
-    hd63096State->SyncWaiting = 0;
+    instance->PendingInterrupts = 0;
+    instance->SyncWaiting = 0;
   }
 }
 
 extern "C" {
   __declspec(dllexport) int __cdecl HD6309Exec(int cycleFor)
   {
-    HD6309State* hd63096State = GetHD6309State();
+    instance->CycleCounter = 0;
 
-    hd63096State->CycleCounter = 0;
+    while (instance->CycleCounter < cycleFor) {
 
-    while (hd63096State->CycleCounter < cycleFor) {
-
-      if (hd63096State->PendingInterrupts)
+      if (instance->PendingInterrupts)
       {
-        if (hd63096State->PendingInterrupts & 4) {
+        if (instance->PendingInterrupts & 4) {
           HD6309_cpu_nmi();
         }
 
-        if (hd63096State->PendingInterrupts & 2) {
+        if (instance->PendingInterrupts & 2) {
           HD6309_cpu_firq();
         }
 
-        if (hd63096State->PendingInterrupts & 1)
+        if (instance->PendingInterrupts & 1)
         {
-          if (hd63096State->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
+          if (instance->IRQWaiter == 0) { // This is needed to fix a subtle timming problem
             HD6309_cpu_irq();		// It allows the CPU to see $FF03 bit 7 high before
           }
           else {				// The IRQ is asserted.
-            hd63096State->IRQWaiter -= 1;
+            instance->IRQWaiter -= 1;
           }
         }
       }
 
-      if (hd63096State->SyncWaiting == 1) { //Abort the run nothing happens asyncronously from the CPU
+      if (instance->SyncWaiting == 1) { //Abort the run nothing happens asyncronously from the CPU
         return(0); // WDZ - Experimental SyncWaiting should still return used cycles (and not zero) by breaking from loop
       }
 
       HD6309ExecOpCode(cycleFor, MemRead8(PC_REG++));
     }
 
-    return(cycleFor - hd63096State->CycleCounter);
+    return(cycleFor - instance->CycleCounter);
   }
 }
