@@ -243,6 +243,7 @@ extern "C"
   }
 }
 
+//0 = Left 1=right
 extern "C"
 {
   __declspec(dllexport) void __cdecl SetButtonStatus(unsigned char side, unsigned char state) //Side=0 Left Button Side=1 Right Button State 1=Down

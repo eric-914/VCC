@@ -326,6 +326,8 @@ extern "C" {
   }
 }
 
+// Force keys up if main widow keyboard focus is lost.  Otherwise
+// down keys will cause issues with OS-9 on return
 // Send key up events to keyboard handler for saved keys
 extern "C" {
   __declspec(dllexport) void __cdecl SendSavedKeyEvents() {
