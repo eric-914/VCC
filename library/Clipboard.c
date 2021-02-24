@@ -75,8 +75,6 @@ extern "C" {
 */
 string GetClipboardText()
 {
-  ClipboardState* clipboardState = GetClipboardState();
-
   if (!OpenClipboard(nullptr)) {
     MessageBox(0, "Unable to open clipboard.", "Clipboard", 0);
 
@@ -119,8 +117,6 @@ extern "C" {
     bool CSHIFT;
     bool LCNTRL;
 
-    ClipboardState* clipboardState = GetClipboardState();
-
     int GraphicsMode = GetGraphicsState()->GraphicsMode;
 
     if (GraphicsMode != 0) {
@@ -135,13 +131,13 @@ extern "C" {
 
     //This sets the keyboard to Natural,
     //but we need to read it first so we can set it back
-    clipboardState->CurrentKeyMap = GetCurrentKeyboardLayout();
+    instance->CurrentKeyMap = GetCurrentKeyboardLayout();
 
     vccKeyboardBuildRuntimeTable((keyboardlayout_e)1);
 
     cliptxt = GetClipboardText().c_str();
 
-    if (clipboardState->PasteWithNew) {
+    if (instance->PasteWithNew) {
       cliptxt = "NEW\n" + cliptxt;
     }
 
@@ -152,7 +148,7 @@ extern "C" {
         lines += tmp;
       }
       else { //...the character is a <CR>
-        if (lines.length() > 249 && lines.length() < 257 && clipboardState->CodePaste == true) {
+        if (lines.length() > 249 && lines.length() < 257 && instance->CodePaste == true) {
           size_t b = lines.find(" ");
           string main = lines.substr(0, 249);
           string extra = lines.substr(249, lines.length() - 249);
@@ -169,7 +165,7 @@ extern "C" {
           lines.clear();
         }
 
-        if (lines.length() >= 257 && clipboardState->CodePaste == true) {
+        if (lines.length() >= 257 && instance->CodePaste == true) {
           // Line is too long to handle. Truncate.
           size_t b = lines.find(" ");
           string linestr = "Warning! Line " + lines.substr(0, b) + " is too long for BASIC and will be truncated.";
@@ -179,7 +175,7 @@ extern "C" {
           lines = (lines.substr(0, 249));
         }
 
-        if (lines.length() <= 249 || clipboardState->CodePaste == false) {
+        if (lines.length() <= 249 || instance->CodePaste == false) {
           // Just a regular line.
           clipparse += lines + "\n";
           lines.clear();
@@ -307,39 +303,35 @@ extern "C" {
       out += sc;
     }
 
-    clipboardState->ClipboardText = out;
+    instance->ClipboardText = out;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl PasteBASIC() {
-    ClipboardState* clipboardState = GetClipboardState();
-
-    clipboardState->CodePaste = true;
+    instance->CodePaste = true;
 
     PasteText();
 
-    clipboardState->CodePaste = false;
+    instance->CodePaste = false;
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl PasteBASICWithNew() {
-    ClipboardState* clipboardState = GetClipboardState();
-
     int tmp = MessageBox(0, "Warning: This operation will erase the Coco's BASIC memory\nbefore pasting. Continue?", "Clipboard", MB_YESNO);
 
     if (tmp != 6) {
       return;
     }
 
-    clipboardState->CodePaste = true;
-    clipboardState->PasteWithNew = true;
+    instance->CodePaste = true;
+    instance->PasteWithNew = true;
 
     PasteText();
 
-    clipboardState->CodePaste = false;
-    clipboardState->PasteWithNew = false;
+    instance->CodePaste = false;
+    instance->PasteWithNew = false;
   }
 }
 
@@ -353,7 +345,6 @@ extern "C" {
     string out;
     string tmpline;
 
-    ClipboardState* clipboardState = GetClipboardState();
     GraphicsState* graphicsState = GetGraphicsState();
 
     int bytesPerRow = graphicsState->BytesperRow;

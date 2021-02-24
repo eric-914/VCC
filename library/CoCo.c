@@ -229,76 +229,70 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl CassIn(void)
   {
-    CoCoState* coco = GetCoCoState();
+    instance->AudioBuffer[instance->AudioIndex] = GetDACSample();
 
-    coco->AudioBuffer[coco->AudioIndex] = GetDACSample();
-
-    SetCassetteSample(coco->CassBuffer[coco->AudioIndex++]);
+    SetCassetteSample(instance->CassBuffer[instance->AudioIndex++]);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassOut(void)
   {
-    CoCoState* coco = GetCoCoState();
-
-    coco->CassBuffer[coco->AudioIndex++] = GetCasSample();
+    instance->CassBuffer[instance->AudioIndex++] = GetCasSample();
   }
 }
 
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetSndOutMode(unsigned char mode)  //0 = Speaker 1= Cassette Out 2=Cassette In
   {
-    CoCoState* coco = GetCoCoState();
-
     static unsigned char lastMode = 0;
-    static unsigned short primarySoundRate = coco->SoundRate;
+    static unsigned short primarySoundRate = instance->SoundRate;
 
     switch (mode)
     {
     case 0:
       if (lastMode == 1) {	//Send the last bits to be encoded
-        FlushCassetteBuffer(coco->CassBuffer, coco->AudioIndex); /* Cassette.cpp */
+        FlushCassetteBuffer(instance->CassBuffer, instance->AudioIndex); /* Cassette.cpp */
       }
 
-      coco->AudioEvent = AudioOut;
+      instance->AudioEvent = AudioOut;
 
       SetAudioRate(primarySoundRate);
 
       break;
 
     case 1:
-      coco->AudioEvent = CassOut;
+      instance->AudioEvent = CassOut;
 
-      primarySoundRate = coco->SoundRate;
+      primarySoundRate = instance->SoundRate;
 
       SetAudioRate(TAPEAUDIORATE);
 
       break;
 
     case 2:
-      coco->AudioEvent = CassIn;
+      instance->AudioEvent = CassIn;
 
-      primarySoundRate = coco->SoundRate;
+      primarySoundRate = instance->SoundRate;
 
       SetAudioRate(TAPEAUDIORATE);
 
       break;
 
     default:	//QUERY
-      return(coco->SoundOutputMode);
+      return(instance->SoundOutputMode);
       break;
     }
 
     if (mode != lastMode)
     {
-      coco->AudioIndex = 0;	//Reset Buffer on true mode switch
+      instance->AudioIndex = 0;	//Reset Buffer on true mode switch
       lastMode = mode;
     }
 
-    coco->SoundOutputMode = mode;
+    instance->SoundOutputMode = mode;
 
-    return(coco->SoundOutputMode);
+    return(instance->SoundOutputMode);
   }
 }
 
@@ -306,170 +300,169 @@ extern "C" {
   __declspec(dllexport) /* _inline */ int __cdecl CPUCycle(void)
   {
     CPU* cpu = GetCPU();
-    CoCoState* coco = GetCoCoState();
 
-    if (coco->HorzInterruptEnabled) {
+    if (instance->HorzInterruptEnabled) {
       GimeAssertHorzInterrupt();
     }
 
     irq_hs(ANY);
     PakTimer();
 
-    coco->PicosThisLine += coco->PicosPerLine;
+    instance->PicosThisLine += instance->PicosPerLine;
 
-    while (coco->PicosThisLine > 1)
+    while (instance->PicosThisLine > 1)
     {
-      coco->StateSwitch = 0;
+      instance->StateSwitch = 0;
 
-      if ((coco->PicosToInterrupt <= coco->PicosThisLine) && coco->IntEnable) {	//Does this iteration need to Timer Interrupt
-        coco->StateSwitch = 1;
+      if ((instance->PicosToInterrupt <= instance->PicosThisLine) && instance->IntEnable) {	//Does this iteration need to Timer Interrupt
+        instance->StateSwitch = 1;
       }
 
-      if ((coco->PicosToSoundSample <= coco->PicosThisLine) && coco->SndEnable) { //Does it need to collect an Audio sample
-        coco->StateSwitch += 2;
+      if ((instance->PicosToSoundSample <= instance->PicosThisLine) && instance->SndEnable) { //Does it need to collect an Audio sample
+        instance->StateSwitch += 2;
       }
 
-      switch (coco->StateSwitch)
+      switch (instance->StateSwitch)
       {
       case 0:		//No interrupts this line
-        coco->CyclesThisLine = coco->CycleDrift + (coco->PicosThisLine * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+        instance->CyclesThisLine = instance->CycleDrift + (instance->PicosThisLine * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-        if (coco->CyclesThisLine >= 1) {	//Avoid un-needed CPU engine calls
-          coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+        if (instance->CyclesThisLine >= 1) {	//Avoid un-needed CPU engine calls
+          instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
         }
         else {
-          coco->CycleDrift = coco->CyclesThisLine;
+          instance->CycleDrift = instance->CyclesThisLine;
         }
 
-        coco->PicosToInterrupt -= coco->PicosThisLine;
-        coco->PicosToSoundSample -= coco->PicosThisLine;
-        coco->PicosThisLine = 0;
+        instance->PicosToInterrupt -= instance->PicosThisLine;
+        instance->PicosToSoundSample -= instance->PicosThisLine;
+        instance->PicosThisLine = 0;
 
         break;
 
       case 1:		//Only Interrupting
-        coco->PicosThisLine -= coco->PicosToInterrupt;
-        coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToInterrupt * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+        instance->PicosThisLine -= instance->PicosToInterrupt;
+        instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToInterrupt * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-        if (coco->CyclesThisLine >= 1) {
-          coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+        if (instance->CyclesThisLine >= 1) {
+          instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
         }
         else {
-          coco->CycleDrift = coco->CyclesThisLine;
+          instance->CycleDrift = instance->CyclesThisLine;
         }
 
         GimeAssertTimerInterrupt();
 
-        coco->PicosToSoundSample -= coco->PicosToInterrupt;
-        coco->PicosToInterrupt = coco->MasterTickCounter;
+        instance->PicosToSoundSample -= instance->PicosToInterrupt;
+        instance->PicosToInterrupt = instance->MasterTickCounter;
 
         break;
 
       case 2:		//Only Sampling
-        coco->PicosThisLine -= coco->PicosToSoundSample;
-        coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToSoundSample * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+        instance->PicosThisLine -= instance->PicosToSoundSample;
+        instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToSoundSample * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-        if (coco->CyclesThisLine >= 1) {
-          coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+        if (instance->CyclesThisLine >= 1) {
+          instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
         }
         else {
-          coco->CycleDrift = coco->CyclesThisLine;
+          instance->CycleDrift = instance->CyclesThisLine;
         }
 
-        coco->AudioEvent();
+        instance->AudioEvent();
 
-        coco->PicosToInterrupt -= coco->PicosToSoundSample;
-        coco->PicosToSoundSample = coco->SoundInterrupt;
+        instance->PicosToInterrupt -= instance->PicosToSoundSample;
+        instance->PicosToSoundSample = instance->SoundInterrupt;
 
         break;
 
       case 3:		//Interrupting and Sampling
-        if (coco->PicosToSoundSample < coco->PicosToInterrupt)
+        if (instance->PicosToSoundSample < instance->PicosToInterrupt)
         {
-          coco->PicosThisLine -= coco->PicosToSoundSample;
-          coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToSoundSample * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+          instance->PicosThisLine -= instance->PicosToSoundSample;
+          instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToSoundSample * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-          if (coco->CyclesThisLine >= 1) {
-            coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+          if (instance->CyclesThisLine >= 1) {
+            instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
           }
           else {
-            coco->CycleDrift = coco->CyclesThisLine;
+            instance->CycleDrift = instance->CyclesThisLine;
           }
 
-          coco->AudioEvent();
+          instance->AudioEvent();
 
-          coco->PicosToInterrupt -= coco->PicosToSoundSample;
-          coco->PicosToSoundSample = coco->SoundInterrupt;
-          coco->PicosThisLine -= coco->PicosToInterrupt;
+          instance->PicosToInterrupt -= instance->PicosToSoundSample;
+          instance->PicosToSoundSample = instance->SoundInterrupt;
+          instance->PicosThisLine -= instance->PicosToInterrupt;
 
-          coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToInterrupt * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+          instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToInterrupt * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-          if (coco->CyclesThisLine >= 1) {
-            coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+          if (instance->CyclesThisLine >= 1) {
+            instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
           }
           else {
-            coco->CycleDrift = coco->CyclesThisLine;
+            instance->CycleDrift = instance->CyclesThisLine;
           }
 
           GimeAssertTimerInterrupt();
 
-          coco->PicosToSoundSample -= coco->PicosToInterrupt;
-          coco->PicosToInterrupt = coco->MasterTickCounter;
+          instance->PicosToSoundSample -= instance->PicosToInterrupt;
+          instance->PicosToInterrupt = instance->MasterTickCounter;
 
           break;
         }
 
-        if (coco->PicosToSoundSample > coco->PicosToInterrupt)
+        if (instance->PicosToSoundSample > instance->PicosToInterrupt)
         {
-          coco->PicosThisLine -= coco->PicosToInterrupt;
-          coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToInterrupt * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+          instance->PicosThisLine -= instance->PicosToInterrupt;
+          instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToInterrupt * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-          if (coco->CyclesThisLine >= 1) {
-            coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+          if (instance->CyclesThisLine >= 1) {
+            instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
           }
           else {
-            coco->CycleDrift = coco->CyclesThisLine;
+            instance->CycleDrift = instance->CyclesThisLine;
           }
 
           GimeAssertTimerInterrupt();
 
-          coco->PicosToSoundSample -= coco->PicosToInterrupt;
-          coco->PicosToInterrupt = coco->MasterTickCounter;
-          coco->PicosThisLine -= coco->PicosToSoundSample;
-          coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToSoundSample * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+          instance->PicosToSoundSample -= instance->PicosToInterrupt;
+          instance->PicosToInterrupt = instance->MasterTickCounter;
+          instance->PicosThisLine -= instance->PicosToSoundSample;
+          instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToSoundSample * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-          if (coco->CyclesThisLine >= 1) {
-            coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+          if (instance->CyclesThisLine >= 1) {
+            instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
           }
           else {
-            coco->CycleDrift = coco->CyclesThisLine;
+            instance->CycleDrift = instance->CyclesThisLine;
           }
 
-          coco->AudioEvent();
+          instance->AudioEvent();
 
-          coco->PicosToInterrupt -= coco->PicosToSoundSample;
-          coco->PicosToSoundSample = coco->SoundInterrupt;
+          instance->PicosToInterrupt -= instance->PicosToSoundSample;
+          instance->PicosToSoundSample = instance->SoundInterrupt;
 
           break;
         }
 
         //They are the same (rare)
-        coco->PicosThisLine -= coco->PicosToInterrupt;
-        coco->CyclesThisLine = coco->CycleDrift + (coco->PicosToSoundSample * coco->CyclesPerLine * coco->OverClock / coco->PicosPerLine);
+        instance->PicosThisLine -= instance->PicosToInterrupt;
+        instance->CyclesThisLine = instance->CycleDrift + (instance->PicosToSoundSample * instance->CyclesPerLine * instance->OverClock / instance->PicosPerLine);
 
-        if (coco->CyclesThisLine > 1) {
-          coco->CycleDrift = cpu->CPUExec((int)floor(coco->CyclesThisLine)) + (coco->CyclesThisLine - floor(coco->CyclesThisLine));
+        if (instance->CyclesThisLine > 1) {
+          instance->CycleDrift = cpu->CPUExec((int)floor(instance->CyclesThisLine)) + (instance->CyclesThisLine - floor(instance->CyclesThisLine));
         }
         else {
-          coco->CycleDrift = coco->CyclesThisLine;
+          instance->CycleDrift = instance->CyclesThisLine;
         }
 
         GimeAssertTimerInterrupt();
 
-        coco->AudioEvent();
+        instance->AudioEvent();
 
-        coco->PicosToInterrupt = coco->MasterTickCounter;
-        coco->PicosToSoundSample = coco->SoundInterrupt;
+        instance->PicosToInterrupt = instance->MasterTickCounter;
+        instance->PicosToSoundSample = instance->SoundInterrupt;
       }
     }
 
@@ -482,17 +475,17 @@ extern "C" {
 
       //Remember the original throttle setting.
       //Set it to off. We need speed for this!
-      if (coco->Throttle == 0) {
-        coco->Throttle = SetSpeedThrottle(QUERY);
+      if (instance->Throttle == 0) {
+        instance->Throttle = SetSpeedThrottle(QUERY);
 
-        if (coco->Throttle == 0) {
-          coco->Throttle = 2; // 2 = No throttle.
+        if (instance->Throttle == 0) {
+          instance->Throttle = 2; // 2 = No throttle.
         }
       }
 
       SetSpeedThrottle(0);
 
-      if (coco->ClipCycle == 1) {
+      if (instance->ClipCycle == 1) {
         key = PeekClipboard();
 
         if (key == SHIFT) {
@@ -503,9 +496,9 @@ extern "C" {
 
         vccKeyboardHandleKey(key, key, kEventKeyDown);
 
-        coco->WaitCycle = key == 0x1c ? 6000 : 2000;
+        instance->WaitCycle = key == 0x1c ? 6000 : 2000;
       }
-      else if (coco->ClipCycle == 500) {
+      else if (instance->ClipCycle == 500) {
         key = PeekClipboard();
 
         vccKeyboardHandleKey(SHIFT, SHIFT, kEventKeyUp);
@@ -516,7 +509,7 @@ extern "C" {
           SetPaste(false);
 
           //Done pasting. Reset throttle to original state
-          if (coco->Throttle == 2) {
+          if (instance->Throttle == 2) {
             SetSpeedThrottle(0);
           }
           else {
@@ -526,14 +519,14 @@ extern "C" {
           //...and reset the keymap to the original state
           vccKeyboardBuildRuntimeTable((keyboardlayout_e)GetCurrentKeyMap());
 
-          coco->Throttle = 0;
+          instance->Throttle = 0;
         }
       }
 
-      coco->ClipCycle++;
+      instance->ClipCycle++;
 
-      if (coco->ClipCycle > coco->WaitCycle) {
-        coco->ClipCycle = 1;
+      if (instance->ClipCycle > instance->WaitCycle) {
+        instance->ClipCycle = 1;
       }
     }
 
@@ -546,10 +539,8 @@ extern "C" {
   {
     static unsigned short FrameCounter = 0;
 
-    CoCoState* coco = GetCoCoState();
-
     //********************************Start of frame Render*****************************************************
-    GetGraphicsState()->BlinkState = coco->BlinkPhase;
+    GetGraphicsState()->BlinkState = instance->BlinkPhase;
 
     irq_fs(0);				//FS low to High transition start of display Blink needs this
 
@@ -567,36 +558,36 @@ extern "C" {
       }
     }
 
-    for (systemState->LineCounter = 0; systemState->LineCounter < (coco->TopBorder - 4); systemState->LineCounter++)
+    for (systemState->LineCounter = 0; systemState->LineCounter < (instance->TopBorder - 4); systemState->LineCounter++)
     {
       if (!(FrameCounter % systemState->FrameSkip)) {
-        coco->DrawTopBorder[systemState->BitDepth](systemState);
+        instance->DrawTopBorder[systemState->BitDepth](systemState);
       }
 
       CPUCycle();
     }
 
-    for (systemState->LineCounter = 0; systemState->LineCounter < coco->LinesperScreen; systemState->LineCounter++)		//Active Display area		
+    for (systemState->LineCounter = 0; systemState->LineCounter < instance->LinesperScreen; systemState->LineCounter++)		//Active Display area		
     {
       CPUCycle();
 
       if (!(FrameCounter % systemState->FrameSkip)) {
-        coco->UpdateScreen[systemState->BitDepth](systemState);
+        instance->UpdateScreen[systemState->BitDepth](systemState);
       }
     }
 
     irq_fs(1);  //End of active display FS goes High to Low
 
-    if (coco->VertInterruptEnabled) {
+    if (instance->VertInterruptEnabled) {
       GimeAssertVertInterrupt();
     }
 
-    for (systemState->LineCounter = 0; systemState->LineCounter < (coco->BottomBorder); systemState->LineCounter++)	// Bottom border
+    for (systemState->LineCounter = 0; systemState->LineCounter < (instance->BottomBorder); systemState->LineCounter++)	// Bottom border
     {
       CPUCycle();
 
       if (!(FrameCounter % systemState->FrameSkip)) {
-        coco->DrawBottomBorder[systemState->BitDepth](systemState);
+        instance->DrawBottomBorder[systemState->BitDepth](systemState);
       }
     }
 
@@ -610,22 +601,22 @@ extern "C" {
       CPUCycle();
     }
 
-    switch (coco->SoundOutputMode)
+    switch (instance->SoundOutputMode)
     {
     case 0:
-      FlushAudioBuffer(coco->AudioBuffer, coco->AudioIndex << 2);
+      FlushAudioBuffer(instance->AudioBuffer, instance->AudioIndex << 2);
       break;
 
     case 1:
-      FlushCassetteBuffer(coco->CassBuffer, coco->AudioIndex);
+      FlushCassetteBuffer(instance->CassBuffer, instance->AudioIndex);
       break;
 
     case 2:
-      LoadCassetteBuffer(coco->CassBuffer);
+      LoadCassetteBuffer(instance->CassBuffer);
       break;
     }
 
-    coco->AudioIndex = 0;
+    instance->AudioIndex = 0;
 
     return(CalculateFPS());
   }
