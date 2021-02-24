@@ -2,12 +2,12 @@
 
 #include "library/VCC.h"
 #include "library/Joystick.h"
+#include "library/MessageHandlers.h"
 
 #include "resources/resource.h"
 
 #include "ProcessCommandMessage.h"
 #include "ProcessKeyDownMessage.h"
-#include "MessageHandlers.h"
 
 //----------------------------------------------------------------------------------------
 //	lParam bits
@@ -33,7 +33,7 @@ void ProcessMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
   {
   case WM_CLOSE:        EmuExit();                                break;
   case WM_COMMAND:      ProcessCommandMessage(hWnd, wParam);      break;
-  case WM_CREATE:       CreateMenu(hWnd);                         break;
+  case WM_CREATE:       CreateMainMenu(hWnd);                     break;
   case WM_KEYDOWN:      ProcessKeyDownMessage(wParam, lParam);    break;
   case WM_KEYUP:        KeyUp(wParam, lParam);                    break;
   case WM_KILLFOCUS:    SendSavedKeyEvents();                     break;

@@ -2,8 +2,7 @@
 
 #include "library/VCC.h"
 #include "library/Config.h"
-
-#include "MessageHandlers.h"
+#include "library/MessageHandlers.h"
 
 void ProcessKeyDownMessage(WPARAM wParam, LPARAM lParam) {
   // get key scan code for emulator control keys

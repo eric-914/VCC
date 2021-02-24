@@ -7,7 +7,7 @@
 #include "library/Clipboard.h"
 #include "library/Graphics.h"
 
-#include "MessageHandlers.h"
+#include "library/MessageHandlers.h"
 
 void ProcessCommandMessage(HWND hWnd, WPARAM wParam) {
   int wmId, wmEvent;
