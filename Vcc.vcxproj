@@ -168,9 +168,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
-    <ClCompile Include="ProcessCommandMessage.c" />
-    <ClCompile Include="ProcessKeyDownMessage.c" />
-    <ClCompile Include="ProcessMessage.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="fd502\fd502.vcxproj">
@@ -200,11 +197,6 @@
       <Project>{95713490-9812-4348-9e5e-818f736a271a}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ProcessCommandMessage.h" />
-    <ClInclude Include="ProcessKeyDownMessage.h" />
-    <ClInclude Include="ProcessMessage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

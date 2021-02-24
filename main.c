@@ -9,8 +9,7 @@
 #include "library/Graphics.h"
 #include "library/PAKInterface.h"
 #include "library/Config.h"
-
-#include "ProcessMessage.h"
+#include "library/ProcessMessage.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
