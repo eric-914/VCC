@@ -16,9 +16,9 @@ typedef struct {
   int InterruptTimer;
 
   unsigned char GimeRegisters[256];
-} RegistersState;
+} TC1014RegistersState;
 
-extern "C" __declspec(dllexport) RegistersState * __cdecl GetRegistersState();
+extern "C" __declspec(dllexport) TC1014RegistersState * __cdecl GetTC1014RegistersState();
 
 extern "C" __declspec(dllexport) unsigned char __cdecl GimeRead(unsigned char port);
 extern "C" __declspec(dllexport) void __cdecl GimeAssertKeyboardInterrupt(void);

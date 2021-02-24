@@ -440,7 +440,7 @@ extern "C" {
     ofn.lpstrTitle = "Open print capture file";		// title bar string
 
     if (GetOpenFileName(&ofn)) {
-      if (!(OpenPrintFile(tempFileName))) {
+      if (!(MC6821_OpenPrintFile(tempFileName))) {
         MessageBox(0, "Can't Open File", "Can't open the file specified.", 0);
       }
 

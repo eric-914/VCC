@@ -226,7 +226,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) int __cdecl OpenPrintFile(char* filename)
+  __declspec(dllexport) int __cdecl MC6821_OpenPrintFile(char* filename)
   {
     instance->hPrintFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 

@@ -1,6 +1,6 @@
-#include "Registers.h"
+#include "TC1014Registers.h"
 #include "VCC.h"
-#include "MMU.h"
+#include "TC1014MMU.h"
 #include "Graphics.h"
 #include "Keyboard.h"
 #include "CoCo.h"
@@ -8,17 +8,17 @@
 #include "cpudef.h"
 #include "defines.h"
 
-RegistersState* InitializeInstance(RegistersState*);
+TC1014RegistersState* InitializeInstance(TC1014RegistersState*);
 
-static RegistersState* instance = InitializeInstance(new RegistersState());
+static TC1014RegistersState* instance = InitializeInstance(new TC1014RegistersState());
 
 extern "C" {
-  __declspec(dllexport) RegistersState* __cdecl GetRegistersState() {
+  __declspec(dllexport) TC1014RegistersState* __cdecl GetTC1014RegistersState() {
     return instance;
   }
 }
 
-RegistersState* InitializeInstance(RegistersState* p) {
+TC1014RegistersState* InitializeInstance(TC1014RegistersState* p) {
   p->EnhancedFIRQFlag = 0;
   p->EnhancedIRQFlag = 0;
   p->VDG_Mode = 0;
@@ -37,7 +37,7 @@ extern "C" {
   {
     static unsigned char temp;
 
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     switch (port)
     {
@@ -66,7 +66,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl GimeAssertKeyboardInterrupt(void)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     CPU* cpu = GetCPU();
 
@@ -86,7 +86,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl GimeAssertVertInterrupt(void)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     CPU* cpu = GetCPU();
 
@@ -106,7 +106,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl GimeAssertTimerInterrupt(void)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     CPU* cpu = GetCPU();
 
@@ -126,7 +126,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl GimeAssertHorzInterrupt(void)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     CPU* cpu = GetCPU();
 
@@ -146,7 +146,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl MC6883Reset()
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     registersState->VDG_Mode = 0;
     registersState->Dis_Offset = 0;
@@ -159,7 +159,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SAMRead(unsigned char port) //SAM don't talk much :)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     if ((port >= 0xF0) && (port <= 0xFF)) { //IRQ vectors from rom
       return(registersState->Rom[0x3F00 + port]);
@@ -175,7 +175,7 @@ extern "C" {
     unsigned char mask = 0;
     unsigned char reg = 0;
 
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     if ((port >= 0xC6) && (port <= 0xD3))	//VDG Display offset Section
     {
@@ -223,7 +223,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeFIRQSteering(unsigned char data) //93
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     if ((registersState->GimeRegisters[0x92] & 2) | (registersState->GimeRegisters[0x93] & 2)) {
       GimeSetKeyboardInterruptState(1);
@@ -259,7 +259,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetGimeIRQSteering(unsigned char data) //92
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     if ((registersState->GimeRegisters[0x92] & 2) | (registersState->GimeRegisters[0x93] & 2)) {
       GimeSetKeyboardInterruptState(1);
@@ -294,7 +294,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetInit0(unsigned char data)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     SetCompatMode(!!(data & 128));
     SetMmuEnabled(!!(data & 64)); //MMUEN
@@ -319,7 +319,7 @@ extern "C" {
   {
     unsigned short temp;
 
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     temp = ((registersState->GimeRegisters[0x94] << 8) + registersState->GimeRegisters[0x95]) & 4095;
 
@@ -332,7 +332,7 @@ extern "C" {
   {
     unsigned short temp;
 
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     temp = ((registersState->GimeRegisters[0x94] << 8) + registersState->GimeRegisters[0x95]) & 4095;
 
@@ -343,7 +343,7 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl GimeWrite(unsigned char port, unsigned char data)
   {
-    RegistersState* registersState = GetRegistersState();
+    TC1014RegistersState* registersState = GetTC1014RegistersState();
 
     registersState->GimeRegisters[port] = data;
 

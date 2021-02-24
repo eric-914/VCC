@@ -5,7 +5,7 @@
 #include "VCC.h"
 #include "MC6821.h"
 #include "Config.h"
-#include "MMU.h"
+#include "TC1014MMU.h"
 #include "systemstate.h"
 #include "cpudef.h"
 #include "fileoperations.h"

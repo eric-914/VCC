@@ -2,7 +2,7 @@
 #include "Config.h"
 #include "Keyboard.h"
 #include "Graphics.h"
-#include "MMU.h"
+#include "TC1014MMU.h"
 
 ClipboardState* InitializeInstance(ClipboardState*);
 

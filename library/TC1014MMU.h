@@ -25,9 +25,9 @@ typedef struct {
   unsigned char VectorMaska[4];
   unsigned int VidMask[4];
 
-} MmuState;
+} TC1014MmuState;
 
-extern "C" __declspec(dllexport) MmuState * __cdecl GetMmuState();
+extern "C" __declspec(dllexport) TC1014MmuState * __cdecl GetTC1014MmuState();
 
 extern "C" __declspec(dllexport) unsigned short __cdecl GetMem(long);
 extern "C" __declspec(dllexport) unsigned char* __cdecl GetInternalRomPointer(void);

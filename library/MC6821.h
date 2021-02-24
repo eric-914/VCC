@@ -31,7 +31,7 @@ extern "C" __declspec(dllexport) MC6821State * __cdecl GetMC6821State();
 
 extern "C" __declspec(dllexport) void __cdecl SetCart(unsigned char);
 
-extern "C" __declspec(dllexport) int __cdecl OpenPrintFile(char*);
+extern "C" __declspec(dllexport) int __cdecl MC6821_OpenPrintFile(char*);
 
 extern "C" __declspec(dllexport) unsigned char __cdecl MC6821_DACState();
 extern "C" __declspec(dllexport) unsigned char __cdecl MC6821_GetCasSample();
