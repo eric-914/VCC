@@ -2,11 +2,6 @@
 
 #include "library/VCC.h"
 #include "library/Config.h"
-#include "library/Keyboard.h"
-#include "library/Graphics.h"
-#include "library/DirectDraw.h"
-
-#include "resources/resource.h"
 
 #include "MessageHandlers.h"
 
@@ -18,63 +13,16 @@ void ProcessKeyDownMessage(WPARAM wParam, LPARAM lParam) {
 
   switch (OEMscan)
   {
-  case DIK_F3:
-    DecreaseOverclockSpeed(&(vccState->EmuState));
-    break;
+  case DIK_F3:    SlowDown();           break;
+  case DIK_F4:    SpeedUp();            break;
+  case DIK_F5:    EmuReset(1);          break;
+  case DIK_F6:    ToggleMonitorType();  break;
+  case DIK_F8:    ToggleThrottle();     break;
+  case DIK_F9:    ToggleOnOff();        break;
+  case DIK_F10:   ToggleInfoBand();     break;
+  case DIK_F11:   ToggleFullScreen();   break;
 
-  case DIK_F4:
-    IncreaseOverclockSpeed(&(vccState->EmuState));
-    break;
-
-  case DIK_F5:
-    EmuReset(1);
-    break;
-
-  case DIK_F6:
-    SetMonitorType(!SetMonitorType(QUERY));
-    break;
-
-  case DIK_F8:
-    SetSpeedThrottle(!SetSpeedThrottle(QUERY));
-    break;
-
-  case DIK_F9:
-    vccState->EmuState.EmulationRunning = !vccState->EmuState.EmulationRunning;
-
-    if (vccState->EmuState.EmulationRunning) {
-      vccState->EmuState.ResetPending = 2;
-    }
-    else {
-      SetStatusBarText("", &(vccState->EmuState));
-    }
-
-    break;
-
-  case DIK_F10:
-    SetInfoBand(!SetInfoBand(QUERY));
-    InvalidateBorder();
-
-    break;
-
-  case DIK_F11:
-    if (vccState->FlagEmuStop == TH_RUNNING)
-    {
-      vccState->FlagEmuStop = TH_REQWAIT;
-      vccState->EmuState.FullScreen = !vccState->EmuState.FullScreen;
-    }
-
-    break;
-
-  default:
-    // send other keystrokes to the emulator if it is active
-    if (vccState->EmuState.EmulationRunning)
-    {
-      vccKeyboardHandleKey((unsigned char)wParam, OEMscan, kEventKeyDown);
-
-      // Save key down in case focus is lost
-      SaveLastTwoKeyDownEvents((unsigned char)wParam, OEMscan);
-    }
-    break;
+  default:        KeyDown(wParam, lParam); 
   }
 }
 

@@ -2,9 +2,11 @@
 
 #include "library/VCC.h"
 #include "library/Callbacks.h"
+#include "library/Config.h"
 #include "library/Graphics.h"
 #include "library/Keyboard.h"
 #include "library/Joystick.h"
+#include "library/DirectDraw.h"
 
 #include "resources/resource.h"
 
@@ -94,4 +96,67 @@ void MouseMove(LPARAM lParam) {
 
     SetJoystick(x, y);
   }
+}
+
+void ToggleOnOff() {
+  VccState* vccState = GetVccState();
+
+  vccState->EmuState.EmulationRunning = !vccState->EmuState.EmulationRunning;
+
+  if (vccState->EmuState.EmulationRunning) {
+    vccState->EmuState.ResetPending = 2;
+  }
+  else {
+    SetStatusBarText("", &(vccState->EmuState));
+  }
+}
+
+void ToggleFullScreen() {
+  VccState* vccState = GetVccState();
+
+  if (vccState->FlagEmuStop == TH_RUNNING)
+  {
+    vccState->FlagEmuStop = TH_REQWAIT;
+    vccState->EmuState.FullScreen = !vccState->EmuState.FullScreen;
+  }
+}
+
+void KeyDown(WPARAM wParam, LPARAM lParam) {
+  unsigned char OEMscan = (unsigned char)((lParam & 0x00FF0000) >> 16); // just get the scan code
+
+  VccState* vccState = GetVccState();
+
+  // send other keystrokes to the emulator if it is active
+  if (vccState->EmuState.EmulationRunning)
+  {
+    vccKeyboardHandleKey((unsigned char)wParam, OEMscan, kEventKeyDown);
+
+    // Save key down in case focus is lost
+    SaveLastTwoKeyDownEvents((unsigned char)wParam, OEMscan);
+  }
+}
+
+void ToggleMonitorType() {
+  SetMonitorType(!SetMonitorType(QUERY));
+}
+
+void ToggleThrottle() {
+  SetSpeedThrottle(!SetSpeedThrottle(QUERY));
+}
+
+void ToggleInfoBand() {
+  SetInfoBand(!SetInfoBand(QUERY));
+  InvalidateBorder();
+}
+
+void SlowDown() {
+  VccState* vccState = GetVccState();
+
+  DecreaseOverclockSpeed(&(vccState->EmuState));
+}
+
+void SpeedUp() {
+  VccState* vccState = GetVccState();
+
+  IncreaseOverclockSpeed(&(vccState->EmuState));
 }
