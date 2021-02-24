@@ -389,26 +389,24 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl FlushCassetteBuffer(unsigned char* buffer, unsigned int length)
   {
-    CassetteState* cassetteState = GetCassetteState();
-
-    if (cassetteState->TapeMode != REC) {
+    if (instance->TapeMode != REC) {
       return;
     }
 
-    switch (cassetteState->FileType)
+    switch (instance->FileType)
     {
     case WAV:
-      SetFilePointer(cassetteState->TapeHandle, cassetteState->TapeOffset + 44, 0, FILE_BEGIN);
-      WriteFile(cassetteState->TapeHandle, buffer, length, &(cassetteState->BytesMoved), NULL);
+      SetFilePointer(instance->TapeHandle, instance->TapeOffset + 44, 0, FILE_BEGIN);
+      WriteFile(instance->TapeHandle, buffer, length, &(instance->BytesMoved), NULL);
 
-      if (length != cassetteState->BytesMoved) {
+      if (length != instance->BytesMoved) {
         return;
       }
 
-      cassetteState->TapeOffset += length;
+      instance->TapeOffset += length;
 
-      if (cassetteState->TapeOffset > cassetteState->TotalSize) {
-        cassetteState->TotalSize = cassetteState->TapeOffset;
+      if (instance->TapeOffset > instance->TotalSize) {
+        instance->TotalSize = instance->TapeOffset;
       }
 
       break;
@@ -419,31 +417,29 @@ extern "C" {
       break;
     }
 
-    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+    UpdateTapeCounter(instance->TapeOffset, instance->TapeMode);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl LoadCassetteBuffer(unsigned char* cassBuffer)
   {
-    CassetteState* cassetteState = GetCassetteState();
-
     unsigned long bytesMoved = 0;
 
-    if (cassetteState->TapeMode != PLAY) {
+    if (instance->TapeMode != PLAY) {
       return;
     }
 
-    switch (cassetteState->FileType)
+    switch (instance->FileType)
     {
     case WAV:
-      SetFilePointer(cassetteState->TapeHandle, cassetteState->TapeOffset + 44, 0, FILE_BEGIN);
-      ReadFile(cassetteState->TapeHandle, cassBuffer, TAPEAUDIORATE / 60, &bytesMoved, NULL);
+      SetFilePointer(instance->TapeHandle, instance->TapeOffset + 44, 0, FILE_BEGIN);
+      ReadFile(instance->TapeHandle, cassBuffer, TAPEAUDIORATE / 60, &bytesMoved, NULL);
 
-      cassetteState->TapeOffset += bytesMoved;
+      instance->TapeOffset += bytesMoved;
 
-      if (cassetteState->TapeOffset > cassetteState->TotalSize) {
-        cassetteState->TapeOffset = cassetteState->TotalSize;
+      if (instance->TapeOffset > instance->TotalSize) {
+        instance->TapeOffset = instance->TotalSize;
       }
 
       break;
@@ -454,45 +450,41 @@ extern "C" {
       break;
     }
 
-    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+    UpdateTapeCounter(instance->TapeOffset, instance->TapeMode);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetTapeCounter(unsigned int count)
   {
-    CassetteState* cassetteState = GetCassetteState();
+    instance->TapeOffset = count;
 
-    cassetteState->TapeOffset = count;
-
-    if (cassetteState->TapeOffset > cassetteState->TotalSize) {
-      cassetteState->TotalSize = cassetteState->TapeOffset;
+    if (instance->TapeOffset > instance->TotalSize) {
+      instance->TotalSize = instance->TapeOffset;
     }
 
-    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+    UpdateTapeCounter(instance->TapeOffset, instance->TapeMode);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl Motor(unsigned char state)
   {
-    CassetteState* cassetteState = GetCassetteState();
+    instance->MotorState = state;
 
-    cassetteState->MotorState = state;
-
-    switch (cassetteState->MotorState)
+    switch (instance->MotorState)
     {
     case 0:
       SetSndOutMode(0);
 
-      switch (cassetteState->TapeMode)
+      switch (instance->TapeMode)
       {
       case STOP:
         break;
 
       case PLAY:
-        cassetteState->Quiet = 30;
-        cassetteState->TempIndex = 0;
+        instance->Quiet = 30;
+        instance->TempIndex = 0;
         break;
 
       case REC:
@@ -505,7 +497,7 @@ extern "C" {
       break;	//MOTOROFF
 
     case 1:
-      switch (cassetteState->TapeMode)
+      switch (instance->TapeMode)
       {
       case STOP:
         SetSndOutMode(0);
@@ -531,49 +523,47 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl SetTapeMode(unsigned char mode)	//Handles button pressed from Dialog
   {
-    CassetteState* cassetteState = GetCassetteState();
+    instance->TapeMode = mode;
 
-    cassetteState->TapeMode = mode;
-
-    switch (cassetteState->TapeMode)
+    switch (instance->TapeMode)
     {
     case STOP:
       break;
 
     case PLAY:
-      if (cassetteState->TapeHandle == NULL) {
+      if (instance->TapeHandle == NULL) {
         if (!LoadTape()) {
-          cassetteState->TapeMode = STOP;
+          instance->TapeMode = STOP;
         }
         else {
-          cassetteState->TapeMode = mode;
+          instance->TapeMode = mode;
         }
       }
 
-      if (cassetteState->MotorState) {
+      if (instance->MotorState) {
         Motor(1);
       }
 
       break;
 
     case REC:
-      if (cassetteState->TapeHandle == NULL) {
+      if (instance->TapeHandle == NULL) {
         if (!LoadTape()) {
-          cassetteState->TapeMode = STOP;
+          instance->TapeMode = STOP;
         }
         else {
-          cassetteState->TapeMode = mode;
+          instance->TapeMode = mode;
         }
       }
       break;
 
     case EJECT:
       CloseTapeFile();
-      strcpy(cassetteState->TapeFileName, "EMPTY");
+      strcpy(instance->TapeFileName, "EMPTY");
 
       break;
     }
 
-    UpdateTapeCounter(cassetteState->TapeOffset, cassetteState->TapeMode);
+    UpdateTapeCounter(instance->TapeOffset, instance->TapeMode);
   }
 }

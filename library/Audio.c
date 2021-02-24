@@ -215,22 +215,18 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) int __cdecl GetSoundCardList(SoundCardList* list)
   {
-    AudioState* audioState = GetAudioState();
-
-    audioState->CardCount = 0;
-    audioState->Cards = list;
+    instance->CardCount = 0;
+    instance->Cards = list;
 
     DirectSoundEnumerate(DirectSoundEnumerateCallback, NULL);
 
-    return(audioState->CardCount);
+    return(instance->CardCount);
   }
 }
 
 extern "C" {
   __declspec(dllexport) int __cdecl SoundInit(HWND hWnd, _GUID* guid, unsigned short rate)
 {
-  AudioState* instance = GetAudioState();
-
   rate = (rate & 3);
 
   if (rate != 0) {	//Force 44100 or Mute
