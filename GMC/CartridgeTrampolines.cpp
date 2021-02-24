@@ -24,7 +24,7 @@ GMC_EXPORT void ModuleReset()
   Cartridge::m_Singleton->OnReset();
 }
 
-GMC_EXPORT void MC6821_SetCart(SETCART callback)
+GMC_EXPORT void SetCart(SETCART callback)
 {
   Cartridge::m_Singleton->SetCartLineAssertCallback(callback);
 }

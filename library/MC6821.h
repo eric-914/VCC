@@ -29,6 +29,8 @@ typedef struct {
 
 extern "C" __declspec(dllexport) MC6821State * __cdecl GetMC6821State();
 
+extern "C" __declspec(dllexport) void __cdecl SetCart(unsigned char);
+
 extern "C" __declspec(dllexport) int __cdecl OpenPrintFile(char*);
 
 extern "C" __declspec(dllexport) unsigned char __cdecl MC6821_DACState();
@@ -45,7 +47,6 @@ extern "C" __declspec(dllexport) void __cdecl MC6821_AssertCart();
 extern "C" __declspec(dllexport) void __cdecl MC6821_CaptureBit(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl MC6821_ClosePrintFile();
 extern "C" __declspec(dllexport) void __cdecl MC6821_PiaReset();
-extern "C" __declspec(dllexport) void __cdecl MC6821_SetCart(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl MC6821_SetCassetteSample(unsigned char);
 extern "C" __declspec(dllexport) void __cdecl MC6821_SetMonState(BOOL);
 extern "C" __declspec(dllexport) void __cdecl MC6821_SetSerialParams(unsigned char);

@@ -253,7 +253,7 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl MC6821_SetCart(unsigned char cart)
+  __declspec(dllexport) void __cdecl SetCart(unsigned char cart)
   {
     instance->CartInserted = cart;
   }

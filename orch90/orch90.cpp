@@ -107,9 +107,8 @@ extern "C"
 
 extern "C"
 {
-  __declspec(dllexport) unsigned char MC6821_SetCart(SETCART pointer)
+  __declspec(dllexport) unsigned char SetCart(SETCART pointer)
   {
-
     PakSetCart = pointer;
     return(NULL);
   }
