@@ -50,26 +50,24 @@ typedef struct
 
 extern "C" __declspec(dllexport) VccState * __cdecl GetVccState();
 
-extern "C" __declspec(dllexport) void __cdecl Reboot(void);
-extern "C" __declspec(dllexport) void __cdecl SaveConfig(void);
-extern "C" __declspec(dllexport) void __cdecl SaveLastTwoKeyDownEvents(unsigned char kb_char, unsigned char oemScan);
-extern "C" __declspec(dllexport) unsigned char __cdecl SetAutoStart(unsigned char autostart);
-extern "C" __declspec(dllexport) void __cdecl SetCPUMultiplayerFlag(unsigned char double_speed);
-extern "C" __declspec(dllexport) unsigned char __cdecl SetCPUMultiplayer(unsigned char multiplayer);
-extern "C" __declspec(dllexport) unsigned char __cdecl SetCpuType(unsigned char cpuType);
-extern "C" __declspec(dllexport) unsigned char __cdecl SetFrameSkip(unsigned char skip);
-extern "C" __declspec(dllexport) unsigned char __cdecl SetRamSize(unsigned char size);
-extern "C" __declspec(dllexport) unsigned char __cdecl SetSpeedThrottle(unsigned char throttle);
-extern "C" __declspec(dllexport) void __cdecl SetTurboMode(unsigned char data);
+extern "C" __declspec(dllexport) unsigned __cdecl CartLoad(void*);
+extern "C" __declspec(dllexport) unsigned __cdecl EmuLoopRun(void*);
 
-extern "C" __declspec(dllexport) unsigned __cdecl CartLoad(void* dummy);
-extern "C" __declspec(dllexport) void __cdecl LoadPack(void);
-
-extern "C" __declspec(dllexport) void __cdecl LoadIniFile(void);
-extern "C" __declspec(dllexport) void __cdecl SendSavedKeyEvents();
-
-extern "C" __declspec(dllexport) void __cdecl SoftReset(void);
-extern "C" __declspec(dllexport) void __cdecl HardReset(SystemState* const systemState);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetAutoStart(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetCPUMultiplayer(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetCpuType(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetFrameSkip(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetRamSize(unsigned char);
+extern "C" __declspec(dllexport) unsigned char __cdecl SetSpeedThrottle(unsigned char);
 
 extern "C" __declspec(dllexport) void __cdecl EmuLoop();
-extern "C" __declspec(dllexport) unsigned __cdecl EmuLoopRun(void* dummy);
+extern "C" __declspec(dllexport) void __cdecl HardReset(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl LoadIniFile();
+extern "C" __declspec(dllexport) void __cdecl LoadPack();
+extern "C" __declspec(dllexport) void __cdecl Reboot();
+extern "C" __declspec(dllexport) void __cdecl SaveConfig();
+extern "C" __declspec(dllexport) void __cdecl SaveLastTwoKeyDownEvents(unsigned char, unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SendSavedKeyEvents();
+extern "C" __declspec(dllexport) void __cdecl SetCPUMultiplayerFlag(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SetTurboMode(unsigned char);
+extern "C" __declspec(dllexport) void __cdecl SoftReset();

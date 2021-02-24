@@ -52,9 +52,9 @@ VccState* InitializeInstance(VccState* p) {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl Reboot(void)
+  __declspec(dllexport) void __cdecl Reboot()
   {
-    GetVccState()->SystemState.ResetPending = 2;
+    instance->SystemState.ResetPending = 2;
   }
 }
 
@@ -64,15 +64,13 @@ extern "C" {
     char curini[MAX_PATH];
     char newini[MAX_PATH + 4];  // Save room for '.ini' if needed
 
-    VccState* vccState = GetVccState();
-
     GetIniFilePath(curini);  // EJJ get current ini file path
     strcpy(newini, curini);   // Let GetOpenFilename suggest it
 
     memset(&ofn, 0, sizeof(ofn));
 
     ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = vccState->SystemState.WindowHandle;
+    ofn.hwndOwner = instance->SystemState.WindowHandle;
     ofn.lpstrFilter = "INI\0*.ini\0\0";      // filter string
     ofn.nFilterIndex = 1;                    // current filter index
     ofn.lpstrFile = newini;                  // contains full path on return
@@ -102,23 +100,21 @@ extern "C" {
 // Save last two key down events
 extern "C" {
   __declspec(dllexport) void __cdecl SaveLastTwoKeyDownEvents(unsigned char kb_char, unsigned char oemScan) {
-    VccState* vccState = GetVccState();
-
     // Ignore zero scan code
     if (oemScan == 0) {
       return;
     }
 
     // Remember it
-    vccState->KeySaveToggle = !vccState->KeySaveToggle;
+    instance->KeySaveToggle = !instance->KeySaveToggle;
 
-    if (vccState->KeySaveToggle) {
-      vccState->KB_save1 = kb_char;
-      vccState->SC_save1 = oemScan;
+    if (instance->KeySaveToggle) {
+      instance->KB_save1 = kb_char;
+      instance->SC_save1 = oemScan;
     }
     else {
-      vccState->KB_save2 = kb_char;
-      vccState->SC_save2 = oemScan;
+      instance->KB_save2 = kb_char;
+      instance->SC_save2 = oemScan;
     }
   }
 }
@@ -126,33 +122,29 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetAutoStart(unsigned char autostart)
   {
-    VccState* vccState = GetVccState();
-
     if (autostart != QUERY) {
-      vccState->AutoStart = autostart;
+      instance->AutoStart = autostart;
     }
 
-    return(vccState->AutoStart);
+    return(instance->AutoStart);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetCPUMultiplayerFlag(unsigned char double_speed)
   {
-    VccState* vccState = GetVccState();
-
     SetClockSpeed(1);
 
-    vccState->SystemState.DoubleSpeedFlag = double_speed;
+    instance->SystemState.DoubleSpeedFlag = double_speed;
 
-    if (vccState->SystemState.DoubleSpeedFlag) {
-      SetClockSpeed(vccState->SystemState.DoubleSpeedMultiplyer * vccState->SystemState.TurboSpeedFlag);
+    if (instance->SystemState.DoubleSpeedFlag) {
+      SetClockSpeed(instance->SystemState.DoubleSpeedMultiplyer * instance->SystemState.TurboSpeedFlag);
     }
 
-    vccState->SystemState.CPUCurrentSpeed = .894;
+    instance->SystemState.CPUCurrentSpeed = .894;
 
-    if (vccState->SystemState.DoubleSpeedFlag) {
-      vccState->SystemState.CPUCurrentSpeed *= ((double)vccState->SystemState.DoubleSpeedMultiplyer * (double)vccState->SystemState.TurboSpeedFlag);
+    if (instance->SystemState.DoubleSpeedFlag) {
+      instance->SystemState.CPUCurrentSpeed *= ((double)instance->SystemState.DoubleSpeedMultiplyer * (double)instance->SystemState.TurboSpeedFlag);
     }
   }
 }
@@ -160,101 +152,89 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetCPUMultiplayer(unsigned char multiplayer)
   {
-    VccState* vccState = GetVccState();
-
     if (multiplayer != QUERY)
     {
-      vccState->SystemState.DoubleSpeedMultiplyer = multiplayer;
+      instance->SystemState.DoubleSpeedMultiplyer = multiplayer;
 
-      SetCPUMultiplayerFlag(vccState->SystemState.DoubleSpeedFlag);
+      SetCPUMultiplayerFlag(instance->SystemState.DoubleSpeedFlag);
     }
 
-    return(vccState->SystemState.DoubleSpeedMultiplyer);
+    return(instance->SystemState.DoubleSpeedMultiplyer);
   }
 }
 
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetCpuType(unsigned char cpuType)
   {
-    VccState* vccState = GetVccState();
-
     switch (cpuType)
     {
     case 0:
-      vccState->SystemState.CpuType = 0;
+      instance->SystemState.CpuType = 0;
 
-      strcpy(vccState->CpuName, "MC6809");
+      strcpy(instance->CpuName, "MC6809");
 
       break;
 
     case 1:
-      vccState->SystemState.CpuType = 1;
+      instance->SystemState.CpuType = 1;
 
-      strcpy(vccState->CpuName, "HD6309");
+      strcpy(instance->CpuName, "HD6309");
 
       break;
     }
 
-    return(vccState->SystemState.CpuType);
+    return(instance->SystemState.CpuType);
   }
 }
 
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetFrameSkip(unsigned char skip)
   {
-    VccState* vccState = GetVccState();
-
     if (skip != QUERY) {
-      vccState->SystemState.FrameSkip = skip;
+      instance->SystemState.FrameSkip = skip;
     }
 
-    return(vccState->SystemState.FrameSkip);
+    return(instance->SystemState.FrameSkip);
   }
 }
 
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetRamSize(unsigned char size)
   {
-    VccState* vccState = GetVccState();
-
     if (size != QUERY) {
-      vccState->SystemState.RamSize = size;
+      instance->SystemState.RamSize = size;
     }
 
-    return(vccState->SystemState.RamSize);
+    return(instance->SystemState.RamSize);
   }
 }
 
 extern "C" {
   __declspec(dllexport) unsigned char __cdecl SetSpeedThrottle(unsigned char throttle)
   {
-    VccState* vccState = GetVccState();
-
     if (throttle != QUERY) {
-      vccState->Throttle = throttle;
+      instance->Throttle = throttle;
     }
 
-    return(vccState->Throttle);
+    return(instance->Throttle);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl SetTurboMode(unsigned char data)
   {
-    VccState* vccState = GetVccState();
-
-    vccState->SystemState.TurboSpeedFlag = (data & 1) + 1;
+    instance->SystemState.TurboSpeedFlag = (data & 1) + 1;
 
     SetClockSpeed(1);
 
-    if (vccState->SystemState.DoubleSpeedFlag) {
-      SetClockSpeed(vccState->SystemState.DoubleSpeedMultiplyer * vccState->SystemState.TurboSpeedFlag);
+    if (instance->SystemState.DoubleSpeedFlag) {
+      SetClockSpeed(instance->SystemState.DoubleSpeedMultiplyer * instance->SystemState.TurboSpeedFlag);
     }
 
-    vccState->SystemState.CPUCurrentSpeed = .894;
+    instance->SystemState.CPUCurrentSpeed = .894;
 
-    if (vccState->SystemState.DoubleSpeedFlag) {
-      vccState->SystemState.CPUCurrentSpeed *= ((double)vccState->SystemState.DoubleSpeedMultiplyer * (double)vccState->SystemState.TurboSpeedFlag);
+    if (instance->SystemState.DoubleSpeedFlag) {
+      instance->SystemState.CPUCurrentSpeed *= ((double)instance->SystemState.DoubleSpeedMultiplyer * (double)instance->SystemState.TurboSpeedFlag);
     }
   }
 }
@@ -262,12 +242,10 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) unsigned __cdecl CartLoad(void* dummy)
   {
-    VccState* vccState = GetVccState();
+    LoadCart(&(instance->SystemState));
 
-    LoadCart(&(vccState->SystemState));
-
-    vccState->SystemState.EmulationRunning = TRUE;
-    vccState->DialogOpen = false;
+    instance->SystemState.EmulationRunning = TRUE;
+    instance->DialogOpen = false;
 
     return(NULL);
   }
@@ -278,13 +256,11 @@ extern "C" {
   {
     unsigned threadID;
 
-    VccState* vccState = GetVccState();
-
-    if (vccState->DialogOpen) {
+    if (instance->DialogOpen) {
       return;
     }
 
-    vccState->DialogOpen = true;
+    instance->DialogOpen = true;
 
     _beginthreadex(NULL, 0, &CartLoad, CreateEvent(NULL, FALSE, FALSE, NULL), 0, &threadID);
   }
@@ -297,14 +273,12 @@ extern "C" {
     OPENFILENAME ofn;
     char szFileName[MAX_PATH] = "";
 
-    VccState* vccState = GetVccState();
-
     GetIniFilePath(szFileName); // EJJ load current ini file path
 
     memset(&ofn, 0, sizeof(ofn));
 
     ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = vccState->SystemState.WindowHandle;
+    ofn.hwndOwner = instance->SystemState.WindowHandle;
     ofn.lpstrFilter = "INI\0*.ini\0\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFile = szFileName;
@@ -318,10 +292,10 @@ extern "C" {
     if (GetOpenFileName(&ofn)) {
       WriteIniFile();               // Flush current profile
       SetIniFilePath(szFileName);   // Set new ini file path
-      ReadIniFile(&(vccState->SystemState));                // Load it
-      UpdateConfig(&(vccState->SystemState));
+      ReadIniFile(&(instance->SystemState));                // Load it
+      UpdateConfig(&(instance->SystemState));
 
-      vccState->SystemState.ResetPending = 2;
+      instance->SystemState.ResetPending = 2;
     }
   }
 }
@@ -331,18 +305,17 @@ extern "C" {
 // Send key up events to keyboard handler for saved keys
 extern "C" {
   __declspec(dllexport) void __cdecl SendSavedKeyEvents() {
-    VccState* vccState = GetVccState();
 
-    if (vccState->SC_save1) {
-      vccKeyboardHandleKey(vccState->KB_save1, vccState->SC_save1, kEventKeyUp);
+    if (instance->SC_save1) {
+      vccKeyboardHandleKey(instance->KB_save1, instance->SC_save1, kEventKeyUp);
     }
 
-    if (vccState->SC_save2) {
-      vccKeyboardHandleKey(vccState->KB_save2, vccState->SC_save2, kEventKeyUp);
+    if (instance->SC_save2) {
+      vccKeyboardHandleKey(instance->KB_save2, instance->SC_save2, kEventKeyUp);
     }
 
-    vccState->SC_save1 = 0;
-    vccState->SC_save2 = 0;
+    instance->SC_save1 = 0;
+    instance->SC_save2 = 0;
   }
 }
 
@@ -360,8 +333,6 @@ void GimeReset(void)
 extern "C" {
   __declspec(dllexport) void __cdecl SoftReset(void)
   {
-    VccState* vccState = GetVccState();
-
     MC6883Reset();
     MC6821_PiaReset();
 
@@ -372,15 +343,13 @@ extern "C" {
     CopyRom();
     ResetBus();
 
-    vccState->SystemState.TurboSpeedFlag = 1;
+    instance->SystemState.TurboSpeedFlag = 1;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl HardReset(SystemState* const systemState)
+  __declspec(dllexport) void __cdecl HardReset(SystemState* systemState)
   {
-    VccState* vccState = GetVccState();
-
     systemState->RamBuffer = MmuInit(systemState->RamSize);	//Allocate RAM/ROM & copy ROM Images from source
     systemState->WRamBuffer = (unsigned short*)systemState->RamBuffer;
 
@@ -421,7 +390,7 @@ extern "C" {
     GimeReset();
     UpdateBusPointer();
 
-    vccState->SystemState.TurboSpeedFlag = 1;
+    instance->SystemState.TurboSpeedFlag = 1;
 
     ResetBus();
     SetClockSpeed(1);
@@ -433,55 +402,53 @@ extern "C" {
     static float fps;
     static unsigned int frameCounter = 0;
 
-    VccState* vccState = GetVccState();
-
     while (true)
     {
-      if (vccState->FlagEmuStop == TH_REQWAIT)
+      if (instance->FlagEmuStop == TH_REQWAIT)
       {
-        vccState->FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
+        instance->FlagEmuStop = TH_WAITING; //Signal Main thread we are waiting
 
-        while (vccState->FlagEmuStop == TH_WAITING) {
+        while (instance->FlagEmuStop == TH_WAITING) {
           Sleep(1);
         }
       }
 
       fps = 0;
 
-      if ((vccState->Qflag == 255) && (frameCounter == 30))
+      if ((instance->Qflag == 255) && (frameCounter == 30))
       {
-        vccState->Qflag = 0;
+        instance->Qflag = 0;
 
-        QuickLoad(&(vccState->SystemState), vccState->QuickLoadFile);
+        QuickLoad(&(instance->SystemState), instance->QuickLoadFile);
       }
 
       StartRender();
 
-      for (uint8_t frames = 1; frames <= vccState->SystemState.FrameSkip; frames++)
+      for (uint8_t frames = 1; frames <= instance->SystemState.FrameSkip; frames++)
       {
         frameCounter++;
 
-        if (vccState->SystemState.ResetPending != 0) {
-          switch (vccState->SystemState.ResetPending)
+        if (instance->SystemState.ResetPending != 0) {
+          switch (instance->SystemState.ResetPending)
           {
           case 1:	//Soft Reset
             SoftReset();
             break;
 
           case 2:	//Hard Reset
-            UpdateConfig(&(vccState->SystemState));
-            DoCls(&(vccState->SystemState));
-            HardReset(&(vccState->SystemState));
+            UpdateConfig(&(instance->SystemState));
+            DoCls(&(instance->SystemState));
+            HardReset(&(instance->SystemState));
 
             break;
 
           case 3:
-            DoCls(&(vccState->SystemState));
+            DoCls(&(instance->SystemState));
             break;
 
           case 4:
-            UpdateConfig(&(vccState->SystemState));
-            DoCls(&(vccState->SystemState));
+            UpdateConfig(&(instance->SystemState));
+            DoCls(&(instance->SystemState));
 
             break;
 
@@ -489,30 +456,30 @@ extern "C" {
             break;
           }
 
-          vccState->SystemState.ResetPending = 0;
+          instance->SystemState.ResetPending = 0;
         }
 
-        if (vccState->SystemState.EmulationRunning == 1) {
-          fps += RenderFrame(&(vccState->SystemState));
+        if (instance->SystemState.EmulationRunning == 1) {
+          fps += RenderFrame(&(instance->SystemState));
         }
         else {
-          fps += Static(&(vccState->SystemState));
+          fps += Static(&(instance->SystemState));
         }
       }
 
-      EndRender(vccState->SystemState.FrameSkip);
+      EndRender(instance->SystemState.FrameSkip);
 
-      fps /= vccState->SystemState.FrameSkip;
+      fps /= instance->SystemState.FrameSkip;
 
-      GetModuleStatus(&(vccState->SystemState));
+      GetModuleStatus(&(instance->SystemState));
 
       char ttbuff[256];
 
-      snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", vccState->SystemState.FrameSkip, fps, vccState->CpuName, vccState->SystemState.CPUCurrentSpeed, vccState->SystemState.StatusLine);
+      snprintf(ttbuff, sizeof(ttbuff), "Skip:%2.2i | FPS:%3.0f | %s @ %2.2fMhz| %s", instance->SystemState.FrameSkip, fps, instance->CpuName, instance->SystemState.CPUCurrentSpeed, instance->SystemState.StatusLine);
 
-      SetStatusBarText(ttbuff, &(vccState->SystemState));
+      SetStatusBarText(ttbuff, &(instance->SystemState));
 
-      if (vccState->Throttle) { //Do nothing untill the frame is over returning unused time to OS
+      if (instance->Throttle) { //Do nothing untill the frame is over returning unused time to OS
         FrameWait();
       }
     }
