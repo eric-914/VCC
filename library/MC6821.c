@@ -49,18 +49,16 @@ MC6821State* InitializeInstance(MC6821State* p) {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned int __cdecl GetDACSample(void)
+  __declspec(dllexport) unsigned int __cdecl MC6821_GetDACSample(void)
   {
     static unsigned int retVal = 0;
     static unsigned short sampleLeft = 0, sampleRight = 0, pakSample = 0;
     static unsigned short outLeft = 0, outRight = 0;
     static unsigned short lastLeft = 0, lastRight = 0;
 
-    MC6821State* mc6821State = GetMC6821State();
-
     pakSample = PakAudioSample();
-    sampleLeft = (pakSample >> 8) + mc6821State->Asample + mc6821State->Ssample;
-    sampleRight = (pakSample & 0xFF) + mc6821State->Asample + mc6821State->Ssample; //9 Bits each
+    sampleLeft = (pakSample >> 8) + instance->Asample + instance->Ssample;
+    sampleRight = (pakSample & 0xFF) + instance->Asample + instance->Ssample; //9 Bits each
     sampleLeft = sampleLeft << 6;	//Conver to 16 bit values
     sampleRight = sampleRight << 6;	//For Max volume
 
@@ -95,14 +93,13 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl AssertCart(void)
+  __declspec(dllexport) void __cdecl MC6821_AssertCart(void)
   {
-    MC6821State* mc6821State = GetMC6821State();
     CPU* cpu = GetCPU();
 
-    mc6821State->regb[3] = (mc6821State->regb[3] | 128);
+    instance->regb[3] = (instance->regb[3] | 128);
 
-    if (mc6821State->regb[3] & 1) {
+    if (instance->regb[3] & 1) {
       cpu->CPUAssertInterrupt(FIRQ, 0);
     }
     else {
@@ -112,54 +109,44 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl ClosePrintFile(void)
+  __declspec(dllexport) void __cdecl MC6821_ClosePrintFile(void)
   {
-    MC6821State* mc6821State = GetMC6821State();
+    CloseHandle(instance->hPrintFile);
 
-    CloseHandle(mc6821State->hPrintFile);
-
-    mc6821State->hPrintFile = INVALID_HANDLE_VALUE;
+    instance->hPrintFile = INVALID_HANDLE_VALUE;
 
     FreeConsole();
 
-    mc6821State->hOut = NULL;
+    instance->hOut = NULL;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl DACState(void)
+  __declspec(dllexport) unsigned char __cdecl MC6821_DACState(void)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    return (mc6821State->regb[0] >> 2);
+    return (instance->regb[0] >> 2);
   }
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl GetCasSample(void)
+  __declspec(dllexport) unsigned char __cdecl MC6821_GetCasSample(void)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    return(mc6821State->Csample);
+    return(instance->Csample);
   }
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl GetMuxState(void)
+  __declspec(dllexport) unsigned char __cdecl MC6821_GetMuxState(void)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    return (((mc6821State->rega[1] & 8) >> 3) + ((mc6821State->rega[3] & 8) >> 2));
+    return (((instance->rega[1] & 8) >> 3) + ((instance->rega[3] & 8) >> 2));
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
+  __declspec(dllexport) void __cdecl MC6821_irq_fs(int phase)	//60HZ Vertical sync pulse 16.667 mS
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    if ((mc6821State->CartInserted == 1) && (mc6821State->CartAutoStart == 1)) {
-      AssertCart();
+    if ((instance->CartInserted == 1) && (instance->CartAutoStart == 1)) {
+      MC6821_AssertCart();
     }
 
     CPU* cpu = GetCPU();
@@ -167,11 +154,11 @@ extern "C" {
     switch (phase)
     {
     case 0:	//FS went High to low
-      if ((mc6821State->rega[3] & 2) == 0) { //IRQ on High to low transition
-        mc6821State->rega[3] = (mc6821State->rega[3] | 128);
+      if ((instance->rega[3] & 2) == 0) { //IRQ on High to low transition
+        instance->rega[3] = (instance->rega[3] | 128);
       }
 
-      if (mc6821State->rega[3] & 1) {
+      if (instance->rega[3] & 1) {
         cpu->CPUAssertInterrupt(IRQ, 1);
       }
 
@@ -179,11 +166,11 @@ extern "C" {
 
     case 1:	//FS went Low to High
 
-      if ((mc6821State->rega[3] & 2)) //IRQ  Low to High transition
+      if ((instance->rega[3] & 2)) //IRQ  Low to High transition
       {
-        mc6821State->rega[3] = (mc6821State->rega[3] | 128);
+        instance->rega[3] = (instance->rega[3] | 128);
 
-        if (mc6821State->rega[3] & 1) {
+        if (instance->rega[3] & 1) {
           cpu->CPUAssertInterrupt(IRQ, 1);
         }
       }
@@ -194,43 +181,42 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl irq_hs(int phase)	//63.5 uS
+  __declspec(dllexport) void __cdecl MC6821_irq_hs(int phase)	//63.5 uS
   {
-    MC6821State* mc6821State = GetMC6821State();
     CPU* cpu = GetCPU();
 
     switch (phase)
     {
     case FALLING:	//HS went High to low
-      if ((mc6821State->rega[1] & 2)) { //IRQ on low to High transition
+      if ((instance->rega[1] & 2)) { //IRQ on low to High transition
         return;
       }
 
-      mc6821State->rega[1] = (mc6821State->rega[1] | 128);
+      instance->rega[1] = (instance->rega[1] | 128);
 
-      if (mc6821State->rega[1] & 1) {
+      if (instance->rega[1] & 1) {
         cpu->CPUAssertInterrupt(IRQ, 1);
       }
 
       break;
 
     case RISING:	//HS went Low to High
-      if (!(mc6821State->rega[1] & 2)) { //IRQ  High to low transition
+      if (!(instance->rega[1] & 2)) { //IRQ  High to low transition
         return;
       }
 
-      mc6821State->rega[1] = (mc6821State->rega[1] | 128);
+      instance->rega[1] = (instance->rega[1] | 128);
 
-      if (mc6821State->rega[1] & 1) {
+      if (instance->rega[1] & 1) {
         cpu->CPUAssertInterrupt(IRQ, 1);
       }
 
       break;
 
     case ANY:
-      mc6821State->rega[1] = (mc6821State->rega[1] | 128);
+      instance->rega[1] = (instance->rega[1] | 128);
 
-      if (mc6821State->rega[1] & 1) {
+      if (instance->rega[1] & 1) {
         cpu->CPUAssertInterrupt(IRQ, 1);
       }
 
@@ -242,11 +228,9 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) int __cdecl OpenPrintFile(char* filename)
   {
-    MC6821State* mc6821State = GetMC6821State();
+    instance->hPrintFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 
-    mc6821State->hPrintFile = CreateFile(filename, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-
-    if (mc6821State->hPrintFile == INVALID_HANDLE_VALUE) {
+    if (instance->hPrintFile == INVALID_HANDLE_VALUE) {
       return(0);
     }
 
@@ -255,127 +239,109 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl PiaReset()
+  __declspec(dllexport) void __cdecl MC6821_PiaReset()
   {
-    MC6821State* mc6821State = GetMC6821State();
-
     // Clear the PIA registers
     for (uint8_t index = 0; index < 4; index++)
     {
-      mc6821State->rega[index] = 0;
-      mc6821State->regb[index] = 0;
-      mc6821State->rega_dd[index] = 0;
-      mc6821State->regb_dd[index] = 0;
+      instance->rega[index] = 0;
+      instance->regb[index] = 0;
+      instance->rega_dd[index] = 0;
+      instance->regb_dd[index] = 0;
     }
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl SetCart(unsigned char cart)
+  __declspec(dllexport) void __cdecl MC6821_SetCart(unsigned char cart)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    mc6821State->CartInserted = cart;
+    instance->CartInserted = cart;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl SetCartAutoStart(unsigned char autostart)
+  __declspec(dllexport) unsigned char __cdecl MC6821_SetCartAutoStart(unsigned char autostart)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
     if (autostart != QUERY) {
-      mc6821State->CartAutoStart = autostart;
+      instance->CartAutoStart = autostart;
     }
 
-    return(mc6821State->CartAutoStart);
+    return(instance->CartAutoStart);
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl SetCassetteSample(unsigned char sample)
+  __declspec(dllexport) void __cdecl MC6821_SetCassetteSample(unsigned char sample)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    mc6821State->regb[0] = mc6821State->regb[0] & 0xFE;
+    instance->regb[0] = instance->regb[0] & 0xFE;
 
     if (sample > 0x7F) {
-      mc6821State->regb[0] = mc6821State->regb[0] | 1;
+      instance->regb[0] = instance->regb[0] | 1;
     }
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl SetMonState(BOOL state)
+  __declspec(dllexport) void __cdecl MC6821_SetMonState(BOOL state)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    if (mc6821State->MonState & !state)
+    if (instance->MonState & !state)
     {
       FreeConsole();
 
-      mc6821State->hOut = NULL;
+      instance->hOut = NULL;
     }
 
-    mc6821State->MonState = state;
+    instance->MonState = state;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl SetSerialParams(unsigned char textMode)
+  __declspec(dllexport) void __cdecl MC6821_SetSerialParams(unsigned char textMode)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    mc6821State->AddLF = textMode;
+    instance->AddLF = textMode;
   }
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl VDG_Mode(void)
+  __declspec(dllexport) unsigned char __cdecl MC6821_VDG_Mode(void)
   {
-    MC6821State* mc6821State = GetMC6821State();
-
-    return((mc6821State->regb[2] & 248) >> 3);
+    return((instance->regb[2] & 248) >> 3);
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl WritePrintMon(char* data)
+  __declspec(dllexport) void __cdecl MC6821_WritePrintMon(char* data)
   {
     unsigned long dummy;
 
-    MC6821State* mc6821State = GetMC6821State();
-
-    if (mc6821State->hOut == NULL)
+    if (instance->hOut == NULL)
     {
       AllocConsole();
 
-      mc6821State->hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+      instance->hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
       SetConsoleTitle("Printer Monitor");
     }
 
-    WriteConsole(mc6821State->hOut, data, 1, &dummy, 0);
+    WriteConsole(instance->hOut, data, 1, &dummy, 0);
 
     if (data[0] == 0x0D)
     {
       data[0] = 0x0A;
 
-      WriteConsole(mc6821State->hOut, data, 1, &dummy, 0);
+      WriteConsole(instance->hOut, data, 1, &dummy, 0);
     }
   }
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl CaptureBit(unsigned char sample)
+  __declspec(dllexport) void __cdecl MC6821_CaptureBit(unsigned char sample)
   {
     unsigned long bytesMoved = 0;
     static unsigned char bitMask = 1, startWait = 1;
     static char Byte = 0;
 
-    MC6821State* mc6821State = GetMC6821State();
-
-    if (mc6821State->hPrintFile == INVALID_HANDLE_VALUE) {
+    if (instance->hPrintFile == INVALID_HANDLE_VALUE) {
       return;
     }
 
@@ -401,17 +367,17 @@ extern "C" {
       bitMask = 1;
       startWait = 1;
 
-      WriteFile(mc6821State->hPrintFile, &Byte, 1, &bytesMoved, NULL);
+      WriteFile(instance->hPrintFile, &Byte, 1, &bytesMoved, NULL);
 
-      if (mc6821State->MonState) {
-        WritePrintMon(&Byte);
+      if (instance->MonState) {
+        MC6821_WritePrintMon(&Byte);
       }
 
-      if ((Byte == 0x0D) & mc6821State->AddLF)
+      if ((Byte == 0x0D) & instance->AddLF)
       {
         Byte = 0x0A;
 
-        WriteFile(mc6821State->hPrintFile, &Byte, 1, &bytesMoved, NULL);
+        WriteFile(instance->hPrintFile, &Byte, 1, &bytesMoved, NULL);
       }
 
       Byte = 0;
@@ -421,43 +387,41 @@ extern "C" {
 
 // Shift Row Col
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl pia0_read(unsigned char port)
+  __declspec(dllexport) unsigned char __cdecl MC6821_pia0_read(unsigned char port)
   {
     unsigned char dda, ddb;
 
-    MC6821State* mc6821State = GetMC6821State();
-
-    dda = (mc6821State->rega[1] & 4);
-    ddb = (mc6821State->rega[3] & 4);
+    dda = (instance->rega[1] & 4);
+    ddb = (instance->rega[3] & 4);
 
     switch (port)
     {
     case 1:
-      return(mc6821State->rega[port]);
+      return(instance->rega[port]);
 
     case 3:
-      return(mc6821State->rega[port]);
+      return(instance->rega[port]);
 
     case 0:
       if (dda)
       {
-        mc6821State->rega[1] = (mc6821State->rega[1] & 63);
+        instance->rega[1] = (instance->rega[1] & 63);
 
-        return (vccKeyboardGetScan(mc6821State->rega[2])); //Read
+        return (vccKeyboardGetScan(instance->rega[2])); //Read
       }
       else {
-        return(mc6821State->rega_dd[port]);
+        return(instance->rega_dd[port]);
       }
 
     case 2: //Write 
       if (ddb)
       {
-        mc6821State->rega[3] = (mc6821State->rega[3] & 63);
+        instance->rega[3] = (instance->rega[3] & 63);
 
-        return(mc6821State->rega[port] & mc6821State->rega_dd[port]);
+        return(instance->rega[port] & instance->rega_dd[port]);
       }
       else {
-        return(mc6821State->rega_dd[port]);
+        return(instance->rega_dd[port]);
       }
     }
 
@@ -466,44 +430,42 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl pia0_write(unsigned char data, unsigned char port)
+  __declspec(dllexport) void __cdecl MC6821_pia0_write(unsigned char data, unsigned char port)
   {
     unsigned char dda, ddb;
 
-    MC6821State* mc6821State = GetMC6821State();
-
-    dda = (mc6821State->rega[1] & 4);
-    ddb = (mc6821State->rega[3] & 4);
+    dda = (instance->rega[1] & 4);
+    ddb = (instance->rega[3] & 4);
 
     switch (port)
     {
     case 0:
       if (dda) {
-        mc6821State->rega[port] = data;
+        instance->rega[port] = data;
       }
       else {
-        mc6821State->rega_dd[port] = data;
+        instance->rega_dd[port] = data;
       }
 
       return;
 
     case 2:
       if (ddb) {
-        mc6821State->rega[port] = data;
+        instance->rega[port] = data;
       }
       else {
-        mc6821State->rega_dd[port] = data;
+        instance->rega_dd[port] = data;
       }
 
       return;
 
     case 1:
-      mc6821State->rega[port] = (data & 0x3F);
+      instance->rega[port] = (data & 0x3F);
 
       return;
 
     case 3:
-      mc6821State->rega[port] = (data & 0x3F);
+      instance->rega[port] = (data & 0x3F);
 
       return;
     }
@@ -511,16 +473,14 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) unsigned char __cdecl pia1_read(unsigned char port)
+  __declspec(dllexport) unsigned char __cdecl MC6821_pia1_read(unsigned char port)
   {
     static unsigned int flag = 0, flag2 = 0;
     unsigned char dda, ddb;
 
-    MC6821State* mc6821State = GetMC6821State();
-
     port -= 0x20;
-    dda = (mc6821State->regb[1] & 4);
-    ddb = (mc6821State->regb[3] & 4);
+    dda = (instance->regb[1] & 4);
+    ddb = (instance->regb[3] & 4);
 
     switch (port)
     {
@@ -528,29 +488,29 @@ extern "C" {
       //	return(0);
 
     case 3:
-      return(mc6821State->regb[port]);
+      return(instance->regb[port]);
 
     case 2:
       if (ddb)
       {
-        mc6821State->regb[3] = (mc6821State->regb[3] & 63);
+        instance->regb[3] = (instance->regb[3] & 63);
 
-        return(mc6821State->regb[port] & mc6821State->regb_dd[port]);
+        return(instance->regb[port] & instance->regb_dd[port]);
       }
       else {
-        return(mc6821State->regb_dd[port]);
+        return(instance->regb_dd[port]);
       }
 
     case 0:
       if (dda)
       {
-        mc6821State->regb[1] = (mc6821State->regb[1] & 63); //Cass In
-        flag = mc6821State->regb[port]; //& regb_dd[port];
+        instance->regb[1] = (instance->regb[1] & 63); //Cass In
+        flag = instance->regb[port]; //& regb_dd[port];
 
         return(flag);
       }
       else {
-        return(mc6821State->regb_dd[port]);
+        return(instance->regb_dd[port]);
       }
     }
 
@@ -559,37 +519,35 @@ extern "C" {
 }
 
 extern "C" {
-  __declspec(dllexport) void __cdecl pia1_write(unsigned char data, unsigned char port)
+  __declspec(dllexport) void __cdecl MC6821_pia1_write(unsigned char data, unsigned char port)
   {
     unsigned char dda, ddb;
     static unsigned short LastSS = 0;
 
-    MC6821State* mc6821State = GetMC6821State();
-
     port -= 0x20;
 
-    dda = (mc6821State->regb[1] & 4);
-    ddb = (mc6821State->regb[3] & 4);
+    dda = (instance->regb[1] & 4);
+    ddb = (instance->regb[3] & 4);
 
     switch (port)
     {
     case 0:
       if (dda) {
-        mc6821State->regb[port] = data;
+        instance->regb[port] = data;
 
-        CaptureBit((mc6821State->regb[0] & 2) >> 1);
+        MC6821_CaptureBit((instance->regb[0] & 2) >> 1);
 
-        if (GetMuxState() == 0) {
-          if ((mc6821State->regb[3] & 8) != 0) { //==0 for cassette writes
-            mc6821State->Asample = (mc6821State->regb[0] & 0xFC) >> 1; //0 to 127
+        if (MC6821_GetMuxState() == 0) {
+          if ((instance->regb[3] & 8) != 0) { //==0 for cassette writes
+            instance->Asample = (instance->regb[0] & 0xFC) >> 1; //0 to 127
           }
           else {
-            mc6821State->Csample = (mc6821State->regb[0] & 0xFC);
+            instance->Csample = (instance->regb[0] & 0xFC);
           }
         }
       }
       else {
-        mc6821State->regb_dd[port] = data;
+        instance->regb_dd[port] = data;
       }
 
       return;
@@ -597,27 +555,27 @@ extern "C" {
     case 2: //FF22
       if (ddb)
       {
-        mc6821State->regb[port] = (data & mc6821State->regb_dd[port]);
+        instance->regb[port] = (data & instance->regb_dd[port]);
 
-        SetGimeVdgMode2((mc6821State->regb[2] & 248) >> 3);
+        SetGimeVdgMode2((instance->regb[2] & 248) >> 3);
 
-        mc6821State->Ssample = (mc6821State->regb[port] & 2) << 6;
+        instance->Ssample = (instance->regb[port] & 2) << 6;
       }
       else {
-        mc6821State->regb_dd[port] = data;
+        instance->regb_dd[port] = data;
       }
 
       return;
 
     case 1:
-      mc6821State->regb[port] = (data & 0x3F);
+      instance->regb[port] = (data & 0x3F);
 
       Motor((data & 8) >> 3);
 
       return;
 
     case 3:
-      mc6821State->regb[port] = (data & 0x3F);
+      instance->regb[port] = (data & 0x3F);
 
       return;
     }

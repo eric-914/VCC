@@ -89,7 +89,7 @@ CoCoState* InitializeInstance(CoCoState* p) {
 extern "C" {
   __declspec(dllexport) void __cdecl AudioOut(void)
   {
-    instance->AudioBuffer[instance->AudioIndex++] = GetDACSample();
+    instance->AudioBuffer[instance->AudioIndex++] = MC6821_GetDACSample();
   }
 }
 
@@ -229,16 +229,16 @@ extern "C" {
 extern "C" {
   __declspec(dllexport) void __cdecl CassIn(void)
   {
-    instance->AudioBuffer[instance->AudioIndex] = GetDACSample();
+    instance->AudioBuffer[instance->AudioIndex] = MC6821_GetDACSample();
 
-    SetCassetteSample(instance->CassBuffer[instance->AudioIndex++]);
+    MC6821_SetCassetteSample(instance->CassBuffer[instance->AudioIndex++]);
   }
 }
 
 extern "C" {
   __declspec(dllexport) void __cdecl CassOut(void)
   {
-    instance->CassBuffer[instance->AudioIndex++] = GetCasSample();
+    instance->CassBuffer[instance->AudioIndex++] = MC6821_GetCasSample();
   }
 }
 
@@ -305,7 +305,7 @@ extern "C" {
       GimeAssertHorzInterrupt();
     }
 
-    irq_hs(ANY);
+    MC6821_irq_hs(ANY);
     PakTimer();
 
     instance->PicosThisLine += instance->PicosPerLine;
@@ -542,7 +542,7 @@ extern "C" {
     //********************************Start of frame Render*****************************************************
     GetGraphicsState()->BlinkState = instance->BlinkPhase;
 
-    irq_fs(0);				//FS low to High transition start of display Blink needs this
+    MC6821_irq_fs(0);				//FS low to High transition start of display Blink needs this
 
     for (systemState->LineCounter = 0; systemState->LineCounter < 13; systemState->LineCounter++) {		//Vertical Blanking 13 H lines
       CPUCycle();
@@ -576,7 +576,7 @@ extern "C" {
       }
     }
 
-    irq_fs(1);  //End of active display FS goes High to Low
+    MC6821_irq_fs(1);  //End of active display FS goes High to Low
 
     if (instance->VertInterruptEnabled) {
       GimeAssertVertInterrupt();

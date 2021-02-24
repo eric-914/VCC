@@ -15,14 +15,14 @@ extern "C" {
     case 1:
     case 2:
     case 3:
-      value = pia0_read(port);	//MC6821 P.I.A  Keyboard access $FF00-$FF03
+      value = MC6821_pia0_read(port);	//MC6821 P.I.A  Keyboard access $FF00-$FF03
       break;
 
     case 0x20:
     case 0x21:
     case 0x22:
     case 0x23:
-      value = pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
+      value = MC6821_pia1_read(port);	//MC6821 P.I.A	Sound and VDG Control 
       break;
 
     case 0xC0:
@@ -149,14 +149,14 @@ extern "C" {
     case 1:
     case 2:
     case 3:
-      pia0_write(data, port);	//MC6821 P.I.A  Keyboard access $FF00-$FF03
+      MC6821_pia0_write(data, port);	//MC6821 P.I.A  Keyboard access $FF00-$FF03
       break;
 
     case 0x20:
     case 0x21:
     case 0x22:
     case 0x23:
-      pia1_write(data, port);	//MC6821 P.I.A	Sound and VDG Control 
+      MC6821_pia1_write(data, port);	//MC6821 P.I.A	Sound and VDG Control 
       break;
 
     case 0xC0:

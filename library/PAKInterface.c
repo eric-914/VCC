@@ -420,7 +420,7 @@ extern "C" {
 
     instance->RomPackLoaded = false;
 
-    SetCart(0);
+    MC6821_SetCart(0);
 
     if (instance->ExternalRomBuffer != nullptr) {
       free(instance->ExternalRomBuffer);
@@ -483,7 +483,7 @@ extern "C" {
 
       systemState->ResetPending = 2;
 
-      SetCart(1);
+      MC6821_SetCart(1);
 
       return(NOMODULE);
 
@@ -496,7 +496,7 @@ extern "C" {
         return(NOMODULE);
       }
 
-      SetCart(0);
+      MC6821_SetCart(0);
 
       instance->GetModuleName = (GETNAME)GetProcAddress(instance->hInstLib, "ModuleName");
       instance->ConfigModule = (CONFIGIT)GetProcAddress(instance->hInstLib, "ModuleConfig");
@@ -632,7 +632,7 @@ extern "C" {
 
         strcat(text, "Can Assert CART\n");
 
-        instance->PakSetCart(SetCart);
+        instance->PakSetCart(MC6821_SetCart);
       }
 
       strcpy(instance->DllPath, modulePath);

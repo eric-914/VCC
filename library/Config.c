@@ -586,7 +586,7 @@ extern "C" {
     SetRamSize(instance->CurrentConfig.RamSize);
     SetCpuType(instance->CurrentConfig.CpuType);
     SetMonitorType(instance->CurrentConfig.MonitorType);
-    SetCartAutoStart(instance->CurrentConfig.CartAutoStart);
+    MC6821_SetCartAutoStart(instance->CurrentConfig.CartAutoStart);
 
     if (instance->CurrentConfig.RebootNow) {
       Reboot();

@@ -107,14 +107,14 @@ extern "C" {
         break;
 
       case IDC_CLOSE:
-        ClosePrintFile();
+        MC6821_ClosePrintFile();
         strcpy(configState->SerialCaptureFile, "No Capture File");
 
         SendDlgItemMessage(hDlg, IDC_SERIALFILE, WM_SETTEXT, strlen(configState->SerialCaptureFile), (LPARAM)(LPCSTR)(configState->SerialCaptureFile));
 
         configState->PrtMon = FALSE;
 
-        SetMonState(configState->PrtMon);
+        MC6821_SetMonState(configState->PrtMon);
 
         SendDlgItemMessage(hDlg, IDC_PRINTMON, BM_SETCHECK, configState->PrtMon, 0);
 
@@ -123,14 +123,14 @@ extern "C" {
       case IDC_LF:
         configState->TextMode = (char)SendDlgItemMessage(hDlg, IDC_LF, BM_GETCHECK, 0, 0);
 
-        SetSerialParams(configState->TextMode);
+        MC6821_SetSerialParams(configState->TextMode);
 
         break;
 
       case IDC_PRINTMON:
         configState->PrtMon = (char)SendDlgItemMessage(hDlg, IDC_PRINTMON, BM_GETCHECK, 0, 0);
 
-        SetMonState(configState->PrtMon);
+        MC6821_SetMonState(configState->PrtMon);
       }
 
       break;

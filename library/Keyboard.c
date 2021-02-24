@@ -287,11 +287,11 @@ extern "C" {
     ret_val = 127 - ret_val;
 
     //Collect CA2 and CB2 from the PIA (1of4 Multiplexer)
-    joystickState->StickValue = get_pot_value(GetMuxState());
+    joystickState->StickValue = get_pot_value(MC6821_GetMuxState());
 
     if (joystickState->StickValue != 0)		//OS9 joyin routine needs this (koronis rift works now)
     {
-      if (joystickState->StickValue >= DACState())		// Set bit of stick >= DAC output $FF20 Bits 7-2
+      if (joystickState->StickValue >= MC6821_DACState())		// Set bit of stick >= DAC output $FF20 Bits 7-2
       {
         ret_val |= 0x80;
       }

@@ -363,7 +363,7 @@ extern "C" {
     VccState* vccState = GetVccState();
 
     MC6883Reset();
-    PiaReset();
+    MC6821_PiaReset();
 
     GetCPU()->CPUReset();
 
@@ -412,7 +412,7 @@ extern "C" {
       cpu->CPUForcePC = MC6809ForcePC;
     }
 
-    PiaReset();
+    MC6821_PiaReset();
     MC6883Reset();	//Captures interal rom pointer for CPU Interrupt Vectors
 
     cpu->CPUInit();

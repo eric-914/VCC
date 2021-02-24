@@ -403,7 +403,7 @@ void CPUAssertInterrupt(unsigned char interrupt, unsigned char latencey)
 
 extern "C"
 {
-  __declspec(dllexport) void SetCart(SETCART pointer)
+  __declspec(dllexport) void MC6821_SetCart(SETCART pointer)
   {
     PakSetCart = pointer;
   }

@@ -59,7 +59,7 @@ private:
   friend void ModuleConfig(unsigned char menuId);
   friend void SetIniPath(const char* iniFilePath);
   friend void ModuleReset(void);
-  friend void SetCart(SETCART pointer);
+  friend void MC6821_SetCart(SETCART pointer);
   friend unsigned char PakMemRead8(unsigned short address);
   friend void PackPortWrite(unsigned char port, unsigned char data);
   friend unsigned char PackPortRead(unsigned char port);
