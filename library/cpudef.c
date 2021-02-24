@@ -2,7 +2,7 @@
 
 #include "cpudef.h"
 
-CPU* InitializeInstance(CPU* cpu);
+CPU* InitializeInstance(CPU*);
 
 static CPU* instance = InitializeInstance(new CPU());
 
@@ -12,13 +12,13 @@ extern "C" {
   }
 }
 
-CPU* InitializeInstance(CPU* cpu) {
-  cpu->CPUAssertInterrupt = NULL;
-  cpu->CPUDeAssertInterrupt = NULL;
-  cpu->CPUExec = NULL;
-  cpu->CPUForcePC = NULL;
-  cpu->CPUInit = NULL;
-  cpu->CPUReset = NULL;
+CPU* InitializeInstance(CPU* p) {
+  p->CPUAssertInterrupt = NULL;
+  p->CPUDeAssertInterrupt = NULL;
+  p->CPUExec = NULL;
+  p->CPUForcePC = NULL;
+  p->CPUInit = NULL;
+  p->CPUReset = NULL;
 
-  return cpu;
+  return p;
 }

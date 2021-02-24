@@ -67,37 +67,33 @@ typedef struct
 
 extern "C" __declspec(dllexport) ConfigState * __cdecl GetConfigState();
 
+extern "C" __declspec(dllexport) POINT __cdecl GetIniWindowSize();
+
 extern "C" __declspec(dllexport) char* __cdecl AppDirectory();
 extern "C" __declspec(dllexport) char* __cdecl BasicRomName(void);
-
-extern "C" __declspec(dllexport) void __cdecl GetIniFilePath(char* path);
-extern "C" __declspec(dllexport) void __cdecl SetIniFilePath(char* path);
 
 extern "C" __declspec(dllexport) int __cdecl GetCurrentKeyboardLayout();
 extern "C" __declspec(dllexport) int __cdecl GetPaletteType();
 extern "C" __declspec(dllexport) int __cdecl GetRememberSize();
+extern "C" __declspec(dllexport) int __cdecl SelectFile(SystemState*, char*);
 
-extern "C" __declspec(dllexport) POINT __cdecl GetIniWindowSize();
-
-extern "C" __declspec(dllexport) void __cdecl GetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpDefault, LPSTR lpReturnedString);
-extern "C" __declspec(dllexport) void __cdecl SetProfileText(LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString);
-
-extern "C" __declspec(dllexport) unsigned short __cdecl GetProfileShort(LPCSTR lpAppName, LPCSTR lpKeyName, int nDefault);
-extern "C" __declspec(dllexport) unsigned char __cdecl GetProfileByte(LPCSTR lpAppName, LPCSTR lpKeyName, int nDefault);
-
-extern "C" __declspec(dllexport) unsigned char __cdecl TranslateDisplay2Scan(LRESULT x);
-extern "C" __declspec(dllexport) void __cdecl BuildTransDisp2ScanTable();
-extern "C" __declspec(dllexport) void __cdecl DecreaseOverclockSpeed(SystemState* systemState);
-extern "C" __declspec(dllexport) void __cdecl UpdateTapeCounter(unsigned int counter, unsigned char tapeMode);
+extern "C" __declspec(dllexport) unsigned char __cdecl GetProfileByte(LPCSTR, LPCSTR, int);
+extern "C" __declspec(dllexport) unsigned char __cdecl ReadIniFile(SystemState*);
+extern "C" __declspec(dllexport) unsigned char __cdecl TranslateDisplay2Scan(LRESULT);
+extern "C" __declspec(dllexport) unsigned char __cdecl TranslateScan2Display(int);
 extern "C" __declspec(dllexport) unsigned char __cdecl WriteIniFile(void);
-extern "C" __declspec(dllexport) void __cdecl IncreaseOverclockSpeed(SystemState* systemState);
-extern "C" __declspec(dllexport) void __cdecl UpdateSoundBar(unsigned short left, unsigned short right);
-extern "C" __declspec(dllexport) unsigned char __cdecl TranslateScan2Display(int x);
 
-extern "C" __declspec(dllexport) void __cdecl RefreshJoystickStatus(void);
-extern "C" __declspec(dllexport) int __cdecl SelectFile(SystemState* systemState, char* filename);
-extern "C" __declspec(dllexport) unsigned char __cdecl ReadIniFile(SystemState* systemState);
+extern "C" __declspec(dllexport) unsigned short __cdecl GetProfileShort(LPCSTR, LPCSTR, int);
 
-extern "C" __declspec(dllexport) void __cdecl UpdateConfig(SystemState* systemState);
-
-extern "C" __declspec(dllexport) void __cdecl LoadConfig(SystemState* systemState, CmdLineArguments cmdArg);
+extern "C" __declspec(dllexport) void __cdecl BuildTransDisp2ScanTable();
+extern "C" __declspec(dllexport) void __cdecl DecreaseOverclockSpeed(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl GetIniFilePath(char*);
+extern "C" __declspec(dllexport) void __cdecl GetProfileText(LPCSTR, LPCSTR, LPCSTR, LPSTR);
+extern "C" __declspec(dllexport) void __cdecl IncreaseOverclockSpeed(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl LoadConfig(SystemState*, CmdLineArguments);
+extern "C" __declspec(dllexport) void __cdecl RefreshJoystickStatus();
+extern "C" __declspec(dllexport) void __cdecl SetIniFilePath(char*);
+extern "C" __declspec(dllexport) void __cdecl SetProfileText(LPCSTR, LPCSTR, LPCSTR);
+extern "C" __declspec(dllexport) void __cdecl UpdateConfig(SystemState*);
+extern "C" __declspec(dllexport) void __cdecl UpdateSoundBar(unsigned short, unsigned short);
+extern "C" __declspec(dllexport) void __cdecl UpdateTapeCounter(unsigned int, unsigned char);
