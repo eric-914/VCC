@@ -19,6 +19,7 @@ typedef struct
 {
   HANDLE hEventThread;
   HANDLE hEmuThread;  // Message handlers
+  MSG  msg;
 
   char CpuName[20];
   char AppName[MAX_LOADSTRING];
